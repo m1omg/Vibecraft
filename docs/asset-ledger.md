@@ -47,8 +47,10 @@ Budget policy (agreed with the user):
 | 13 | 2026-10-16 | Higgsfield | Library clip on soldier rig: Right_Hand_Sword_Slash (219) (job f4f33f9d-cdb4-44af-9fd5-5b486f74f2f8) | 8 cr | OK (1.5 s, in place) |
 | 14 | 2026-10-16 | Higgsfield | Library clip on soldier rig: Dead (8) (job acc356bf-34e1-4499-a9f5-5972b476c8bc) | 8 cr | OK (2.97 s) |
 
+| 15 | 2026-10-16 | Higgsfield | Greenvale terrain + materials, 13 × gpt_image_2_5 (art bible T5–T8): gv_scree 8c9ef1ec, gv_cracked 9016da95, gv_grassy_dirt 48002468, water_ripples ce8b2084, gv_dirt 6e219d05, gv_road 49908061, gv_meadow 224a7af7, gv_thick_meadow a2db424c, cliff_limestone 769d321f, cliff_earthbank ab177c7f, foliage_oak_cards 8782d25e, foliage_linden_cards 8cc6aba2, bark_oak 9494d147 | 3.25 cr | All approved. Made seamless with `texture_tools.py seamless` (seam scores 2–3.9 → 0.72–0.91). Foliage keyed from #0000FF. 8 first-attempt submissions were rate-limited (429) and never created — not charged |
+
 **Bake-off conclusion (2026-10-16):** characters and anything that turns → Higgsfield Tripo H3.1 (9 cr) + Higgsfield
 rigging (8 cr). Static buildings/props → Krea TRELLIS v1 (~15 CU) is acceptable when the back is never seen; otherwise
 Higgsfield Tripo H3.1. All other Krea 3D models cost 148–222 CU each — banned.
 
-**Balances after log:** Krea 1529.63 CU · Higgsfield 228.5 cr (verified 2026-10-16 14:45)
+**Balances after log:** Krea 1529.63 CU · Higgsfield 225.25 cr (verified 2026-10-16 16:49)
