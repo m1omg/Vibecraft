@@ -1,0 +1,4 @@
+{
+  "tree_pine": {"name": "Pine Tree", "lumber": 50, "shape": "pine"},
+  "tree_round": {"name": "Leafy Tree", "lumber": 50, "shape": "round"}
+}

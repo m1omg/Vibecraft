@@ -1,0 +1,13 @@
+{
+  "dummy_bolt": {
+    "name": "Placeholder Bolt",
+    "type": "target_unit",
+    "effect": "damage",
+    "hotkey": "T",
+    "ranks": [
+      {"mana": 75, "cooldown": 9.0, "range": 8.0, "amount": 100},
+      {"mana": 75, "cooldown": 9.0, "range": 8.0, "amount": 175},
+      {"mana": 75, "cooldown": 9.0, "range": 8.0, "amount": 250}
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "factions": {
+    "placeholder_a": {"name": "Placeholder Faction A", "worker": "dummy_worker", "hall": "dummy_hall",
+                      "start_units": {"dummy_worker": 5}},
+    "placeholder_b": {"name": "Placeholder Faction B", "worker": "dummy_worker", "hall": "dummy_hall",
+                      "start_units": {"dummy_worker": 5}}
+  },
+  "combat": {
+    "armor_k": 0.06,
+    "types": {
+      "normal": {"none": 1.0, "light": 1.0, "medium": 1.5, "heavy": 1.0, "fortified": 0.7, "hero": 1.0},
+      "pierce": {"none": 1.0, "light": 2.0, "medium": 0.75, "heavy": 1.0, "fortified": 0.35, "hero": 0.5},
+      "siege":  {"none": 1.0, "light": 1.0, "medium": 0.5, "heavy": 1.0, "fortified": 1.5, "hero": 0.5},
+      "magic":  {"none": 1.0, "light": 1.25, "medium": 0.75, "heavy": 2.0, "fortified": 0.35, "hero": 0.5},
+      "chaos":  {"none": 1.0, "light": 1.0, "medium": 1.0, "heavy": 1.0, "fortified": 1.0, "hero": 1.0},
+      "hero":   {"none": 1.0, "light": 1.0, "medium": 1.0, "heavy": 1.0, "fortified": 0.5, "hero": 1.0}
+    }
+  },
+  "upkeep": [
+    {"food": 0, "gold_factor": 1.0, "label": "No Upkeep"},
+    {"food": 51, "gold_factor": 0.7, "label": "Low Upkeep"},
+    {"food": 81, "gold_factor": 0.4, "label": "High Upkeep"}
+  ]
+}

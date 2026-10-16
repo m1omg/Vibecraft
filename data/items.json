@@ -1,0 +1,3 @@
+{
+  "dummy_potion": {"name": "Placeholder Potion", "charges": 1, "cost": {"gold": 150}, "effect": "heal", "amount": 250}
+}
