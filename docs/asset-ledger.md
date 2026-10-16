@@ -1,10 +1,11 @@
 # Asset generation ledger
 
 Budget policy (agreed with the user):
-- **Higgsfield** credits are reserved for what only Higgsfield can do: **3D models, auto-rigging and
-  animation clips**. Cheap Higgsfield images (0.25 cr) only when they feed a 3D generation directly
-  (e.g. a clean A-pose front view for image-to-3D).
-- **Krea** compute units cover 2D (concept art, terrain textures, icons, UI art) and **all audio**
+- **Balance both services; neither is limited to one asset type.**
+- **Higgsfield** credits are prioritised for what only Higgsfield can do — **3D models, auto-rigging
+  and animation clips** — but its cheap images (gpt_image_2_5, 0.25 cr) are also used for terrain
+  textures and for character/building reference art that feeds image-to-3D.
+- **Krea** compute units cover concept art, icons, UI art and other 2D work, plus **all audio**
   (SFX via Seed Audio, voices via ElevenLabs TTS, music via ElevenLabs Music).
 - Krea 3D is not used: measured 148–167 CU per model and the meshes are ~50k faces.
 - 3D jobs are always submitted **async** so a tool timeout can never lose a paid result.
