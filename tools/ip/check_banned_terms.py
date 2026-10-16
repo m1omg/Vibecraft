@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Fail if any banned IP term appears in shipped content, data, asset names or prompts.
 
-Usage: python3 tools/ip/check_banned_terms.py [paths...]   (default: src data assets tools/prompts)
-Exit code 1 when a match is found. Docs under docs/ are exempt (research and design notes compare against WC3 on purpose).
+Usage: python3 tools/ip/check_banned_terms.py [paths...]
+  (default: src data assets tests tools/prompts docs/design/art-and-audio-bible.md)
+Exit code 1 when a match is found. Docs under docs/ are exempt (research and design notes compare against WC3 on purpose),
+except the art-and-audio bible: generation prompts are assembled from it, so it is checked like shipped content.
 """
 import pathlib
 import re
@@ -10,7 +12,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 TERMS_FILE = pathlib.Path(__file__).with_name("banned_terms.txt")
-DEFAULT_PATHS = ["src", "data", "assets", "tests", "tools/prompts"]
+DEFAULT_PATHS = ["src", "data", "assets", "tests", "tools/prompts", "docs/design/art-and-audio-bible.md"]
 TEXT_EXT = {".gd", ".json", ".tscn", ".tres", ".md", ".txt", ".csv", ".cfg", ".py", ".gdshader", ".godot"}
 # Words that are legitimate in game rules text: only flag them as whole proper names elsewhere.
 ALLOWED_CONTEXT = {"grunt": re.compile(r"\bgrunts? (?:sfx|sound|vocal)", re.I)}

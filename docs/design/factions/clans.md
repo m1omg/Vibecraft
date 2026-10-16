@@ -1,6 +1,6 @@
-# Faction design: `clans` (the Tormai Clans)
+# Faction design: `clans` (the Tormai)
 
-*Design date: 2026-10-16, revised the same day after the IP-safety and WC3-fidelity reviews (see the Review log at the end).
+*Design date: 2026-10-16, revised the same day after two rounds of IP-safety and WC3-fidelity reviews (see the two Review logs at the end).
 Status: full-game design, with the vertical-slice subset marked ✅. Faction id: `clans` (data prefix `clans_`). Opponent in the
 slice: `kingdom`.*
 
@@ -18,7 +18,7 @@ cells** (`architecture.md`), in step with `kingdom.md`. Sight is day / night. Da
 
 ## 0. Summary
 
-**What a Warcraft III fan should feel:** "This is the warrior-people race." The clans have tough, high-HP infantry, a worker
+**What a Warcraft III fan should feel:** "This is the warrior-people race." The Tormai have tough, high-HP infantry, a worker
 garrison for defence, a haste-buff caster, a ward-planting support, a defensive spirit caster, a fast siege-type raider that pins
 flyers, an aura-carrying war-beast, a flyer, a siege engine and a huge T3 melee people. They have a stealth-and-crit sword
 duelist, a seer, a giant tank chieftain and a hex-and-heal support hero. A fan can read every unit's job and the build-order
@@ -31,13 +31,13 @@ broken-English grunts. Nothing reads like another game's hungry steppe giants ei
 | | Choice |
 |---|---|
 | People | **Tormai**: big, slate-grey, heavy-jawed steppe nomads with pale "hail-speckles", and **no tusks** |
-| Display name | **Tormai Clans** (formal: *the Clans under the Gong-Ring*) |
-| Ally people (the tauren-like slot) | **Thoom**: hill-sized, gentle cauldron-helmed giants who keep the clans' hearths and serve their guests. Hosts, never eaters |
+| Display name | **the Tormai** (formal: *the Gong-Ring Tormai*). `clans` is the internal data id only; the UI never shows "Clans" (§1.1) |
+| Ally people (the tauren-like slot) | **Thoom**: hill-sized, gentle cauldron-helmed giants with pink-granite hides who keep the households' fires and serve their guests. Hosts, never eaters |
 | Look | Felt yurts, lamellar, polished bronze, ancient tortoise-shell halls. Ink-teal and saffron felt, warm bronze, slate skin |
 | Voice | Formal, courteous and slow. Comedy of **ferocious hospitality**: they apologise before hitting you |
-| Signature WC3-derived mechanic (1 allowed) | Workers garrison the supply yurt and sling stones. Presented as the hall's gong ringing and the yurt's felt skirt **rolling up** |
-| Gameplay identity | Durable units and strong heroes, mobile mid-game pushes (haste, riders), pull/trap/sleep disables, T3 giants. Weaknesses: fragile casters, few cheap detectors (true sight only from the T2 Pole-Carver and a level-5 Skymirror), slower early lumber trips |
-| Slice subset ✅ | Worker **Yurtwright**. Combat: **Grappler**, **Javelineer**, **Gustcaller**, **Sling-Cart** (siege). Heroes: **the Uncut**, **Skymirror**. Buildings: **Shell Hall (→ Banner Shell)**, **Home Yurt**, **Grapple Yard**, **Naming Stones**, **Casting Pit**, **Mirror Yurt**, **Spear-Mast**, **Tea Tent** |
+| Signature WC3-derived mechanic (1 allowed) | Workers garrison the supply yurt (3 per yurt) and sling stones. Presented as any hall's gong ringing and the yurt's felt skirt **rolling up**. It is the only one: the war-mill slot has no thorns or burrow-armour research (§8) |
+| Gameplay identity | Durable units and strong heroes, mobile mid-game pushes (haste, riders), pull/trap/sleep disables, T3 giants. Weaknesses: fragile casters, few cheap detectors (true sight only from the T2 Pole-Carver's Mirror Pole and a level-5 Skymirror), slower early lumber trips |
+| Slice subset ✅ | Worker **Yurtwright**. Combat: **Grappler**, **Javelineer**, **Gustcaller**, **Sling-Cart** (siege). Heroes: **the Uncut**, **Skymirror**. Buildings: **Shell Hall (→ Banner Shell)**, **Home Yurt**, **Grapple Yard**, **Naming Stones**, **Casting Pit**, **Mirror Yurt**, **Bow-Mast**, **Tea Tent** |
 
 ---
 
@@ -50,7 +50,11 @@ broken-English grunts. Nothing reads like another game's hungry steppe giants ei
   - **Clearance:** the review's web search found no game or IP collision. "Torma" is a real Tibetan and Mongolian Buddhist
     ritual offering, so a cultural-consultant check of "Tormai" is open (§13, Q7). Fallbacks: **Tormun** or **Torvai**, cleared
     with the same search as the public title.
-- **Faction display name: Tormai Clans.** In lore they are *the Clans under the Gong-Ring*.
+- **Faction display name: the Tormai** (formal: *the Gong-Ring Tormai*).
+  - **Why not "Clans":** clans are the core social word of the reference game's orcs, whose named clans are its lore (one of them is on
+    the ip-safety §2.1 list). On the orc-slot faction, with its steppe inspiration, "Clans" was the strongest orc-lore word still on screen.
+  - **The UI never shows "Clans".** The faction id `clans` is fixed by the brief and stays an internal data id. Lore and VO say
+    "households" or "felt-houses".
 - **Ally giants: Thoom** (singular and plural). The name is onomatopoeic for their footsteps.
 - **Decision: the UI, data and VO never say "orc".** The word is legally free folklore (ip-safety §3.1).
   We still avoid it, for four reasons:
@@ -63,13 +67,18 @@ broken-English grunts. Nothing reads like another game's hungry steppe giants ei
   4. It sets up the voice: the Tormai speak formal, complete sentences, the opposite of the WC3 orc grunt-speak.
 - **Naming rules for the faction** (so future names stay consistent and far from WC3):
   - Two-part English compounds for units and buildings ("Grapple Yard", "Sky-Kite").
-  - Invented personal names use soft steppe-flavoured syllables (CV/CVC, doubled vowels allowed: *Ilaya, Ommet, Beluu*).
+  - Invented personal names use soft steppe-flavoured syllables (CV/CVC, doubled vowels allowed: *Ilaya, Ubbet, Beluu*).
   - **No apostrophes**, and no Grom-/Gar-/Kar- or -tar/-ash name patterns.
   - **No "Far-" prefix** on any clans name (the token of a WC3 Orc hero and of its reveal spell).
   - **No one-word swaps** of a WC3 coined name on the same role slot ("Healing Ward" → "Healing Pole" is a swap, not a new
     name). Name the object by what it *is* in our world.
   - Never "Horde", "clan of the X wolf", "Lok-", "Zug" or "Dabu".
-  - No real ethnonyms, real clan names, real sacred terms or sacred numbers.
+  - **Never "Hearth"** in any name: it sits next to Blizzard's *Hearthstone* mark (same goods) and WoW's recall item; `kingdom.md` §1.1
+    and the neutrals name audit already retired it. Avoid "Fireside" too (Hearthstone's own event branding).
+  - **No eye or squint jokes** in names, tics or lines, and **no Native-American-style epithets** ("Two-X", "Who-Y"), the naming
+    register WoW uses for its bull-folk. A Central-Asian-inspired people must never be drawn through eye-shape humour (§1.4).
+  - No real ethnonyms, real clan names, real sacred terms or sacred numbers, **even by sound**: check new names against the religious
+    vocabulary of the source cultures and their neighbours (the first revision had *Sabbet* ≈ "Sabbath" and *Ommet* ≈ Turkish *ümmet*).
   - **Search every new proper name** against WoW, Warhammer and other Blizzard and Games Workshop coinages, not only the
     ip-safety §2.1 list. (The first draft's "Kirrik" and "Long-Braid" were both Blizzard names; see §13.)
 
@@ -97,20 +106,20 @@ broken-English grunts. Nothing reads like another game's hungry steppe giants ei
 > why no guest leaves a Tormai fire hungry. (To the Tormai the sky is weather, not a god. It hails, it clears, and nobody
 > prays to it; they just complain about it.)
 >
-> For as long as their songs remember, the clans have walked the **Herd Road**: a great loop of grass between
+> For as long as their songs remember, the households have walked the **Herd Road**: a great loop of grass between
 > the Salt Lakes and the **Sleeping Hills**. Each autumn they stop below the hills and beat the gongs until the
-> **Thoom** wake. The Thoom are giants older than the clans, who sleep inside the hills between seasons, wearing
+> **Thoom** wake. The Thoom are giants older than the Tormai, who sleep inside the hills between seasons, wearing
 > the cauldrons their grandmothers cast. A Thoom woken too early is a landslide. A Thoom woken gently, with a song and a kettle
-> already steaming, is a friend for life, and spends the whole season making sure everyone else is warm. The clans call every
+> already steaming, is a friend for life, and spends the whole season making sure everyone else is warm. The Tormai call every
 > Thoom "uncle".
 >
-> Each clan is a household of felt tents under one banner. The clans meet at the **Gong-Ring**, a council where anyone may
+> Each household is a ring of felt tents under one banner. The households meet at the **Gong-Ring**, a council where anyone may
 > raise a matter by striking the gong, and nothing is decided until everyone has been served tea. Tormai law is hospitality:
 > no guest may be harmed under your roof. A guest who refuses tea, however, is no longer a guest.
 >
 > Three summers ago the Kingdom raised a line of toll-towers across the Herd Road and fenced the river
-> crossings. Its heralds sent a letter. The clans, being polite, sent tea. The Kingdom sent a bill.
-> The clans are now coming to discuss the bill in person.
+> crossings. Its heralds sent a letter. The Tormai, being polite, sent tea. The Kingdom sent a bill.
+> The Tormai are now coming to discuss the bill in person.
 
 **Lore guardrails.** No demonic blood-curse, internment camps, portals, prophecy-driven exodus or redemption arc
 (WC3 orc story beats). No sky deity and no sacred numbers. The Tormai are not villains, and the Kingdom is not evil: this is a
@@ -123,7 +132,8 @@ border dispute between proud neighbours, told with warmth and humour.
 | Long Sky / Long Grass | The open steppe and its sky (landscape, not a deity) |
 | Herd Road | The migration loop; the reason for the war |
 | Sleeping Hills | Where the Thoom sleep |
-| Gong-Ring / Ring-Elder | The clan council / its elder. Units address the player as "Ring-Elder" |
+| Gong-Ring / Ring-Elder | The council of the households / its elder. Units address the player as "Ring-Elder" |
+| household / felt-house | A family band of yurts under one banner; the word players hear instead of "clan" |
 | sun-teeth | Gold ("sky-fire that fell and stuck in the ground") |
 | lattice-wood | Lumber |
 | guest / uninvited guest | Ally / enemy (in VO) |
@@ -132,10 +142,10 @@ border dispute between proud neighbours, told with warmth and humour.
 
 The Tormai draw on the **everyday material culture** of the Eurasian steppe broadly: felt tents, lamellar armour, bronze
 cauldrons and kettles, wrestling, tea and strong hospitality. They blend it with **invented** elements: the hail myth,
-bronze sun-mirrors used as tools (signalling, reading the sky, the Skymirror's visor), tortoise-shell halls, Hookbill birds,
+bronze sun-mirrors used as tools (signalling, reading the sky, the Skymirror's brow-mirror), tortoise-shell halls, Hookbill birds,
 the Thoom and the Gong-Ring council.
 
-**Real sacred items we do not use.** The first draft labelled several of these "invented". They are real, and were removed:
+**Real sacred items we do not use.** The first draft labelled several of these "invented". They are real, and were removed (the second review found the last two):
 
 | Real sacred item or rite | Where the draft had it | Now |
 |---|---|---|
@@ -144,13 +154,15 @@ the Thoom and the Gong-Ring council.
 | Carved-face standing stones (Turkic funerary stelae, deer stones) | Naming Stones | Rough stones carved with hail and wind glyphs; no faces, nothing hung on them; a frame of small gongs beside them |
 | Horse-hair tassels below a spearhead, and a sacred count of nine banners (steppe war-standards) | Masts; "the Nine Clans" | Masts carry felt ribbon streamers and gong frames. "The Clans under the Gong-Ring", with no number |
 | A watching creator-Sky (Tengri) | Lore; the Grappler warcry "The Sky is watching" | The sky is weather. The warcry is "THE WHOLE GRASS IS WATCHING. LOOK GOOD!" |
+| Knucklebone divination: ankle-bones whose four faces are read as horse, camel, sheep and goat (Mongolian *shagai*) | Omen-Mother's omen ability (faces Hookbill, Shell, Ewe, Ram); knucklebones on her hat, a pouch of ankle-bones | **Tea-Leaf Omen**: she swirls her cup and reads the leaves (Kite, Shell, Kettle, Hill). Her hat carries small bronze cups and tea-brick tokens; no bones anywhere |
+| Burial mounds (kurgans) and funerary masks | The defensive caster: a "Mound-Speaker" with an ancestor-mask and an ancestor's second voice | **Hill-Listener**: the second voice is the Sleeping Hills' (a Thoom dream-voice); a bronze echo-horn instead of a mask; **Hands of the Hill** |
 
 Rules:
 
 - The Tormai are a **non-human fantasy people** (grey skin, giant jaw, hail-speckles). Do not draw human
   Central Asian facial features as monstrous, and do not stereotype them.
 - **No real sacred objects or rites** depicted as such: no real deity names, spirit banners or war-standards, sacred cairns,
-  funerary stelae, shaman-costume elements (mirror robes, fringes), libations, real clan marks or national emblems. Before adding
+  funerary stelae, burial mounds, funerary masks, divination bones, shaman-costume elements (mirror robes, fringes), libations, real clan marks or national emblems. Before adding
   any steppe-inspired object, ask "is this sacred or ritual in a real culture?" and drop it if the answer is yes or unsure.
 - **VO and TTS never request a real-world ethnic accent.** Tormai English is slow, formal and standard.
 - Portray them as sophisticated (law, poetry, craft, humour), never as "savage hordes".
@@ -168,7 +180,7 @@ Rules:
 | Hair | Blue-black. Warriors loop two thick braids up and bind them with bronze rings; workers hide theirs under felt hats | |
 | Build | Upright and broad, with a thick neck and big forearms. They stand about 10% taller than the Kingdom's people at equal class (scale table below) | |
 | Upper-third identity (art doc rule 2) | **Cone shapes on top:** conical bronze helmets with a long team-colour streamer, or tall peaked felt hats with ear-flaps. **Flat, layered rectangular shoulder-flaps** (lamellar or quilted felt) below. Seen from above, a soldier is a cone over a wide trapezoid | WC3 orcs have round spiked pauldrons |
-| Weapons | Flanged bronze maces, javelin bundles, **straight horse-sabres**, ladles (Thoom), poles and bronze mirrors used as tools (casters). **No axes as the iconic weapon; no oversized curved blades** | WC3 Grunt: axe. WC3 sword-duelist: giant curved blade |
+| Weapons | Flanged bronze maces, javelin bundles (the Javelineer and the Glintback rider only), **straight horse-sabres**, ladles (Thoom), horn bows (the Bow-Mast), weighted bronze darts (the Sky-Kite), poles and bronze mirrors used as tools (casters). **No axes as the iconic weapon; no oversized curved blades; javelins are not the universal projectile** | WC3 Grunt: axe. WC3 sword-duelist: giant curved blade. WC3 Orc: spears from nearly every ranged source |
 | Shields | Few. Where used: small round felt-and-bronze bucklers | Leaves the tall rectangle to the Kingdom's pavises |
 
 **Scale** (overrides the generic table in the research README for this faction):
@@ -182,7 +194,7 @@ Rules:
 | Thoom (unit) | 2.8 m | 0.75 m | 4–6k |
 | Cauldron-Father (hero) | 3.1 m | 0.80 m | 6–8k |
 | Hookbill Rider (later) | 2.2 m | 0.60 m | 4–6k |
-| Glintback (later) | 2.6 m tall to the shell, 4.0 m to the mirror top; 3.2 m long | 1.00 m | 5–8k |
+| Glintback (later) | 2.6 m tall to the shell, 3.9 m to the top of the mirror-ladder; 3.2 m long | 1.00 m | 5–8k |
 | Shell Hall | 7.5 m tall; the mesh may overhang the footprint up to 6 m wide | Footprint **10×10 cells (5 m)** | 8–12k |
 
 **64 px black-silhouette test (art doc §7.4).** Every unit must pass these checks:
@@ -191,10 +203,10 @@ Rules:
 |---|---|
 | Tormai infantry | A cone and a streamer over a wide flat trapezoid |
 | Thoom / Cauldron-Father | A big bronze bowl-dome with **one** central knob or short smoke-vent, plus a ladle. **No paired upward protrusions above the head; it must not read as horned.** The cauldron's ring-handles hang as horizontal rings at the sides, below the crown line |
-| Glintback | A circle (the shell) carrying an upright disc on a mast (the sun-mirror) |
+| Glintback | A dome (the shell) carrying a **thin vertical ladder** (the mirror-ladder: 4–5 small square plates on a slender mast). **No disc wider than 0.6 m anywhere on a beast** |
 | Sky-Kite | A diamond with two long tails |
 | Hookbill Rider | A hooked beak forward, with the rider's cone above |
-| The Uncut | A flared coat circle with a braid line whirled overhead. The sabre is short and carried low; never a long curved blade |
+| The Uncut | A flared coat with a **long braid line trailing to the ground**. **No circular motion in idle or abilities.** The sabre is short and carried low; never a long curved blade |
 | Buildings | Low domes and masts. Never spikes |
 
 ### 2.2 Palette (albedo, before team colour)
@@ -206,10 +218,10 @@ Rules:
 | Warm bronze | `#A8743A` / highlight `#D9A55E` | Helmets, gongs, mirrors, cauldrons, kettles, studs |
 | Verdigris (sparingly) | `#5FA08E` | Old bronze, the Thoom's cauldrons |
 | Slate skin | `#6F7C88` mid / `#4E5966` shadow / speckles `#C9D0D6` | Tormai skin |
-| Thoom skin | `#B8916A` sandstone / `#8A6A4C` shadow | Thick, elephant-like hide |
+| Thoom skin | `#A48E86` weathered pink granite / `#76625C` shadow | Thick, elephant-like hide. Clear of the Tormai slate, the reference orcs' red-brown and the reference bull-folk's brown |
 | Felt cream (accent only) | `#E9DDBF` | Never a large mass (avoid white-and-gold) |
 | Hair | `#1C2230` | |
-| Magic VFX | Sun-glint gold `#FFD27A` (HDR), dust ochre `#C9A46A`, moon-silver `#C8D4E8`, hail white `#EEF3F6` | Clan magic is **warm glints, dust, hail and silver smoke**. No blue lightning, no fel green, no teal glow, no ghostly blue-white |
+| Magic VFX | Sun-glint gold `#FFD27A` (HDR), dust ochre `#C9A46A`, moon-silver `#C8D4E8`, hail white `#EEF3F6` | Tormai magic is **warm glints, dust, hail and silver smoke**. No blue lightning, no fel green, no teal glow, no ghostly blue-white |
 
 **Contrast with neighbours:**
 - WC3 Orc is red, brown and green skin. WC3 Night Elf is violet, teal and silver. The Alliance is blue, white and gold.
@@ -239,7 +251,7 @@ Rules:
 
 ### 2.4 Architecture: "domes and masts"
 
-- Every clan building is a **round, low dome** (felt yurt, or an ancient tortoise shell) on a short stone ring,
+- Every Tormai building is a **round, low dome** (felt yurt, or an ancient tortoise shell) on a short stone ring,
   plus **masts**: carved poles with felt ribbon streamers, banners and gongs on frames. **No horse-hair tassels.**
 - There are no spikes, bones, hides or tusks. That rules out the WC3 Orc's hide-and-bone spiky huts.
 - **Construction verb: Raising.**
@@ -262,35 +274,46 @@ Rules:
 - Wolves as mounts. Kodo-like grey dinosaurs. Wyverns. **Any percussion instrument (drum or gong) carried on a beast.**
 - Lightning-wielding shamans. Blue electric VFX.
 - **Paired upward points on a giant's helm** (reads as horns).
-- **An oversized curved sword on the duelist hero; a translucent wind-whirl vanish.**
+- **An oversized curved sword on the duelist hero; a translucent wind-whirl vanish; any spinning or circular motion on her** (a whirled
+  braid, a coat that spins out, a dust column or whirlwind). With her stealth opener and crit, a spinning figure reads as the reference
+  sword-duelist's spin-and-vanish (*Tetris* squint test).
+- **A disc wider than 0.6 m anywhere on a beast** (mirror, shield or gong). At RTS zoom a big upright bronze disc on a beast is a gong.
+- **Bone fetishes on casters:** knucklebones, ankle-bones, skull or bone charms (the reference hex hero's voodoo vocabulary).
+- **Javelins everywhere:** only the Javelineer and the Glintback rider throw them (the reference orcs throw spears from nearly every
+  ranged source).
 - **Games Workshop's Ogre Kingdoms trade dress:** hungry steppe giants, big bellies or gut-plates, cleavers and gore, cauldron
   priests who heal through eating, "great maw" imagery, rhino cavalry. The Thoom are hosts who serve; they never eat on screen,
   and no mechanic is tied to eating, kills-as-food or feasting.
 - Slender, colourful, long-legged bird mounts. Hookbills are **heavy, short-legged, big-headed terror-birds** in grey-brown.
 - Kegs, brewing or alcohol on the Thoom. They are hosts who pour tea, not brewers.
+- Tan, brown or sandstone hide on the Thoom (the reference bull-folk colour). They are weathered pink granite.
 - Real sacred items (§1.4): mirror-hung robes, ribbon fringes on robes, milk libations, carved-face stones, horse-hair standards.
 
 ### 2.6 Distinctness rubric (ip-safety §3.2) vs the nearest WC3 race (Orc)
 
-| Axis | Tormai Clans | Differs? |
+| Axis | The Tormai | Differs? |
 |---|---|---|
 | 1. Silhouette | Cones and streamers over flat layered flaps; heavy jaws without tusks; giant helms with one central knob (never horned); domes and masts | ✅ (required) |
 | 2. Palette | Dark ink-teal, saffron, warm bronze, slate | ✅ |
 | 3. Materials | Felt, lamellar, polished bronze, lattice, tortoise shell | ✅ |
-| 4. Cultural inspiration | Everyday steppe material culture (sacred items excluded, §1.4) plus invented myth (hail, sun-mirror tools, Thoom) | ✅ |
-| 5. Signature mechanic | One WC3-derived mechanic only (worker garrison), shown as gong plus rolling felt | ✅ |
-| 6. Names and voice | All original and searched beyond the §2.1 list; formal, courteous, hospitality comedy | ✅ |
+| 4. Cultural inspiration | Everyday steppe material culture (sacred, funerary and divination items excluded, §1.4) plus invented myth (hail, sun-mirror tools, Thoom). The people are "the Tormai", living in households; the orc-lore word "clan" is never on screen | ✅ |
+| 5. Signature mechanic | One WC3-derived mechanic only (worker garrison), shown as gong plus rolling felt. The second review found a second one hidden in the war-mill slot (building thorns and burrow-and-tower armour); both are gone (§8) | ✅ |
+| 6. Names and voice | All original and searched beyond the §2.1 list; no "Clans", "Hearth" or "orc" on screen; formal, courteous hospitality comedy; no reworded reference-worker acks (§3.1) | ✅ |
 
-**Result: passes after the 2026-10-16 review fixes** (6 of 6 axes differ, including silhouette). The first draft also claimed
-6 of 6 while carrying a Blizzard-coined bird name, a WoW hero-class name, two one-word ward swaps, a percussion war-beast, a
-horned-looking giant helm and real sacred items. All are fixed; see the Review log.
+**Result: passes after the second 2026-10-16 review** (6 of 6 axes differ, including silhouette). Both earlier versions also claimed
+6 of 6. The first draft carried a Blizzard-coined bird name, a WoW hero-class name, two one-word ward swaps, a percussion war-beast, a
+horned-looking giant helm and real sacred items. The first revision still carried a gong-shaped mirror on a beast, a spinning duelist,
+"Hearth" names, the orc-lore word "Clans" on screen, a second WC3 Orc signature mechanic in the war-mill slot, a 3-of-3 witch-doctor
+kit, real divination and burial imagery, and 15 numbers equal to WC3's. All are fixed; see the two Review logs.
 
 **Residual risk:** the *role structure* is a deliberate slot-for-slot mirror (the user's direction). Mitigations:
 - Every kit has original abilities (see the equivalence ledgers in §5.3 and §6.2). The four heroes keep 8 functional
   equivalents of the 16 WC3 Orc hero abilities (2 per hero, the policy maximum), all with our names, visuals and numbers.
-- No hero number equals its WC3 analogue (§6, fidelity rule 2), and unit, item and building numbers were moved off WC3 values
-  where the review found matches.
-- The building arrangement is changed where cheap: the Mound-Speaker trains at the Mirror Yurt, not beside the giants, and the
+- Units keep at most 2 functional WC3 equivalents each (§5.3; the Pole-Carver was 3 of 3 and is now 2 of 3).
+- No hero number equals its WC3 analogue (§6, fidelity rule 2). The first revision claimed the unit, item and building numbers had
+  been moved off WC3 values; the second review still found 15 equal values. They are changed and listed in §5.4, and
+  `tools/ip/check_value_echo.py` fails if one comes back.
+- The building arrangement is changed where cheap: the Hill-Listener trains at the Mirror Yurt, not beside the giants, and the
   flyer needs a caster building.
 - A pre-release legal review should look at the **whole** faction (ip-safety §5.3).
 
@@ -315,8 +338,15 @@ horned-looking giant helm and real sacred items. All are fixed; see the Review l
   - Skymirror describes what his mirror *shows*. He never gives yes/no fortune answers: no answer-ball phrasing in the style of
     "outlook good", "reply hazy" or "it is certain".
   - No "[someone] has fallen" phrasing, no "for the [faction]!" template and no "build more [supply]" template.
+  - **Worker acks:** no bare interjection as a select line (a lone "Hm-hm?" rewords the reference worker's "Hmmm?"); "Hm-hm" only
+    leads into a full sentence. No "happy to", "glad to" or "with pleasure" acknowledgements, and no bare "Done" job-done line
+    (both reword reference-worker lines).
+  - **No eye or squint jokes** in names, tics or lines (§1.1, §1.4).
+  - Lines say "household", "felt-house" or "the Tormai", never "clan" (§1.1).
 - **Line budget** (audio doc §3.2):
-  - Regular unit: about 18 lines. Worker: about 19. Hero: about 26. Advisor: about 19 (one per rules §17.3 trigger).
+  - Regular unit: about 18 lines. Caster: 19. Siege crew: 16. Worker: about 19. Hero: about 26. Advisor: 19 (one per rules §17.3
+    trigger; both upkeep steps and the cripple reveal count). The §3.3 tables give candidates; art bible §8.2 sets how many of each
+    category are recorded.
   - Check every line against the WC3 Orc quote page before recording, and reject anything close
     (ip-safety §2.2). Never use the words "poke" or "poking" in annoyed lines.
 
@@ -329,16 +359,16 @@ horned-looking giant helm and real sacred items. All are fixed; see the Review l
 | Javelineer | Boastful athletes who track their throwing distances | Quotes distances ("forty paces!") |
 | Gustcaller | Breathy weather-gossip; talks about the wind like a neighbour | "The wind says…" |
 | Pole-Carver | Deadpan carpenter of poles | Complains about wood grain |
-| Mound-Speaker | Speaks with an ancestor's second voice that interrupts (the shoulder-mask's jaw clacks) | Two voices (chorus) |
+| Hill-Listener | The Sleeping Hills speak through it: a slow Thoom dream-voice interrupts, and the bronze echo-horn at its shoulder hums along | Two voices (chorus) |
 | Hookbill Rider | Fast-talking; the bird shrieks over the ends of lines | Bird interruptions |
-| Glintback rider | Sun-dazzled mirror-tender who squints at everything | "Hold still, you're too bright." |
+| Glintback rider | Sun-dazzled mirror-tender | Shades his eyes with his hat brim: "Hold still, you're too bright." |
 | Sky-Kite | Airy thrill-seeker | Whoops |
 | Sling-Cart crew | Two bickering brothers | Finish each other's sentences wrongly |
 | Thoom | Slow, gentle, anxious host; checks that everyone is warm and comfortable | Long "mmmm" |
 | The Uncut | Dry, clipped, competitive; her uncut braid is her pride | Keeps a duel tally |
 | Skymirror | Vain about his mirror's polish; narrates tiny far-off things the mirror shows ("a goat, two hills away, is wearing a hat"), never fortunes | Polishes mid-sentence |
 | Cauldron-Father | Enormous, gentle host | Calls everyone "little one" |
-| Omen-Mother | Sly grandmother and gambler | Rattles her knucklebones |
+| Omen-Mother | Sly grandmother and gambler | Swirls her cup |
 
 ### 3.3 Sample lines (original; at least 3 per category)
 
@@ -348,11 +378,12 @@ post-chain `rubberband=pitch=0.9:formant=shifted`, warm EQ.
 | Category | Lines |
 |---|---|
 | Ready | "Felt rolled, poles packed. Where do we raise?" · "Strong back, hot tea. Ready." · "Hm-hm. I have tea in my boot. I am ready." |
-| What (select) | "Hm-hm?" · "The wright is listening." · "You need a roof? I have a roof." |
-| Yes (order) | "Gladly." · "Onward, with care." · "I go. Slowly, but I go." |
+| What (select) | "The mallet is in my hand." · "The wright is listening." · "You need a roof? I have a roof." · "Hm-hm. Counting stitches. Speak." |
+| Yes (order) | "Rope in hand." · "Onward, with care." · "I go. Slowly, but I go." · "Pole by pole." |
 | Attack | "Forgive me. I must hit you now." · "With my good mallet, then." · "Very sorry. Very hard." |
 | Warcry | "Out of my yurt!" · "Mind the felt!" · "Guests do not do this!" |
-| Job done | "Raised, roped, and ready for guests." · "Another roof under the sky." · "Done. Somebody warm the kettle." |
+| Job done | "Raised, roped, and ready for guests." · "Another roof under the sky." · "Last rope tied. Somebody warm the kettle." |
+| Mechanic (Sound the Gong, Roll the Felt, All Clear) | "The gong! Inside, everyone, inside!" · "Rolling up the felt. Slings ready." · (All Clear) "Hm-hm. The guests have left. Rude, but quiet." |
 | Annoyed (plays in order) | 1. "Hm. A guest who knocks twice is still welcome." 2. "A guest who knocks five times is… still welcome. Through my teeth." 3. "That is eleven knocks. My jaw is making a noise." 4. "Fine. Sit. Drink. Tell me about your day." |
 | Death (non-verbal) | A deep "*hhuff*", then a soft felt thump · a surprised "*Hm?*" cut short · a tired sigh and the clatter of a mallet |
 
@@ -363,11 +394,56 @@ post-chain `rubberband=pitch=0.84:formant=shifted`, +4 dB at 180 Hz, compressor.
 |---|---|
 | Ready | "Grappler, oiled and braided." · "Show me something heavy." · "The ring is drawn. Who steps in?" |
 | What | "Speak, Ring-Elder." · "Hm-hm. Big ears, listening." · "Grappler." |
-| Yes | "With pleasure." · "Shoulders first." · "I move like a hill moves. Surely." |
+| Yes | "Feet set." · "Shoulders first." · "I move like a hill moves. Surely." |
 | Attack | "Down you go." · "Excuse my hands!" · "I will fold them like felt." |
 | Warcry | "INTO THE GRASS WITH THEM!" · "GRIP AND THROW!" · "THE WHOLE GRASS IS WATCHING. LOOK GOOD!" |
-| Annoyed (plays in order) | 1. "You test my footing. Good." 2. "Again? In the ring, that earns a bow." 3. "I bow. You push. This is rude in every clan." 4. "Fine. You win. Your prize is my disappointment." |
+| Annoyed (plays in order) | 1. "You test my footing. Good." 2. "Again? In the ring, that earns a bow." 3. "I bow. You push. This is rude in every household." 4. "Fine. You win. Your prize is my disappointment." |
 | Death | A huge "*HNNGH*" and a ground-shaking thud · "…pinned." · a long exhale, then a heavy body fall |
+
+**Javelineer (ranged thrower).** Cast: `cgSgspJ2msm6clMCkdW9` (Jessica), tags `[bright, boastful, competitive]`,
+post-chain `rubberband=pitch=0.94:formant=shifted`, light compression. Tic: she quotes throwing distances.
+
+| Category | Lines |
+|---|---|
+| Ready | "Forty paces, and I have not even warmed up." · "Eight javelins. I will need three." · "Point me at something far away." |
+| What | "Measure something for me, Ring-Elder." · "Hm-hm. Is it far? Tell me it is far." · "Arm loose, eye sharp. Speak." · "I was pacing out the yard. Again." |
+| Yes | "Thirty paces that way. Easy." · "Going. Count my steps for me." · "Downwind, naturally." · "Closer, but not too close." |
+| Attack | "Fifty paces. Watch this." · "That one is standing very still. Thank you." · "One, and the next, and the next!" |
+| Warcry | "PACE IT OUT AND LET FLY!" · "SIXTY PACES, NO WOBBLE!" · "STAND STILL, GUESTS! IT HELPS!" |
+| Annoyed (plays in order) | 1. "Fifteen clicks. My sister only managed twelve." 2. "You click from very far away. I respect that." 3. "Hold still, I am measuring your finger. Eighty paces, and wobbling." 4. "If you need a target, I can lend you one. It has a few holes." |
+| Mechanic (Throwing-Sticks done) | "With the stick? Ninety paces. Somebody write that down." |
+| Death | A sharp gasp and javelins clattering · "…one pace… short…" · a winded "*hff*" and a soft fall |
+
+**Gustcaller (caster).** Cast: `EXAVITQu4vr4xnSDxMaL` (Sarah), tags `[breathy, gossipy, warm]`, post-chain a light `chorus` plus a short
+`aecho`. Tic: "The wind says…", as if the wind were a nosy neighbour.
+
+| Category | Lines |
+|---|---|
+| Ready | "The wind says I am needed. The wind is a terrible gossip." · "Staff tied, ribbons tied, tongue untied." · "Hm-hm. A breeze from the east, and here I am." |
+| What | "The wind says you called." · "Shh. The breeze is telling me something juicy." · "Yes, dear? Speak up, it is gusty out here." · "I hear you. So does the whole valley, now." |
+| Yes | "The wind says that way. I agree with the wind." · "Off I drift." · "Following the breeze." · "Lightly, lightly." |
+| Attack | "The wind says you deserve this." · "A little gust, just for you." · "Mind your hat, guest." |
+| Warcry | "THE WIND HAS TAKEN SIDES!" · "BLOW THEM OVER!" · "HOLD ON TO YOUR HATS!" |
+| Annoyed (plays in order) | 1. "The wind says you keep clicking me. The wind notices everything." 2. "The wind also says you have not finished your tea." 3. "Now the wind is telling the hills about you. Everyone will know by supper." 4. "The wind says it is sorry. The wind is lying." |
+| Abilities | Unbind: "Let it all blow loose." · Wind at Your Back: "Go on, the wind is behind you. Thank it later." |
+| Death | A long breathy sigh that trails off like a dropping breeze · "The wind says… oh." · ribbons snapping, then a soft fall |
+
+**Sling-Cart crew (two brothers).** Cast candidates: Roger `CwhRBWXzGAHq8TQ4Fs17` (the older, slow brother, **A**) and Charlie
+`IKne3meq5aSn9XLyUdCD` (the younger, quick one, **B**). Confirm both with the 5-line probe and keep them off every kingdom speaker
+(art bible §8.1: no preset is shared between factions). Tags `[deadpan]` / `[eager]`, `rubberband=pitch=0.9:formant=shifted` on both;
+the two takes are mixed with a slight stereo offset. Tic: they finish each other's sentences, wrongly. (The kingdom's bombard crew
+bickers; this crew agrees cheerfully and is wrong.)
+
+| Category | Lines (A / B) |
+|---|---|
+| Ready | A: "Cart greased, arm wound—" B: "—lunch packed!" · A: "Two brothers—" B: "—one cart, many pots!" · B: "Ready to throw—" A: "—clay. He means clay." |
+| What | A: "You called for the—" B: "—handsome brother?" · B: "Point, and we will—" A: "—nod. Then push." · A: "Hm-hm. The wheels—" B: "—are still round!" |
+| Yes | A: "Push on three. One—" B: "—three!" · B: "Rolling to the—" A: "—place you said. That place." · A: "Slowly, so the pots—" B: "—fly later!" |
+| Attack | B: "Load the—" A: "—pot. Not the cushion." · A: "Aim high, so it—" B: "—comes down loudly!" · B: "Pot away!" A: "…pot away." |
+| Warcry | B: "CLAY FOR THE GUESTS!" · A: "HEADS UP—" B: "—AND THEN DOWN!" · together: "THROW IT, BROTHER!" |
+| Annoyed (plays in order) | 1. A: "Who keeps clicking the—" B: "—biscuit tin?" A: "Cart." 2. B: "Maybe they like—" A: "—the wheels." B: "I was going to say me." 3. A: "Click once more and we will be—" B: "—delighted!" A: "Not the word I had." 4. B: "Brother, finish my—" A: "No." B: "…sentence." |
+| Mechanic (Attack Ground) | A: "Right there, on the—" B: "—exact spot! Roughly." |
+| Death | The arm snaps with a crack and pots shatter · two overlapping "*hff!*", then wood collapsing · A: "Brother—" B: "—I know." Then a crash |
 
 **The Uncut (hero, AGI duelist).** Cast: `FGY2WhTYpPnrIDTdsKH5` (Laura), tags `[low, dry, confident]`,
 post-chain `rubberband=pitch=0.9:formant=preserved`, small plate reverb.
@@ -383,8 +459,25 @@ post-chain `rubberband=pitch=0.9:formant=preserved`, small plate reverb.
 | Abilities | Dust Veil: "Gone with the dust." · Braid Lash: "Come here." · ultimate: "Through the grass!" |
 | Death | A sharp breath and her sabre ringing on stone · "Cut… at last." · a short laugh that breaks off |
 
-**Advisor.** The clan's gong-keeper. Cast: `onwK4e9ZLuTAKqWW03F9` (Daniel), pitch 0.9, a bronze-plate reverb tail.
-One line per rules §17.3 trigger (the hero level-up uses the shared cue with a clan gong layer).
+**Skymirror (hero, INT seer-caster).** Cast: `nPczCjzI2devNBz1zQrb` (Brian), tags `[grand, vain, rounded]`, post-chain
+`rubberband=pitch=0.88:formant=shifted`, a light shimmer only on the mirror-sight lines; a cloth-squeak SFX marks the polishing. Tic: he
+narrates tiny far-off things the mirror shows, and **never** gives fortunes or yes/no answers (§3.1).
+
+| Category | Lines |
+|---|---|
+| Ready / revive | "The mirror is polished. The world may now be looked at." · "Skymirror. Mind the fingerprints." · (revive) "Back, and not a scratch on the bronze. Good." |
+| What | "Hm-hm. A hare, three hills off, has dropped its turnip." · "One moment… (*squeak*)… yes?" · "There you are. And a crow behind you. It is not impressed." · "Speak. The mirror is listening, and so am I, mostly." |
+| Yes | "The mirror says that way. The mirror has very good taste." · "Going. Do not touch the bronze." · "A long walk, but a shiny one." · "As you wish. (*squeak*)" |
+| Attack | "Look into the light, guest." · "Such a dull fellow. Let me brighten him." · "Hold still. You are smudging my view." · "Bronze bright, aim true." |
+| Warcry | "LOOK UPON THE BRONZE!" · "SHINE!" · "EYES FRONT, GUESTS!" |
+| Annoyed (plays in order) | 1. "Please. Not the mirror. Fingers." 2. "I see a thumb. A very large thumb. Yours." 3. "Far away, a goat is wearing a hat. It has nothing to do with you. I simply prefer the goat." 4. "Every click is a smudge. That is forty smudges." 5. "I am now polishing you out of the mirror. Gently. Thoroughly." 6. "There. Spotless, and you are gone from it. Peace at last." |
+| Abilities | Sunglint: "A little sunshine for your eyes!" · Moonglint (night): "Even the moon owes me a favour." · Bronze Window: "Now, what is behind that hill?" · Hail-Swifts: "Out you go, little hailstones. Peck politely." · Swallowed Sun: "Nobody wants the sun? I will put it away." |
+| Level-up | "Brighter. Naturally." |
+| Last word | "Mind… the… mirr—" |
+| Death (non-verbal) | A bronze clang and a cracked ring · a long, offended exhale |
+
+**Advisor.** The household's gong-keeper. Cast: `onwK4e9ZLuTAKqWW03F9` (Daniel), pitch 0.9, a bronze-plate reverb tail.
+One line per rules §17.3 trigger (the hero level-up uses the shared cue with a Tormai gong layer).
 
 | Event (rules §17.3) | Line |
 |---|---|
@@ -393,18 +486,18 @@ One line per rules §17.3 trigger (the hero level-up uses the shared cue with a 
 | Not enough food | "Every yurt is full. Our guests are sleeping in the rain." |
 | Hero slot unavailable | "The Stones can hold no more names yet." |
 | Can't build there | "The ground says no." |
-| Hall attacked | "Someone is striking the Shell Hall!" |
+| Building attacked | "Someone is striking our felt!" (halls: "Someone is striking the Shell!", which fits all three tiers) |
 | Units attacked | "Our kin are fighting!" |
 | Workers attacked | "Our wrights are being struck!" |
 | Hero died | "A name has gone quiet. The Stones will call it back." |
 | Hero revived | "The Stones have called a name back." |
 | Building finished | "The felt is tied. It stands." |
-| Unit trained (idle queue) | "A new guest of the clan stands ready." |
+| Unit trained (idle queue) | "A new guest of the household stands ready." |
 | Research finished | "The bronze has cooled." |
 | Gold mine low (1,500) | "The sun-teeth are wearing thin." |
 | Gold mine exhausted | "The sun-teeth are gone from this hill." |
 | Upkeep rises to 30 % | "More mouths, thinner purse. Our gold comes slower now." |
-| Upkeep rises to 60 % | "The clan eats more than it earns." |
+| Upkeep rises to 60 % | "The household eats more than it earns." |
 | Cripple countdown started | "Without a hall the whole steppe will see us. Raise one!" |
 | Cripple reveal | "Too late. Every roof we own is in plain sight." |
 
@@ -425,7 +518,7 @@ One line per rules §17.3 trigger (the hero level-up uses the shared cue with a 
   - click: a small bronze tap plus a felt thump;
   - complete: a soft gong swell;
   - error: a throat "*hm-mm*" plus a muffled felt thud;
-  - hero level-up: the shared game cue, with a clan gong layer added.
+  - hero level-up: the shared game cue, with a Tormai gong layer added.
 
 ---
 
@@ -439,23 +532,34 @@ One line per rules §17.3 trigger (the hero level-up uses the shared cue with a 
 | Supply | Shell Hall **+10 food** (all tiers). Home Yurt **+10 food**. 9 yurts reach the 100 cap |
 | Upkeep, food cap | Global (rules §4.4–§4.5: cap 100; Upkeep 30 % from 51 food, Upkeep 60 % from 81) |
 | Construction | One Yurtwright raises a building; extra Yurtwrights cannot speed it up (rules §4.3). **Mend** (repair) works on finished buildings and on Sling-Carts (rules §4.8) |
-| **Signature mechanic (WC3-derived, 1 of 1)** | **Sound the Gong / Roll the Felt.** Up to 4 Yurtwrights enter a Home Yurt; its felt skirt rolls up and each throws sling-stones. See §4.1 |
+| **Signature mechanic (WC3-derived, 1 of 1)** | **Sound the Gong / Roll the Felt.** Up to **3** Yurtwrights enter a Home Yurt; its felt skirt rolls up and each throws sling-stones. See §4.1 |
 | Faction passives | None globally. Day/night matters only through Skymirror's Sunglint and Swallowed Sun (rules §13) |
 
 ### 4.1 Sound the Gong / Roll the Felt (presented differently from WC3's burrow battle stations)
 
-- **Shell Hall ability "Sound the Gong"** (hotkey G, no cost, no cooldown):
+- **"Sound the Gong"** (hall button **G**, no cost, no cooldown) exists on **every hall tier** (Shell Hall, Banner Shell, Sun-Gong Shell),
+  expansion halls included:
   - The hall's gong rings, with a visible ripple and a 2D gong cue for the owner.
-  - Every Yurtwright within **30 m** stops work and runs to the nearest Home Yurt with a free slot. It **keeps its cargo** and
-    delivers it on its next return after All Clear (the rules §4.3 default).
-  - Workers with no free slot run to the Shell Hall and wait there (they cannot be garrisoned in the hall).
-  - **"All Clear"** (same button) sends them back to their previous jobs.
-- **Home Yurt "Roll the Felt":** holds 4 Yurtwrights. A Yurtwright can also enter on its own (right-click the yurt, or the
-  Enter command).
+  - Every Yurtwright within **30 m of that hall** stops work and runs to the nearest **finished** Home Yurt with a free slot. A worker
+    within 30 m of several halls answers the **nearest** one (and only that hall's All Clear releases it).
+  - It **keeps its cargo** and delivers it on its next return after All Clear (the rules §4.3 default).
+  - A Yurtwright **inside the mine** finishes its 1.0 s dwell, comes out with its 10 gold, then runs.
+  - **Builders ignore the gong:** a Yurtwright raising a building stays on site, so construction never pauses. Workers who are
+    gathering, walking or Mending answer it.
+  - Workers with no free slot run to the hall that rang and wait beside it (they cannot be garrisoned in a hall).
+  - **"All Clear"** (the same button, now showing All Clear) sends every worker that answered that hall back to its previous job.
+- **Home Yurt "Roll the Felt":** holds **3** Yurtwrights, and only a **finished** Home Yurt accepts them. A Yurtwright can also enter on
+  its own: the **Roll the Felt (F)** command on its card, or a smart right-click on an own finished Home Yurt with a free slot.
+  - **Smart-click priority:** right-click on an own finished Home Yurt that has a free slot means **Enter**, even when the yurt is
+    damaged. Mend on a yurt comes only from the **Mend (R)** command or autocast; a full yurt falls back to the rules §18.2 default
+    (Mend if damaged). This needs a matching rules §18.2 row (§13, Q8).
   - Garrisoned workers cannot be targeted and do not gather.
-  - Each one adds a sling attack from the yurt: **Pierce 8–11, cooldown 1.8 s, range 7.0 m**, ground and air (sling stone,
-    18 m/s). The animation: the felt skirt rolls up to show the lattice, and the slings whirl through the gaps.
-  - "Unload" empties the yurt instantly. If the yurt dies, its workers pop out with 50% HP.
+  - Each one adds a sling attack from the yurt: **Pierce 10–13, cooldown 1.8 s, range 9.4 m (600 gu)**, ground and air (sling stone,
+    18 m/s). The range matches both factions' T2 range researches (Throwing-Sticks 8.6 m, the Kingdom's Drawn Barrels 9.0 m), so the
+    garrison still deters raids in the mid-game. The animation: the felt skirt rolls up to show the lattice, and the slings swing
+    through the gaps.
+  - The sling attack takes **no weapon upgrades**. The yurt itself takes **Bronze Banding** (+2 armour, §8), like every building.
+  - **"Unload All" (U)** empties the yurt instantly. If the yurt dies, its workers pop out with 50% HP.
 
 ---
 
@@ -464,37 +568,43 @@ One line per rules §17.3 trigger (the hero level-up uses the shared cue with a 
 ### 5.1 Stats
 
 Unit **level** sets XP value and creep-style difficulty. Organic units regenerate 0.25 HP/s (rules §9). Casters start with
-75 mana and regenerate 0.65 mana/s. G = ground, A = air.
+75 mana and regenerate 0.65 mana/s. G = ground, A = air. **Damage point and backswing use the rules §7.5 class defaults.** Radius is the
+collision radius; Flags are the rules §10.7 classification flags.
 
-| # | id / Name | WC3 role slot | Built at (needs) | Gold / lumber / food | Time | Lvl | HP | Mana | Armour | Attack: type, dmg | CD | Range (m) | Speed (m/s) | Sight (d/n) | Hits | Slice |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | `clans_yurtwright` **Yurtwright** | Worker | Shell Hall | 70 / 0 / 1 | 15 | 1 | 240 | – | 0 Medium | Blade 6–8 | 2.0 | 0.6 | 3.1 | 12.5 / 9.4 | G | ✅ |
-| 2 | `clans_grappler` **Grappler** | Heavy melee infantry | Grapple Yard | 185 / 10 / 3 | 26 | 3 | 660 | – | 1 Heavy | Blade 17–22 | 1.55 | 0.8 | 4.2 | 21.9 / 12.5 | G | ✅ |
-| 3 | `clans_javelineer` **Javelineer** | Ranged thrower | Grapple Yard | 140 / 20 / 2 | 21 | 2 | 370 | – | 0 Medium | Pierce 19–24 | 2.0 | 7.0 (8.6 with Throwing-Sticks) | 4.2 | 21.9 / 12.5 | G+A | ✅ |
-| 3b | `clans_proven` **Proven Javelineer** | Upgraded tougher form | Proving Rite (T3) converts all Javelineers; later trains replace them | 140 / 20 / 2 | 21 | 3 | 540 | – | 1 Medium | Pierce 21–26 | 1.9 | 7.0 (8.6 with Throwing-Sticks) | 4.4 | 21.9 / 12.5 | G+A | later |
-| 4 | `clans_hookbill_rider` **Hookbill Rider** | Fast beast-rider raider | Herd Pen (T2) | 185 / 45 / 3 | 30 | 3 | 590 | – | 1 Medium | **Siege 21–26** | 1.75 | 0.8 | 5.6 | 21.9 / 12.5 | G | later |
-| 5 | `clans_gustcaller` **Gustcaller** | Shaman-type buffer | Mirror Yurt (T2) | 135 / 25 / 2 | 28 | 2 | 320 | 200 | 0 Unarmored | Arcane 9–11 | 1.8 | 7.5 | 4.2 | 21.9 / 12.5 | G+A | ✅ |
-| 6 | `clans_pole_carver` **Pole-Carver** | Witch-doctor-type ward support | Mirror Yurt (T2) | 150 / 30 / 2 | 30 | 2 | 320 | 200 | 0 Unarmored | Arcane 10–13 | 1.8 | 7.5 | 4.2 | 21.9 / 12.5 | G+A | later |
-| 7 | `clans_mound_speaker` **Mound-Speaker** | Spirit-walker-type caster | Mirror Yurt (T3) | 190 / 45 / 3 | 40 | 3 | 520 | 225 | 1 Medium | Arcane 16–20 | 1.9 | 6.5 | 4.2 | 21.9 / 12.5 | G+A | later |
-| 8 | `clans_sling_cart` **Sling-Cart** | Siege engine (wheeled, mechanical) | Grapple Yard (T2 + Casting Pit) | 200 / 70 / 3 | 36 | 3 | 420 | – | 1 Heavy | Siege 60–74, splash full 0.6 m / half 1.9 m (2.5 m with Packed Clay Pots) | 3.3 | 15.6 (min 3.9) | 3.3 | 21.9 / 12.5 | G only | ✅ |
-| 9 | `clans_glintback` **Glintback** | Heavy war-beast carrying an aura (a sun-mirror) | Herd Pen (T2) | 245 / 70 / 4 | 40 | 4 | 960 | – | 3 Heavy | Pierce 13–17 (rider's javelins) | 1.6 | 6.0 | 3.4 | 21.9 / 12.5 | G+A | later |
-| 10 | `clans_sky_kite` **Sky-Kite** | Flyer | Herd Pen (T3 + Mirror Yurt) | 225 / 50 / 4 | 36 | 4 | 500 | – | 0 Light | Pierce 20–26 | 1.8 | 5.0 | 5.6 (flying) | 21.9 / 12.5 | G+A | later |
-| 11 | `clans_thoom` **Thoom** | Big T3 melee people (tauren-like slot) | Hearth Ring (T3) | 300 / 85 / 5 | 46 | 5 | 1300 | – | 2 Heavy | Blade 31–38 | 2.0 | 1.0 | 3.9 | 21.9 / 12.5 | G | later |
+| # | id / Name | WC3 role slot | Built at (needs) | Gold / lumber / food | Time | Lvl | HP | Mana | Armour | Attack: type, dmg | CD | Range (m) | Speed (m/s) | Sight (d/n) | Hits | Radius (m) | Flags | Slice |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | `clans_yurtwright` **Yurtwright** | Worker | Shell Hall (any tier) | 70 / 0 / 1 | 15 | 1 | 240 | – | 0 Medium | Blade 6–8 | 2.0 | 0.6 | 3.1 | 12.5 / 9.4 | G | 0.35 | ground, organic, worker | ✅ |
+| 2 | `clans_grappler` **Grappler** | Heavy melee infantry | Grapple Yard | 185 / 10 / 3 | 26 | 3 | 660 | – | 1 Heavy | Blade 17–22 | 1.55 | 0.8 | 4.2 | 21.9 / 12.5 | G | 0.50 | ground, organic | ✅ |
+| 3 | `clans_javelineer` **Javelineer** | Ranged thrower | Grapple Yard | 140 / 20 / 2 | 21 | 2 | 370 | – | 0 Medium | Pierce 19–24 | 2.0 | 7.0 (8.6 with Throwing-Sticks) | 4.2 | 21.9 / 12.5 | G+A | 0.40 | ground, organic | ✅ |
+| 3b | `clans_proven` **Proven Javelineer** | Upgraded tougher form | Proving Rite (T3) converts all Javelineers; later trains replace them | 140 / 20 / 2 | 21 | 3 | 540 | – | 1 Medium | Pierce 21–26 | 1.9 | 7.0 (8.6 with Throwing-Sticks) | 4.4 | 21.9 / 12.5 | G+A | 0.45 | ground, organic | later |
+| 4 | `clans_hookbill_rider` **Hookbill Rider** | Fast beast-rider raider | Herd Pen (T2) | 185 / 45 / 3 | 30 | 3 | 590 | – | 1 Medium | **Siege 21–26** | 1.75 | 0.8 | 5.6 | 21.9 / 12.5 | G | 0.60 | ground, organic | later |
+| 5 | `clans_gustcaller` **Gustcaller** | Shaman-type buffer | Mirror Yurt (T2) | 135 / 25 / 2 | 28 | 2 | 320 | **180** | 0 Unarmored | Arcane 9–11 | 1.8 | 7.5 | 4.2 | 21.9 / 12.5 | G+A | 0.40 | ground, organic | ✅ |
+| 6 | `clans_pole_carver` **Pole-Carver** | Witch-doctor-type ward support | Mirror Yurt (T2) | 150 / 30 / 2 | **32** | 2 | 320 | **180** | 0 Unarmored | Arcane 10–13 | 1.8 | 7.5 | 4.2 | 21.9 / 12.5 | G+A | 0.40 | ground, organic | later |
+| 7 | `clans_hill_listener` **Hill-Listener** | Spirit-walker-type caster | Mirror Yurt (T3) | 190 / 45 / 3 | 40 | 3 | 520 | 225 | 1 Medium | Arcane 16–20 | 1.9 | 6.5 | 4.2 | 21.9 / 12.5 | G+A | 0.40 | ground, organic | later |
+| 8 | `clans_sling_cart` **Sling-Cart** | Siege engine (wheeled, mechanical) | Grapple Yard (T2 + Casting Pit) | 200 / 70 / 3 | 36 | 3 | 420 | – | 1 Heavy | Siege 60–74, splash full 0.6 m / half 1.9 m (2.5 m with Packed Clay Pots) | 3.3 | 15.6 (min 3.9) | 3.3 | 21.9 / 12.5 | G only | 0.80 | ground, mechanical | ✅ |
+| 9 | `clans_glintback` **Glintback** | Heavy war-beast carrying an aura (a mirror-ladder) | Herd Pen (T2) | 245 / 70 / 4 | 40 | 4 | 960 | – | 3 Heavy | Pierce 13–17 (rider's javelins) | 1.6 | 6.0 | 3.4 | 21.9 / 12.5 | G+A | 1.00 | ground, organic | later |
+| 10 | `clans_sky_kite` **Sky-Kite** | Flyer | Herd Pen (T3 + Mirror Yurt) | 225 / 50 / 4 | 36 | 4 | 500 | – | 0 Light | Pierce 20–26 (dropped hail-darts) | 1.8 | 5.0 | 5.6 (flying) | 21.9 / 12.5 | G+A | 0.60 | air, organic; `fly_height` 4.0 m | later |
+| 11 | `clans_thoom` **Thoom** | Big T3 melee people (tauren-like slot) | Guest Ring (T3) | 300 / 85 / 5 | 46 | 5 | **1260** | – | 2 Heavy | Blade 31–38 | 2.0 | 1.0 | 3.9 | 21.9 / 12.5 | G | 0.75 | ground, organic | later |
+
+**Summons and wards** (not trained): the **Hail-Swift** (Skymirror E, §6.1) has radius 0.30 m and the flags ground, summoned. The
+Pole-Carver's **poles** (§5.2) have radius 0.25 m and the flag `ward`; they have no regeneration and cannot be healed or Mended.
 
 **Deliberately cut:** a second, suicide-style anti-air flyer. Anti-air comes from Javelineers, Sky-Kites,
-Glintback riders, casters, Spear-Masts and Hobble-Bola instead. Leaving the slot empty also breaks the 1:1
+Glintback riders, casters, Bow-Masts and Hobble-Bola instead. Leaving the slot empty also breaks the 1:1
 roster count.
 
-**Projectile speeds** (rules §7.7; damage rolled at launch, homing):
+**Projectile speeds** (rules §7.7; damage rolled at launch, homing). Javelins are thrown only by the Javelineer (and the Proven) and the
+Glintback rider (§2.5):
 
 | Attack | Speed (m/s) | Arc |
 |---|---|---|
-| Javelin (Javelineer, Proven, Glintback rider, Sky-Kite) | 20 | Low arc |
-| Spear-Mast javelin | 22 | Low arc |
+| Javelin (Javelineer, Proven, Glintback rider) | 20 | Low arc |
+| Hail-dart (Sky-Kite: a weighted, notched bronze dart dropped from the kite) | 16 | Steep drop |
+| Arrow (Bow-Mast horn bow) | 22 | Flat |
 | Sling stone (Home Yurt garrison) | 18 | Low arc |
 | Clay pot (Sling-Cart) | 12 | High arc |
-| Arcane bolt (Gustcaller, Pole-Carver, Mound-Speaker) | 15 | — |
-| Glint bolt (Skymirror) / bone-chip (Omen-Mother) | 15 | — |
+| Arcane bolt (Gustcaller, Pole-Carver, Hill-Listener) | 15 | — |
+| Glint bolt (Skymirror) / tea-brick chip (Omen-Mother) | 15 | — |
 | Ice pellet (Hail-Swift summon) | 18 | — |
 
 **Raider damage check** (Hookbill Rider, Siege 23.5 average every 1.75 s, before armour): ≈ 6.7 DPS against Medium (workers,
@@ -517,7 +627,7 @@ damage unless a row says otherwise.
   - **Mend** (repair; autocast, **default off**, 8 m when on): repairs **finished** buildings and **Sling-Carts** (mechanical;
     they have no natural regeneration). A full repair takes 1.5× the target's build time and costs 30% of its cost, paid pro rata
     (rules §4.8). Mend cannot speed up an unfinished site.
-  - **Roll the Felt** (enter a Home Yurt; see §4.1).
+  - **Roll the Felt** (**F**: enter a finished Home Yurt with a free slot; see §4.1).
 
 **2. Grappler** (heavy melee infantry)
 
@@ -567,13 +677,13 @@ damage unless a row says otherwise.
 - **Look:** a Tormai weather-caster in a long, **plain** saffron felt robe. They carry a tall **wind-vane staff** (a bronze vane
   on a pivot) with felt ribbons tied to the staff only, and a folding felt fan at the belt. No mirror on the body and no ribbons
   sewn on the robe.
-- **Trainings:** **Second Ribbon** (T2) and **Elder Ribbon** (T3) each give +60 HP, +100 mana and +2 damage. Each ties one more
+- **Trainings:** **Second Ribbon** (T2) and **Elder Ribbon** (T3) each give +60 HP, **+90 mana** and +2 damage (mana 180 → 270 → 360). Each ties one more
   ribbon to the staff.
 
 | Ability | Unlock | Effect | Mana | CD | Range | Kind |
 |---|---|---|---|---|---|---|
 | **Unbind** | Base | 3 m area. Removes buffs **selectively** (`dispel_mode: "selective"`): positive buffs from enemies, negative buffs from allies. Deals **220** damage to enemy summoned units (`summon_damage`). Slows enemies 40% for 3 s (heroes 1.5 s) | 60 | 6 s | 8 m | ≈WC3 (dispel), made an area spell |
-| **Wind at Your Back** (autocast, default on) | Second Ribbon (T2) | Ally gains **+20%** move speed and **+30%** attack speed for 40 s. Ribbons of dust spiral round it. Dispellable | 45 | **1.5 s** | 9 m | ≈WC3 (haste buff) |
+| **Wind at Your Back** (autocast, default on) | Second Ribbon (T2) | Ally gains **+20%** move speed and **+30%** attack speed for 40 s. Ribbons of dust trail behind it. Dispellable. **Autocast target:** an allied non-worker, non-mechanical unit (heroes allowed) within 9 m that is attacking or has an enemy within 8 m and lacks the buff; melee units before ranged, then the nearest | 45 | **1.5 s** | 9 m | ≈WC3 (haste buff) |
 | **Dust Shroud** | Elder Ribbon (T3) | A 5 m dust cloud for 10 s: ranged attacks against units inside miss 60% of the time | 75 | 25 s | 9 m | Original |
 
 **6. Pole-Carver** (witch-doctor-type ward support)
@@ -584,19 +694,20 @@ damage unless a row says otherwise.
 | Ability | Unlock | Effect | Mana | CD | Range | Kind |
 |---|---|---|---|---|---|---|
 | **Mirror Pole** | Base | An **invisible** pole topped with a small bronze mirror that shows what is hidden. Reveals a 14 m radius, including invisible units, for **9 min** | **45** | 0 | 5 m | ≈WC3 (sentry ward) |
-| **Hitching Pole** | Second Ribbon (T2) | A 20 HP pole. Enemy ground units within 4 m when it is planted are **tethered**: they cannot move beyond 4 m of the pole for 7 s (heroes 3.5 s). The rope VFX ties each one to the pole | 90 | 22 s | 7 m | Original (replaces the WC3 stasis trap) |
+| **Grain-Reader's Mark** | Second Ribbon (T2) | **Not a pole and not a disable.** The carver chalks lines along the "grain" of an enemy **building or mechanical unit** (a cart, a wagon, a construct). For **12 s** it takes **+20%** damage from **Blade and Siege** attacks (a percent bonus, rules §7.4 step 2; dispellable). VFX: white chalk lines run along the target's planks and seams, with a chalk tick where the next blow will split it | 75 | 15 s | 8 m | Original (replaces the WC3 stasis trap: the carpenter reads where the wood will split) |
 | **Kettle Pole** | Elder Ribbon (T3) | A steaming bronze kettle hangs from the pole; its steam heals allies within 6 m for 1.8% of max HP per second for 25 s. Skips mechanical units | 100 | 0 | 5 m | ≈WC3 (healing ward) |
 
-**7. Mound-Speaker** (spirit-walker-type defensive caster)
+**7. Hill-Listener** (spirit-walker-type defensive caster)
 
-- **Look:** a gaunt, very old Tormai in **dark ink-teal felt**, carrying a bronze bowl of smoke. A small bronze ancestor-mask hangs
-  at one shoulder; its jaw clacks when the second voice speaks. Nothing about the Mound-Speaker glows or turns translucent.
+- **Look:** a gaunt, very old Tormai in **dark ink-teal felt**, carrying a bronze bowl of smoke. A small curled **bronze echo-horn** sits
+  at one shoulder. When the Sleeping Hills speak through the Hill-Listener (a slow, rumbling Thoom dream-voice), the horn hums and
+  "answers". No mask, no ancestor imagery, no burial mound (§1.4). Nothing about the Hill-Listener glows or turns translucent.
 
 | Ability | Unlock | Effect | Mana | CD | Range | Kind |
 |---|---|---|---|---|---|---|
 | **Between Breaths** (toggle) | Base | Applies the rules **`spectral`** flag verbatim (rules §7.2: immune to Blade, Pierce, Siege, Heroic and **Pure** attacks; cannot attack), with this ability's own magic multiplier: it takes **+60%** (×1.60) from Arcane and Spell instead of the flag's ×1.66. Presentation: a cocoon of ochre-silver smoke rises from the bowl and wraps it; the body stays **opaque** and greys out. No blue-white glow | 0 | 2 s | self | ≈WC3 (ethereal) |
-| **Kin-Thread** | Second Ribbon (T3) | Links up to **3** allies within 8 m for 60 s. 40% of the damage any linked unit takes is spread among the others | **70** | 2 s | 8 m | ≈WC3 (damage link) |
-| **Hands from the Mound** | Elder Ribbon (T3) | 3 m area. After 0.75 s, clay-and-smoke hands rise and root enemy ground units for 3 s (heroes 1.5 s), dealing 25 Spell damage per second | 100 | 20 s | 8 m | Original (replaces the WC3 resurrect) |
+| **Kin-Thread** | Second Ribbon (T3) | Links up to **3** allies within 8 m for 60 s (the Hill-Listener may be one of the 3). 40% of the damage any linked unit takes is spread among the others | **70** | 2 s | 8 m | ≈WC3 (damage link) |
+| **Hands of the Hill** | Elder Ribbon (T3) | 3 m area. After 0.75 s, clay-and-smoke hands of the Sleeping Hills rise and root enemy ground units for 3 s (heroes 1.5 s), dealing 25 Spell damage per second | 100 | 20 s | 8 m | Original (replaces the WC3 resurrect) |
 
 **8. Sling-Cart** (siege engine)
 
@@ -605,64 +716,100 @@ damage unless a row says otherwise.
 - **Mechanical:** no natural regeneration; Yurtwrights **Mend** it (rules §4.8). It scales with **Bronze Points** and
   **Lamellar Plates** like the other ranged and armoured units (§8).
 - **Packed Clay Pots** (T2 research, in the slice): half-damage splash radius 1.9 → 2.5 m. The counterpart of the Kingdom's
-  Scatter Shot.
-- **Tallow Pots** (≈WC3 burning ammunition; T3 research): each impact leaves burning ground in a 1.5 m radius for 5 s, dealing
-  12 damage per second. It does not stack, and it also burns buildings.
+  Case Shot (they slow, we widen the splash).
+- **Tallow Pots** (≈WC3 burning ammunition; T3 research): each impact leaves burning ground in a 1.5 m radius for **6 s**, dealing
+  **10** damage per second. It does not stack, and it also burns buildings.
 - **Motion** is fully procedural (§12.2): the wheels roll, the arm swings, the cart recoils and the crew bob.
 
-**9. Glintback** (heavy war-beast carrying a sun-mirror)
+**9. Glintback** (heavy war-beast carrying a mirror-ladder)
 
-- **Look:** a giant steppe tortoise. On its shell sits a felt-roofed platform with a javelin rider and a **lattice mast** topped
-  by a big, tilting, **polished bronze sun-mirror** (about 1.6 m across) that a mirror-tender angles with ropes.
-  **No drum, gong or other instrument rides on the beast.** The gong stays a hall and emblem motif only.
+- **Look:** a giant steppe tortoise. On its shell sits a felt-roofed platform with a javelin rider and a **mirror-ladder**: a slender
+  lattice mast carrying **4–5 small square bronze plates (about 0.5 m each)** stacked one above another. A mirror-tender tilts them
+  with cords.
+  - **No drum, gong or other instrument rides on the beast, and no disc wider than 0.6 m** (§2.5). The gong stays a hall and emblem
+    motif only. (The first revision's 1.6 m round sun-mirror on a mast still read as a gong on a beast.)
 - **Sun on the Blades** (≈WC3 damage aura, presented as light instead of music): allied units within **8 m** deal **+8%** damage,
-  or **+15%** with *Burnished Face*. Each pulse the mirror tilts and a glint runs along the allies' weapons (a visible flash every
-  2 s; the aura itself re-applies every 0.5 s, rules §10.3). At night the glint is moon-silver; the effect is unchanged.
+  or **+15%** with *Burnished Face*. On each pulse the plates tilt **one after another, bottom to top**, and a glint runs up the ladder
+  and along the allies' weapons (a visible flash every 2 s; the aura itself re-applies every 0.5 s, rules §10.3). At night the glint is
+  moon-silver; the effect is unchanged.
 - **Withdraw** (Original; replaces the WC3 devour), cooldown 25 s, no mana:
   - The tortoise pulls into its shell for 6 s. It cannot move or attack, and takes 70% less damage.
-  - Enemies within 5 m are forced to attack it.
-  - The mirror-tender keeps the mirror turning, so the aura stays on.
-- **Production:** this is the cheapest non-biped we have. The shell is rigid, the 4 legs and the head are pivoting segments,
-  the mast and mirror are rigid with a procedural tilt, and the animation is procedural.
+  - **Taunt:** enemy **non-hero** units within 5 m must attack it for **3 s**, refreshed each second while it stays withdrawn. Heroes
+    are never taunted.
+  - The mirror-tender keeps the plates turning, so the aura stays on.
+- **Production:** this is the cheapest non-biped we have. The shell is rigid, the 4 legs and the head are pivoting segments, the mast is
+  rigid and each plate is a rigid part with its own procedural tilt, and the animation is procedural.
 
 **10. Sky-Kite** (flyer)
 
 - **Look:** a big hexagonal felt-and-cane kite with two long team-colour tails. A light Tormai rider hangs in a harness under it
-  and throws javelins down.
+  and drops weighted bronze **hail-darts** from a belt pouch. No javelins and no spear-throwing from the air (§2.5).
   - In lore, a wind bound by the Gustcallers lifts the kite. That is why the Sky-Kite needs a Mirror Yurt.
   - There are no wings, so the motion is procedural: bank, sway and tail ribbons.
-- **Ribbon Barbs** (≈WC3 poison; research): attacks make units bleed 4 damage per second for 4 s. It does not stack, and does
-  not affect buildings.
+- **Hail-Darts** (≈WC3 poison; research): the darts are notched, so struck units bleed **5 damage per second for 3 s**. It does not
+  stack, and does not affect buildings.
 - **Updraft** (Original, cooldown 25 s): +75% move speed for 3 s, and immune to Hobble-type pull-downs and roots while it lasts.
 
 **11. Thoom** (big T3 melee people)
 
-- **Look:** a 2.8 m hill-giant with sandstone, elephant-thick skin and tiny eyes.
+- **Look:** a 2.8 m hill-giant with weathered **pink-granite**, elephant-thick skin (`#A48E86`) and tiny kind eyes.
   - The head is hidden under a huge upturned **bronze cauldron helm** topped by **one central lid-knob** (or a short
     smoke-vent). The two ring-handles **hang at the sides as horizontal rings, below the crown line**. Nothing points upward in
     pairs (§2.1).
   - It wears a long quilted **felt robe** with a sash (no apron, no bare belly) and swings a **giant bronze ladle** as a mace.
   - No horns, no hooves, no kegs, no cleavers, no gore.
-- **Heavy Ladle** (≈WC3 splash slam; research): every **3rd** attack is a **Ladle Slam** that deals 55 Spell damage to all
-  enemies within 2.5 m. Deterministic, not a chance roll.
+- **Heavy Ladle** (≈WC3 splash attack; research): every **3rd** attack is a **Ladle Sweep**, a flat horizontal swing through the
+  **180° arc in front of the Thoom**. It deals **55 Spell damage to every enemy within 2.5 m in that arc, the attacked target included**,
+  on top of the normal hit. Deterministic, not a chance roll. It is never shown as a downward ground pound.
 - **Shelter** (Original, passive): when an allied non-hero unit within **6 m** drops below **30% HP**, the Thoom gains
   **+3 armour for 6 s** (cooldown 20 s). It plays a sheltering pose, the ladle raised over the hurt ally like a roof (animation
   only; no movement). In VO a Thoom frets over the hurt guest, never about food.
 
 ### 5.3 Unit equivalence ledger (roles kept, kits mixed)
 
-| Unit | WC3 equivalents kept | Original |
+At most 2 functional WC3 equivalents per unit, as for heroes (§6.2).
+
+| Unit or building | WC3 equivalents kept | Original |
 |---|---|---|
 | Grappler | – (WC3's HP and attack-speed upgrade is replaced) | Shove |
 | Javelineer / Proven | Range upgrade; a transform into a tougher form | Heel-Seeker |
 | Hookbill Rider | Ensnare, **including** the flyer pull-down (WC3's ensnare also grounds air units); the Siege-type raider role | Shriek-Scatter (cargo drop); Roof-Burner (building burn, no repair lock); the bird mount |
 | Gustcaller | Dispel (base), haste buff (T2) | Dust Shroud (T3) |
-| Pole-Carver | Invisible sentry-type ward (base), healing ward (T3) | Hitching Pole (T2) |
-| Mound-Speaker | Ethereal form, damage link | Hands from the Mound |
+| Pole-Carver | Invisible sentry-type ward (base), healing ward (T3): **2 of 3** | Grain-Reader's Mark (T2): not a ward, not a disable. (The first revision's Hitching Pole was a planted disabling pole, so the kit was 3 of 3 by kind) |
+| Hill-Listener | Ethereal form, damage link | Hands of the Hill |
 | Sling-Cart | Burning ammunition | Packed Clay Pots (splash radius) |
-| Glintback | Damage aura | Withdraw, turtle body, the aura shown as light (no instrument) |
-| Sky-Kite | Bleed (DoT) | Updraft, kite body |
-| Thoom | Splash slam | Shelter, cauldron-helmed host giants |
+| Glintback | Damage aura | Withdraw, turtle body, the aura shown as light on a mirror-ladder (no instrument, no disc) |
+| Sky-Kite | Bleed (DoT) | Updraft; kite body; darts dropped, not spears thrown |
+| Thoom | Splash attack (shown as a horizontal sweep, never a ground pound) | Shelter; cauldron-helmed host giants |
+| Home Yurt | Worker garrison: the faction's **one** WC3 signature mechanic (§4.1) | Gong call from every hall tier; 3 slots; the felt roll-up |
+| Casting Pit | Weapon and armour lines; one building-armour research (**Bronze Banding**: all buildings +2 armour, the genre masonry line) | **Smoke-Ring Watch**. The WC3 Orc building-thorns upgrade and its burrow-and-tower armour upgrade are **not** used (a second signature mechanic) |
+| Tea Tent stock | Race-shop staples: instant HP and mana restores, a recall item, a vision ward, a tiny supply building | Regeneration teas that stop on damage; Glint Charm (armour plus reveal-on-hit, not an attack orb); the vision ward is a pebble (no "hawk = vision" link) |
+
+### 5.4 WC3 value-echo audit (units, buildings, upgrades)
+
+The second review checked our numbers against the classic.battle.net Orc pages and found 15 values that still equalled WC3's, after
+the first revision had claimed they were moved. All are changed. The WC3 values are recorded **for review only and must never be
+entered as data**. `tools/ip/check_value_echo.py` holds the same table (`tools/ip/value_echo_reference.json`, which also carries the
+§6.2 hero values) and fails if a design value or, once the defs exist, a `data/*.json` value equals its reference. Global rules (food
+cap, hero cost, upkeep, the XP table) and the 15 s worker train time that every faction shares are exempt.
+
+| Ours | Field | WC3 analogue | WC3 value | Ours now |
+|---|---|---|---|---|
+| Grapple Yard | Cost, build time | Orc barracks | 180 / 50, 60 s | **170 / 60, 65 s** |
+| Guest Ring | Cost | Tauren building | 135 / 155 | **145 / 165** |
+| Herd Pen | Lumber, build time, HP | Orc beast building | 140 l, 60 s, 1100 HP | **150 / 130, 65 s, 1050 HP** |
+| Tea Tent | Cost | Orc race shop | 130 / 30 | **120 / 40** |
+| Mirror Yurt | Gold, HP | Orc spirit building | 150 g, 800 HP | **145 / 120, 760 HP** |
+| Naming Stones | HP, build time | Orc altar | 900 HP, 60 s | **860 HP, 55 s** |
+| Casting Pit | HP | Orc war mill | 1000 HP | **960 HP** |
+| Bow-Mast | HP | Orc watch tower | 500 HP | **470 HP** |
+| Shell Hall | Build time | Orc T1 hall | 150 s | **155 s** (rules §5.1 updated) |
+| Home Yurt | Lumber, garrison | Orc burrow | 40 lumber, 4 workers | **150 / 35, 3 workers** (Pierce 10–13 each, 9.4 m) |
+| Thoom | HP | Tauren | 1300 HP | **1260 HP** (5 food kept: the rules §4.4 heavy-unit class value) |
+| Gustcaller, Pole-Carver | Mana | Orc shaman, witch doctor | 200, +100 per training (400) | **180, +90 per Ribbon (360)** |
+| Pole-Carver | Train time | Orc witch doctor | 30 s | **32 s** |
+| Hail-Darts (was Ribbon Barbs) | Bleed | Wind-rider poison | 4 damage/s | **5 damage/s for 3 s** |
+| Tallow Pots | Burn | Burning oil | 6 per 0.5 s (12/s) | **10 damage/s for 6 s** |
 
 ---
 
@@ -692,7 +839,7 @@ All four heroes use the global hero rules (rules §6):
 | **The Uncut** (`clans_hero_uncut`; title "Uncut Duelist") | AGI melee duelist | AGI | 19 (+2.0) | 22 (+1.9) | 14 (+1.5) | 2–11 | −2 | 2.0 | 0.9 m melee | 5.0 | 28.1 / 12.5 | 2.2 m | ✅ |
 | **Skymirror** (`clans_hero_skymirror`) | INT seer-caster (ranged) | INT | 16 (+1.7) | 14 (+1.0) | 22 (+2.9) | 1–9 | −2 | 2.3 | 7.5 m (glint bolt, 15 m/s) | 4.7 | 28.1 / 12.5 | 2.2 m | ✅ |
 | **Cauldron-Father** (`clans_hero_cauldron_father`), a Thoom | STR tank chieftain | STR | 26 (+2.9) | 11 (+1.1) | 13 (+1.5) | 6–15 | −1 | 2.4 | 1.2 m melee | 4.4 | 28.1 / 12.5 | 3.1 m | later |
-| **Omen-Mother** (`clans_hero_omen_mother`) | INT support (hex, heal) | INT | 17 (+1.8) | 13 (+1.1) | 21 (+2.6) | 1–8 | −2 | 2.3 | 7.0 m (bone-chip toss, 15 m/s) | 4.7 | 28.1 / 12.5 | 2.1 m | later |
+| **Omen-Mother** (`clans_hero_omen_mother`) | INT support (hex, heal) | INT | 17 (+1.8) | 13 (+1.1) | 21 (+2.6) | 1–8 | −2 | 2.3 | 7.0 m (tea-brick chip, 15 m/s) | 4.7 | 28.1 / 12.5 | 2.1 m | later |
 
 **Derived values** (HP / mana / armour / damage / effective attack cooldown; `test_hero_attributes` asserts these):
 
@@ -704,43 +851,45 @@ All four heroes use the global hero rules (rules §6):
 | Omen-Mother | 525 / 315 / 1.9 / 22–29 / 1.83 s | 700 / 465 / 3.1 / 32–39 / 1.72 s | 925 / 660 / 4.6 / 45–52 / 1.60 s |
 
 **Proper names** (one is picked at random for each hero, shown as "Title: Name", rules §6.1):
-- The Uncut ("Uncut Duelist"): *Ilaya, Teshe, Orsel, Nauri, Sabbet*.
-- Skymirror: *Hodun Brightbowl, Sarvi Two-Skies, Ommet the Polished, Kelun Who-Squints*.
+- The Uncut ("Uncut Duelist"): *Ilaya, Teshe, Orsel, Nauri, Bessu*.
+- Skymirror: *Hodun Brightbowl, Sarvi the Twice-Polished, Ubbet the Polished, Kelun Bright-Rim*.
 - Cauldron-Father: *Boomul, Ummoru, Gubbada, Lummaro*.
 - Omen-Mother: *Grandmother Ezzi, Old Beluu, Auntie Ottu, Mother Halsi*.
 
 #### The Uncut: AGI duelist
 
 **Look:**
-- A lean, fast Tormai woman in a flared saffron riding coat; the skirt spins out in a wide silhouette.
+- A lean, fast Tormai woman in a **split saffron riding coat** that hangs straight at rest and flares only in the run cycle.
 - A bronze chin-guard, and a team-colour sash.
 - A **normal-length straight horse-sabre**, carried low and back-handed. Never an oversized or curved blade.
-- Her **single huge braid**, ending in a bronze weight, is the silhouette hook: she whirls it overhead in idle and uses it as a
-  second weapon in combat.
+- Her **single huge braid**, ending in a bronze weight, is the silhouette hook. It reaches the ground and **trails behind her** like a
+  line; in combat it lashes forward in straight snaps (Braid Lash). **It is never whirled, and nothing about her spins:** no circular
+  motion in idle, attacks or abilities (§2.5).
 - No mask, no topknot.
 
 **Lore:** a Tormai duelist never cuts her braid until she loses a duel. Hers reaches the ground; hence the title.
 
 | Key | Ability | Rank 1 / 2 / 3 | Mana | Cooldown | Kind |
 |---|---|---|---|---|---|
-| Q | **Dust Veil**: she spins her braid; an **ochre dust column** rises around her, then collapses into ground dust, and she is gone. Invisible (`fade`, rules §11) for up to **15 / 20 / 25 s** with **+20 / 35 / 50%** move speed (fade time **0.5 s**). Her first attack out of it deals **+45 / 80 / 115** bonus Heroic damage and slows the target 30% for 2 s (heroes **1 s**, `hero_duration`). VFX: no translucent fade-out and no wind streaks; the dust column sells the vanish (her owner then sees her through the global invisibility shader) | see text | 70 | 8 s | ≈WC3 #1 (stealth opener) |
-| W | **Braid Lash**: the weighted braid snaps out at a ground unit within 5.5 m. It deals **40 / 75 / 110** Spell damage, pulls the target **3 m** toward her (heroes 1.5 m) and roots it for **1.0 / 1.25 / 1.5 s** (heroes **0.75 / 1.0 / 1.25 s**, `hero_duration`) | see text | 70 | 14 / 12 / 10 s | Original |
+| Q | **Dust Veil**: she drops low into the grass, and a **flat, ground-hugging puff of ochre dust** rolls outward around her (about 3 m across, never above knee height) and settles; when it settles she is gone. Invisible (`fade`, rules §11) for up to **15 / 20 / 25 s** with **+20 / 35 / 50%** move speed (fade time **0.5 s**). Her first attack out of it deals **+45 / 80 / 115** bonus Heroic damage and slows the target 30% for 2 s (heroes **1 s**, `hero_duration`). VFX: no column, no spin, no swirl and no translucent fade-out; the settling dust sells the vanish (her owner then sees her through the global invisibility shader) | see text | 70 | 8 s | ≈WC3 #1 (stealth opener) |
+| W | **Braid Lash**: she draws the weighted braid back low behind her and snaps it forward **in a straight line** at a ground unit within 5.5 m (never whirled overhead). It deals **40 / 75 / 110** Spell damage, pulls the target **3 m** toward her (heroes 1.5 m) and roots it for **1.0 / 1.25 / 1.5 s** (heroes **0.75 / 1.0 / 1.25 s**, `hero_duration`) | see text | 70 | 14 / 12 / 10 s | Original |
 | E | **Keen Edge** (passive): **18%** chance to deal **1.8× / 2.4× / 3.0×** damage. Each crit gives her +25% move speed for 1.5 s (hit-and-run) | see text | – | – | ≈WC3 #2 (critical strike) |
-| R | **Through the Tall Grass** (ult, level 6): for **10 s** she gains +30% attack speed, and every attack also cuts a **6 m × 1.5 m line** behind the target for **60%** of the hit. The cut deals **Heroic** damage, takes the hit's **post-crit, pre-armour** value (each victim's own type and armour then apply), and **does not hit structures**. A crescent dust-slash VFX shows each cut | – | 125 | 120 s | Original (not a spin AoE) |
+| R | **Through the Tall Grass** (ult, level 6): for **10 s** she gains **+40%** attack speed and **ignores slows** (move and attack-speed slows on her are suppressed; roots and stuns still apply), and every attack also cuts an **8 m × 2 m line** behind the target for **100%** of the hit. The cut deals **Heroic** damage, takes the hit's **post-crit, pre-armour** value (each victim's own type and armour then apply), and **does not hit structures**. A straight dust-slash streak shows each cut. Target: against 4 clumped Pavisiers it deals about 800 damage to units other than the one she attacks (§13, Q2) | – | 125 | 120 s | Original (a line cleave, not a spin AoE) |
 
 #### Skymirror: INT seer-caster
 
 **Look:**
 - An old, broad Tormai on foot in a **plain quilted ink-teal felt coat with bronze studs**.
-- A large polished bronze mirror hangs over his eyes like a visor ("he sees through the bronze").
+- A polished bronze mirror on a **brow-band**, worn pushed up on his forehead. He flips it down over his eyes **only while casting
+  Bronze Window**; at idle his eyes are visible, bright and keen. He is a vain polisher, not a blind seer.
 - He holds a long staff topped by a second mirror.
 - He polishes constantly. The two mirrors are his **tools**; nothing is sewn on as costume (§1.4).
 
 | Key | Ability | Rank 1 / 2 / 3 | Mana | Cooldown | Kind |
 |---|---|---|---|---|---|
 | Q | **Sunglint**: he tilts the staff-mirror and flashes a **50° cone, 7 m long**. The **blind** is the main effect: 35% miss chance for **3 / 4 / 5 s** (heroes **2 / 2.5 / 3 s**, `hero_duration`). It also deals **50 / 85 / 120** Spell damage. **At night it becomes Moonglint:** 50% damage, but the blind lasts 2 s longer (heroes 1 s longer). Cast point 0.4 s | see text | 80 | 9 s | Original (a cone blind, not a line nuke) |
-| W | **Bronze Window**: he lifts the visor-mirror and looks through it. Reveals a **10 / 14 / 18 m** radius anywhere on the map for **10 s**. At rank 3 it also reveals invisible units | see text | 60 / 50 / 40 | 20 / 15 / 10 s | ≈WC3 #1 (remote reveal) |
-| E | **Hail-Swifts**: summons **2 / 2 / 3** hail-cloud birds (level 2 / 2 / 3) for **45 s**: opaque, icy-white swifts of packed hail, with no ghost glow. Each: **160 / 200 / 240 HP**, Light 0, Pierce **7–9 / 9–11 / 10–12** (ice pellets), CD 1.5, range 4.5 m, **flying**, 5.5 m/s, sight 17 / 12.5. **No true sight at any rank.** On death or expiry each bursts into a **2 m hail patch**: 15 Spell damage and a 20% slow for 2 s to enemy ground units. As flyers they cannot be hit by melee creeps, so they add damage and scout but never tank. Summons give 50% XP (rules §10.6) | see text | 100 | 35 s | ≈WC3 #2 (summon), changed to flying hail birds |
+| W | **Bronze Window**: he flips the brow-mirror down over his eyes and looks through it. Reveals a **10 / 14 / 18 m** radius anywhere on the map for **10 s**. At rank 3 it also reveals invisible units | see text | 60 / 50 / 40 | 20 / 15 / 10 s | ≈WC3 #1 (remote reveal) |
+| E | **Hail-Swifts**: summons **2 / 2 / 3** hail-cloud birds (level 2 / 2 / 3) for **45 s**: opaque, icy-white swifts of packed hail, with no ghost glow. They are **ground summons that skim 0.6 m above the grass** (`hover_height` is visual only): flags **ground, summoned**; ground pathing; normal line of sight; **5.2 m/s**; sight 17 / 12.5. Each: **160 / 200 / 240 HP**, Light 0, Pierce **7–9 / 9–11 / 10–12** (ice pellets), CD 1.5, range 4.5 m. Melee units and creeps can hit them and idle creeps acquire them, so they **tank** while the Skymirror creeps. **No true sight at any rank.** On death or expiry each bursts into a **2 m hail patch**: 15 Spell damage and a 20% slow for 2 s to enemy ground units. Summons give 50% XP (rules §10.6) | see text | 100 | 35 s | ≈WC3 #2 (summon), changed to skimming hail birds |
 | R | **Swallowed Sun** (ult, level 6): within 12 m, a **9 m radius** goes dark for **12 s**. Enemies inside have sight 3 m and a **40% miss chance**, and enemy vision cannot see into the area. Your units inside gain +15% move speed. It is an **area state, not a timed control**: it applies in full to heroes while they are inside and lingers the rules aura time (2 s) after they leave | – | 175 | 150 s | Original (it uses the day/night sight system) |
 
 #### Cauldron-Father: STR tank chieftain (Thoom; a different people from the WC3 bull-folk)
@@ -757,22 +906,23 @@ All four heroes use the global hero rules (rules §6):
 | Key | Ability | Rank 1 / 2 / 3 | Mana | Cooldown | Kind |
 |---|---|---|---|---|---|
 | Q | **Bowl Over**: he hurls his cauldron helm at a ground unit within 6 m.<br>• It deals **70 / 120 / 170** Spell damage and lands **upside-down over the target**, trapping it for **3 / 4 / 5 s** (heroes **1.5 / 2 / 2.5 s**, `hero_duration`; units of 5+ food half as long). `allow_heroes: true`.<br>• A trapped unit cannot move, attack or cast, and cannot be targeted or damaged.<br>• While the helm is away (trap time + 0.5 s), he has −3 armour. Then the helm flies back | see text | 80 | 14 s | Original |
-| W | **Cauldron Ring**: he punches his own helm. A ringing shock deals **30 / 60 / 90** Spell damage and stuns ground enemies within **3.5 / 4.0 / 4.5 m** for **2 / 2.5 / 3 s** (heroes **1 / 1.25 / 1.5 s**). Without the helm, he stamps instead (same effect) | see text | 100 | 9 s | ≈WC3 #1 (AoE stun) |
-| E | **Hearth-Warmth** (aura, 9 m): allies gain **+8 / 14 / 20%** attack speed and **+1 / 2 / 3 HP/s**. This is the clans' only regeneration aura | see text | – | – | ≈WC3 #2 (attack-speed aura; move speed swapped for regeneration) |
+| W | **Cauldron Ring**: he punches his own helm. A ringing shock deals **30 / 60 / 90** Spell damage and stuns ground enemies within **3.5 / 4.0 / 4.5 m** for **2 / 2.5 / 3 s** (heroes **1 / 1.25 / 1.5 s**). Without the helm, he strikes his ladle against the bronze breast-tray instead (a flatter clang, same effect); **never a foot stamp** | see text | 100 | 9 s | ≈WC3 #1 (AoE stun) |
+| E | **Warm Welcome** (aura, 9 m): allies gain **+8 / 14 / 20%** attack speed and **+1 / 2 / 3 HP/s**. This is the faction's only regeneration aura | see text | – | – | ≈WC3 #2 (attack-speed aura; move speed swapped for regeneration) |
 | R | **Under My Roof** (ult, level 6), for **10 s**:<br>• **40%** of the damage taken by allied non-building units within **8 m** is redirected to him;<br>• he takes **40% less** damage from all sources;<br>• when it ends, he heals for **25%** of the damage he redirected.<br>VFX: a felt roof of warm saffron light spans the area | – | 150 | 150 s | Original (not a self-revive) |
 
 #### Omen-Mother: INT support (hex and heal)
 
 **Look:**
-- A small, hunched, sly Tormai grandmother in a towering felt hat hung with knucklebones.
-- A **dented bronze tea-kettle** on a long chain, and a pouch of polished ankle-bones.
+- A small, hunched, sly Tormai grandmother in a towering felt hat hung with **small bronze cups and pressed tea-brick tokens**. No
+  bones of any kind (§2.5).
+- A **dented bronze tea-kettle** on a long chain, and a lidded tea cup that she swirls constantly.
 - A fat felt shawl in team colour.
 
 | Key | Ability | Rank 1 / 2 / 3 | Mana | Cooldown | Kind |
 |---|---|---|---|---|---|
 | Q | **Kettle Blessing**: she swings the kettle and splashes hot sweet tea. It heals **115 / 170 / 225**, then jumps to **2 / 3 / 4** more allies within 6 m (most damaged first), **−15%** per jump. Range 8 m. Skips mechanical units | see text | 85 | 10 s | ≈WC3 #1 (bouncing heal) |
 | W | **Marmot Curse**: turns a target within 8 m into a squeaking **marmot** for **12 / 18 / 24 s** (heroes **2 / 3 / 4 s**, `hero_duration`; `allow_heroes: true`, as WC3's own hex works on heroes). A marmot has speed 2.2 m/s, armour 0, and cannot attack or cast; it keeps its HP | see text | 80 | 9 s | ≈WC3 #2 (polymorph) |
-| E | **Knucklebone Omen**: she throws the bones. **One omen** (seeded sim RNG) applies to all allies within 7 m for 10 s. At rank 3 she throws twice and gets **two different omens**. The result shows as an icon over her head | Hookbill: **+20 / 30 / 40%** move speed · Shell: **+2 / 3 / 4** armour · Ewe: **+3 / 5 / 7 HP/s** · Ram: **+10 / 15 / 20%** attack speed | 75 | 20 s | Original |
+| E | **Tea-Leaf Omen**: she swirls her cup, tips it out and reads the leaves. **One omen** (seeded sim RNG) applies to all allies within 7 m for 10 s. At rank 3 she reads twice and gets **two different omens**. The leaf pattern shows as an icon over her head | **Kite**: **+20 / 30 / 40%** move speed · **Shell**: **+2 / 3 / 4** armour · **Kettle**: **+3 / 5 / 7 HP/s** · **Hill**: **+10 / 15 / 20%** attack speed | 75 | 20 s | Original |
 | R | **Grandmother's Tale** (ult, level 6): in a **8 m radius** within 10 m, enemy non-hero units **fall asleep for 6 s** (any damage after 0.5 s wakes them). Enemy heroes become **drowsy** for 5 s (−40% move and attack speed; this is the explicit hero effect). Cast time 1 s | – | 175 | 150 s | Original |
 
 ### 6.2 Hero equivalence ledger (maximum 2 per hero)
@@ -780,9 +930,9 @@ All four heroes use the global hero rules (rules §6):
 | Our hero | WC3 nearest | Equivalents kept (2) | Original (2) |
 |---|---|---|---|
 | The Uncut | AGI melee duelist | Dust Veil (stealth opener), Keen Edge (crit) | Braid Lash (pull and root), Through the Tall Grass (line cleave) |
-| Skymirror | INT seer | Bronze Window (remote reveal), Hail-Swifts (summon; flying hail birds that burst into slowing hail) | Sunglint (cone blind with a day/night twist), Swallowed Sun (area darkness) |
-| Cauldron-Father | STR tank chieftain | Cauldron Ring (AoE stun), Hearth-Warmth (attack-speed aura) | Bowl Over (pot trap), Under My Roof (damage redirect) |
-| Omen-Mother | INT support | Kettle Blessing (bouncing heal), Marmot Curse (polymorph) | Knucklebone Omen (random team buff), Grandmother's Tale (mass sleep) |
+| Skymirror | INT seer | Bronze Window (remote reveal), Hail-Swifts (summon; skimming hail birds that tank and burst into slowing hail) | Sunglint (cone blind with a day/night twist), Swallowed Sun (area darkness) |
+| Cauldron-Father | STR tank chieftain | Cauldron Ring (AoE stun), Warm Welcome (attack-speed aura) | Bowl Over (pot trap), Under My Roof (damage redirect) |
+| Omen-Mother | INT support | Kettle Blessing (bouncing heal), Marmot Curse (polymorph) | Tea-Leaf Omen (random team buff), Grandmother's Tale (mass sleep) |
 
 None of the four uses the WC3 hero's **ultimate**. That removes the most recognisable "signature" from each kit. Across the four
 heroes, 8 of the 16 WC3 Orc hero abilities have a functional equivalent (2 per hero, the policy maximum). Sunglint used to be a
@@ -790,19 +940,19 @@ line nuke like another WC3 Orc hero's; it is now a cone blind.
 
 **Numeric deltas vs the WC3 analogue** (fidelity rule 2). The WC3 values are those the 2026-10-16 review cited from the
 classic.battle.net hero pages; values marked * are from memory and need checking. They are recorded for review only and must
-never be entered as data.
+never be entered as data. `tools/ip/value_echo_reference.json` carries the same values for the value-echo check (§5.4).
 
 | Our ability | WC3 analogue | WC3 reference value | Ours |
 |---|---|---|---|
 | Dust Veil | Stealth opener | +40 / 70 / 100 bonus damage, 75 mana, 0.6 s fade* | +45 / 80 / 115, 70 mana, 0.5 s fade |
 | Keen Edge | Critical strike | 15% chance, 2× at rank 1 (3× / 4× at ranks 2–3*) | 18%, 1.8× / 2.4× / 3.0× |
 | Bronze Window | Remote reveal | 8 s duration | 10 s |
-| Hail-Swifts | Summoned beasts | 30 s cooldown at rank 1 | 35 s; 2 / 2 / 3 flying birds, 160 / 200 / 240 HP |
+| Hail-Swifts | Summoned beasts | 30 s cooldown at rank 1 | 35 s; 2 / 2 / 3 skimming hail birds (ground summons), 160 / 200 / 240 HP |
 | Sunglint | Line nuke of another Orc hero | 75 damage at rank 1 | 50 / 85 / 120, cone, blind first |
 | Cauldron Ring | AoE stun | 90 mana | 100 mana |
 | Kettle Blessing | Bouncing heal | 3 / 4 / 5 jumps, 90 mana, 9 s cooldown | 2 / 3 / 4 jumps at −15%, 85 mana, 10 s |
 | Marmot Curse | Polymorph | 70 mana | 80 mana, 9 s cooldown |
-| Hearth-Warmth | Attack-speed aura | not checked yet | +8 / 14 / 20% attack speed, +1 / 2 / 3 HP/s |
+| Warm Welcome | Attack-speed aura | +5 / 10 / 15% attack speed and +10 / 20 / 30% move speed* | +8 / 14 / 20% attack speed, +1 / 2 / 3 HP/s, no move speed |
 
 ---
 
@@ -818,17 +968,17 @@ All clan buildings have Fortified armour 5 (+2 with *Bronze Banding*; rules §8)
 | **Sun-Gong Shell** (`clans_sun_gong_shell`): crowned with a giant mirror-gong that flashes at noon | T3 | Banner Shell + Naming Stones | +330 / 215 | 145 | 2600 | 10×10 | +10 | Yurtwright | Unlocks tier 3 and the 3rd hero | 18.0 / 12.5 | later |
 | **Home Yurt** (`clans_home_yurt`) | Supply plus worker garrison | – | 150 / 40 | 45 | 620 | 4×4 | +10 | – | **Roll the Felt** (4 Yurtwrights: Pierce 8–11 each, 7.0 m) | 12.5 / 9.4 | ✅ |
 | **Grapple Yard** (`clans_grapple_yard`): a fenced wrestling ring beside a long yurt, with weapon racks | Barracks | – | 180 / 50 | 60 | 1150 | 8×8 | – | Grappler, Javelineer, Sling-Cart (T2 + Casting Pit) | Wrestler's Training, Throwing-Sticks, Packed Clay Pots, Proving Rite, Tallow Pots | 12.5 / 9.4 | ✅ |
-| **Casting Pit** (`clans_casting_pit`): a bronze-casting pit, a charcoal kiln and log stacks | War mill / lumber drop | – | 155 / 70 | 60 | 1000 | 6×6 | – | – | **Lumber drop-off**. Bronze Edges, Bronze Points, Lamellar Plates, Bronze Banding, Burr Felt | 12.5 / 9.4 | ✅ |
+| **Casting Pit** (`clans_casting_pit`): a bronze-casting pit, a charcoal kiln and log stacks | War mill / lumber drop | – | 155 / 70 | 60 | 1000 | 6×6 | – | – | **Lumber drop-off**. Bronze Edges, Bronze Points, Lamellar Plates, Bronze Banding, Smoke-Ring Watch | 12.5 / 9.4 | ✅ |
 | **Naming Stones** (`clans_naming_stones`): a ring of rough standing stones carved with hail and wind glyphs, with a frame of small bronze gongs beside them (no faces, nothing hung on the stones) | Altar | – | 170 / 60 | 60 | 900 | 6×6 | – | Heroes | Revive heroes | 12.5 / 9.4 | ✅ |
-| **Spear-Mast** (`clans_spear_mast`): a tall carved mast with felt ribbon streamers, a windbreak platform and a javelin thrower | Tower | Casting Pit | 115 / 60 | 45 | 500 | 4×4 | – | – | Pierce 17–21, CD 1.0, range 10.9 m, hits ground and air (javelin, 22 m/s) | 25.0 / 14.0 | ✅ |
+| **Bow-Mast** (`clans_bow_mast`): a tall carved mast with felt ribbon streamers, a windbreak platform and a javelin thrower | Tower | Casting Pit | 115 / 60 | 45 | 500 | 4×4 | – | – | Pierce 17–21, CD 1.0, range 10.9 m, hits ground and air (javelin, 22 m/s) | 25.0 / 14.0 | ✅ |
 | **Tea Tent** (`clans_tea_tent`): a striped yurt with a steaming urn and bronze cups | Faction shop | Shell Hall | 130 / 30 | 50 | 480 | 6×6 | – | – | Sells items (§9) | 12.5 / 9.4 | ✅ |
-| **Herd Pen** (`clans_herd_pen`): a stone-walled pen, Hookbill perches, a tortoise wallow and kite poles | Beastiary | T2 | 150 / 140 | 60 | 1100 | 8×8 | – | Hookbill Rider, Glintback (T2); Sky-Kite (T3 + Mirror Yurt) | Hobble-Bola, Ribbon Barbs, Burnished Face | 12.5 / 9.4 | later |
-| **Mirror Yurt** (`clans_mirror_yurt`): a tall yurt ringed by bronze sun-mirrors on tilting posts, used to read the sky | Spirit lodge | T2 | 150 / 120 | 60 | 800 | 8×8 | – | Gustcaller, Pole-Carver (T2); Mound-Speaker (T3) | Second Ribbon and Elder Ribbon trainings for all three casters | 12.5 / 9.4 | ✅ |
-| **Hearth Ring** (`clans_hearth_ring`): a stone hearth-ring around a house-sized bronze kettle-cauldron, with felt benches where the Thoom serve tea to guests | Tauren-totem equivalent | T3 + Grapple Yard | 135 / 155 | 60 | 900 | 6×6 | – | Thoom | Heavy Ladle. **Hearthside** (passive aura): allied units within 8 m gain **+1 armour** | 12.5 / 9.4 | later |
+| **Herd Pen** (`clans_herd_pen`): a stone-walled pen, Hookbill perches, a tortoise wallow and kite poles | Beastiary | T2 | 150 / 140 | 60 | 1100 | 8×8 | – | Hookbill Rider, Glintback (T2); Sky-Kite (T3 + Mirror Yurt) | Hobble-Bola, Hail-Darts, Burnished Face | 12.5 / 9.4 | later |
+| **Mirror Yurt** (`clans_mirror_yurt`): a tall yurt ringed by bronze sun-mirrors on tilting posts, used to read the sky | Spirit lodge | T2 | 150 / 120 | 60 | 800 | 8×8 | – | Gustcaller, Pole-Carver (T2); Hill-Listener (T3) | Second Ribbon and Elder Ribbon trainings for all three casters | 12.5 / 9.4 | ✅ |
+| **Guest Ring** (`clans_guest_ring`): a stone hearth-ring around a house-sized bronze kettle-cauldron, with felt benches where the Thoom serve tea to guests | Tauren-totem equivalent | T3 + Grapple Yard | 135 / 155 | 60 | 900 | 6×6 | – | Thoom | Heavy Ladle. **Warm Benches** (passive aura): allied units within 8 m gain **+1 armour** | 12.5 / 9.4 | later |
 
 **Arrangement changes vs WC3** (made on purpose, to weaken the 1:1 structure):
 - The spirit caster trains at the caster building (T3), not beside the giants.
-- The giants' building has its own armour aura (Hearthside).
+- The giants' building has its own armour aura (Warm Benches).
 - The flyer needs the caster building.
 - The shop sells a supply building (Folded Yurt), not a hall.
 
@@ -842,15 +992,15 @@ flowchart LR
   SH --> NS["Naming Stones (heroes)"]
   SH --> CP["Casting Pit (lumber, upgrades)"]
   SH --> TT["Tea Tent (shop)"]
-  CP --> SM["Spear-Mast (tower)"]
+  CP --> SM["Bow-Mast (tower)"]
   BS --> HP["Herd Pen"]
   BS --> MY["Mirror Yurt"]
-  SG --> HR["Hearth Ring"]
+  SG --> HR["Guest Ring"]
   GY --> HR
   GY -. "T2 + Casting Pit" .-> SC(("Sling-Cart"))
   GY --> GR(("Grappler")) & JV(("Javelineer"))
   MY --> GC(("Gustcaller")) & PC(("Pole-Carver"))
-  MY -. "T3" .-> MS(("Mound-Speaker"))
+  MY -. "T3" .-> MS(("Hill-Listener"))
   HP --> HB(("Hookbill Rider")) & GB(("Glintback"))
   HP -. "T3 + Mirror Yurt" .-> SK(("Sky-Kite"))
   HR --> TH(("Thoom"))
@@ -858,9 +1008,9 @@ flowchart LR
 
 | Tier | Unlocks |
 |---|---|
-| T1 (Shell Hall) | Yurtwright, Grappler, Javelineer. Hero 1. Spear-Mast. Tea Tent stock T1. Level-1 upgrades |
+| T1 (Shell Hall) | Yurtwright, Grappler, Javelineer. Hero 1. Bow-Mast. Tea Tent stock T1. Level-1 upgrades |
 | T2 (Banner Shell) | Herd Pen, Mirror Yurt, Sling-Cart, Hookbill Rider, Glintback, Gustcaller, Pole-Carver. Hero 2. Level-2 upgrades. Second Ribbon trainings. Packed Clay Pots. Tea Tent stock T2 |
-| T3 (Sun-Gong Shell) | Hearth Ring, Thoom, Mound-Speaker, Sky-Kite. Hero 3. Level-3 upgrades. Elder Ribbon trainings. Proving Rite. Tallow Pots. Burnished Face |
+| T3 (Sun-Gong Shell) | Guest Ring, Thoom, Hill-Listener, Sky-Kite. Hero 3. Level-3 upgrades. Elder Ribbon trainings. Proving Rite. Tallow Pots. Burnished Face |
 
 ---
 
@@ -875,20 +1025,20 @@ unit's base average damage, rounded, at least 1). Casters scale only through the
 | **Bronze Edges** (`clans_up_melee`) | Casting Pit | L2 needs T2, L3 needs T3 | 110/60, 55 s · 180/170, 70 s · 260/290, 85 s | Damage per level: Grappler +2, Hookbill Rider +2, Thoom +3 |
 | **Bronze Points** (`clans_up_ranged`) | Casting Pit | as above | 110/60, 55 s · 180/170, 70 s · 260/290, 85 s | Damage per level: Javelineer +2, Proven +2, Glintback rider +2, Sky-Kite +2, **Sling-Cart +7** |
 | **Lamellar Plates** (`clans_up_armor`) | Casting Pit | as above | 140/70, 55 s · 170/180, 70 s · 200/270, 85 s | +2 armour per level for: Grappler, Javelineer, Proven, Hookbill Rider, **Sling-Cart**, Glintback, Sky-Kite, Thoom. Not workers, casters, summons or heroes |
-| **Bronze Banding** (`clans_up_banding`) | Casting Pit | T2 | 150/180, 60 s | Buildings +2 armour; Home Yurts and Spear-Masts +15% HP |
-| **Burr Felt** (`clans_up_burr`) | Casting Pit | L2 needs T2 | 75/50, 45 s · 125/100, 60 s | Buildings deal 6 / 12 damage back to melee attackers |
+| **Bronze Banding** (`clans_up_banding`) | Casting Pit | T2 | 150/180, 60 s | Buildings +2 armour; Home Yurts and Bow-Masts +15% HP |
+| **Smoke-Ring Watch** (`clans_up_smoke_watch`) | Casting Pit | L2 needs T2 | 75/50, 45 s · 125/100, 60 s | Buildings deal 6 / 12 damage back to melee attackers |
 | **Wrestler's Training** (`clans_up_wrestle`) | Grapple Yard | T2 | 150/125, 50 s | Grapplers +60 HP and gain **Shove** |
 | **Throwing-Sticks** (`clans_up_atlatl`) | Grapple Yard | T2 | 80/110, 45 s | Javelineer and Proven range 7.0 → 8.6 m |
 | **Packed Clay Pots** (`clans_up_packed_pots`) | Grapple Yard | T2 | 100/100, 45 s | Sling-Cart half-damage splash radius 1.9 → 2.5 m |
 | **Proving Rite** (`clans_up_proving`) | Grapple Yard | T3 | 150/200, 60 s | Javelineers become **Proven Javelineers** (§5.2) |
 | **Tallow Pots** (`clans_up_tallow`) | Grapple Yard | T3 | 125/175, 50 s | Sling-Cart burning ground (§5.2) |
 | **Hobble-Bola** (`clans_up_bola`) | Herd Pen | T2 | 70/80, 45 s | Hookbill Riders gain Hobble-Bola |
-| **Ribbon Barbs** (`clans_up_barbs`) | Herd Pen | T3 | 100/125, 45 s | Sky-Kite bleed |
+| **Hail-Darts** (`clans_up_hail_darts`) | Herd Pen | T3 | 100/125, 45 s | Sky-Kite bleed |
 | **Burnished Face** (`clans_up_burnished`) | Herd Pen | T3 | 100/150, 50 s | Sun on the Blades +8% → +15% |
 | **Gustcaller: Second Ribbon / Elder Ribbon** (`clans_up_gust_r2`, `clans_up_gust_r3`) | Mirror Yurt | T2 / T3 | 90/60, 55 s · 140/110, 70 s | +60 HP, +100 mana, +2 damage per level; unlocks Wind at Your Back / Dust Shroud |
-| **Pole-Carver: Second Ribbon / Elder Ribbon** (`clans_up_pole_r2`, `clans_up_pole_r3`) | Mirror Yurt | T2 / T3 | 90/60, 55 s · 140/110, 70 s | Same stat gains; unlocks Hitching Pole / Kettle Pole |
-| **Mound-Speaker: Second Ribbon / Elder Ribbon** (`clans_up_mound_r2`, `clans_up_mound_r3`) | Mirror Yurt | T3 / T3 | 100/80, 55 s · 150/120, 70 s | Same stat gains; unlocks Kin-Thread / Hands from the Mound |
-| **Heavy Ladle** (`clans_up_ladle`) | Hearth Ring | T3 | 150/200, 50 s | Thoom Ladle Slam (every 3rd attack) |
+| **Pole-Carver: Second Ribbon / Elder Ribbon** (`clans_up_pole_r2`, `clans_up_pole_r3`) | Mirror Yurt | T2 / T3 | 90/60, 55 s · 140/110, 70 s | Same stat gains; unlocks Grain-Reader's Mark / Kettle Pole |
+| **Hill-Listener: Second Ribbon / Elder Ribbon** (`clans_up_hill_r2`, `clans_up_hill_r3`) | Mirror Yurt | T3 / T3 | 100/80, 55 s · 150/120, 70 s | Same stat gains; unlocks Kin-Thread / Hands of the Hill |
+| **Heavy Ladle** (`clans_up_ladle`) | Guest Ring | T3 | 150/200, 50 s | Thoom Ladle Sweep (every 3rd attack) |
 
 ---
 
@@ -900,7 +1050,7 @@ Prices were nudged off the common WC3 race-shop values (unverified, so moved to 
 |---|---|---|---|---|---|
 | **Salt Tea** | T1 | 110 g | 3 / 30 s | Restores 300 HP over 12 s; stops if the drinker takes damage | ✅ |
 | **Brick-Tea Shavings** | T1 | 65 g | 3 / 30 s | Restores 120 mana over 10 s; stops if the drinker takes damage | ✅ |
-| **Hawk Feather** (2 charges) | T1 | 90 g | 2 / 60 s | Plants an invisible feather within 5 m: **14 m vision for 5 min**. It does **not** see invisible units (vision only) | ✅ |
+| **Hail-Eye Pebble** (2 charges) | T1 | 90 g | 2 / 60 s | Plants an invisible feather within 5 m: **14 m vision for 5 min**. It does **not** see invisible units (vision only) | ✅ |
 | **Homeward Felt** | T1 | 325 g | 2 / 100 s | After a 3 s channel, the hero and up to 11 of your units within 6 m return to your nearest hall (rules §6.8). The first hero also gets one free (rules §3.2) | ✅ |
 | **Folded Yurt** | T2 | 170 g / 35 l | 1 / 90 s | Unfolds into a finished Home Yurt (+10 food) at a target point in 4 s | later |
 | **Glint Charm** | T2 | 450 g | 1 / 120 s | Permanent: +7 Arcane bonus damage per attack, and a 15% chance to blind the target (30% miss) for 2 s | later |
@@ -928,7 +1078,7 @@ asserts this per row (no "stalled for food" event before the push).
 | ≈2:30 | 24/30 | **Home Yurt 3** (done ≈3:20) |
 | 2:45 | ≈26/30 | The 16th Yurtwright is out: stop workers. **Casting Pit** (155/70) at the tree line (shorter lumber walks; done ≈3:50). From ≈2:50 Skymirror creeps with the Grappler tanking; the swifts add damage and scout |
 | 3:07–4:15 | 29 → 33/40 | Grappler 2, Javelineers 2 and 3. Creep the second green camp |
-| ≈3:40 | ≈31/40 | **Tea Tent** (130/30) by the hall: Salt Tea for the hero, and a second Homeward Felt when gold allows. Optional **Spear-Mast** (115/60) at the mine if the enemy hero harasses. Use **Sound the Gong** against early raids |
+| ≈3:40 | ≈31/40 | **Tea Tent** (130/30) by the hall: Salt Tea for the hero, and a second Homeward Felt when gold allows. Optional **Bow-Mast** (115/60) at the mine if the enemy hero harasses. Use **Sound the Gong** against early raids |
 | ≈3:50 | 31/40 | Casting Pit done → **Lamellar Plates 1** (or Bronze Edges 1) if gold allows; otherwise after the Banner Shell |
 | 4:15 | 33/40 | **Banner Shell** (T2, +305/195, 130 s; done ≈6:25). The hall cannot train while upgrading |
 | ≈4:30 | 33/40 | **Home Yurt 4** (cap 50 at ≈5:20). Javelineer 4 → 35/50. Keep creeping; aim for hero level 3 by ≈5:30 |
@@ -957,11 +1107,11 @@ asserts this per row (no "stalled for food" event before the push).
 | Kind | In the slice | Not in the slice |
 |---|---|---|
 | Worker | Yurtwright (+ Roll the Felt, Sound the Gong, Mend) | – |
-| Combat units (4) | **Grappler** (melee), **Javelineer** (ranged), **Gustcaller** (caster: Unbind; Wind at Your Back after Second Ribbon), **Sling-Cart** (siege) | Proven, Hookbill Rider, Pole-Carver, Mound-Speaker, Glintback, Sky-Kite, Thoom |
+| Combat units (4) | **Grappler** (melee), **Javelineer** (ranged), **Gustcaller** (caster: Unbind; Wind at Your Back after Second Ribbon), **Sling-Cart** (siege) | Proven, Hookbill Rider, Pole-Carver, Hill-Listener, Glintback, Sky-Kite, Thoom |
 | Heroes (2) | **The Uncut**, **Skymirror** (full kits; Hail-Swifts need the `is_flying` flag) | Cauldron-Father, Omen-Mother |
-| Buildings (8) | **Shell Hall → Banner Shell**, **Home Yurt**, **Grapple Yard**, **Naming Stones**, **Casting Pit**, **Mirror Yurt**, **Spear-Mast**, **Tea Tent** | Sun-Gong Shell, Herd Pen, Hearth Ring |
-| Items (Tea Tent T1 stock) | Salt Tea, Brick-Tea Shavings, Homeward Felt, Hawk Feather | Folded Yurt, Glint Charm |
-| Upgrades | Bronze Edges / Bronze Points / Lamellar Plates levels 1–2 (the Sling-Cart included), Wrestler's Training, Throwing-Sticks, Packed Clay Pots, Gustcaller Second Ribbon | All T3 research, Bronze Banding, Burr Felt, Herd Pen and Hearth Ring research |
+| Buildings (8) | **Shell Hall → Banner Shell**, **Home Yurt**, **Grapple Yard**, **Naming Stones**, **Casting Pit**, **Mirror Yurt**, **Bow-Mast**, **Tea Tent** | Sun-Gong Shell, Herd Pen, Guest Ring |
+| Items (Tea Tent T1 stock) | Salt Tea, Brick-Tea Shavings, Homeward Felt, Hail-Eye Pebble | Folded Yurt, Glint Charm |
+| Upgrades | Bronze Edges / Bronze Points / Lamellar Plates levels 1–2 (the Sling-Cart included), Wrestler's Training, Throwing-Sticks, Packed Clay Pots, Gustcaller Second Ribbon | All T3 research, Bronze Banding, Smoke-Ring Watch, Herd Pen and Guest Ring research |
 | Hero slots | T1: 1, T2: 2 | T3 slot |
 
 **Shop symmetry:** both slice factions keep a race shop, so the WC3 habit of buying salves and a second recall item at home
@@ -999,7 +1149,7 @@ half of the Higgsfield budget for the Kingdom.
 | Hail-Swift summon | Procedural bpy rigid swift, wing-flap in the vertex shader, opaque icy-white hail material (no spirit glow); the burst is a particle hail patch | 0 |
 | Shell Hall (T1, with T2/T3 add-on props) | Tripo H3.1 for the signature shell (9 cr). Banners, gongs and the mirror crown for T2/T3 are bpy props | 9 cr |
 | Home Yurt, Mirror Yurt, Grapple Yard's yurt, **Tea Tent** | **One procedural yurt kit in bpy**: lattice cylinder, dome, felt bands and team-colour band mask. Yurts are geometrically trivial. The Tea Tent is the kit with a striped felt swatch and an urn prop; the Mirror Yurt adds sun-mirror posts | 0 (+ 5 textures ≈ 1.25 cr) |
-| Naming Stones (rough glyph stones and a gong frame), Casting Pit, Spear-Mast, fence ring | Procedural bpy plus AI textures (stone, bronze, lattice-wood, felt) | ≈ 2 cr |
+| Naming Stones (rough glyph stones and a gong frame), Casting Pit, Bow-Mast, fence ring | Procedural bpy plus AI textures (stone, bronze, lattice-wood, felt) | ≈ 2 cr |
 | Icons (about 32: units, hero portraits and abilities, buildings, upgrades, 4 Tea Tent items) | Krea 2×2 icon sheets (9 CU each; sheet reliability unverified, pipeline §4.4) | ≈ 72–135 CU |
 | **3D subtotal** | | **≈ 80–90 cr Higgsfield** |
 
@@ -1023,7 +1173,7 @@ TTS cost per line is not yet measured: run the 5-line probe first (audio doc §4
 
 | Asset | Body type | Plan |
 |---|---|---|
-| Pole-Carver, Mound-Speaker, Omen-Mother, Proven (texture swap) | Biped | Same pipeline as the slice bipeds |
+| Pole-Carver, Hill-Listener, Omen-Mother, Proven (texture swap) | Biped | Same pipeline as the slice bipeds |
 | Thoom, Cauldron-Father | Big biped | Rig well; the cauldron helm and its side ring-handles are rigid (skin them to the head bone) |
 | Glintback | Quadruped tortoise | **Procedural segments** (rigid shell, 4 leg pivots, head pivot) plus a rigid mast whose sun-mirror tilts procedurally on the aura pulse. No skinning, so it is the first non-biped to build |
 | Sky-Kite | Flyer without wings | **Procedural** (bank, sway, tail ribbons via a vertex shader). The rider is a rigid harness pose |
@@ -1085,7 +1235,7 @@ and missed the rows marked "review".
 | Adept / Master Training (review) | WC3's own caster-upgrade naming | Renamed **Second Ribbon / Elder Ribbon** |
 | Torch-Raid (review) | Leaks the WC3 raider's unit name into its signature ability | Renamed **Roof-Burner** (and reworked, §5.2) |
 | Gongback, Rallying Gong, Deep-Cast Gong (review) | A percussion war-beast powering a damage aura: the *Spry Fox* substitution of the WC3 drum beast | **Glintback**, **Sun on the Blades**, **Burnished Face**; no instrument on any beast |
-| Feast Cauldron, Feast-Warmth, Big Appetite (review) | Ogre Kingdoms' trade dress (hungry steppe giants, cauldron priests, healing through eating) | **Hearth Ring**, **Hearth-Warmth**, **Shelter** |
+| Feast Cauldron, Feast-Warmth, Big Appetite (review) | Ogre Kingdoms' trade dress (hungry steppe giants, cauldron priests, healing through eating) | **Guest Ring**, **Warm Welcome**, **Shelter** |
 | Hail-Hawks (review) | A hawk summon with true sight at rank 3 lands on the WC3 beast hero's hawk | **Hail-Swifts**: hail birds, no true sight |
 | Milk Blessing (review) | A real Mongolian milk libation | **Kettle Blessing** |
 | "the Nine Clans" (review) | A real sacred number (the nine white war-standards) | "the Clans under the Gong-Ring" |
@@ -1115,7 +1265,7 @@ and missed the rows marked "review".
 | Emblem vs the Soyombo and the Kazakh and Kyrgyz state emblems | Nothing cups the disc from below; compare the 16 px glyph at concept review |
 | Steppe sacred items (§1.4) | Mirrors only as tools; no mirror robes, milk libations, carved-face stones, horse-hair standards, sky deity or sacred numbers |
 | Teal palette vs the Night Elf palette | Keep teal dark and never pair it with violet |
-| Mound-Speaker vs the WC3 spirit caster | Dark ink-teal felt; Between Breaths is opaque smoke, never a pale translucent glow |
+| Hill-Listener vs the WC3 spirit caster | Dark ink-teal felt; Between Breaths is opaque smoke, never a pale translucent glow |
 
 **Open questions:**
 1. Cross-check names with `kingdom.md` (the Kingdom of Brennmark). The shared "Homeward" prefix of the two recall items is
@@ -1126,7 +1276,7 @@ and missed the rows marked "review".
    - Swallowed Sun's 40% miss chance;
    - Grandmother's Tale's area sleep;
    - Gustcaller haste now arriving with Second Ribbon (≈8:20) against the Kingdom's push (8:30–9:30).
-3. Does Knucklebone Omen's randomness feel good, or should rank 1 let the player pick from two bones?
+3. Does Tea-Leaf Omen's randomness feel good, or should rank 1 let the player pick from two bones?
    Keep it seeded and deterministic either way.
 4. Is the Hookbill two-leg bird rig feasible with the CPU auto-rigger? Test before committing the raider design;
    the fallback is the procedural hop-run.
@@ -1140,7 +1290,7 @@ and missed the rows marked "review".
    - §7.2: make the `spectral` magic multiplier a per-source field (Between Breaths uses ×1.60; the flag default is ×1.66).
    - §10.4: add `dispel_mode: "selective"` (Unbind removes only enemy positives and ally negatives).
    - §4.8 needs no change: Mend works on finished buildings and mechanical units only.
-   - §11's "few cheap detectors" stays true: the Hawk Feather is now vision-only.
+   - §11's "few cheap detectors" stays true: the Hail-Eye Pebble is now vision-only.
    - §23 #10 (footprint units) is resolved for this doc: cells.
 9. **Other docs that still use the old names** (update when their owners next edit them): `art-and-audio-bible.md`
    (Long-Braid, Kirrik Rider, Gongback rider, the crescent sabre), `juice/combat-and-units.md` and

@@ -195,6 +195,8 @@ lok'tar
 dabu
 additional pylons
 not enough minerals
+high noon
+it's high noon
 # People (never in prompts)
 samwise
 didier
@@ -216,3 +218,26 @@ sentry ward
 adept training
 war drums
 spirit link
+# Second clans review (2026-10-16): retired clans names that must not come back through prompts or data
+gongback
+hail-hawk
+hail-hawks
+hail hawk
+milk blessing
+# "Hearth" sits next to Blizzard's Hearthstone mark (kingdom.md §1.1, neutrals.md name audit). Covers ids such as hearth_pool too.
+hearth
+# WC3 orc-race building, unit and upgrade names (the clans war-mill and shop lists were checked against these)
+voodoo lounge
+spirit lodge
+tauren totem
+beastiary
+war mill
+spirit walker
+witch doctor
+spiked barricades
+reinforced defenses
+envenomed spears
+stasis trap
+# Prompt words (pull unwanted looks into AI generations; banned in prompts by docs/design/factions/sylvan-and-deathless.md §B2.
+# The checker applies every term to every scanned path; that is harmless for these words, which shipped content never needs.)
+canopic
