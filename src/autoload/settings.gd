@@ -58,9 +58,11 @@ static func default_actions() -> Dictionary:
 static func make_event(desc: Dictionary) -> InputEvent:
 	if desc.has("key"):
 		var k := InputEventKey.new()
+		k.device = -1
 		k.physical_keycode = desc["key"]
 		return k
 	var m := InputEventMouseButton.new()
+	m.device = -1
 	m.button_index = desc["mouse"]
 	return m
 

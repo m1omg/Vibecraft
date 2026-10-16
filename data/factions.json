@@ -1,19 +1,33 @@
 {
   "factions": {
     "placeholder_a": {"name": "Placeholder Faction A", "worker": "dummy_worker", "hall": "dummy_hall",
-                      "start_units": {"dummy_worker": 5}},
+                      "start_units": {"dummy_worker": 5}, "start_gold": 500, "start_lumber": 150},
     "placeholder_b": {"name": "Placeholder Faction B", "worker": "dummy_worker", "hall": "dummy_hall",
-                      "start_units": {"dummy_worker": 5}}
+                      "start_units": {"dummy_worker": 5}, "start_gold": 500, "start_lumber": 150}
   },
   "combat": {
     "armor_k": 0.06,
+    "attack_types": ["blade", "pierce", "siege", "arcane", "hero", "chaos", "spell"],
+    "armor_types": ["light", "medium", "heavy", "fortified", "hero", "unarmored"],
     "types": {
-      "normal": {"none": 1.0, "light": 1.0, "medium": 1.5, "heavy": 1.0, "fortified": 0.7, "hero": 1.0},
-      "pierce": {"none": 1.0, "light": 2.0, "medium": 0.75, "heavy": 1.0, "fortified": 0.35, "hero": 0.5},
-      "siege":  {"none": 1.0, "light": 1.0, "medium": 0.5, "heavy": 1.0, "fortified": 1.5, "hero": 0.5},
-      "magic":  {"none": 1.0, "light": 1.25, "medium": 0.75, "heavy": 2.0, "fortified": 0.35, "hero": 0.5},
-      "chaos":  {"none": 1.0, "light": 1.0, "medium": 1.0, "heavy": 1.0, "fortified": 1.0, "hero": 1.0},
-      "hero":   {"none": 1.0, "light": 1.0, "medium": 1.0, "heavy": 1.0, "fortified": 0.5, "hero": 1.0}
+      "blade":  {"light": 1.0,  "medium": 1.5,  "heavy": 1.0, "fortified": 0.7,  "hero": 1.0, "unarmored": 1.0},
+      "pierce": {"light": 2.0,  "medium": 0.75, "heavy": 0.9, "fortified": 0.35, "hero": 0.5, "unarmored": 1.5},
+      "siege":  {"light": 1.0,  "medium": 0.5,  "heavy": 1.0, "fortified": 1.5,  "hero": 0.5, "unarmored": 1.5},
+      "arcane": {"light": 1.25, "medium": 0.75, "heavy": 2.0, "fortified": 0.35, "hero": 0.5, "unarmored": 1.0},
+      "hero":   {"light": 1.0,  "medium": 1.0,  "heavy": 1.0, "fortified": 0.5,  "hero": 1.0, "unarmored": 1.0},
+      "chaos":  {"light": 1.0,  "medium": 1.0,  "heavy": 1.0, "fortified": 1.0,  "hero": 1.0, "unarmored": 1.0},
+      "spell":  {"light": 1.0,  "medium": 1.0,  "heavy": 1.0, "fortified": 1.0,  "hero": 0.7, "unarmored": 1.0}
+    },
+    "defaults": {
+      "acquire": 8.0,
+      "leash": 14.0,
+      "damage_point": 0.4,
+      "backswing": 0.4,
+      "corpse_decay": 8.0,
+      "structure_decay": 4.0,
+      "help_radius": 6.0,
+      "alert_interval": 8.0,
+      "food_max": 100
     }
   },
   "upkeep": [

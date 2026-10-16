@@ -1,0 +1,194 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/ui/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://src/ui/minimap.gd" id="2_minimap"]
+[ext_resource type="Script" path="res://src/ui/command_card.gd" id="3_card"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar"]
+content_margin_left = 14.0
+content_margin_top = 4.0
+content_margin_right = 10.0
+content_margin_bottom = 4.0
+bg_color = Color(0.09, 0.08, 0.07, 0.93)
+border_width_bottom = 2
+border_color = Color(0.56, 0.46, 0.3, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_console"]
+bg_color = Color(0.11, 0.1, 0.085, 0.97)
+border_width_top = 3
+border_color = Color(0.56, 0.46, 0.3, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_inset"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.05, 0.05, 0.045, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.42, 0.35, 0.24, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_portrait"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.05, 0.05, 0.045, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.42, 0.35, 0.24, 1)
+
+[node name="HUD" type="CanvasLayer"]
+process_mode = 3
+layer = 2
+script = ExtResource("1_hud")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 34.0
+grow_horizontal = 2
+mouse_filter = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bar")
+
+[node name="Row" type="HBoxContainer" parent="Root/TopBar"]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="Gold" type="Label" parent="Root/TopBar/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.86, 0.35, 1)
+theme_override_font_sizes/font_size = 17
+text = "Gold  0"
+
+[node name="Lumber" type="Label" parent="Root/TopBar/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.9, 0.45, 1)
+theme_override_font_sizes/font_size = 17
+text = "Lumber  0"
+
+[node name="Food" type="Label" parent="Root/TopBar/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 17
+text = "Food  0 / 0"
+
+[node name="Upkeep" type="Label" parent="Root/TopBar/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 15
+text = "No Upkeep"
+
+[node name="Spacer" type="Control" parent="Root/TopBar/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Clock" type="Label" parent="Root/TopBar/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Day  08:00"
+
+[node name="MenuButton" type="Button" parent="Root/TopBar/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Menu (F10)"
+
+[node name="Console" type="Panel" parent="Root"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -206.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_console")
+
+[node name="Layout" type="HBoxContainer" parent="Root/Console"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 10.0
+offset_right = -8.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="Minimap" type="Control" parent="Root/Console/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(188, 188)
+layout_mode = 2
+size_flags_vertical = 4
+script = ExtResource("2_minimap")
+
+[node name="Portrait" type="PanelContainer" parent="Root/Console/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_portrait")
+
+[node name="PortraitLabel" type="Label" parent="Root/Console/Layout/Portrait"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 56
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Info" type="PanelContainer" parent="Root/Console/Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_inset")
+
+[node name="Box" type="VBoxContainer" parent="Root/Console/Layout/Info"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="UnitName" type="Label" parent="Root/Console/Layout/Info/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="UnitStats" type="Label" parent="Root/Console/Layout/Info/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+
+[node name="SelectionGrid" type="GridContainer" parent="Root/Console/Layout/Info/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+columns = 12
+
+[node name="CommandCard" type="GridContainer" parent="Root/Console/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+script = ExtResource("3_card")

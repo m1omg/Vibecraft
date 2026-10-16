@@ -1,0 +1,42 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/world/world.gd" id="1_world"]
+[ext_resource type="Script" path="res://src/world/terrain_builder.gd" id="2_terrain"]
+[ext_resource type="Script" path="res://src/world/doodads.gd" id="3_doodads"]
+[ext_resource type="Script" path="res://src/world/day_night.gd" id="4_daynight"]
+[ext_resource type="Script" path="res://src/fx/selection_circles.gd" id="5_circles"]
+[ext_resource type="Script" path="res://src/fx/health_bars.gd" id="6_bars"]
+[ext_resource type="Script" path="res://src/fx/vfx.gd" id="7_vfx"]
+
+[node name="World" type="Node3D"]
+script = ExtResource("1_world")
+
+[node name="Terrain" type="Node3D" parent="."]
+script = ExtResource("2_terrain")
+
+[node name="Doodads" type="Node3D" parent="."]
+script = ExtResource("3_doodads")
+
+[node name="Units" type="Node3D" parent="."]
+
+[node name="Projectiles" type="Node3D" parent="."]
+
+[node name="DayNight" type="Node3D" parent="."]
+script = ExtResource("4_daynight")
+
+[node name="Sun" type="DirectionalLight3D" parent="DayNight"]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 0, 30, 0)
+shadow_enabled = true
+
+[node name="Fx" type="Node3D" parent="."]
+
+[node name="SelectionCircles" type="MultiMeshInstance3D" parent="Fx"]
+script = ExtResource("5_circles")
+
+[node name="HealthBars" type="MultiMeshInstance3D" parent="Fx"]
+script = ExtResource("6_bars")
+
+[node name="Vfx" type="Node3D" parent="Fx"]
+script = ExtResource("7_vfx")
+
+[node name="Systems" type="Node" parent="."]

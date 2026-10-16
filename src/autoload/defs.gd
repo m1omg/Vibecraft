@@ -9,7 +9,7 @@ const ABILITY_TYPES: Array[String] = ["target_unit", "target_point", "instant", 
 
 ## Applied to every unit def before validation so code can index fields without has() checks.
 const UNIT_DEFAULTS: Dictionary = {
-	"mana": 0, "armor": 0, "armor_type": "none", "speed": 0.0, "turn_rate": 12.0,
+	"mana": 0, "armor": 0, "armor_type": "unarmored", "speed": 0.0, "turn_rate": 12.0,
 	"sight": 10.0, "height": 1.5, "shape": "humanoid", "model": "", "flags": [],
 	"abilities": [], "attack": {}, "cost": {}, "footprint": [0, 0], "trains": [],
 	"food_provided": 0, "weapon": "none", "roof": "pyramid", "scale": 1.0,
@@ -51,27 +51,32 @@ func reload() -> void:
 
 
 func unit(id: String) -> Dictionary:
-	return _get(units, id, "unit")
+	return _lookup(units, id, "unit")
 
 
 func ability(id: String) -> Dictionary:
-	return _get(abilities, id, "ability")
+	return _lookup(abilities, id, "ability")
 
 
 func item(id: String) -> Dictionary:
-	return _get(items, id, "item")
+	return _lookup(items, id, "item")
 
 
 func upgrade(id: String) -> Dictionary:
-	return _get(upgrades, id, "upgrade")
+	return _lookup(upgrades, id, "upgrade")
 
 
 func doodad(id: String) -> Dictionary:
-	return _get(doodads, id, "doodad")
+	return _lookup(doodads, id, "doodad")
 
 
 func faction(id: String) -> Dictionary:
-	return _get(factions, id, "faction")
+	return _lookup(factions, id, "faction")
+
+
+## Combat tuning value from factions.json → combat.defaults.
+func combat_default(key: String, fallback: Variant) -> Variant:
+	return (combat.get("defaults", {}) as Dictionary).get(key, fallback)
 
 
 func has_unit(id: String) -> bool:
@@ -105,7 +110,7 @@ func _load_table(file_name: String) -> Dictionary:
 	return data
 
 
-func _get(table: Dictionary, id: String, kind: String) -> Dictionary:
+func _lookup(table: Dictionary, id: String, kind: String) -> Dictionary:
 	if table.has(id):
 		return table[id]
 	var key := kind + ":" + id
@@ -122,7 +127,27 @@ func _prepare_units() -> void:
 			if not d.has(k):
 				d[k] = UNIT_DEFAULTS[k].duplicate() if UNIT_DEFAULTS[k] is Array else UNIT_DEFAULTS[k]
 		d["id"] = id
+		_prepare_attack(d)
 		_validate_unit(id, d)
+
+
+## Fills attack timing defaults so the sim can index them directly. `acquire` is the auto-acquire
+## radius (0 = never auto-acquires or retaliates, e.g. workers); it never falls below the range.
+func _prepare_attack(d: Dictionary) -> void:
+	if not d.has("leash"):
+		d["leash"] = combat_default("leash", 14.0)
+	var a: Dictionary = d["attack"]
+	if a.is_empty():
+		return
+	for k: String in ["damage_point", "backswing"]:
+		if not a.has(k):
+			a[k] = combat_default(k, 0.4)
+	if not a.has("projectile"):
+		a["projectile"] = {}
+	if not a.has("range"):
+		a["range"] = 0.5
+	var acq := float(a.get("acquire", combat_default("acquire", 8.0)))
+	a["acquire"] = maxf(acq, float(a["range"]) + 1.0) if acq > 0.0 else 0.0
 
 
 func _validate_unit(id: String, d: Dictionary) -> void:
@@ -141,12 +166,33 @@ func _validate_unit(id: String, d: Dictionary) -> void:
 		var fp: Array = d["footprint"]
 		if fp.size() != 2 or int(fp[0]) <= 0 or int(fp[1]) <= 0:
 			errors.append("structure '%s' needs footprint [w, h] in pathing cells" % id)
+	_validate_combat(id, d)
 	for a: String in d["abilities"]:
 		if not abilities.has(a):
 			errors.append("unit '%s' references unknown ability '%s'" % [id, a])
 	for t: String in d["trains"]:
 		if not units.has(t):
 			errors.append("unit '%s' trains unknown unit '%s'" % [id, t])
+
+
+func _validate_combat(id: String, d: Dictionary) -> void:
+	var armor_types: Array = combat.get("armor_types", [])
+	if not armor_types.is_empty() and not armor_types.has(d.get("armor_type")):
+		errors.append("unit '%s' has unknown armor_type '%s'" % [id, d.get("armor_type")])
+	var a: Dictionary = d.get("attack", {})
+	if a.is_empty():
+		return
+	var attack_types: Array = combat.get("attack_types", [])
+	if not attack_types.is_empty() and not attack_types.has(a.get("type")):
+		errors.append("unit '%s' has unknown attack type '%s'" % [id, a.get("type")])
+	var dmg: Variant = a.get("damage")
+	if not dmg is Array or (dmg as Array).size() != 2 or float(dmg[0]) > float(dmg[1]):
+		errors.append("unit '%s' attack damage must be [min, max]" % id)
+	if float(a.get("cooldown", 0)) <= 0.0:
+		errors.append("unit '%s' attack cooldown must be > 0" % id)
+	var p: Dictionary = a.get("projectile", {})
+	if not p.is_empty() and float(p.get("speed", 0)) <= 0.0:
+		errors.append("unit '%s' projectile speed must be > 0" % id)
 
 
 func _validate_abilities() -> void:

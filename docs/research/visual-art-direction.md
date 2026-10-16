@@ -2,6 +2,32 @@
 
 Research date: 2026-10-16. Scope: the visual language of Warcraft III Classic (2002) and Reforged (2020), WC3 camera, scale and UI conventions, what makes Freecraft/Stratagus-style clones and cheap indie RTS look generic, modern stylized strategy games worth borrowing from, a reference-image list, and a concrete style plan for AI-generated assets (Krea image models feeding image-to-3D generators, no rigging) in Godot.
 
+**Fact-check pass (2026-10-16):**
+
+- **Verified against primary or reputable sources:**
+  - Camera defaults, from the `Blizzard.j` constants.
+  - Zoom patch notes for 1.33.0, 1.35.0 and 1.36.1.
+  - `war3map.w3e` formulas and tileset codes.
+  - Player-color RGB values.
+  - Upkeep tiers.
+  - Didier quotes (Game Informer, Eurogamer via Blizzplanet, Parka Blogs, Wikipedia; retired Nov 2023).
+  - Smithy-post quotes and the Jaina 700 to 15k polygon counts.
+  - Rumble color and upper-third rules.
+  - Godot 4.6 Compatibility SSAO, render modes and tonemappers.
+  - Battle Aces cancellation (23 May 2025).
+  - The GDC Orphea talk (Lana Bachynski, GDC 2019).
+- **Corrected:**
+  - Gryphon mount.
+  - Frost Wyrm and Dryad wording.
+  - Rumble "fussy" quote.
+  - Day/night game-hour length.
+  - Tileset-limit patch version.
+  - Doodad scale semantics.
+  - Stormgate and AoM attributions.
+  - Stratagus quote.
+  - Krea image minimum.
+  - Removed a dead Omake Books link.
+
 Conventions: "WC3 units" means World Editor game units (1 terrain tile = 128 units). Anything marked **(unverified)** comes from community memory, inference or a single weak source. Anything marked **(proposal)** is our own recommendation, not a WC3 fact.
 
 ---
@@ -12,7 +38,7 @@ Conventions: "WC3 units" means World Editor game units (1 terrain tile = 128 uni
 2. **Exaggerate the top third of every unit.** The RTS camera mostly sees the upper third of a character (Warcraft Rumble art team). Put the identity there: helmet, shoulders, weapon head, banner, roof.
 3. **Use one or two major color areas per unit, plus team color.** Rumble rule: most minis have one or two major color areas so players can identify them quickly.
 4. **Make silhouettes and shapes oversized and simple.** Didier: "bigger shapes, not as much little dots", and characters "a little bit bigger and over-proportioned". House rules attributed to him: "Bigger is ALWAYS better" and "one-handed weapons should be (at least) as big as two-handed weapons."
-5. **Never let size hurt readability.** Reforged had to shrink the Frost Wyrm's wingspan because several of them "obscured view of everything beneath them". It also reduced the Dryad's spear so players could see the whole unit, and kept the Gryphon mount enlarged for clarity.
+5. **Never let size hurt readability.** Reforged first modeled the Frost Wyrm with a "realistic (aka massive) wingspan", but several of them "obscured view of everything beneath them", so the artists had to balance "winged majesty and visual clarity". It also "reduces the focus of the spear" on the Dryad so players can take in the whole unit. In Classic, the Gryphon's mount half was made "much more prominent" to keep the unit unambiguous in battle; Reforged rebalanced it toward the rider.
 6. **Paint the lighting into the texture, and keep scene lighting soft.** WC3 Classic textures carry painted light: a top-lit gradient, painted AO and painted metal highlights. Real-time lighting is low-contrast. Avoid PBR gloss: Reforged was criticized because shiny plate made grouped Footmen and Knights "blend together and lose silhouettes".
 7. **Keep the environment quieter than the units.** Use lower saturation, a narrower value range and less detail on terrain. Riot's Summoner's Rift update stated this as "clamping value ranges" and "reducing character occlusion".
 8. **Use the WC3 camera:** distance 1650, angle of attack 304° (that is, pitch -56°), FOV 70 (likely horizontal at 4:3), far Z 5000. Reforged added an optional zoom-out, with presets up to 2250. See §2 for Godot values.
@@ -46,18 +72,18 @@ Conventions: "WC3 units" means World Editor game units (1 terrain tile = 128 uni
 | Low poly | The community reports about 1,500 triangles as the practical cap for classic models (unverified). Blizzard says Jaina went from about 700 polys (Classic) to 15,000 (Reforged). | Big planar shapes make silhouettes crisp. |
 | Saturated, warm-biased palette | Strong hue identity per faction: humans blue/white/gold, orcs red/brown/green skin, undead purple/teal/bone, night elves violet/teal/silver (observational). Terrain is mid-value and less saturated. | Units pop against terrain by both hue and saturation. |
 | Team color | Player color fills cloth areas, banners, shoulder trim and roof flags. In-engine it is a solid color shown through alpha-masked texture regions, plus a soft "team glow" under some units (unverified detail). | It identifies ownership instantly even when unit type is unclear. |
-| Lighting | Day/night "DNC" light models per tileset. The terrain and unit light emitters are white by day and shift to blue at night (Hive community docs). Contrast is low, with painted shading carrying form. Units have soft blob shadows, and buildings have shadow decals (unverified detail). | Even lighting keeps painted textures as authored. Night is readable because it is tinted blue, not darkened to black. |
+| Lighting | Day/night "DNC" light models per tileset. The terrain and unit light emitters are white by day and shift to blue at night (unverified: the cited Hive thread only says modified DNC models make "the nights are darker"). Contrast is low, with painted shading carrying form. Units have soft blob shadows, and buildings have shadow decals (unverified detail). | Even lighting keeps painted textures as authored. Night is readable because it is tinted blue, not darkened to black. |
 | VFX | Additive, saturated particle sprites and ribbon trails, chunky and short-lived, with emissive colors (green fel, blue frost, orange fire). | They read through any background. |
 
 **Blizzard art rules (attributed to Didier, via a review of his WoW TCG art book):** "Less is NEVER more", "Bigger is ALWAYS better", "All one-handed weapons should be (at least) as big as two-handed weapons", "If all else fails, add skulls and spikes and paint it red". His retirement note (2023) advised "always draw big shoulder pads" (GameSpot). Wikipedia summarizes his aim as "over-the-top, over-proportioned, and really colorful". In the StarCraft II Eurogamer interview he said that because "all the art … is going to be viewed in the top-down, three-quarter view", they focus on silhouettes from that angle and keep "bigger shapes, not as much little dots".
 
 ### 1.2 Warcraft III Reforged (2020): what changed and what to learn
 
-- **Intent:** units slightly "overbuilt" so they are easier to read from above (lead producer Pete Stilwell, Game Informer 2018). Orc models went through months of proportion iterations because a WoW third-person model looks wrong from an RTS camera.
+- **Intent:** units slightly "overbuilt" so they are easier to read from above (lead producer Pete Stilwell, Game Informer 2018). Blizzard made several Orc model versions with altered proportions because "a model that worked in third person for WOW will look different in a top-down RTS".
 - **Material choice:** "stylized colors and proportions, but realistic flesh, clothing, and metal textures" (Blizzard Orc smithy post). Polygon counts rose about 20× (Jaina 700 to 15k).
-- **Readability fixes made during production:** Frost Wyrm wingspan reduced (it obscured the battlefield). Dryad spear reduced so the unit is visible. Gryphon mount enlarged. Kel'Thuzad's details added "without detracting from visual legibility". Shaman: "balance the number of bones and other details against the need for an instantly recognizable silhouette".
+- **Readability fixes made during production:** Frost Wyrm's initially "realistic (aka massive)" wingspan was balanced against "visual clarity" because grouped wyrms obscured the battlefield. Less focus on the Dryad's spear so the whole unit reads. Gryphon Rider: Classic's mount was "much more prominent" for clarity; Reforged gave the rider more visible detail. Kel'Thuzad's details added "without detracting from visual legibility". Shaman: "balance the number of bones and other details against the need for an instantly recognizable silhouette".
 - **Criticisms (lessons for us):**
-  - The art leaned toward realism and the movie/cinematic look (Windows Central, community).
+  - The art leaned toward realism and a cinematic look. Forum posters reacting to the 2018 pre-release screenshots complained of "unnecessary realism". The Hive recap of Blizzard's Q&A says the team moved from a "more cartoony look" to "a grittier look". The Windows Central article could not be read to confirm its part.
   - Glossy armor made grouped units merge and shift color with reflections (Blizzard forums).
   - Environments were called "hazy and gray" and desaturated, while other screenshots were called too bright.
   - Blizzard acknowledged that colors and shading differed from the original and promised a patch (PC Games Insider).
@@ -67,7 +93,7 @@ Conventions: "WC3 units" means World Editor game units (1 terrain tile = 128 uni
 ### 1.3 Why this reads well top-down (design principles)
 
 1. **Upper-third identity.** The camera sees the head, shoulders, back and weapon top. Design from a 56° overhead thumbnail first, not a front view (Rumble: "the top-down camera mostly shows the upper third").
-2. **Color blocking.** Use 1–2 big local colors plus team color plus 1 accent (metal or skin). Avoid "fussy material breakups" (Rumble art director Jeremy Collins).
+2. **Color blocking.** Use 1–2 big local colors plus team color plus 1 accent (metal or skin). Rumble: "Most of our minis have 1-2 major color break-ups", and "We had to make sure there wasn't a lot of material breakups" (art director Jeremy Collins, PocketGamer.biz).
 3. **Value grouping.** Keep three value masses per unit: dark (legs and base), mid (body), light (shoulders, head, weapon). A vertical gradient (darker low, lighter high) separates objects from the ground. A Polycount critique recommends vertical gradients so "trees stand out from the ground".
 4. **Exaggerated, held poses and broad motion.** Rumble's senior animator: clear silhouettes, exaggerated poses and broad movements help players identify units at a glance.
 5. **Environment as stage, not subject.** Riot's Summoner's Rift update put "Clarity and Readability" first and clamped environment value ranges.
@@ -95,16 +121,16 @@ Conventions: "WC3 units" means World Editor game units (1 terrain tile = 128 uni
 - **Height:** final ground height = `(ground_height - 8192 + (layer - 2) * 512) / 4`. So **one cliff level = 512/4 = 128 units**, the same as one tile width.
 - **Water:** water level = `(water_level - 8192)/4 - 89.6`.
 - **Ramps:** a tilepoint flag `0x0010` marks a ramp between two layers.
-- **Limits:** 4-bit ground texture index, so 16 ground textures per map (Reforged 2.0.4 raised this to 64). Up to 15 cliff types, cliff variation 0–7, 5-bit ground variation. Cliff models are a fixed kit (94 models), selected by the corner height pattern.
-- **Tile textures** are 256×256 (one tile set of transitions) or 512×256 (double width, with extra variations) according to a Hive answer. They are blended in a fixed per-tileset order, where later textures overlap earlier ones. The exact layout is a 4×4 grid of transition masks plus variations (unverified).
+- **Limits:** 4-bit ground texture index, so 16 ground textures per map. Reforged raised the tileset limit "from 16 to 64": the notes body says Version 2.0.3 (Build 23101), although the forum thread is titled 2.0.4. Up to 15 cliff types, cliff variation 0–7, 5-bit ground variation. Cliff models are a fixed kit selected by the corner height pattern (the count of 94 models is unverified).
+- **Tile textures** are 256×256 or 512×256, according to a Hive answer. The answer does not say what the extra half holds; "extra variations" is unverified. They are blended in a fixed per-tileset order, where later textures overlap earlier ones. The exact layout is a 4×4 grid of transition masks plus variations (unverified).
 - **Natural blending ladder** (Hive advanced terraining tutorial): "Cracked Dirt -> Dirt -> Grassy Dirt -> Grass -> Thick Grass", ordered in the tileset so transitions are not sharp. Shores use dirt and grassy dirt near water.
-- **Doodads:** default random scale 0.80–1.20, random rotation, per-variation tinting (RGB 0–255). Place rocks, shrubs and a few trees on cliff edges. Place river rushes, rocks, shrubs and lily pads along shores.
+- **Doodads:** most Blizzard doodads have an editor minimum scale of 0.80 and maximum of 1.20 (Hive tutorial). These are limits on how far a placed doodad can be scaled, not a confirmed random-scale default. Random rotation and per-variation tinting (RGB 0–255) are unverified. Place rocks, shrubs and a few trees on cliff edges. Place river rushes, rocks, shrubs and lily pads along shores.
 - **Fog:** terrain fog with start 0 to avoid a sharp boundary.
 
 **How a WC3 melee map is composed (observational):**
 - **Macro:** start locations on mid or high ground, each with gold mine plus tree line. Expansions sit on lower ground. Creep camps sit in pockets near paths. Ramps (usually 2–3 tiles wide) are the choke points between cliff levels. The map edge is dense tree walls or cliffs, never a void.
 - **Meso:** roads (cobble or dirt) trace main paths. Grass-to-dirt transitions are wide and ragged, never hard tile edges. Cliffs come in 1–2 level steps with rock clusters at the base. Water sits in low basins with shallow (walkable) and deep bands.
-- **Micro:** doodad clusters of 3–7 objects (rock plus shrub plus grass tuft or flower). Fences, ruins and signs hint at a lived-in world. Tree lines are irregular with 2–3 tree variations and the ±20% scale jitter.
+- **Micro:** doodad clusters of 3–7 objects (rock plus shrub plus grass tuft or flower). Fences, ruins and signs hint at a lived-in world. Tree lines are irregular with 2–3 tree variations. Our proposal: ±20% scale jitter, matching the 0.8–1.2 editor scale range.
 - **Hierarchy:** units are the most saturated, buildings next, doodads and trees mid, terrain least saturated.
 
 ---
@@ -113,12 +139,12 @@ Conventions: "WC3 units" means World Editor game units (1 terrain tile = 128 uni
 
 | Field | WC3 default | Confidence / note | Godot 4.7 equivalent (proposal: 1 m = 64 WC3 units, so 1 tile = 2 m and 1 cliff level = 2 m) |
 |---|---|---|---|
-| Target distance | **1650** | Hive Workshop "standard value of 1650", and the PCGamingWiki camera-tool listing | 25.8 m from look-at point |
-| Angle of attack | **304°** | Hive: "304 degrees is the standard game camera AoA". The PCGW tool lists 300 (conflict, small). | Camera pitch = 304 - 360 = **-56°** (`rotation_degrees.x = -56`) |
-| Field of view | **70** | PCGW tool listing. The axis is not documented. | See below |
-| Far Z | **5000** (max 10,000) | PCGW tool listing; Hive says the max is 10,000 | `far = 80` m (5000/64 = 78 m) |
-| Rotation | 90 (map "north" is screen-up) | Hive example value (unverified as default) | Yaw 0, camera looks toward -Z |
-| Roll / Z offset | 0 / 0 | Hive example values | |
+| Target distance | **1650** | Verified: `Blizzard.j` constant `bj_CAMERA_DEFAULT_DISTANCE = 1650`; Hive Workshop "standard value of 1650" | 25.8 m from look-at point |
+| Angle of attack | **304°** | Verified: `bj_CAMERA_DEFAULT_AOA = 304`; Hive: "304 degrees is the standard game camera AoA". The PCGW tool listing's 300 is wrong. | Camera pitch = 304 - 360 = **-56°** (`rotation_degrees.x = -56`) |
+| Field of view | **70** | Verified: `bj_CAMERA_DEFAULT_FOV = 70`. The axis is not documented. | See below |
+| Far Z | **5000** (max 10,000) | Verified: `bj_CAMERA_DEFAULT_FARZ = 5000` (`bj_CAMERA_MIN_FARZ = 100`); Hive says the max is 10,000 | `far = 80` m (5000/64 = 78 m) |
+| Rotation | 90 (map "north" is screen-up) | Verified: `bj_CAMERA_DEFAULT_ROTATION = 90` | Yaw 0, camera looks toward -Z |
+| Roll / Z offset | 0 / 0 | Roll verified (`bj_CAMERA_DEFAULT_ROLL = 0`); Z offset 0 is a Hive example value | |
 | Near Z | about 16 (unverified) | | `near = 0.3` m |
 | Zoom | Classic: fixed default view (wheel zoom-in only, unverified). Reforged 1.33.0: optional mouse-wheel zoom with "Default zoom and maximum zoom" sliders, Page Up/Down, F5 resets. 1.35.0 added zoom levels **1750, 2100, 2250**. 1.36.1 allows granular values (for example 1933). | Blizzard patch notes | Zoom range **1650 to 2250**, that is 25.8 to 35.2 m. Optional close zoom to about 1200 for screenshots. |
 
@@ -134,7 +160,7 @@ In Godot, use `keep_aspect = KEEP_HEIGHT` with `fov ≈ 55`. Widescreen then rev
 
 Use this to size base layouts and sight radii. For example, a Footman's 1400 day sight is about 11 tiles. The warcraft.wiki.gg page lists 140/80, which appears to be in tens.
 
-**Day/night** (Liquipedia, via search): a full cycle is 480 s (240 s day, 240 s night). Dawn is at 06:00 and dusk at 18:00, and each game hour is 40 s. Sight is lower at night.
+**Day/night** (Liquipedia, via search; the page could not be fetched to re-check): a full cycle is 480 s (240 s day, 240 s night). Dawn is at 06:00 and dusk at 18:00. That makes each game hour **20 s** (480 / 24). An earlier draft said 40 s; that contradicts the 480 s cycle. A Liquipedia excerpt quoted in `gameplay-mechanics.md` also says "40 real seconds" (unverified, unreconciled). Sight is lower at night. The in-game indicator has 8 ticks per day or night phase (classic.battle.net).
 
 **Godot camera rig (proposal):**
 
@@ -158,10 +184,10 @@ CameraRig (Node3D, at look-at point on ground; pan with edge-scroll / WASD / mid
 **Known facts:**
 - 1 tile = 128 units, and 1 cliff level = 128 units.
 - Pathing is evaluated on a finer grid. The smallest editor cell is 32×32 (Hive pathing thread, community-observed).
-- Unit collision size behaves like a radius. Collision 0–15 occupies 1×1 cell, 16–31 occupies 2×2, 32–47 occupies 3×3, and 48+ occupies 4×4.
+- Unit collision size behaves like a radius. Collision 0–15 occupies 1×1 cell, 16–31 occupies 2×2, 32–47 occupies 3×3, and 48–63 occupies 4×4 (Hive thread, community-tested).
 - The Footman's collision size is 31 (warcraft.wiki.gg, Liquipedia).
 - "Selection scale" (not collision) controls the green selection circle.
-- Doodads are randomly scaled 0.8–1.2.
+- Most Blizzard doodads allow an editor scale of 0.8–1.2.
 
 **Size relationships to reproduce:**
 - Building footprints: farm about 2×2 tiles, barracks about 3×3, town hall about 4×4 (unverified; from memory of WC3 placement grids). Tree footprint about 1 tile.
@@ -221,7 +247,7 @@ CameraRig (Node3D, at look-at point on ground; pan with edge-scroll / WASD / mid
 ```
 
 - **Command card:** 12 slots, indices 0–11 bottom-right (JASS origin frames). The conventional placement puts standard orders (Move, Stop, Hold, Attack, Patrol) in the top rows and abilities and build/train buttons in the lower rows. Heroes get a "learn skill" sub-menu (unverified exact slots).
-- **Top bar:** day/night clock in the center. Upkeep text sits beside food. Upkeep tiers (TFT): 0–50 food none, 51–80 low (70% gold income), 81–100 high (40%). In RoC the tiers were 0–40, 41–70 and 71–90.
+- **Top bar:** day/night clock in the center. Upkeep text sits beside food. Upkeep tiers (verified, classic.battle.net, current/TFT-era values): 0–50 food none (100% income), 51–80 low (70% gold income), 81–100 high (40%). In RoC the tiers were 0–40, 41–70 and 71–90 (unverified).
 - **Reforged:** decoupled UI elements so the game renders beneath the console, and kept the 12-button card.
 - **Our version (proposal):**
   - Keep the structure because it is a genre convention.
@@ -239,7 +265,7 @@ CameraRig (Node3D, at look-at point on ground; pan with edge-scroll / WASD / mid
 **What it was:**
 - A Linux Warcraft II clone (ALE Clone 1998, renamed Freecraft 1999).
 - Blizzard sent a cease-and-desist in 2003. The project became Stratagus (engine) plus Wargus (needs original WC2 data).
-- Stratagus is "a 2D engine based on a set of pictures in a .png file to show animation" (Wikipedia mirrors).
+- Stratagus is "a 2D engine based on cross-platform open-source libraries", and "Animations are created from a set of .png pictures" (Wikipedia). The C&D letter arrived in June 2003.
 
 **Why it reads as generic or dated** (analysis):
 - Square tile grid with visible tile repetition and right-angle coastlines.
@@ -282,10 +308,10 @@ CameraRig (Node3D, at look-at point on ground; pan with edge-scroll / WASD / mid
 |---|---|---|
 | **Warcraft Rumble** (Blizzard) | Toy-miniature conceit. 1–2 major color areas per unit. The upper third carries identity. Saturated, welcoming colors. Clean concept, blockout, sculpt and paint pipeline. | Mobile-scale simplification. Our units need a bit more painted texture richness. |
 | **Heroes of the Storm** (Blizzard) | The modern renderer version of the Warcraft look. GDC talk "Bringing Orphea to Heroes of the Storm" covers silhouettes and balancing franchise styles, "gameplay first". | MOBA scale (fewer units). |
-| **Stormgate** (Frost Giant, ex-WC3/SC2 devs) | Each faction gets its own unified look (art director Jesse Brophy's ordered criteria: purpose, appeal, performance). The colorful style keeps clarity "even in the most chaotic battles". | A cautionary tale: the cartoony look was polarizing, fans asked for more grounded "StarCraft-like" art, and the studio pivoted. **Grounded painterly beats plastic cartoony.** |
+| **Stormgate** (Frost Giant, ex-WC3/SC2 devs) | Each faction gets its own unified look (art director Jesse Brophy's art reveal). A GamingBolt reviewer said the simple, colorful style gives "a clarity to even the most chaotic battles". (An earlier draft attributed "purpose, appeal, performance" criteria to Brophy; this is unverified.) | A cautionary tale: GamingBolt called the art "divisive". Fans said the graphics "looked a bit more cartoon-like" and wanted something more StarCraft-like. Frost Giant brought in a StarCraft II art director and moved to a "grittier" look (GamesBeat). **Grounded painterly beats plastic cartoony.** |
 | **Battle Aces** (Uncapped, cancelled May 2025) | Colorful, charismatic robot units with ultra-clear battles. | Readability alone did not save it, so pair clarity with identity and tone. |
 | **Northgard** (Shiro) | Crisp units on richly textured terrain, an "original Warcraft with modern assets" vibe. Territory zones with painted borders. Seasonal winter overlay on terrain. | Units are small. We keep WC3's bigger unit scale. |
-| **Age of Mythology: Retold** | Big myth monsters with huge silhouettes. God-power spectacle ("more God powers exploding across the map"). Monsters "designed for viewing from high above". | Semi-realistic materials. Keep ours painterly. |
+| **Age of Mythology: Retold** | Big myth monsters with huge silhouettes. God-power spectacle ("more God powers exploding across the map", Xbox Wire). An earlier draft quoted monsters as "designed for viewing from high above"; that phrase is not in the cited Xbox Wire or Pure Xbox pages (unverified). | Semi-realistic materials. Keep ours painterly. |
 | **Songs of Conquest** | Stylized assets lit by modern dynamic light, water reflections and particles. Each campaign setting has its own palette. | Players report busy visuals at zoom. Keep terrain quiet. |
 | **Tiny Glade** | Procedural structures that self-assemble (walls, fences, roofs adapt). Soft, warm light. Cozy diorama feel. | Not combat. Borrow only the procedural fences and walls and the light softness. |
 | **Bad North** | Radical minimalism ("Minimalism is the thread that runs through just about everything"). Diorama islands, muted soft palette, units as tiny banners and silhouettes. Readable even by sound. | Too minimal for WC3 feel. Borrow the restraint on terrain and unit banners. |
@@ -313,12 +339,12 @@ Blizzard CDN images come from the official "Tales from the Smithy" Reforged post
 | 4 | [Kael'thas (Blood Mage)](https://bnetcmsus-a.akamaihd.net/cms/page_media/R4V61X03MLEI1579635422930.jpg) | Slender build still reads through oversized shoulder pieces and orbs |
 | 5 | [Sorceress](https://bnetcmsus-a.akamaihd.net/cms/page_media/ONPE5OUYFL4U1579635411119.jpg) | Emblem on cloak as faction ID, cloth as team-color carrier |
 | 6 | [Mortar Team](https://bnetcmsus-a.akamaihd.net/cms/page_media/QKPHDGE6A5QG1579635425943.jpg) | Multi-figure unit composition and a prop-heavy silhouette |
-| 7 | [Gryphon Rider](https://bnetcmsus-a.akamaihd.net/cms/page_media/71SYW3J4GTIP1579635417322.jpg) | Mount enlarged for clarity, rider detail kept small |
+| 7 | [Gryphon Rider](https://bnetcmsus-a.akamaihd.net/cms/page_media/71SYW3J4GTIP1579635417322.jpg) | Classic made the mount "much more prominent" for clarity. Reforged gives the rider more detail and the mount less dominance. |
 | 8 | [Illidan (Demon Hunter)](https://bnetcmsus-a.akamaihd.net/cms/page_media/39/39Q99JC5MXXH1575589778948.jpg) | Emissive tattoo channels, wing and glaive silhouette |
 | 9 | [Keeper / Cenarius](https://bnetcmsus-a.akamaihd.net/cms/page_media/yq/YQ873P0EP10Y1575589659623.jpg) | Antlers and claw hand made more defined for top-down read |
 | 10 | [Maiev (Warden)](https://bnetcmsus-a.akamaihd.net/cms/page_media/t9/T9KWJL7BPJ3G1575589804112.jpg) | Crescent back piece and bladed cape as ID shapes visible from above |
 | 11 | [Archer](https://bnetcmsus-a.akamaihd.net/cms/page_media/ib/IB3NYFUYPGLP1575589601098.jpg) | Bow redesigned to a clear recurve, ranged-unit read |
-| 12 | [Dryad](https://bnetcmsus-a.akamaihd.net/cms/page_media/oq/OQ2DMT6STUJI1575589746916.jpg) | Spear shrunk so the body stays visible. Recolored fawn (purple read as "undead") |
+| 12 | [Dryad](https://bnetcmsus-a.akamaihd.net/cms/page_media/oq/OQ2DMT6STUJI1575589746916.jpg) | Less focus on the spear, so the body stays visible. Recolored to fawn: Blizzard called the original's grayish-purple "almost undead in nature". |
 | 13 | [Druid of the Claw](https://bnetcmsus-a.akamaihd.net/cms/page_media/w2/W2TOFS3XST0D1575589714958.jpg) | Bulky creature mass, fur color blocking |
 | 14 | [Mountain Giant](https://bnetcmsus-a.akamaihd.net/cms/page_media/6r/6R57HJKPRCBM1575589830605.jpg) | Shoulder crystals as top-down identifiers |
 | 15 | [Arthas (Death Knight)](https://bnetcmsus-a.akamaihd.net/cms/page_media/mb/MBX05RZQ6TZ21579022880906.jpg) | Same hero, new faction palette (teal/ice), recognizable by shapes |
@@ -327,7 +353,7 @@ Blizzard CDN images come from the official "Tales from the Smithy" Reforged post
 | 18 | [Anub'arak (Crypt Lord)](https://bnetcmsus-a.akamaihd.net/cms/page_media/ck/CK3ASK589D3B1579023329296.jpg) | Insectoid, wide low silhouette |
 | 19 | [Meat Wagon](https://bnetcmsus-a.akamaihd.net/cms/page_media/75/75CCSTHVKM6T1579023364236.jpg) | Siege vehicle read: chunky wheels, a payload visible from above |
 | 20 | [Crypt Fiend](https://bnetcmsus-a.akamaihd.net/cms/page_media/41/411VLH8US81Z1579023397707.jpg) | Spider-legged silhouette, legs as primary read |
-| 21 | [Frost Wyrm](https://bnetcmsus-a.akamaihd.net/cms/page_media/w3/W30LCO6V1F9C1579023425339.jpg) | Wingspan reduced because flyers must not hide the battlefield |
+| 21 | [Frost Wyrm](https://bnetcmsus-a.akamaihd.net/cms/page_media/w3/W30LCO6V1F9C1579023425339.jpg) | A "realistic (aka massive)" wingspan was balanced for clarity because flyers must not hide the battlefield |
 | 22 | [Samuro (Blademaster)](https://bnetcmsus-a.akamaihd.net/cms/page_media/CGF8NH7UQ8PS1579713521493.jpg) | Hero variants share a recognizable silhouette |
 | 23 | [Drek'Thar (Far Seer)](https://bnetcmsus-a.akamaihd.net/cms/page_media/PSAPBRGAIVJ91579713516017.jpg) | Wolf-mount hero, fur and bone accents |
 | 24 | [Cairne (Tauren Chieftain)](https://bnetcmsus-a.akamaihd.net/cms/page_media/M7ZMBZB3ZL6Q1579713513267.jpg) | Totem as giant weapon, horn silhouette |
@@ -349,10 +375,10 @@ Blizzard CDN images come from the official "Tales from the Smithy" Reforged post
 | 40 | [Netzwelt Reforged screenshot gallery](https://www.netzwelt.de/galerie/23629-warcraft-3-reforged.html) | Reforged in-game terrain, cliffs, tree walls, UI |
 | 41 | [Worthplaying 2002 "golden" WC3 screens](https://worthplaying.com/article/2002/6/23/news/4404-warcraft-iii-reign-of-chaos-golden-screens/) | Classic 2002 in-game look: tile blending, doodads, HUD |
 | 42 | [Neowin: high-res WC3 beta screenshots](https://www.neowin.net/news/high-res-warcraft-3-screenshots/) | Classic-era screenshots |
-| 43 | [Macworld E3 WC3 screens](https://www.macworld.com/article/161365/war3.html) | Pre-release look and camera |
+| 43 | [Macworld: "Blizzard: Warcraft III coming to Mac OS X" (May 2001)](https://www.macworld.com/article/161365/war3.html) | A news item, not a gallery. It references E3-era screenshots of the Windows build. Low value. |
 | 44 | [Warcraft wiki: box art](https://warcraft.wiki.gg/wiki/Box_art) | Key-art composition per race (painted, saturated) |
-| 45 | [Sebastian Wagner: Stormgate Human Vanguard (ArtStation)](https://sebastian-wagner.artstation.com/projects/6Lay80) | Building concept sheets for an RTS faction (barracks, hangar, mech bay) |
-| 46 | [Normalweird: WoW tileset textures (ArtStation)](https://normalweird.artstation.com/projects/98JqqW) | Blizzard-style tileable hand-painted ground textures (WoW: Midnight). Target for terrain tiles |
+| 45 | [Sebastian Wagner: Stormgate Human Vanguard (ArtStation)](https://sebastian-wagner.artstation.com/projects/6Lay80) | Building concept sheets for an RTS faction (barracks, hangar, mech bay). Unverified: ArtStation blocks automated fetching. |
+| 46 | [Normalweird: WoW tileset textures (ArtStation)](https://normalweird.artstation.com/projects/98JqqW) | Blizzard-style tileable hand-painted ground textures (WoW: Midnight). Target for terrain tiles. Unverified: ArtStation blocks automated fetching. |
 | 47 | [ArtStation Magazine: Heroes of the Storm 2.0 Art Blast](https://magazine.artstation.com/2017/05/blizzard-entertainment-heroes-storm-art-blast/) | Modern Blizzard-stylized environments, characters and UI |
 | 48 | [ArtStation Magazine: WoW Dungeon Environment Art Blast](https://magazine.artstation.com/2018/09/blizzard-entertainment-world-warcraft-art-blast-dungeon-environment-art/) | Hand-painted environment modules, color keys |
 | 49 | [Polycount: "Show your hand-painted stuff"](https://polycount.com/discussion/125954/show-your-hand-painted-stuff-pls/p53) | Low-poly hand-painted props and characters, texture technique |
@@ -363,7 +389,7 @@ Blizzard CDN images come from the official "Tales from the Smithy" Reforged post
 | 54 | [Hive advanced terraining tutorial](https://www.hiveworkshop.com/threads/advanced-terraining-tutorial.203428) | Tile ladder, shore dressing, fog setup |
 | 55 | [GDC Vault: Bringing Orphea to HotS](https://gdcvault.com/play/1025744/contactUs) | Silhouette techniques and franchise-style balancing |
 | 56 | [Brütal: The Art of Samwise (Abrams)](https://www.abramsbooks.com/product/brutal_9781419747755/) | The Didier style bible (book) |
-| 57 | [The Art of Northgard (artbook)](https://omakebooks.com/collections/artbooks/products/the-art-of-northgard-standard) | Stylized Norse RTS concept work |
+| 57 | The Art of Northgard (artbook; the earlier Omake Books link returns 404 and was removed) | Stylized Norse RTS concept work |
 | 58 | [Songs of Conquest digital artbook](https://store.epicgames.com/p/songs-of-conquest--digital-artbook) | Per-biome palettes in a stylized strategy game |
 
 ---
@@ -462,7 +488,7 @@ Never include "Warcraft", "Blizzard", "Samwise", "Azeroth" or WC3 unit names.
    > bust portrait of [character], exaggerated heroic features, big jaw/brow [as fits], painted, warm key light, cool shadow, plain background
 
 **Cohesion levers:**
-- **Train a Krea style (LoRA)** on 10–30 curated, uniformly lit images of our approved look (Krea docs: minimum 3, 10–30 recommended, uniform lighting and color balance). Use that style code for every 2D generation.
+- **Train a Krea style (LoRA)** on 10–30 curated, uniformly lit images of our approved look. The Krea user guide sets a minimum of 3 images, says "Larger datasets (10-30 images) improve the model's ability to generalize", and advises "uniform lighting, color balance, and resolution". The Krea developer tutorial calls 5 images the "minimum viable" and recommends 10–30. Use that style code for every 2D generation.
 - Keep a single moodboard.
 - Lock seeds per asset family.
 - Generate all units of a faction in one batch session with the same suffix.
@@ -564,20 +590,22 @@ For a softer, banded "painted" ramp, replace `diffuse_lambert_wrap` with a `ligh
 
 ## Sources
 
+- [Blizzard.j via lep/jassdoc (bj_CAMERA_DEFAULT_DISTANCE 1650, AOA 304, FOV 70, FARZ 5000, ROTATION 90, ROLL 0)](https://raw.githubusercontent.com/lep/jassdoc/master/Blizzard.j)
+- [JassBot: bj_CAMERA_DEFAULT_FOV = 70](https://lep.duckdns.org/jassbot/doc/bj_CAMERA_DEFAULT_FOV)
 - [Hive Workshop: Cameras (default distance 1650, AoA 304, FarZ max 10,000)](https://www.hiveworkshop.com/threads/cameras.160369/)
-- [PCGamingWiki: Advanced Camera Control (defaults incl. FOV 70, FarZ 5000; via search snippet, page returned 403)](https://community.pcgamingwiki.com/files/file/1145-advanced-camera-control/)
+- [PCGamingWiki: Advanced Camera Control (via search snippet; the page returned 403. Its AoA of 300 conflicts with Blizzard.j's 304)](https://community.pcgamingwiki.com/files/file/1145-advanced-camera-control/)
 - [Blizzard: Warcraft III Reforged Patch 1.33.0 (camera zoom options)](https://news.blizzard.com/en-us/article/23816417/warcraft-iii-reforged-patch-1-33-0-now-live)
 - [Blizzard: Warcraft III Reforged Patch 1.35.0 (zoom levels 1750/2100/2250)](https://news.blizzard.com/en-gb/article/23896791/warcraft-iii-reforged-patch-1-35-0-now-live)
 - [Blizzard: Patch notes 1.36.1 (granular zoom)](https://news.blizzard.com/en-us/article/23987390/warcraft-iii-reforged-patch-notes-version-1-36-1)
 - [HiveWE wiki: war3map.w3e terrain format (tile 128, height formulas, tileset codes)](https://github.com/stijnherfst/HiveWE/wiki/war3map.w3e-Terrain)
 - [Hive Workshop wiki: War3map.w3e – Terrain](https://wiki.hiveworkshop.com/index.php/War3map.w3e_-_Terrain)
-- [Blizzard forums: Reforged 2.0.4 patch notes (tileset limit 16 to 64)](https://us.forums.blizzard.com/en/warcraft3/t/warcraft-iii-reforged-patch-notes-version-204/36567/4)
+- [Blizzard forums: Reforged patch notes thread (tileset limit 16 to 64; the post body says 2.0.3 Build 23101)](https://us.forums.blizzard.com/en/warcraft3/t/warcraft-iii-reforged-patch-notes-version-204/36567/4)
 - [Hive Workshop: Advanced terraining tutorial](https://www.hiveworkshop.com/threads/advanced-terraining-tutorial.203428)
 - [Hive Workshop: How to use a custom terrain texture (256×256 vs 512×256)](https://www.hiveworkshop.com/threads/how-to-use-a-custom-terrain-texture.214600)
 - [Hive Workshop: Pathing collision size values into real values](https://www.hiveworkshop.com/threads/pathing-collision-size-values-into-real-values.271205)
 - [Hive Workshop: Let's make a pathing tutorial (WIP)](https://www.hiveworkshop.com/threads/wip-lets-make-a-pathing-tutorial.307864/)
-- [Hive Workshop: DNC lighting / brightness thread](https://www.hiveworkshop.com/threads/is-there-anyway-i-can-change-in-game-lighting-brightness-without-fog.304188)
-- [Hive Workshop: WC3 editor player colors reference](https://www.hiveworkshop.com/threads/wc3-editor-player-colors-reference.306608)
+- [Hive Workshop: DNC lighting / brightness thread (does not confirm the white-day/blue-night claim)](https://www.hiveworkshop.com/threads/is-there-anyway-i-can-change-in-game-lighting-brightness-without-fog.304188)
+- [Hive Workshop: WC3 editor player colors reference (links to an external sheet; the RGB values are verified via w3ts instead)](https://www.hiveworkshop.com/threads/wc3-editor-player-colors-reference.306608)
 - [w3ts color utilities (player color RGB values)](https://cdn.jsdelivr.net/npm/w3ts@3.0.2/utils/color.lua)
 - [JassBot: BlzGetOriginFrame (command button indices 0–11)](https://lep.duckdns.org/jassbot/doc/BlzGetOriginFrame)
 - [Blizzard forums: UI bottom bar customization (Reforged UI decoupled, 12-icon card)](https://us.forums.blizzard.com/en/warcraft3/t/ui-bottom-bar-customization/1080)
@@ -630,7 +658,6 @@ For a softer, banded "painted" ramp, replace `diffuse_lambert_wrap` with a `ligh
 - [PC Gamer: Battle Aces hands-on](https://www.pcgamer.com/games/rts/battle-aces-deckbuilding-rts-hands-on-preview/)
 - [Gematsu: Battle Aces canceled](https://www.gematsu.com/2025/05/battle-aces-canceled)
 - [Checkpoint Gaming: Northgard review](https://checkpointgaming.net/reviews/2018/03/northgard-review/)
-- [Omake Books: The Art of Northgard](https://omakebooks.com/collections/artbooks/products/the-art-of-northgard-standard)
 - [Xbox Wire: Beyond a Remake – Age of Mythology: Retold](https://news.xbox.com/en-us/2024/08/20/beyond-a-remake-how-age-of-mythology-retold-revives-and-retools-a-beloved-classic/)
 - [Pure Xbox: AoM Retold interview](https://purexbox.com/features/interview-age-of-mythology-retold-a-reimagined-classic-makes-its-grand-arrival-on-xbox-and-pc)
 - [God is a Geek: Songs of Conquest review](https://www.godisageek.com/reviews/songs-of-conquest-review/)
@@ -651,7 +678,7 @@ For a softer, banded "painted" ramp, replace `diffuse_lambert_wrap` with a `ligh
 - [Netzwelt: Warcraft 3 Reforged gallery](https://www.netzwelt.de/galerie/23629-warcraft-3-reforged.html)
 - [Worthplaying: WC3 golden screens (2002)](https://worthplaying.com/article/2002/6/23/news/4404-warcraft-iii-reign-of-chaos-golden-screens/)
 - [Neowin: High-res Warcraft 3 screenshots](https://www.neowin.net/news/high-res-warcraft-3-screenshots/)
-- [Macworld: Warcraft III E3 screenshots](https://www.macworld.com/article/161365/war3.html)
+- [Macworld: Blizzard: Warcraft III coming to Mac OS X (2001)](https://www.macworld.com/article/161365/war3.html)
 - [warcraft.wiki.gg: Box art](https://warcraft.wiki.gg/wiki/Box_art)
 - [OpenGameArt: Hand painted stone texture](https://opengameart.org/content/hand-painted-stone-texture)
 - [Hive Workshop: Terraining Contest 15 results](https://www.hiveworkshop.com/threads/terraining-contest-15-results.249166)
