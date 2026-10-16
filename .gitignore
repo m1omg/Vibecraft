@@ -1,0 +1,15 @@
+# Godot 4
+.godot/
+*.import.tmp
+export/
+build/
+*.translation
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+# Local tooling
+/tools/.venv/
+__pycache__/
+*.pyc
+/tmp/
