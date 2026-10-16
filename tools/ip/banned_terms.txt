@@ -120,6 +120,10 @@ haunted gold mine
 entangled gold mine
 goblin merchant
 goblin laboratory
+arcane sanctum
+arcane vault
+arcane tower
+gryphon aviary
 # Abilities
 holy light
 divine shield
@@ -179,6 +183,7 @@ northern isles
 concealed hill
 last refuge
 # Catch-phrases (fragments)
+call to arms
 work work
 zug zug
 job's done
@@ -201,3 +206,13 @@ derek duke
 jason hayes
 glenn stafford
 bill roper
+# Blizzard coinages and WC3 names found in the clans review (2026-10-16)
+kirrik
+longbraid
+long-braid
+far sight
+healing ward
+sentry ward
+adept training
+war drums
+spirit link
