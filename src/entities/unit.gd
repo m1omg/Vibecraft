@@ -17,7 +17,6 @@ const ARRIVE_EPS := 0.2
 const WAYPOINT_EPS := 0.45
 const SEPARATION_GAIN := 6.0
 const PUSH_GAIN := 7.0
-const NEIGHBOUR_PAD := 1.2       ## added to own radius for the neighbour query
 const STALL_TICKS_NEAR := 8
 const STALL_TICKS_FAR := 45
 const MAX_REPATHS := 3
@@ -25,10 +24,10 @@ const INVENTORY_SLOTS := 6
 const SCAN_TICKS := 5            ## auto-acquire scan interval (staggered by id)
 const REPATH_TICKS := 10         ## min ticks between chase path requests
 const REPATH_DIST := 1.0         ## target drift (m) that makes a chase path stale
+const DIRECT_CHASE := 5.0        ## a target this close and in plain sight is chased without a path
 const FACE_TOLERANCE := 0.35     ## rad; a swing starts only when roughly facing the target
 const RANGE_BUFFER := 2.5        ## a swing still connects if the target stepped back this far
 const CHASE_SLACK := 3.0         ## an acquired target beyond acquire range + this is dropped
-const MAX_TARGET_RADIUS := 3.0   ## largest structure half-size; pads acquisition queries
 const STRUCTURE_PENALTY := 6.0   ## acquisition prefers units over structures (metres)
 const BLOCKED_TICKS := 45        ## chasing without progress this long -> try another target
 const SKIP_TICKS := 90           ## how long a given-up target is ignored by acquisition
@@ -37,6 +36,7 @@ const FOLLOW_DIST := 1.2
 const GATHER_REACH := 0.8
 
 static var _scan_buf: Array = []
+static var _help_buf: Array = []
 
 # identity
 var id: int = 0
@@ -54,6 +54,8 @@ var max_mana: float = 0.0
 var armor: float = 0.0
 var armor_type: String = "unarmored"
 var radius: float = 0.4
+## Centre-to-edge reach for target queries: footprint half-diagonal for structures, else radius.
+var target_radius: float = 0.4
 var speed: float = 0.0
 var sight: float = 10.0
 var turn_rate: float = 12.0
@@ -112,6 +114,9 @@ var _stall: int = 0
 var _repaths: int = 0
 var _patrol_from: Vector3 = Vector3.ZERO
 var _nbuf: Array = []
+var _group: GroupPath = null      ## shared path of the current order (first path request only)
+var _group_try: bool = false      ## a matching base may still be derived from
+var _decay_ticks: int = -1        ## cached corpse lifetime (see decay_ticks)
 
 # combat
 var _cooldown: int = 0            ## ticks until the weapon is ready
@@ -139,6 +144,8 @@ func setup(w: World, uid: int, did: String, pid: int, p: Vector3) -> void:
 	name = "%s_%d" % [did, uid]
 	def = Defs.unit(did)
 	_apply_def()
+	target_radius = Vector2(footprint.size).length() * Grid.CELL * 0.5 \
+		if footprint.size != Vector2i.ZERO else radius
 	pos = p
 	if w != null and w.map != null:
 		pos.y = w.map.height_at(p.x, p.z)
@@ -228,7 +235,12 @@ func combat_target_id() -> int:
 
 ## Interpolated display position (for fx/UI drawn in _process).
 func display_pos() -> Vector3:
-	return prev_pos.lerp(pos, Engine.get_physics_interpolation_fraction())
+	return prev_pos.lerp(pos, _frac())
+
+
+## Tick interpolation fraction for visuals (frozen at 1 while the World is paused).
+func _frac() -> float:
+	return world.interpolation_fraction() if world != null else Engine.get_physics_interpolation_fraction()
 
 
 func top_height() -> float:
@@ -263,7 +275,7 @@ func swing_progress() -> float:
 	var total := damage_point_ticks + backswing_ticks
 	if _swing < 0 or total <= 0:
 		return -1.0
-	return clampf((_swing + Engine.get_physics_interpolation_fraction()) / total, 0.0, 1.0)
+	return clampf((_swing + _frac()) / total, 0.0, 1.0)
 
 
 func damage_point_ratio() -> float:
@@ -275,13 +287,16 @@ func damage_point_ratio() -> float:
 func dead_time() -> float:
 	if died_tick < 0 or world == null:
 		return 0.0
-	return (world.tick_count - died_tick + Engine.get_physics_interpolation_fraction()) * World.DT
+	return (world.tick_count - died_tick + _frac()) * World.DT
 
 
-## How long the corpse stays before World removes it.
+## How long the corpse stays before World removes it (computed once; read every tick).
 func decay_ticks() -> int:
-	var key := "structure_decay" if footprint.size != Vector2i.ZERO else "corpse_decay"
-	return _to_ticks(def.get("decay", Defs.combat_default(key, 8.0)))
+	if _decay_ticks < 0:
+		var key := "structure_decay" if footprint.size != Vector2i.ZERO else "corpse_decay"
+		var seconds: Variant = def["decay"] if def.has("decay") else Defs.combat_default(key, 8.0)
+		_decay_ticks = _to_ticks(seconds)
+	return _decay_ticks
 
 
 # --- orders --------------------------------------------------------------------------------
@@ -330,6 +345,8 @@ func _start(o: Order) -> void:
 	_blocked = 0
 	_repath_cd = 0
 	_stop_moving()
+	_group = o.group_path
+	_group_try = _group != null
 	match o.type:
 		Order.Type.HOLD:
 			holding = true
@@ -380,6 +397,7 @@ func _finish_current(advance: bool = true) -> void:
 	holding = false
 	_engage_id = 0
 	_resume = false
+	_group = null
 	_stop_moving()
 	_guard_pos = pos
 	if advance and not orders.is_empty():
@@ -523,11 +541,18 @@ func _attack_move(dt: float) -> Vector3:
 	return d
 
 
+## Keeps close to an ally. A follower that is hit fights back (see _on_attacked), then
+## resumes following.
 func _follow(dt: float) -> Vector3:
 	var t := world.get_unit(current.target_id)
 	if t == null or not t.alive:
 		_finish_current()
 		return Vector3.ZERO
+	var e := _engaged()
+	if e != null:
+		if not _lost(e):
+			return _fight(e, dt, true)
+		_give_up(e)
 	if edge_distance(t) <= FOLLOW_DIST:
 		_stop_moving()
 		return Vector3.ZERO
@@ -555,23 +580,42 @@ func is_valid_target(o: Unit) -> bool:
 		and world.is_enemy(player_id, o.player_id)
 
 
-## Closest valid enemy whose edge is within `r` (units preferred over structures).
+## Closest valid enemy whose edge is within `r` (units preferred over structures, ties by id;
+## melee units skip what they cannot walk to). The spatial query only visits buckets that hold
+## hostile players, so a scan costs what the nearby enemies cost, not the friendly crowd.
 func find_target(r: float) -> Unit:
+	var hostile := world.hostile_mask(player_id)
+	if hostile == 0:
+		return null
 	var best: Unit = null
 	var best_score := INF
-	world.spatial.query_radius(pos, r + radius + MAX_TARGET_RADIUS, _scan_buf)
+	world.spatial.query_hostile(pos, r + radius, hostile, _scan_buf)
 	for o: Unit in _scan_buf:
-		if o.id == _skip_id or not is_valid_target(o):
+		if not o.alive or o.id == _skip_id or o.is_invulnerable or o.is_resource:
 			continue
 		var d := edge_distance(o)
 		if d > r:
 			continue
 		var score := d + (STRUCTURE_PENALTY if o.footprint.size != Vector2i.ZERO else 0.0)
-		if score < best_score or (score == best_score and o.id < best.id):
-			best_score = score
-			best = o
+		if score > best_score or (score == best_score and o.id > best.id):
+			continue
+		if not _can_reach(o, d):
+			continue
+		best_score = score
+		best = o
 	_scan_buf.clear()
 	return best
+
+
+## Melee units only take on what they can walk up to (or already reach): an enemy on an
+## unreachable plateau or across water is ignored instead of chased into a wall. Ranged and
+## flying units can fight across terrain, so everything counts for them.
+func _can_reach(o: Unit, edge: float) -> bool:
+	if not projectile.is_empty() or is_flying or edge <= attack_range:
+		return true
+	var rect := o.footprint if o.footprint.size != Vector2i.ZERO \
+		else Rect2i(Grid.world_to_cell(o.pos), Vector2i.ONE)
+	return world.pathing.can_reach(Grid.world_to_cell(pos), rect, is_large())
 
 
 ## Throttled acquisition (every SCAN_TICKS, staggered by id so scans spread over ticks).
@@ -598,6 +642,7 @@ func _engage(t: Unit) -> void:
 	_blocked = 0
 	_repath_cd = 0
 	_returning = false
+	_group = null
 	_stop_moving()
 
 
@@ -620,13 +665,18 @@ func _return_to(p: Vector3) -> void:
 	_begin_move(p)
 
 
-## Fight back when hit while idle or attack-moving; creeps also wake their camp.
+## Fight back when hit while idle, attack-moving, patrolling or following; creeps also wake
+## their camp. A target just given up on (unreachable or stuck) and, for melee units, one they
+## cannot walk to are ignored, so a unit under fire from a cliff keeps doing its job.
 func _on_attacked(src: Unit) -> void:
 	if acquire_range <= 0.0 or not can_attack() or not is_valid_target(src) or _engage_id != 0:
 		return
-	if _returning and is_creep():
+	if src.id == _skip_id or (_returning and is_creep()):
 		return
-	if current != null and current.type != Order.Type.ATTACK_MOVE and current.type != Order.Type.PATROL:
+	if current != null and current.type != Order.Type.ATTACK_MOVE and current.type != Order.Type.PATROL \
+			and current.type != Order.Type.FOLLOW:
+		return
+	if not _can_reach(src, edge_distance(src)):
 		return
 	_engage(src)
 	if current != null:
@@ -637,11 +687,12 @@ func _on_attacked(src: Unit) -> void:
 
 func _call_for_help(src: Unit) -> void:
 	var r := float(Defs.combat_default("help_radius", 6.0))
-	var mates := world.spatial.query_radius(pos, r, [])
-	for m: Unit in mates:
+	world.spatial.query_radius(pos, r, _help_buf)
+	for m: Unit in _help_buf:
 		if m != self and m.alive and m.player_id == player_id and m.current == null \
 				and m._engage_id == 0 and not m._returning and m.can_attack():
 			m._engage(src)
+	_help_buf.clear()
 
 
 # --- attacking -----------------------------------------------------------------------------
@@ -665,12 +716,17 @@ func _fight(t: Unit, dt: float, can_chase: bool) -> Vector3:
 
 ## Moves towards a (possibly moving) unit. Paths are re-requested at most every REPATH_TICKS
 ## and only when the target drifted; at a stale goal the unit steers straight at the target.
+## A close target in plain sight (the usual case in a melee) needs no path query at all.
 func _chase_move(t: Unit, dt: float) -> Vector3:
 	var goal := t.pos
 	var no_path := path.is_empty() and not _need_path
 	if _repath_cd == 0 and (no_path or _arrived or Grid.flat_dist(_goal, goal) > REPATH_DIST):
-		_begin_move(goal)
 		_repath_cd = REPATH_TICKS
+		if Grid.flat_dist(pos, goal) <= DIRECT_CHASE and world.pathing.line_of_walk(pos, goal, is_large()):
+			_stop_moving()
+			_goal = goal
+		else:
+			_begin_move(goal)
 	var d := _follow_path(dt)
 	if d == Vector3.ZERO and not _need_path:
 		d = _steer_direct(goal, dt)
@@ -742,9 +798,8 @@ func _follow_path(dt: float) -> Vector3:
 	if _arrived:
 		return Vector3.ZERO
 	if _need_path:
-		if not world.pathing.has_budget():
+		if not _request_path():
 			return Vector3.ZERO
-		path = world.pathing.find_path(pos, _goal, is_large())
 		path_i = 1
 		_need_path = false
 		if path.size() < 2:
@@ -770,18 +825,51 @@ func _follow_path(dt: float) -> Vector3:
 	return Vector3(dir.x, 0.0, dir.y) * spd
 
 
+## Fills `path` towards `_goal`: derived from the order's group path when a base fits (cheap
+## line checks), otherwise a budgeted query that is then offered to the group as a base.
+## False when this tick's path budget is used up (the unit retries next tick).
+func _request_path() -> bool:
+	var p := world.pathing
+	var large := is_large()
+	if _group_try:
+		if not p.has_budget():
+			return false
+		var b := _group.find_base(pos, _goal, large)
+		if b != null:
+			_group_try = false
+			var shared := _group.derive(p, b, pos, _goal)
+			if not shared.is_empty():
+				path = shared
+				_group = null
+				return true
+	if not p.can_query(pos, _goal):
+		return false
+	path = p.find_path(pos, _goal, large)
+	if _group != null:
+		_group.add_base(path, _goal, large)
+		_group = null
+		_group_try = false
+	return true
+
+
+## Separation from overlapping neighbours (the query only reaches as far as the largest unit
+## radius allows an overlap; the cheap distance test runs before anything else) plus shoving
+## idle allies, then the move itself.
 func _steer_and_move(desired: Vector3, dt: float) -> void:
 	var moving := desired != Vector3.ZERO
 	var sep := Vector3.ZERO
-	var nbrs := world.spatial.query_radius(pos, radius + NEIGHBOUR_PAD, _nbuf)
+	var px := pos.x
+	var pz := pos.z
+	var nbrs := world.spatial.query_radius(pos, radius + world.max_unit_radius, _nbuf)
 	for n: Unit in nbrs:
-		if n == self or not n.alive or n.is_flying != is_flying or not n.is_mobile():
+		if n == self:
 			continue
-		var dx := pos.x - n.pos.x
-		var dz := pos.z - n.pos.z
+		var np := n.pos
+		var dx := px - np.x
+		var dz := pz - np.z
 		var min_d := radius + n.radius
 		var d2 := dx * dx + dz * dz
-		if d2 >= min_d * min_d:
+		if d2 >= min_d * min_d or not n.alive or n.is_flying != is_flying or not n.is_mobile():
 			continue
 		var d := sqrt(d2)
 		var nrm := Vector3(dx / d, 0.0, dz / d) if d > 0.0001 else Vector3(1.0 if id > n.id else -1.0, 0.0, 0.0)
@@ -814,19 +902,24 @@ func _turn_towards(dir: Vector3, dt: float) -> void:
 	facing = rotate_toward(facing, target, turn_rate * dt)
 
 
-## Moves by `delta` on XZ, sliding along blocked cells. Units standing in a blocked cell
-## (spawned inside a footprint, pushed onto a tree edge) may move freely to escape.
+## Moves by `delta` on XZ, sliding along blocked cells. A diagonal step into a cell that only
+## touches the current one at a corner also needs both side cells free (the A* diagonal rule),
+## so units never squeeze through gaps the pathfinder and region labels treat as closed.
+## Units standing in a blocked cell (spawned inside a footprint, pushed onto a tree edge) may
+## move freely to escape.
 func _try_move(delta: Vector3) -> void:
 	if delta.length_squared() < 1e-10:
 		return
 	var p := world.pathing
 	var np := Vector3(pos.x + delta.x, 0.0, pos.z + delta.z)
-	if not p.is_walkable_world(pos) or p.is_walkable_world(np):
+	var a := Grid.world_to_cell(pos)
+	var b := Grid.world_to_cell(np)
+	if a == b or not p.is_walkable(a) or _can_step(p, a, b):
 		pos.x = np.x
 		pos.z = np.z
-	elif p.is_walkable_world(Vector3(np.x, 0.0, pos.z)):
+	elif p.is_walkable(Vector2i(b.x, a.y)):
 		pos.x = np.x
-	elif p.is_walkable_world(Vector3(pos.x, 0.0, np.z)):
+	elif p.is_walkable(Vector2i(a.x, b.y)):
 		pos.z = np.z
 	else:
 		return
@@ -835,6 +928,16 @@ func _try_move(delta: Vector3) -> void:
 	pos.z = clampf(pos.z, 0.0, size.y)
 	pos.y = world.map.height_at(pos.x, pos.z)
 	world.spatial.update(self)
+
+
+## True when a step from cell `a` to cell `b` (at most one cell on each axis) enters a walkable
+## cell without cutting a blocked corner.
+static func _can_step(p: Pathing, a: Vector2i, b: Vector2i) -> bool:
+	if not p.is_walkable(b):
+		return false
+	if a.x != b.x and a.y != b.y:
+		return p.is_walkable(Vector2i(b.x, a.y)) and p.is_walkable(Vector2i(a.x, b.y))
+	return true
 
 
 func _update_stall(desired: Vector3, dt: float) -> void:

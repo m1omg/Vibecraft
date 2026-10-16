@@ -58,10 +58,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## Command card slot pressed (hotkey or HUD button): targeted commands enter targeting mode,
-## the others are issued at once. Returns false when the slot is empty or nothing is selected.
+## the others are issued at once. Returns false when the slot is empty, nothing is selected or
+## the game is paused (no orders while paused; the HUD stays clickable).
 func activate_card(slot: int, shift: bool = false) -> bool:
 	var cmd: String = CARD.get(slot, "")
-	if cmd.is_empty() or selection.selected_ids().is_empty():
+	if cmd.is_empty() or selection.selected_ids().is_empty() or not can_process():
 		return false
 	if TARGETED.has(cmd):
 		_set_targeting(cmd)
@@ -72,7 +73,7 @@ func activate_card(slot: int, shift: bool = false) -> bool:
 
 ## Ground point chosen outside the 3D view (minimap): confirms targeting, else a smart move.
 func command_ground(ground: Vector3, shift: bool = false) -> void:
-	if selection.selected_ids().is_empty():
+	if selection.selected_ids().is_empty() or not can_process():
 		return
 	if targeting != "":
 		_issue({"type": targeting, "pos": ground, "queue": shift})
@@ -80,6 +81,11 @@ func command_ground(ground: Vector3, shift: bool = false) -> void:
 			_set_targeting("")
 		return
 	_issue({"type": "smart", "pos": ground, "queue": shift})
+
+
+func cancel_targeting() -> void:
+	if targeting != "":
+		_set_targeting("")
 
 
 func _set_targeting(mode: String) -> void:

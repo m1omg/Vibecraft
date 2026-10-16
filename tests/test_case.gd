@@ -96,3 +96,74 @@ func run_until_idle(w: World, units: Array, max_ticks: int) -> int:
 			return t
 		w.step()
 	return max_ticks
+
+
+## Steps the world `ticks` times and returns each tick's wall time in milliseconds.
+func tick_samples(w: World, ticks: int) -> PackedFloat64Array:
+	var out := PackedFloat64Array()
+	for i in ticks:
+		var t0 := Time.get_ticks_usec()
+		w.step()
+		out.append((Time.get_ticks_usec() - t0) / 1000.0)
+	return out
+
+
+## Time of the calibration workload on the reference machine (4-core Xeon 2.1 GHz, Godot
+## 4.7.2 headless) the tick limits below were set on.
+const CALIBRATION_REFERENCE_US := 3600.0
+
+
+## How much slower this machine runs GDScript right now than the reference machine (best of a
+## few runs of a fixed workload; never below 1). Shared CI hosts and VMs slow down for seconds
+## at a time, so wall-clock limits are scaled by it.
+func machine_slowdown() -> float:
+	var best := INF
+	for r in 5:
+		var t0 := Time.get_ticks_usec()
+		var acc := 0.0
+		var arr: Array = []
+		for i in 40000:
+			acc += sqrt(float(i)) * 0.5
+			arr.append(i)
+		arr.clear()
+		best = minf(best, float(Time.get_ticks_usec() - t0))
+	return maxf(1.0, best / CALIBRATION_REFERENCE_US)
+
+
+## Builds a fresh scenario with `build` (a Callable returning a World ready to step) `reps`
+## times and times `ticks` steps of each. Returns, per tick, the fastest repetition scaled to
+## the reference machine. The sim is deterministic, so every repetition does exactly the same
+## work: the minimum filters out host noise, a real spike (a path burst) shows in all of them.
+func best_tick_samples(build: Callable, ticks: int, reps: int = 3) -> PackedFloat64Array:
+	var best := PackedFloat64Array()
+	best.resize(ticks)
+	best.fill(INF)
+	for r in reps:
+		var w: World = build.call()
+		var k := machine_slowdown()
+		var s := tick_samples(w, ticks)
+		for i in ticks:
+			best[i] = minf(best[i], s[i] / k)
+		if r < reps - 1:
+			w.free()
+	return best
+
+
+## {avg, p95, max} of tick samples (ms).
+func tick_stats(samples: PackedFloat64Array) -> Dictionary:
+	var sorted := samples.duplicate()
+	sorted.sort()
+	var sum := 0.0
+	for v in sorted:
+		sum += v
+	var n := sorted.size()
+	return {"avg": sum / maxi(n, 1), "p95": sorted[mini(int(n * 0.95), n - 1)], "max": sorted[n - 1]}
+
+
+## Asserts the average and the worst tick of a run and prints them.
+func assert_tick_cost(samples: PackedFloat64Array, label: String, avg_ms: float, max_ms: float) -> void:
+	var st := tick_stats(samples)
+	print("     %s: avg %.2f | p95 %.2f | max %.2f ms per tick (%d ticks)" % [label, st["avg"],
+		st["p95"], st["max"], samples.size()])
+	assert_lt(st["avg"], avg_ms, "%s: average tick" % label)
+	assert_lt(st["max"], max_ms, "%s: worst tick" % label)

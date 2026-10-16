@@ -64,15 +64,13 @@ func _spawn_camps(map: MapData) -> void:
 			world.spawn_unit(creeps[i], PlayerState.NEUTRAL_HOSTILE, c + Vector3(cos(a), 0, sin(a)) * 1.4, a)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("menu"):
-		Events.menu_requested.emit()
-		get_viewport().set_input_as_handled()
-
-
+## F10 / HUD menu button (Events.menu_requested). Pausing cancels a pending targeting mode:
+## CommandInput stops receiving clicks while paused, so it could not be confirmed or cancelled.
 func _toggle_pause() -> void:
 	get_tree().paused = not get_tree().paused
 	pause_label.visible = get_tree().paused
+	if get_tree().paused:
+		commands.cancel_targeting()
 
 
 func _process(_delta: float) -> void:

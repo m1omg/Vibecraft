@@ -192,6 +192,60 @@ func test_units_walk_around_buildings() -> void:
 	assert_lt(Grid.flat_dist(u.pos, goal), 0.3, "arrived behind the building")
 
 
+## A closed diamond of diagonally touching trees around (30.5, 30.5). A* (no diagonal steps
+## past obstacles) and the region labels treat the corner gaps as closed.
+func _tree_diamond_map() -> MapData:
+	var m := flat_map(32, 32)
+	var c := Vector2i(30, 30)
+	for y in range(c.y - 4, c.y + 5):
+		for x in range(c.x - 4, c.x + 5):
+			if absi(x - c.x) + absi(y - c.y) == 4:
+				m.trees.append(Vector2i(x, y))
+				m.tree_types.append(0)
+	return m
+
+
+## Units must not squeeze diagonally between two blocked cells that only touch at a corner, or
+## they walk into pockets the pathfinder considers unreachable and get trapped there.
+func test_units_do_not_cut_corners_between_diagonal_trees() -> void:
+	var w := make_world(_tree_diamond_map())
+	var inside := Vector3(30.5, 0, 30.5)
+	var enemy := w.spawn_unit("dummy_worker", 1, inside)
+	var me := w.spawn_unit("dummy_soldier", 0, Vector3(20.5, 0, 30.5))
+	var pocket := Grid.world_to_cell(inside)
+	assert_false(w.pathing.same_region(Grid.world_to_cell(me.pos), pocket), "the pocket is closed")
+	w.issue({"type": "attack", "player": 0, "units": [me.id], "target": enemy.id})
+	var entered := false
+	var closest := INF
+	for i in 600:
+		w.step()
+		entered = entered or w.pathing.same_region(Grid.world_to_cell(me.pos), pocket)
+		closest = minf(closest, Grid.flat_dist(me.pos, inside))
+	assert_true(closest < 4.0, "the attacker pressed against the trees (%.2f m)" % closest)
+	assert_false(entered, "but never got into the pocket")
+	assert_near(enemy.hp, enemy.max_hp, 0.001, "enemy inside the pocket untouched")
+	var goal := Vector3(10.5, 0, 30.5)
+	w.issue({"type": "move", "player": 0, "units": [me.id], "pos": goal})
+	run_until_idle(w, [me], 900)
+	assert_lt(Grid.flat_dist(me.pos, goal), 0.5, "not trapped: walks away afterwards")
+
+
+## Direct check of the step rule at one pinch: a diagonal step through the corner is refused
+## and the unit slides along a free side instead (or stays when both sides are blocked).
+func test_diagonal_step_needs_both_side_cells() -> void:
+	var w := make_world()
+	var u := w.spawn_unit("dummy_soldier", 0, Vector3(20.2, 0, 20.2))
+	var c := Grid.world_to_cell(u.pos)
+	w.pathing.set_tree(c + Vector2i(1, 0), true)
+	w.pathing.set_tree(c + Vector2i(0, 1), true)
+	u.teleport(Grid.cell_to_world(c) + Vector3(0.2, 0, 0.2))
+	u._try_move(Vector3(0.2, 0, 0.2))
+	assert_eq(Grid.world_to_cell(u.pos), c, "diagonal squeeze between two corner cells refused")
+	w.pathing.set_tree(c + Vector2i(0, 1), false)
+	u._try_move(Vector3(0.2, 0, 0.2))
+	assert_eq(Grid.world_to_cell(u.pos), c + Vector2i(0, 1), "slides into the free side cell")
+
+
 func test_enemy_units_cannot_be_commanded() -> void:
 	var w := make_world()
 	var enemy := w.spawn_unit("dummy_soldier", 1, Vector3(10, 0, 10))
@@ -200,7 +254,7 @@ func test_enemy_units_cannot_be_commanded() -> void:
 	assert_true(enemy.current == null, "command for foreign unit ignored")
 
 
-func test_200_units_tick_cost() -> void:
+func _spread_units() -> World:
 	var w := make_world(flat_map(96, 96, 1))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 99
@@ -212,9 +266,8 @@ func test_200_units_tick_cost() -> void:
 		var u: Unit = units[i]
 		w.issue({"type": "move", "player": u.player_id, "units": [u.id],
 			"pos": Vector3(rng.randf_range(10, 182), 0, rng.randf_range(10, 182))})
-	var t0 := Time.get_ticks_usec()
-	for i in 90:
-		w.step()
-	var per_tick := (Time.get_ticks_usec() - t0) / 90.0 / 1000.0
-	print("     200 units: %.2f ms per tick (budget %.1f ms)" % [per_tick, 1000.0 / 30.0])
-	assert_lt(per_tick, 1000.0 / 30.0, "200 moving units fit in one 30 Hz tick")
+	return w
+
+
+func test_200_units_tick_cost() -> void:
+	assert_tick_cost(best_tick_samples(_spread_units, 90, 2), "200 units spread over a flat map", 12.0, 20.0)

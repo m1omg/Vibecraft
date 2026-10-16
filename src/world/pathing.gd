@@ -9,9 +9,16 @@ extends RefCounted
 ## weighted A* (heuristic x ~1.5): ~0.5 ms for a cross-map query instead of ~10-20 ms, with
 ## near-identical lengths after string pulling. Connected-component labels let unreachable
 ## goals snap to the closest reachable cell without exhausting the whole grid.
+##
+## Path work is budgeted per tick by cost, not just by count: a query is charged
+## QUERY_BASE_COST + its length in cells (estimated from the octile distance before it runs,
+## the real path length after), so a burst of cross-map orders spreads over a few ticks while
+## dozens of short chase re-paths still fit in one. Everything is deterministic (no clocks).
 
 const LARGE_RADIUS := 0.5
-const DEFAULT_BUDGET := 24
+const DEFAULT_BUDGET := 24       ## max queries per tick
+const DEFAULT_COST_BUDGET := 2000.0 ## path cells per tick (~5-6 ms; a cross-map query is ~300)
+const QUERY_BASE_COST := 16.0    ## fixed part of a query's cost, in cells
 const SNAP_RADIUS := 24          ## cells searched when snapping a blocked goal
 const REACH_RADIUS := 96         ## cells searched for the closest reachable cell
 const CLEARANCE := 0.3           ## side offset checked by line_of_walk
@@ -21,7 +28,9 @@ const SPLIT_WINDOW := 8          ## cells around a new obstacle searched for a l
 
 var size: Vector2i               ## in cells
 var max_queries_per_tick: int = DEFAULT_BUDGET
+var cost_budget: float = DEFAULT_COST_BUDGET
 var queries_this_tick: int = 0
+var cost_this_tick: float = 0.0
 var total_queries: int = 0
 
 var _terrain: PackedByteArray    ## 1 = blocked by terrain
@@ -72,12 +81,34 @@ func setup_raw(cells: Vector2i, terrain_blocked: PackedByteArray) -> void:
 
 func begin_tick() -> void:
 	queries_this_tick = 0
+	cost_this_tick = 0.0
 	if _labels_dirty or not _job.is_empty():
 		_relabel_step(RELABEL_CELLS_PER_TICK)
 
 
+## True while this tick's query count and cost allowance are not used up.
 func has_budget() -> bool:
-	return queries_this_tick < max_queries_per_tick
+	return queries_this_tick < max_queries_per_tick and cost_this_tick < cost_budget
+
+
+## Admission for one query from `from` to `to`: its estimated cost must fit in what is left of
+## this tick's allowance. The first query of a tick always runs, so no request starves.
+func can_query(from: Vector3, to: Vector3) -> bool:
+	if queries_this_tick >= max_queries_per_tick:
+		return false
+	return cost_this_tick == 0.0 or cost_this_tick + estimate_cost(from, to) <= cost_budget
+
+
+## Expected cost of a query in cells: QUERY_BASE_COST + octile cell distance.
+static func estimate_cost(from: Vector3, to: Vector3) -> float:
+	var dx := absf(to.x - from.x) / Grid.CELL
+	var dz := absf(to.z - from.z) / Grid.CELL
+	return QUERY_BASE_COST + maxf(dx, dz) + 0.414 * minf(dx, dz)
+
+
+## Adds work done outside find_path (e.g. validating a shared group path) to this tick's cost.
+func charge(cost: float) -> void:
+	cost_this_tick += cost
 
 
 func is_walkable(c: Vector2i, large: bool = false) -> bool:
@@ -145,6 +176,24 @@ func same_region(a: Vector2i, b: Vector2i, large: bool = false) -> bool:
 	return comp[a.y * size.x + a.x] == comp[b.y * size.x + b.x]
 
 
+## True when a unit standing in cell `from` can walk up to the cell rectangle `rect` (a target's
+## footprint, or its cell): some walkable cell of the rect or of the ring around it is in the
+## unit's region. Cheap (labels only); like `same_region` it never reports a false negative.
+func can_reach(from: Vector2i, rect: Rect2i, large: bool = false) -> bool:
+	var start := nearest_walkable(from, large, 4)
+	if start.x < 0:
+		return false
+	var comp := _comp_large if large else _comp
+	var label := comp[start.y * size.x + start.x]
+	var area := rect.grow(2 if large else 1).intersection(Rect2i(Vector2i.ZERO, size))
+	for y in range(area.position.y, area.end.y):
+		var row := y * size.x
+		for x in range(area.position.x, area.end.x):
+			if comp[row + x] == label:
+				return true
+	return false
+
+
 # --- queries -------------------------------------------------------------------------------
 
 ## Finds a path between two world points. Blocked or unreachable goals snap to the closest
@@ -156,13 +205,12 @@ func find_path(from: Vector3, to: Vector3, large: bool = false) -> PackedVector3
 	var grid := _astar_large if large else _astar
 	var out := PackedVector3Array()
 	var start := nearest_walkable(Grid.world_to_cell(from), large)
-	if start.x < 0:
-		return out
 	var want := Grid.world_to_cell(to)
-	var goal := closest_reachable(start, want, large)
-	if goal.x < 0:
-		return out
-	var ids := grid.get_id_path(start, goal, true)
+	var goal := closest_reachable(start, want, large) if start.x >= 0 else start
+	var ids: Array[Vector2i] = []
+	if goal.x >= 0:
+		ids = grid.get_id_path(start, goal, true)
+	cost_this_tick += QUERY_BASE_COST + ids.size() if not ids.is_empty() else estimate_cost(from, to)
 	if ids.is_empty():
 		return out
 	var pts := PackedVector3Array()
@@ -188,6 +236,7 @@ func closest_reachable(start: Vector2i, want: Vector2i, large: bool = false) -> 
 	if same_region(start, want, large):
 		return want
 	var comp := _comp_large if large else _comp
+	var solid := _solid_large if large else _solid
 	var label := comp[start.y * size.x + start.x]
 	for r in range(1, REACH_RADIUS + 1):
 		var best := Vector2i(-1, -1)
@@ -197,7 +246,8 @@ func closest_reachable(start: Vector2i, want: Vector2i, large: bool = false) -> 
 			var step := 1 if edge_row else 2 * r
 			var x := want.x - r
 			while x <= want.x + r:
-				if x >= 0 and x < size.x and comp[y * size.x + x] == label:
+				var i := y * size.x + x
+				if x >= 0 and x < size.x and comp[i] == label and solid[i] == 0:
 					var dd := Vector2(x - want.x, y - want.y).length_squared()
 					if dd < best_d:
 						best_d = dd
@@ -209,20 +259,27 @@ func closest_reachable(start: Vector2i, want: Vector2i, large: bool = false) -> 
 
 
 ## Greedy string pulling over the corner points: from each anchor, advance while the next
-## waypoint is still in straight-line reach; the last reachable one becomes the new anchor.
+## waypoint is in reach of the anchor's centre line (one ray, cheap), then confirm the chosen
+## segment with the clearance rays of `line_of_walk`, backing off a corner at a time if they
+## clip an obstacle. Consecutive corners are always connected (they come from the grid path).
 func smooth_path(pts: PackedVector3Array, large: bool = false) -> PackedVector3Array:
 	if pts.size() <= 2:
 		return pts
 	var out := PackedVector3Array()
 	out.append(pts[0])
+	var last := pts.size() - 1
 	var anchor := 0
-	var i := 2
-	while i < pts.size():
-		if not line_of_walk(pts[anchor], pts[i], large):
-			anchor = i - 1
-			out.append(pts[anchor])
-		i += 1
-	out.append(pts[pts.size() - 1])
+	while anchor < last:
+		var a := pts[anchor]
+		var a2 := Vector2(a.x, a.z)
+		var j := anchor + 1
+		while j < last and _ray_clear(a2, Vector2(pts[j + 1].x, pts[j + 1].z), large):
+			j += 1
+		# every candidate up to j passed the centre ray; only the side rays remain
+		while j > anchor + 1 and not _sides_clear(a, pts[j], large):
+			j -= 1
+		out.append(pts[j])
+		anchor = j
 	return out
 
 
@@ -230,10 +287,13 @@ func smooth_path(pts: PackedVector3Array, large: bool = false) -> PackedVector3A
 ## cells, and two parallel lines offset by CLEARANCE are checked too (except at the ends) so
 ## paths do not shave obstacle corners.
 func line_of_walk(a: Vector3, b: Vector3, large: bool = false) -> bool:
+	return _ray_clear(Vector2(a.x, a.z), Vector2(b.x, b.z), large) and _sides_clear(a, b, large)
+
+
+## The two clearance rays of `line_of_walk` (offset by CLEARANCE, trimmed at both ends).
+func _sides_clear(a: Vector3, b: Vector3, large: bool) -> bool:
 	var a2 := Vector2(a.x, a.z)
 	var b2 := Vector2(b.x, b.z)
-	if not _ray_clear(a2, b2, large):
-		return false
 	var d := b2 - a2
 	var length := d.length()
 	if length < CLEARANCE * 3.0:
@@ -245,7 +305,9 @@ func line_of_walk(a: Vector3, b: Vector3, large: bool = false) -> bool:
 		and _ray_clear(a2 + trim - side, b2 - trim - side, large)
 
 
-## Amanatides-Woo grid traversal: every cell the segment touches must be walkable.
+## Amanatides-Woo grid traversal: every cell the segment touches must be walkable. Takes
+## exactly |dx| + |dy| cell steps and never leaves the endpoints' bounding box, so only the
+## endpoints need a bounds check (this runs a lot while string pulling).
 func _ray_clear(a: Vector2, b: Vector2, large: bool) -> bool:
 	var solid := _solid_large if large else _solid
 	var inv := 1.0 / Grid.CELL
@@ -253,6 +315,8 @@ func _ray_clear(a: Vector2, b: Vector2, large: bool) -> bool:
 	var y := floori(a.y * inv)
 	var ex := floori(b.x * inv)
 	var ey := floori(b.y * inv)
+	if x < 0 or y < 0 or x >= size.x or y >= size.y or ex < 0 or ey < 0 or ex >= size.x or ey >= size.y:
+		return false
 	var dx := b.x - a.x
 	var dy := b.y - a.y
 	var sx := 1 if dx > 0.0 else -1
@@ -263,20 +327,20 @@ func _ray_clear(a: Vector2, b: Vector2, large: bool) -> bool:
 	var ny := (y + (1 if sy > 0 else 0)) * Grid.CELL
 	var t_mx := (nx - a.x) / dx if dx != 0.0 else INF
 	var t_my := (ny - a.y) / dy if dy != 0.0 else INF
-	var guard := absi(ex - x) + absi(ey - y) + 2
-	while guard > 0:
-		if x < 0 or y < 0 or x >= size.x or y >= size.y or solid[y * size.x + x] == 1:
+	var row_step := sy * size.x
+	var idx := y * size.x + x
+	for _k in absi(ex - x) + absi(ey - y):
+		if solid[idx] == 1:
 			return false
-		if x == ex and y == ey:
-			return true
-		if t_mx < t_my:
+		if y == ey or (x != ex and t_mx < t_my):
 			t_mx += t_dx
 			x += sx
+			idx += sx
 		else:
 			t_my += t_dy
 			y += sy
-		guard -= 1
-	return true
+			idx += row_step
+	return solid[idx] == 0
 
 
 ## Nearest walkable cell to `c` in growing square rings, or (-1,-1) when none within range.
@@ -429,6 +493,11 @@ func _flood(solid: PackedByteArray, comp: PackedInt32Array, queue: PackedInt32Ar
 func _update_label(comp: PackedInt32Array, solid: PackedByteArray, i: int, large: bool) -> void:
 	if solid[i] == 1:
 		comp[i] = 0
+		if not _job.is_empty():
+			# the running relabel may already have labelled this cell; its arrays replace the
+			# live ones when it finishes, so clear it there too
+			var pending: PackedInt32Array = _job["labels"][1 if large else 0]
+			pending[i] = 0
 		var cell := Rect2i(i % size.x, i / size.x, 1, 1)
 		if large:
 			_split_rect_large = cell if _split_rect_large.size == Vector2i.ZERO else _split_rect_large.merge(cell)

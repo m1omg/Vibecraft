@@ -18,9 +18,11 @@ change an interface here, change this file in the same commit.
    `reset_physics_interpolation()` (`Unit.teleport()` does). Nodes animated per render frame
    (UnitView `Rig`, fx MultiMeshes) set `physics_interpolation_mode = OFF`; Godot's scene-tree
    interpolation still carries them along with their interpolated parent. Fx drawn in `_process`
-   use `Unit.display_pos()` (= `prev_pos.lerp(pos, Engine.get_physics_interpolation_fraction())`).
+   use `Unit.display_pos()` (= `prev_pos.lerp(pos, World.interpolation_fraction())`; the
+   fraction is the engine's physics interpolation fraction, frozen at 1 while the World is
+   paused so nothing oscillates between the last two ticks).
    Determinism: sim code never uses wall-clock time, `randf()` without the world RNG, or
-   unordered iteration (path budgets are counts, not milliseconds).
+   unordered iteration (path budgets are query counts and cell costs, not milliseconds).
 3. **Data-driven.** Units, buildings, abilities, items, upgrades, factions live in `data/*.json`,
    loaded by the `Defs` autoload. Code never hardcodes a unit stat. `Defs.unit(id)`,
    `ability(id)`, `item(id)`, `upgrade(id)`, `doodad(id)`, `faction(id)` return the def dictionary
@@ -68,7 +70,7 @@ src/
   main.tscn + main.gd   boots a skirmish on the generated test map (camera, selection, input)
   world/        world.gd + world.tscn (match root), grid.gd, map_data.gd, map_generator.gd,
                 terrain_builder.gd, terrain.gdshader, water.gdshader, tree.gdshader,
-                pathing.gd, spatial_hash.gd, fog.gd, doodads.gd, day_night.gd
+                pathing.gd, group_path.gd, spatial_hash.gd, fog.gd, doodads.gd, day_night.gd
   entities/     unit.gd, order.gd, projectile.gd, unit_view.gd (visuals) + unit_placeholder.gdshader,
                 resource_node logic in unit.gd
   systems/      player_state.gd (PlayerState), combat.gd, abilities.gd (+ abilities/*.gd effects),
@@ -91,7 +93,10 @@ docs/           design, research, this file
 `World` (`src/world/world.gd`, scene `src/world/world.tscn`) is the match root. It owns systems
 as child nodes and runs them in this order every tick (`dt = 1/30`). A system is any node with
 `sim_tick(world: World, dt: float)` registered with `world.register_system(stage, node)`
-(stages are the names below); `World.step()` runs `orders`, `units` and `cleanup` itself.
+(stages are the names below); `World.step()` runs `orders`, `units` and `cleanup` itself, so
+those three are rejected (`push_error`, returns false), as are unknown names
+(`World.is_system_stage(stage)`). Several systems may share a stage: they run in registration
+order (`systems_in(stage)` lists them; `Combat` is the first `projectiles` system).
 Scene children: `Terrain` (TerrainBuilder), `Doodads`, `Units` (unit container), `DayNight`
 (`Sun` light + environment), `Fx` (`SelectionCircles`, `HealthBars`), `Systems`.
 `World.visuals = false` skips terrain/fx/views (headless tests); `World.auto_tick = false`
@@ -112,7 +117,10 @@ lets tests drive `step()` manually.
 `entities:Dictionary(id->Unit)`, `unit_list:Array[Unit]` (stable spawn order — iterate this),
 `spatial:SpatialHash`, `pathing:Pathing`, `map:MapData`, `fog:Fog`, `local_player_id`, `rng`
 (seeded), and helpers `setup(map, seed)`, `step()`, `add_player(id, team, faction, ai)`,
-`player(id)`, `team_of`, `is_enemy`, `is_ally`, `player_color`,
+`player(id)`, `team_of`, `is_enemy` (O(1): a player x player table rebuilt by `add_player`;
+call `refresh_relations()` after changing a team), `hostile_mask(pid)` (bitmask of the player
+ids `pid` fights; player ids are 0..15), `is_ally`, `player_color`,
+`interpolation_fraction()` (visual only, see §1), `max_unit_radius` (from Defs),
 `spawn_unit(def_id, player_id, pos, facing=0)` (structures snap to their footprint and block
 pathing; mobile units snap to the nearest walkable cell), `get_unit(id)`, `units_of_player`,
 `query_radius(pos, r, filter:Callable, out:Array)`, `issue(command:Dictionary)`,
@@ -142,12 +150,15 @@ rally, follow` (`follow` added for right-clicking an ally). `smart` is resolved 
 by `World.resolve_smart(u, target)`: structures that train units → `rally` (sets
 `rally_pos`/`rally_id`, never becomes a running order); no target → `move`; resource →
 `gather` for workers, `move` for others; enemy → `attack` (`follow` if the unit has no weapon);
-ally → `follow`. `attack` without a target is an `attack_move`. `gather` walks to the resource
-and calls `World.gather_handler` (stub until economy.gd); build/cast still just move to their
-target. Building/hero commands (`train, cancel, research, use_item, drop_item, learn`) are
+mobile ally → `follow`; allied structure → `move` to it (a follow on a building never ends).
+`attack` without a target is an `attack_move`. `gather` walks to the resource and calls
+`World.gather_handler` (stub until economy.gd); build/cast still just move to their target.
+Building/hero commands (`train, cancel, research, use_item, drop_item, learn`) are
 rejected with a warning until production/heroes exist.
 Group moves keep a compact group's formation (offsets from the group centre when its spread is
-< 8 m); otherwise everyone heads for the point and separation spreads them.
+< 8 m); otherwise everyone heads for the point and separation spreads them. Every ground
+move / attack-move / patrol given to 2+ units carries one `GroupPath` (`Order.group_path`) so
+the group shares its path searches (§6).
 
 ## 5. Entities
 
@@ -162,6 +173,8 @@ carry_gold, carry_lumber, hero:Dictionary (level, xp, str, agi, int, skill_point
 inventory:Array (6)`.
 Sim state (written only in `sim_tick`): `pos:Vector3` (authoritative position; the Node3D
 transform is a copy written once per tick), `prev_pos`, `facing` (yaw, forward = -Z rotated),
+`target_radius` (centre-to-edge reach for target queries: footprint half-diagonal for
+structures, else `radius`; `Defs.max_target_radius` is the largest over all defs),
 `velocity` (actual displacement / dt), `holding`, `footprint:Rect2i` (structures),
 `hash_bucket` (SpatialHash), `path`, `died_tick`. Weapon fields (from `def.attack`, timings
 converted to integer ticks): `attack_type, damage_min, damage_max, attack_range,
@@ -179,17 +192,23 @@ crowded goal) and ignores enemies; STOP clears the queue (and cancels a wind-up)
 completes, cannot be pushed and attacks only enemies already in weapon range, never moving;
 ATTACK chases its target until it dies (no leash); ATTACK_MOVE follows its path, engages
 anything acquired on the way and re-paths to its goal after each fight; PATROL is an
-attack-move that ping-pongs forever; FOLLOW keeps within 1.2 m of an ally; shift-queued orders
-start when the current one completes.
+attack-move that ping-pongs forever; FOLLOW keeps within 1.2 m of a mobile ally (and fights
+back when hit, then resumes); shift-queued orders start when the current one completes.
 Combat behaviour (all in `Unit.sim_tick`, integer tick timers):
 - **Acquisition**: idle, attack-moving and patrolling units scan every `SCAN_TICKS` (5, staggered
   by id) for the closest valid enemy within `acquire_range` (structures get a 6 m penalty so
   units are preferred; ties by id). `acquire = 0` (workers) never auto-acquires or retaliates.
-- **Retaliation**: an idle or attack-moving unit that is hit engages the attacker; creeps also
-  wake idle camp mates within `help_radius` (6 m).
+  The scan uses `SpatialHash.query_hostile` (only buckets holding hostile players are looked
+  at), so its cost follows the nearby enemies, not the friendly crowd. Melee units skip targets
+  they cannot walk to (`Pathing.can_reach`: region labels of the target's cell or footprint
+  ring), unless already in weapon range; ranged units may shoot across cliffs and water.
+- **Retaliation**: an idle, attack-moving, patrolling or following unit that is hit engages the
+  attacker (a follower resumes following afterwards); not a target it just gave up on, and for
+  melee units not one it cannot reach. Creeps also wake idle camp mates within `help_radius` (6 m).
 - **Chasing**: path requests at most every `REPATH_TICKS` (10) and only when the target drifted
-  more than 1 m from the last goal; at a stale goal the unit steers straight at the target.
-  Path queries remain subject to the per-tick budget.
+  more than 1 m from the last goal; at a stale goal the unit steers straight at the target. A
+  target within `DIRECT_CHASE` (5 m) and in plain sight (`line_of_walk`) is chased without a
+  path query (most of a melee). Path queries remain subject to the per-tick budget.
 - **Leash**: auto-acquired fights are dropped when the unit gets `leash` (def, default 14 m;
   creeps 18.75 m) from its guard position, when the target escapes beyond
   `max(acquire, distance at engagement) + 3 m`, or after ~1.5 s without chase progress (that
@@ -226,7 +245,9 @@ health bar are rendered by `fx/` systems, not by `UnitView`.
 the `projectiles` stage; homes on its target's current `hit_point()` along a parabola whose peak
 is `arc × flight distance`, carries the base damage rolled at launch, and on arrival `Combat`
 applies it (a projectile whose target died lands harmlessly). Its transform is written once per
-tick (physics interpolated); visuals are a placeholder arrow mesh.
+tick (physics interpolated); on arrival it is committed at the impact point and the node stays
+one more tick (`landed`) so the interpolated arrow visibly reaches the target before `Combat`
+frees it. Visuals are a placeholder arrow mesh.
 
 ## 6. Movement & pathing
 
@@ -240,27 +261,57 @@ tick (physics interpolated); visuals are a placeholder arrow mesh.
   i.e. weighted A* (heuristic ×1.5): ~0.5–1.5 ms per cross-map query, path length within ~1 %
   after string pulling.
 - Connected-component labels (both grids) make unreachable goals cheap: `find_path` snaps a
-  blocked or unreachable goal to the closest cell reachable from the start (ring search, 48 m),
-  instead of letting A* exhaust the grid. Merges (tree cut, building removed) relabel
-  immediately. A new obstacle only triggers a relabel when the walkable cells around it cannot
-  reach each other inside a small window (buildings in the open never do); that relabel runs
-  incrementally in `begin_tick()` (6k cells/tick ≈ 3–4 ms, ~3 s for the slice). Until it
+  blocked or unreachable goal to the closest walkable cell reachable from the start (ring
+  search, 48 m), instead of letting A* exhaust the grid. Merges (tree cut, building removed)
+  relabel immediately. A new obstacle only triggers a relabel when the walkable cells around it
+  cannot reach each other inside a small window (buildings in the open never do); that relabel
+  runs incrementally in `begin_tick()` (6k cells/tick ≈ 3–4 ms, ~3 s for the slice). Until it
   finishes, labels may claim two split areas are connected; queries stay correct, just slower.
+  Cells that become solid while it runs are cleared in the job's arrays too (they replace the
+  live labels at the end), so a solid cell never carries a region label.
 - `find_path(from:Vector3, to:Vector3, large:=false) -> PackedVector3Array` (y = 0; callers
   sample height), then string-pulls over corner points with `line_of_walk(a, b)` (grid
-  traversal of the centre line plus two lines offset by 0.3 m). Also: `is_walkable(cell)`,
+  traversal of the centre line plus two lines offset by 0.3 m; the pull advances on the centre
+  ray and confirms the chosen segment with the side rays). Also: `is_walkable(cell)`,
   `is_walkable_world(pos)`, `nearest_walkable(cell)`, `closest_reachable(start, cell)`,
-  `same_region(a, b)`, `set_tree(cell, present)`, `set_footprint(cells, blocked)`,
-  `set_footprint_rect(rect, blocked)`, `is_rect_free(rect)`.
-- Path requests are budgeted per tick by count (deterministic): `begin_tick()` resets,
-  `has_budget()` (default 24 queries/tick); units that miss out retry next tick.
-- `SpatialHash` (`src/world/spatial_hash.gd`): 4 m buckets over the map, units stored by `pos`
+  `same_region(a, b)`, `can_reach(from_cell, rect)` (melee target filter), `set_tree(cell,
+  present)`, `set_footprint(cells, blocked)`, `set_footprint_rect(rect, blocked)`,
+  `is_rect_free(rect)`.
+- Path requests are budgeted per tick by count **and cost** (deterministic, no clocks):
+  `begin_tick()` resets; a query is charged `QUERY_BASE_COST` (16) + its path length in cells
+  (estimated from the octile distance by `can_query(from, to)` before it runs, the real length
+  after). `can_query` admits a query while the estimate fits in `cost_budget` (default 2000
+  cells ≈ 5–6 ms, i.e. ~6 cross-map queries of ~300 cells) and fewer than
+  `max_queries_per_tick` (24) ran; the first query of a tick always runs. Units that miss out
+  retry next tick. 24 short chase re-paths (~30 cells each) fit easily; a burst of long
+  queries spreads over a few ticks instead of spiking one.
+- `GroupPath` (`src/world/group_path.gd`): one per group command. The first unit to need a
+  path queries it and offers it as a base; others whose formation slot starts within 12 m of a
+  base derive theirs with line checks (charged 0.2 per checked cell): the base waypoints
+  shifted by their formation offset if every segment is walkable, else the base waypoints
+  themselves, joined at one of the first 3 in straight reach. Units that fit neither query
+  their own path (a new base, max 16). Only an order's first path uses it; re-paths after
+  fights or stalls are ordinary queries. Measured: 250 units ordered across the slice = 4 A*
+  queries, all paths assigned within 2 ticks.
+- `SpatialHash` (`src/world/spatial_hash.gd`): 2 m buckets over the map, units stored by `pos`
   with incremental `update(u)`; `query_radius(p, r, out)` / `query_rect(rect, out)` fill a
-  caller-owned array (no per-query allocation).
-- Local movement = path following + separation steering from neighbours (via `SpatialHash`),
-  allies push idle allies aside (WC3-like; same player, idle, not holding), units never enter
-  blocked cells (slide along them). Height `y` sampled from `MapData.height_at(x,z)`.
-  Measured: 200 moving units ≈ 3–4 ms per tick headless (budget 33 ms).
+  caller-owned array (no per-query allocation). Each bucket and each 4×4-bucket block keeps a
+  bitmask of the players present, so `query_hostile(p, r, mask, out)` (acquisition) skips
+  areas without enemies; it returns units whose centre is within `r + u.target_radius`.
+  `player_id` must not change while a unit is inserted.
+- Local movement = path following + separation steering from overlapping neighbours (query
+  radius = own radius + the largest unit radius), allies push idle allies aside (WC3-like; same
+  player, idle, not holding), units never enter blocked cells (slide along them) and never
+  step diagonally between two blocked cells that only touch at a corner (the A* diagonal rule,
+  so they cannot reach pockets the pathfinder and labels treat as closed). Height `y` sampled
+  from `MapData.height_at(x,z)`.
+  Measured (headless, 4-core Xeon 2.1 GHz, `tests/unit/test_perf.gd`): 250 units packed at
+  1.1 m, idle ≈ 2 ms avg / 2 ms worst tick, attack-moving ≈ 4 / 9 ms; 250 units ordered across
+  the slice in one command ≈ 4 / 13 ms (the order's path burst); 2 × 125 approach and clash ≈ 5 /
+  10 ms; 200 units brawling ≈ 3.5 / 10 ms (before the review fixes the review harness
+  measured 12 / 21, 17 / 32, 18 / 37 and 12 / 29 ms for comparable scenarios). Tests assert
+  avg < 12 ms and worst tick < 20 ms (tick budget 33 ms; the rest is reserved for fog, AI,
+  abilities, economy).
 - Buildings call `pathing.set_footprint(cells, blocked)` on placement/death; trees on harvest.
 
 ## 7. Map, terrain, doodads
@@ -361,6 +412,10 @@ nearest drop-off building.
   Emits `Events.selection_changed`.
   The press must land in the world (HUD panels stop it); once pressing, drag motion and the
   release are read in `_input`, before the GUI, so a box that ends over the HUD still completes.
+- Pause: F10 (`menu`) is handled by the HUD, which keeps processing while the tree is paused
+  (Main and World do not), so the same key unpauses; `Main._toggle_pause` also cancels a
+  pending targeting mode. `CommandInput` is pausable: no orders are given while paused
+  (`activate_card`/`command_ground` refuse).
 - `CommandInput` (`Node`, placed after `Selection` so it sees input first): right-click smart
   command (ground → move, unit → smart target), shift-queue, default card hotkeys Q move,
   W stop, E hold, R attack-move, A patrol; targeted commands enter targeting mode (cross cursor,
@@ -415,6 +470,13 @@ with `.ogg/.wav/.mp3`.
   display: `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0
   1600x900x24" godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution
   1280x720 -s tests/playtest/screenshot_overview.gd` (lavapipe) or `--rendering-driver opengl3`.
+- `tests/unit/test_perf.gd`: worst-case tick cost with 250 units (dense blob idle and
+  attack-moving, a cross-map group order on the generated map, 2 × 125 armies clashing); every
+  tick is timed and both the average and the worst tick are asserted (`assert_tick_cost`).
+  Wall-clock asserts use `best_tick_samples`: each scenario runs 2–3 times (the sim is
+  deterministic, so the work is identical), the fastest time per tick is kept and scaled by
+  `machine_slowdown()` (a fixed GDScript workload against the reference machine), so host
+  noise on shared VMs does not fail the build while a real spike still does.
 - `tests/playtest/battle.gd`: 8 soldiers + 4 archers attack-move into 10 creeps on an open
   patch of the test map inside the real main scene (HUD visible); asserts a winner within 90 sim
   s and saves `tests/output/battle_1..3.png`. The same setup (`battle_setup.gd`) runs headless

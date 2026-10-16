@@ -209,3 +209,145 @@ func test_relabel_only_when_a_split_is_possible() -> void:
 	var s0 := Grid.world_to_cell(m.start_locations[0] + Vector3(0, 0, -8))
 	var s1 := Grid.world_to_cell(m.start_locations[1] + Vector3(0, 0, 8))
 	assert_true(p.same_region(s0, s1), "labels still correct after relabel")
+
+
+## A cell that becomes solid while a background relabel runs must lose its label in the job's
+## arrays too (they replace the live ones when the job ends); otherwise closest_reachable picks
+## a solid goal and A* exhausts the region on every query into the building.
+func test_relabel_job_keeps_new_obstacles_solid() -> void:
+	var p := _pathing(flat_map(96, 96))
+	var wall: Array[Vector2i] = []
+	for y in p.size.y:
+		wall.append(Vector2i(200, y))
+	p.set_footprint(wall, true)
+	p.begin_tick()
+	assert_false(p._job.is_empty(), "a split started a background relabel")
+	for i in 20:
+		p.begin_tick()
+	var rect := Rect2i(Vector2i(60, 60), Vector2i(10, 10))
+	p.set_footprint_rect(rect, true)
+	var guard := 0
+	while (not p._job.is_empty() or p._labels_dirty) and guard < 1000:
+		p.begin_tick()
+		guard += 1
+	var inside := Vector2i(65, 65)
+	assert_eq(p._comp[inside.y * p.size.x + inside.x], 0, "blocked cell has no label")
+	assert_eq(p._comp_large[inside.y * p.size.x + inside.x], 0, "nor on the large grid")
+	var start := Vector2i(20, 20)
+	var goal := p.closest_reachable(start, inside)
+	assert_true(p.is_walkable(goal), "closest reachable cell %s is walkable" % goal)
+	var t := Time.get_ticks_usec()
+	var path := p.find_path(Grid.cell_to_world(start), Grid.cell_to_world(inside))
+	var ms := (Time.get_ticks_usec() - t) / 1000.0
+	assert_true(path.size() >= 2 and p.is_walkable_world(path[path.size() - 1]), "path ends at the building")
+	assert_lt(ms, 5.0, "query into the building stays cheap (%.2f ms)" % ms)
+
+
+## Path work is charged by cost: only a handful of cross-map queries run per tick, while the
+## usual burst of short chase re-paths is limited by count alone. The first query always runs.
+func test_path_budget_charges_by_cost() -> void:
+	var m := MapGenerator.test_map()
+	var w := make_world(m)
+	var p := w.pathing
+	var s0 := m.start_locations[0] + Vector3(0, 0, -8)
+	var s1 := m.start_locations[1] + Vector3(0, 0, 8)
+	p.begin_tick()
+	var far := 0
+	while p.can_query(s0, s1) and far < 50:
+		p.find_path(s0, s1)
+		far += 1
+	assert_true(far >= 3 and far <= 8, "a few cross-map queries per tick (%d)" % far)
+	assert_true(p.cost_this_tick + Pathing.estimate_cost(s0, s1) > p.cost_budget, "allowance used up")
+	p.begin_tick()
+	var near := 0
+	var to := s0 + Vector3(6, 0, 4)
+	while p.can_query(s0, to) and near < 50:
+		p.find_path(s0, to)
+		near += 1
+	assert_eq(near, p.max_queries_per_tick, "short re-paths are limited by count only")
+	p.begin_tick()
+	p.cost_budget = 1.0
+	assert_true(p.can_query(s0, s1), "the first query of a tick always runs")
+	p.find_path(s0, s1)
+	assert_false(p.can_query(s0, to), "then the allowance is spent")
+	p.cost_budget = Pathing.DEFAULT_COST_BUDGET
+
+
+## A group order shares its path search: units derive their paths from the first unit's (shifted
+## into their formation slot, or joined), so 12 units crossing the map cost a few A* queries.
+@warning_ignore("integer_division")
+func test_group_order_shares_path_searches() -> void:
+	var m := MapGenerator.test_map()
+	var w := make_world(m)
+	var s0 := m.start_locations[0]
+	var s1 := m.start_locations[1]
+	var units: Array = []
+	var ids: Array = []
+	for i in 12:
+		var u := w.spawn_unit("dummy_soldier", 0, s0 + Vector3((i % 4) * 1.2 - 2.0, 0, (i / 4) * 1.2 + 6.0))
+		units.append(u)
+		ids.append(u.id)
+	var q0 := w.pathing.total_queries
+	w.issue({"type": "move", "player": 0, "units": ids, "pos": s1})
+	w.step()
+	w.step()
+	var goals: Array = []
+	for u: Unit in units:
+		goals.append(u.current.target_pos)
+		assert_true(u.path.size() >= 2, "%s got a path" % u.name)
+		assert_true(_path_is_walkable(w.pathing, u.path), "%s path is walkable" % u.name)
+	var queries := w.pathing.total_queries - q0
+	assert_true(queries <= 4, "12 units crossing the map ran %d A* queries" % queries)
+	run_until_idle(w, units, 30 * 90)
+	var worst := 0.0
+	for i in units.size():
+		worst = maxf(worst, Grid.flat_dist(units[i].pos, goals[i]))
+	assert_lt(worst, 2.0, "every unit reached its formation slot (worst %.2f m)" % worst)
+
+
+func test_can_reach_uses_region_labels() -> void:
+	var p := _pathing()
+	p.set_footprint_rect(Rect2i(59, 59, 12, 1), true)
+	p.set_footprint_rect(Rect2i(59, 70, 12, 1), true)
+	p.set_footprint_rect(Rect2i(59, 60, 1, 10), true)
+	p.set_footprint_rect(Rect2i(70, 60, 1, 10), true)
+	while p._labels_dirty or not p._job.is_empty():
+		p.begin_tick()                      # closing the ring split a region: let labels settle
+	var me := Vector2i(10, 10)
+	assert_false(p.can_reach(me, Rect2i(64, 64, 1, 1)), "inside a closed ring")
+	assert_true(p.can_reach(me, Rect2i(40, 40, 1, 1)), "open field")
+	var fp := Rect2i(90, 90, 10, 10)
+	p.set_footprint_rect(fp, true)
+	assert_true(p.can_reach(me, fp), "a building is reachable through the cells around it")
+	assert_true(p.can_reach(me, fp, true), "on the large grid too")
+	assert_false(p.can_reach(Vector2i(64, 64), Rect2i(10, 10, 1, 1)), "and not out of the ring")
+
+
+## The grid traversal behind line_of_walk (optimised: no per-step bounds checks) must never
+## report a segment clear when a point on it lies in a blocked cell.
+func test_ray_traversal_never_misses_blocked_cells() -> void:
+	var p := _pathing()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	for i in 220:
+		p.set_tree(Vector2i(rng.randi_range(2, 125), rng.randi_range(2, 125)), true)
+	var missed := 0
+	var agree := 0
+	for i in 400:
+		var a := Vector2(rng.randf_range(1.0, 63.0), rng.randf_range(1.0, 63.0))
+		var b := a + Vector2(rng.randf_range(-12.0, 12.0), rng.randf_range(-12.0, 12.0))
+		b = b.clamp(Vector2(1, 1), Vector2(63, 63))
+		var clear := p._ray_clear(a, b, false)
+		var sampled := true
+		var steps := ceili(a.distance_to(b) / 0.01) + 1
+		for s in steps + 1:
+			var q := a.lerp(b, float(s) / steps)
+			if not p.is_walkable_world(Vector3(q.x, 0, q.y)):
+				sampled = false
+				break
+		if clear and not sampled:
+			missed += 1
+		if clear == sampled:
+			agree += 1
+	assert_eq(missed, 0, "no blocked cell missed")
+	assert_true(agree >= 390, "agrees with dense sampling (%d / 400)" % agree)

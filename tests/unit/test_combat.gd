@@ -151,8 +151,18 @@ func test_ranged_attack_launches_homing_projectile() -> void:
 	var expected := dist / float(archer.projectile["speed"]) * World.TICK_RATE
 	assert_near(flight, expected, 2.0, "flight time matches speed")
 	assert_true(peak > start_y + 0.1, "projectile arcs (peak %.2f vs launch %.2f)" % [peak, start_y])
-	assert_eq(w.combat.projectiles.size(), 0, "projectile removed on impact")
 	assert_eq(_hits[0][3], archer.id, "damage credited to the archer")
+	# the landed missile is committed at the impact point and kept one more tick, so the
+	# interpolated arrow visibly reaches its target before it disappears
+	assert_eq(w.combat.projectiles.size(), 1, "landed projectile kept for one tick")
+	if w.combat.projectiles.size() == 1:
+		var p := w.combat.projectiles[0]
+		assert_true(p.landed, "flagged as landed")
+		assert_lt(p.transform.origin.distance_to(victim.hit_point()), 0.01,
+			"last committed transform is the impact point")
+	w.step()
+	assert_eq(w.combat.projectiles.size(), 0, "projectile removed on the next tick")
+	assert_eq(_hits.size(), 1, "a landed projectile never hits twice")
 
 
 func test_projectile_follows_moving_target() -> void:
@@ -264,7 +274,8 @@ func test_combat_is_refresh_rate_independent() -> void:
 
 
 @warning_ignore("integer_division")
-func test_200_unit_brawl_tick_cost() -> void:
+func _brawl_200() -> World:
+	_hits.clear()
 	var w := make_world(flat_map(64, 64, 0))
 	var sides: Array = [[], []]
 	for i in 200:
@@ -276,12 +287,11 @@ func test_200_unit_brawl_tick_cost() -> void:
 		sides[side].append(u.id)
 	w.issue({"type": "attack_move", "player": 0, "units": sides[0], "pos": Vector3(90, 0, 58)})
 	w.issue({"type": "attack_move", "player": 1, "units": sides[1], "pos": Vector3(30, 0, 58)})
-	for i in 60:
-		w.step()
-	var t0 := Time.get_ticks_usec()
-	for i in 150:
-		w.step()
-	var per_tick := (Time.get_ticks_usec() - t0) / 150.0 / 1000.0
-	print("     200-unit brawl: %.2f ms per tick, %d hits, %d dead" % [per_tick, _hits.size(), w.corpse_count()])
+	return w
+
+
+func test_200_unit_brawl_tick_cost() -> void:
+	var samples := best_tick_samples(_brawl_200, 210, 2)
+	print("     200-unit brawl: %d hits" % _hits.size())
 	assert_true(_hits.size() > 100, "armies engaged (%d hits)" % _hits.size())
-	assert_lt(per_tick, 1000.0 / 30.0, "200 fighting units fit in one 30 Hz tick")
+	assert_tick_cost(samples, "200-unit brawl, approach and melee", 12.0, 20.0)

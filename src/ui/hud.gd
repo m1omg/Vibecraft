@@ -97,6 +97,14 @@ func _on_menu_pressed() -> void:
 	Events.menu_requested.emit()
 
 
+## F10 lives here, not in Main: the HUD processes while the game is paused (Main does not), so
+## the same key that pauses also unpauses.
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("menu"):
+		Events.menu_requested.emit()
+		get_viewport().set_input_as_handled()
+
+
 # --- selection panel -----------------------------------------------------------------------
 
 func _on_selection_changed(units: Array) -> void:

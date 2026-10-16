@@ -255,3 +255,111 @@ func test_scripted_battle_resolves_within_time_limit() -> void:
 	print("     battle: %s won after %.1f s (%d soldiers/archers, %d creeps left)" % [result,
 		w.time, BattleSetup.alive_count(sides["army"]), BattleSetup.alive_count(sides["creeps"])])
 	assert_true(result != "", "one side wins within %d s" % int(BattleSetup.TIME_LIMIT_S))
+
+
+## Right-clicking an own structure walks there: a FOLLOW on a building never completes, so the
+## unit would stay busy forever and never fight back.
+func test_smart_on_own_building_is_a_move() -> void:
+	var w := make_world(flat_map(48, 48))
+	var hall := w.spawn_unit("dummy_hall", 0, Vector3(40, 0, 40))
+	var s := w.spawn_unit("dummy_soldier", 0, Vector3(20, 0, 40))
+	var ally := w.spawn_unit("dummy_soldier", 0, Vector3(20, 0, 30))
+	assert_eq(w.resolve_smart(s, hall), Order.Type.MOVE, "own building -> move")
+	assert_eq(w.resolve_smart(s, ally), Order.Type.FOLLOW, "mobile ally -> follow")
+	_order(w, [s], "smart", {"target": hall.id})
+	w.step()
+	assert_true(s.current != null and s.current.type == Order.Type.MOVE, "a move order")
+	var ticks := run_until_idle(w, [s], 300)
+	assert_true(s.current == null, "the move completed (%d ticks)" % ticks)
+	assert_lt(s.edge_distance(hall), 1.0, "standing at the building")
+	var e := w.spawn_unit("dummy_soldier", 1, s.pos + Vector3(-4, 0, 0))
+	_order(w, [e], "attack", {"target": s.id})
+	for i in 300:
+		w.step()
+	assert_true(e.hp < e.max_hp, "the idle soldier fought back")
+
+
+## A follower that is attacked fights back, then resumes following.
+func test_follower_fights_back_then_keeps_following() -> void:
+	var w := make_world(flat_map(48, 48))
+	var leader := w.spawn_unit("dummy_soldier", 0, Vector3(30, 0, 40))
+	var s := w.spawn_unit("dummy_soldier", 0, Vector3(20, 0, 40))
+	_order(w, [s], "smart", {"target": leader.id})
+	for i in 90:
+		w.step()
+	assert_true(s.current != null and s.current.type == Order.Type.FOLLOW, "following")
+	var e := w.spawn_unit("dummy_soldier", 1, s.pos + Vector3(0, 0, -3))
+	_order(w, [e], "attack", {"target": s.id})
+	for i in 150:
+		w.step()
+	assert_true(e.hp < e.max_hp, "the follower hit back")
+	assert_true(s.current != null and s.current.type == Order.Type.FOLLOW, "still a follow order")
+	e.take_damage(e.max_hp * 2.0)
+	_order(w, [leader], "move", {"pos": Vector3(70, 0, 70)})
+	for i in 360:
+		w.step()
+	assert_lt(s.edge_distance(leader), 2.5, "back at the leader's side")
+
+
+## Melee units ignore enemies they cannot walk to: an attack-moving soldier passing an archer
+## on an isolated plateau keeps walking (it used to engage, stall at the cliff, give up and
+## re-engage on the next arrow until it died).
+func test_melee_ignores_unreachable_shooter() -> void:
+	var m := flat_map(32, 32)
+	for y in range(8, 25):
+		for x in range(8, 15):
+			m.cliff[m.idx(x, y)] = 1          # plateau without a ramp: x 16..30 m, z 16..50 m
+	m.compute_heights()
+	var w := make_world(m)
+	var archer := w.spawn_unit("dummy_archer", 1, Vector3(28, 0, 33))
+	var s := w.spawn_unit("dummy_soldier", 0, Vector3(34, 0, 4))
+	var goal := Vector3(34, 0, 62)
+	assert_false(w.pathing.same_region(Grid.world_to_cell(s.pos), Grid.world_to_cell(archer.pos)),
+		"plateau unreachable")
+	_order(w, [s], "attack_move", {"pos": goal})
+	var engaged := 0
+	for i in 30 * 30:
+		w.step()
+		if s.combat_target_id() == archer.id:
+			engaged += 1
+		if s.current == null or not s.alive:
+			break
+	assert_true(s.alive, "survived the walk")
+	assert_true(s.hp < s.max_hp, "it was shot at on the way")
+	assert_eq(engaged, 0, "never engaged the unreachable archer")
+	assert_lt(Grid.flat_dist(s.pos, goal), 0.5, "reached its goal")
+
+
+## A target just given up on (unreachable or stuck) is not re-engaged by the next hit.
+func test_retaliation_skips_given_up_target() -> void:
+	var w := make_world()
+	var s := w.spawn_unit("dummy_soldier", 0, Vector3(20, 0, 20))
+	var a := w.spawn_unit("dummy_archer", 1, Vector3(26, 0, 20))
+	s._skip_id = a.id
+	s._skip_ticks = Unit.SKIP_TICKS
+	s._on_attacked(a)
+	assert_eq(s.combat_target_id(), 0, "ignored while skipped")
+	s._skip_id = 0
+	s._on_attacked(a)
+	assert_eq(s.combat_target_id(), a.id, "engaged otherwise")
+
+
+## Structures are acquired by footprint edge distance: a hall's corner reaches further from its
+## centre (half-diagonal 3.54 m) than the old fixed query padding allowed.
+func test_building_corner_in_range_is_acquired() -> void:
+	var w := make_world()
+	var hall := w.spawn_unit("dummy_hall", 1, Vector3(30, 0, 30))
+	var fp := hall.footprint
+	var corner := Vector3(fp.end.x * Grid.CELL, 0, fp.end.y * Grid.CELL)
+	var holder := w.spawn_unit("dummy_soldier", 0, corner + Vector3(0.6, 0, 0.6))
+	assert_lt(holder.edge_distance(hall), holder.attack_range, "corner within weapon range")
+	_order(w, [holder], "hold")
+	for i in 120:
+		w.step()
+	assert_true(hall.hp < hall.max_hp, "hold attacks a building whose corner is in range")
+	# an idle unit 7.5 m off the opposite corner (acquire 8 m): centre distance 11.5 m
+	var diag := Vector3(1, 0, 1).normalized()
+	var near_corner := Vector3(fp.position.x * Grid.CELL, 0, fp.position.y * Grid.CELL)
+	var scout := w.spawn_unit("dummy_soldier", 0, near_corner - diag * (7.5 + 0.45))
+	assert_near(scout.edge_distance(hall), 7.5, 0.05, "scout 7.5 m from the corner")
+	assert_true(scout.find_target(scout.acquire_range) == hall, "idle acquisition sees the corner")

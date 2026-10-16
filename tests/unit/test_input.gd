@@ -167,3 +167,25 @@ func test_enemy_click_selects_but_cannot_command() -> void:
 	for i in 30:
 		world.step()
 	assert_lt(Grid.flat_dist(enemy.pos, before), 0.01, "enemy unit ignores our commands")
+
+
+## F10 pauses and unpauses: the HUD handles it and keeps processing while the tree is paused.
+## Pausing cancels a pending targeting mode (CommandInput gets no clicks while paused, so it
+## could be neither confirmed nor cancelled) and the command card issues nothing while paused.
+func test_f10_toggles_pause_and_cancels_targeting() -> void:
+	var commands: CommandInput = main.commands
+	sel.select_units(_army())
+	_key(KEY_R)
+	assert_eq(commands.targeting, "attack_move", "targeting before the pause")
+	assert_false(sel.enabled, "selection off while targeting")
+	_key(KEY_F10)
+	assert_true(tree.paused, "F10 pauses")
+	assert_eq(commands.targeting, "", "pausing cancelled targeting")
+	assert_true(sel.enabled, "selection enabled again")
+	assert_false(commands.activate_card(3), "the command card does nothing while paused")
+	assert_eq(commands.targeting, "", "no targeting entered while paused")
+	_key(KEY_F10)
+	assert_false(tree.paused, "F10 again unpauses")
+	assert_true(main.pause_label.visible == false, "pause label hidden")
+	assert_true(commands.activate_card(3), "commands work again")
+	commands.cancel_targeting()

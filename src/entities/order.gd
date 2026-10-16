@@ -18,6 +18,9 @@ var target_id: int = 0            ## 0 = no target unit
 var def_id: String = ""
 var ability: String = ""
 var data: Dictionary = {}
+## Shared path of the command this order came from (group moves); null for single units and
+## targeted orders. Only the order's first path request uses it.
+var group_path: GroupPath = null
 
 
 static func make(t: Type, pos: Vector3 = Vector3.ZERO, target: int = 0) -> Order:

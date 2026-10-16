@@ -6,6 +6,8 @@ extends Node
 ## and k live in data/factions.json -> combat. Rolls use World.rng (seeded), so a fight replays
 ## identically. Owned by World and registered for the `projectiles` stage.
 
+const _NONE: Dictionary = {}         ## shared read-only default (no allocation per lookup)
+
 var world: World
 var projectiles: Array[Projectile] = []
 var _last_alert: Dictionary = {}     ## player id -> sim time of the last "under attack" alert
@@ -17,7 +19,7 @@ func setup(w: World) -> void:
 
 
 static func type_multiplier(attack_type: String, armor_type: String) -> float:
-	var row: Dictionary = (Defs.combat.get("types", {}) as Dictionary).get(attack_type, {})
+	var row: Dictionary = (Defs.combat.get("types", _NONE) as Dictionary).get(attack_type, _NONE)
 	return float(row.get(armor_type, 1.0))
 
 
@@ -65,17 +67,19 @@ func launch(src: Unit, target: Unit, base: float) -> Projectile:
 	return p
 
 
+## Advances missiles; damage lands on the arrival tick. A landed missile is freed one tick
+## later, after its final (impact point) transform has been rendered.
 func sim_tick(_w: World, dt: float) -> void:
 	var keep := 0
 	for i in projectiles.size():
 		var p := projectiles[i]
-		if p.sim_tick(dt):
-			if p.hit_target:
-				hit(world.get_unit(p.source_id), world.get_unit(p.target_id), p.damage, p.attack_type)
+		if p.landed:
 			p.queue_free()
-		else:
-			projectiles[keep] = p
-			keep += 1
+			continue
+		if p.sim_tick(dt) and p.hit_target:
+			hit(world.get_unit(p.source_id), world.get_unit(p.target_id), p.damage, p.attack_type)
+		projectiles[keep] = p
+		keep += 1
 	projectiles.resize(keep)
 
 

@@ -51,7 +51,7 @@ func current_hour() -> float:
 		return fixed_hour
 	if world == null:
 		return START_HOUR
-	return hour_at(world.time + Engine.get_physics_interpolation_fraction() * World.DT)
+	return hour_at(world.time + world.interpolation_fraction() * World.DT)
 
 
 func is_day() -> bool:

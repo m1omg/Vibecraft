@@ -24,6 +24,12 @@ var factions: Dictionary = {}
 var combat: Dictionary = {}
 var upkeep: Array = []
 var errors: Array[String] = []
+## Largest acquisition target radius over all unit defs: footprint half-diagonal for
+## structures, radius for units. Pads target queries (see `target_radius`).
+var max_target_radius: float = 0.0
+## Largest radius of a mobile unit def (separation neighbour queries need no more padding).
+var max_unit_radius: float = 0.0
+var _combat_defaults: Dictionary = {}
 var _warned: Dictionary = {}
 
 
@@ -42,6 +48,7 @@ func reload() -> void:
 	factions = fac.get("factions", {})
 	combat = fac.get("combat", {})
 	upkeep = fac.get("upkeep", [])
+	_combat_defaults = combat.get("defaults", {})
 	_prepare_units()
 	_validate_abilities()
 	_validate_simple(doodads, "doodad", ["name", "lumber", "shape"])
@@ -76,7 +83,18 @@ func faction(id: String) -> Dictionary:
 
 ## Combat tuning value from factions.json → combat.defaults.
 func combat_default(key: String, fallback: Variant) -> Variant:
-	return (combat.get("defaults", {}) as Dictionary).get(key, fallback)
+	return _combat_defaults.get(key, fallback)
+
+
+## How far a unit's centre can be from the nearest point of its body: the footprint
+## half-diagonal for structures (edge distances are measured to the footprint rectangle),
+## the radius otherwise.
+static func target_radius(d: Dictionary) -> float:
+	if d.get("kind", "unit") != "unit":
+		var fp: Array = d.get("footprint", [0, 0])
+		if fp.size() == 2:
+			return Vector2(float(fp[0]), float(fp[1])).length() * Grid.CELL * 0.5
+	return float(d.get("radius", 0.0))
 
 
 func has_unit(id: String) -> bool:
@@ -121,6 +139,8 @@ func _lookup(table: Dictionary, id: String, kind: String) -> Dictionary:
 
 
 func _prepare_units() -> void:
+	max_target_radius = 0.0
+	max_unit_radius = 0.0
 	for id: String in units:
 		var d: Dictionary = units[id]
 		for k: String in UNIT_DEFAULTS:
@@ -129,6 +149,9 @@ func _prepare_units() -> void:
 		d["id"] = id
 		_prepare_attack(d)
 		_validate_unit(id, d)
+		max_target_radius = maxf(max_target_radius, target_radius(d))
+		if d.get("kind") == "unit":
+			max_unit_radius = maxf(max_unit_radius, float(d.get("radius", 0.0)))
 
 
 ## Fills attack timing defaults so the sim can index them directly. `acquire` is the auto-acquire

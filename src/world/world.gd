@@ -7,6 +7,12 @@ const TICK_RATE := 30
 const DT := 1.0 / TICK_RATE
 const STAGES: Array[StringName] = [&"orders", &"production", &"units", &"projectiles",
 	&"abilities", &"economy", &"creeps", &"ai", &"fog", &"cleanup"]
+## Stages World runs itself; systems cannot register for them.
+const OWN_STAGES: Array[StringName] = [&"orders", &"units", &"cleanup"]
+## Stages run after the units, in this order.
+const LATE_STAGES: Array[StringName] = [&"projectiles", &"abilities", &"economy", &"creeps", &"ai",
+	&"fog"]
+const MAX_PLAYERS := SpatialHash.MAX_PLAYERS
 const FORMATION_MAX_SPREAD := 8.0
 const SPAWN_SNAP_CELLS := 16
 
@@ -23,6 +29,8 @@ var pathing: Pathing
 var map: MapData
 var fog: Node = null                 ## Fog system (added with the systems milestone)
 var combat: Combat                   ## damage resolution + projectiles (stage `projectiles`)
+## Largest mobile unit radius (from Defs): pads separation neighbour queries.
+var max_unit_radius: float = 1.0
 var local_player_id: int = 0
 var rng := RandomNumberGenerator.new()
 ## Economy hook: Callable(worker: Unit, resource: Unit) run when a GATHER order reaches its
@@ -33,7 +41,8 @@ var _next_id: int = 1
 var _pending: Array[Dictionary] = []
 var _dead: Array = []                ## [Unit, killer]
 var _corpses: Array[Unit] = []       ## dead, out of the sim, removed after their decay time
-var _systems: Dictionary = {}        ## stage -> Node implementing sim_tick(world, dt)
+var _systems: Dictionary = {}        ## stage -> Array[Node] (sim_tick(world, dt)), registration order
+var _hostile := PackedInt32Array()   ## player id -> bitmask of the player ids it is an enemy of
 
 @onready var units_root: Node3D = _child_or_new("Units", Node3D) as Node3D
 @onready var projectile_root: Node3D = _child_or_new("Projectiles", Node3D) as Node3D
@@ -43,6 +52,13 @@ var _systems: Dictionary = {}        ## stage -> Node implementing sim_tick(worl
 @onready var day_night: DayNight = get_node_or_null("DayNight") as DayNight
 
 
+func _init() -> void:
+	refresh_relations()
+	for stage in STAGES:
+		if is_system_stage(stage):
+			_systems[stage] = [] as Array[Node]
+
+
 func setup(m: MapData, seed_value: int = 1) -> void:
 	map = m
 	rng.seed = seed_value
@@ -50,6 +66,8 @@ func setup(m: MapData, seed_value: int = 1) -> void:
 	pathing.setup(map)
 	spatial = SpatialHash.new()
 	spatial.setup(map.size_world())
+	spatial.max_target_radius = Defs.max_target_radius
+	max_unit_radius = Defs.max_unit_radius
 	doodads.setup(self, map)
 	combat = Combat.new()
 	combat.setup(self)
@@ -91,27 +109,57 @@ func step() -> void:
 	var n := unit_list.size()
 	for i in n:
 		unit_list[i].sim_tick(DT)
-	for stage: StringName in [&"projectiles", &"abilities", &"economy", &"creeps", &"ai", &"fog"]:
+	for stage: StringName in LATE_STAGES:
 		_run_stage(stage)
 	_cleanup()
 
 
-func register_system(stage: StringName, system: Node) -> void:
-	assert(STAGES.has(stage), "unknown stage %s" % stage)
-	_systems[stage] = system
+## Adds a system (a node with `sim_tick(world, dt)`) to a stage. Several systems may share a
+## stage; they run in registration order. `orders`, `units` and `cleanup` are run by World
+## itself and are rejected, as are unknown stages. Returns false when rejected.
+func register_system(stage: StringName, system: Node) -> bool:
+	if not is_system_stage(stage):
+		push_error("World: systems cannot register for stage '%s'" % stage)
+		return false
+	var list: Array[Node] = _systems[stage]
+	if not list.has(system):
+		list.append(system)
+	return true
+
+
+static func is_system_stage(stage: StringName) -> bool:
+	return STAGES.has(stage) and not OWN_STAGES.has(stage)
+
+
+## Systems registered for a stage, in run order (a copy).
+func systems_in(stage: StringName) -> Array[Node]:
+	var out: Array[Node] = []
+	if _systems.has(stage):
+		out.assign(_systems[stage])
+	return out
 
 
 func _run_stage(stage: StringName) -> void:
-	var s: Node = _systems.get(stage)
-	if s != null:
+	for s: Node in _systems[stage]:
 		s.sim_tick(self, DT)
+
+
+## Fraction of the current tick interval for visuals drawn in _process (the engine's physics
+## interpolation fraction). Frozen at 1 while the World is paused: no ticks run then, so the
+## last tick's state is shown instead of oscillating between the last two ticks.
+func interpolation_fraction() -> float:
+	if is_inside_tree() and not can_process():
+		return 1.0
+	return Engine.get_physics_interpolation_fraction()
 
 
 # --- players -------------------------------------------------------------------------------
 
 func add_player(pid: int, team_id: int, faction: String = "", ai: bool = false) -> PlayerState:
+	assert(pid >= 0 and pid < MAX_PLAYERS, "player id out of range")
 	var p := PlayerState.make(pid, team_id, faction, ai)
 	players.append(p)
+	refresh_relations()
 	return p
 
 
@@ -132,12 +180,36 @@ func player_color(pid: int) -> Color:
 	return p.color if p != null else PlayerState.COLORS[pid % PlayerState.COLORS.size()]
 
 
+## O(1): reads the relation table (see refresh_relations).
 func is_enemy(a: int, b: int) -> bool:
+	if a < 0 or b < 0 or a >= MAX_PLAYERS or b >= MAX_PLAYERS:
+		return _enemy_rule(a, b)
+	return (_hostile[a] >> b) & 1 == 1
+
+
+## Bitmask of the player ids `pid` is an enemy of (bit b set = enemy of player b).
+func hostile_mask(pid: int) -> int:
+	return _hostile[pid] if pid >= 0 and pid < MAX_PLAYERS else 0
+
+
+func _enemy_rule(a: int, b: int) -> bool:
 	if a == b or a == PlayerState.NEUTRAL_PASSIVE or b == PlayerState.NEUTRAL_PASSIVE:
 		return false
 	if a == PlayerState.NEUTRAL_HOSTILE or b == PlayerState.NEUTRAL_HOSTILE:
 		return true
 	return team_of(a) != team_of(b)
+
+
+## Rebuilds the player x player enemy table. Called by add_player; call it again after changing
+## a PlayerState.team.
+func refresh_relations() -> void:
+	_hostile.resize(MAX_PLAYERS)
+	for a in MAX_PLAYERS:
+		var m := 0
+		for b in MAX_PLAYERS:
+			if _enemy_rule(a, b):
+				m |= 1 << b
+		_hostile[a] = m
 
 
 func is_ally(a: int, b: int) -> bool:
@@ -300,6 +372,7 @@ func _apply_command(cmd: Dictionary) -> void:
 	var offsets: Array[Vector3] = []
 	if target == 0 and t in [Order.Type.MOVE, Order.Type.ATTACK_MOVE, Order.Type.PATROL, Order.Type.SMART]:
 		offsets = _formation_offsets(us, pos)
+	var group: GroupPath = GroupPath.new() if us.size() > 1 else null
 	for i in us.size():
 		var u := us[i]
 		var ut := t as Order.Type
@@ -312,6 +385,8 @@ func _apply_command(cmd: Dictionary) -> void:
 		if not offsets.is_empty() and ut != Order.Type.RALLY:
 			goal = map.clamp_to_map(pos + offsets[i], 0.5)
 		var o := Order.make(ut, goal, tid)
+		if tid == 0 and ut in [Order.Type.MOVE, Order.Type.ATTACK_MOVE, Order.Type.PATROL]:
+			o.group_path = group
 		o.def_id = str(cmd.get("def", ""))
 		o.ability = str(cmd.get("ability", ""))
 		u.issue_order(o, queue)
@@ -329,7 +404,8 @@ func _command_units(cmd: Dictionary) -> Array[Unit]:
 
 ## Right-click resolution for one unit: producing structures set their rally point; enemies
 ## are attacked (followed by units without a weapon); workers gather resources (others walk
-## there); allies are followed; ground is a move.
+## there); mobile allies are followed; allied structures and the ground are a move (a FOLLOW
+## on a building would never complete).
 func resolve_smart(u: Unit, target: Unit) -> Order.Type:
 	if u.can_train():
 		return Order.Type.RALLY
@@ -339,10 +415,10 @@ func resolve_smart(u: Unit, target: Unit) -> Order.Type:
 		return Order.Type.GATHER if u.is_worker else Order.Type.MOVE
 	if is_enemy(u.player_id, target.player_id):
 		return Order.Type.ATTACK if u.can_attack() else Order.Type.FOLLOW
-	return Order.Type.FOLLOW
+	return Order.Type.FOLLOW if target.is_mobile() else Order.Type.MOVE
 
 
-## Keeps a compact group's shape (WC3-like) instead of funnelling everyone into one point.
+## Keeps a compact group's shape (classic RTS style) instead of funnelling everyone into one point.
 func _formation_offsets(us: Array[Unit], target: Vector3) -> Array[Vector3]:
 	var out: Array[Vector3] = []
 	if us.size() < 2 or not us[0].is_mobile():

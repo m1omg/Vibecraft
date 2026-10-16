@@ -3,7 +3,9 @@ extends Node3D
 ## A missile simulated in the fixed tick: it homes on its target's current hit point along a
 ## parabolic arc (peak = arc x flight distance) and, on arrival, Combat applies the base damage
 ## rolled at launch. If the target dies first the missile lands where it last was, harmlessly.
-## The Node3D transform is written once per tick so physics interpolation smooths the flight.
+## The Node3D transform is written once per tick so physics interpolation smooths the flight;
+## on arrival the transform is committed at the impact point and the node lives one more tick
+## (`landed`), so the interpolated missile visibly finishes its flight into the target.
 
 const HIT_EPS := 0.05
 
@@ -20,6 +22,7 @@ var arc: float = 0.0
 var pos: Vector3 = Vector3.ZERO
 var prev_pos: Vector3 = Vector3.ZERO
 var hit_target: bool = false
+var landed: bool = false          ## arrived last tick; Combat frees it on the next one
 
 var _start_y: float = 0.0
 var _aim: Vector3 = Vector3.ZERO  ## last known impact point
@@ -59,8 +62,11 @@ func sim_tick(dt: float) -> bool:
 	var remaining := to.length()
 	var step := speed * dt
 	if remaining <= step + HIT_EPS:
+		var last_dir := _aim - pos
 		pos = _aim
+		_commit(last_dir)
 		hit_target = target_alive
+		landed = true
 		return true
 	_flat += to / remaining * step
 	_travelled += step

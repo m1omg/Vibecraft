@@ -1,6 +1,6 @@
 class_name RtsCamera
 extends Camera3D
-## WC3-style RTS camera: fixed pitch looking down at a ground focus point, wheel zoom along the
+## Classic RTS camera: fixed pitch looking down at a ground focus point, wheel zoom along the
 ## view ray, arrow-key / screen-edge / middle-drag panning, clamped to the map. Runs entirely
 ## in _process with delta (visual only, not physics-interpolated).
 
