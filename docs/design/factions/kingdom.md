@@ -380,6 +380,16 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
 | Attack | "Here's some warmth for you!" · "Catch!" · "With my compliments!" |
 | Annoyed (in order) | "Careful, I'm combustible." → "I've lost two eyebrows and a good hat to this trade." → "Click once more and I'll juggle the flasks." → "...Ooh, that one's fizzing. That's not good. That's not good at all." |
 
+**Linden Sister (healer caster, brisk and motherly)**
+
+| Category | Lines |
+|---|---|
+| Ready | "Kettle's hot, basket's full." · "Linden, rue and a steady hand." · "Linden Sister. Who's been careless?" |
+| What | "Sit. Drink this." · "Show me the scrape." · "Speak up, I'm steeping." |
+| Yes | "Basket and all." · "Mind the brew." · "Coming. Don't bleed on anything." |
+| Attack | "Shoo! Out of my ward!" · "I'll not have it!" · "That's for the bandages!" |
+| Annoyed (in order) | "Clicking won't make it steep faster." → "I've a tea for nerves. You're having two cups." → "My mother nursed a whole regiment and never got clicked at." → "One more and it's the bitter tonic. The very bitter one." |
+
 **Advisor ("the Reeve", clipped town official).** One line per rules.md §17.3 trigger (plus the placement error and hero-trained events).
 **Reeve rules:** no "[build verb] more [supply building]" pattern; never the word "done" on a completion event; never "…under attack" (§17.3).
 
@@ -791,14 +801,14 @@ Derived values (HP / mana / armour / damage / cooldown):
 **Numbers are ours.** No mana cost, cooldown, duration or per-rank value of an ability listed as a functional equivalent matches the WC3
 ability it mirrors, and no ability's (mana, cooldown) pair matches any ability of the matching WC3 hero. This is enforced by a data test:
 
-- **`test_no_wc3_number_fingerprints`** (`tests/unit/`). It reads a reference table that lives **only** in `docs/research/`
-  (`docs/research/wc3-hero-ability-reference.csv`: our ability id → the WC3 hero and ability it is audited against, with that ability's
+- **`tests/unit/test_number_fingerprints.gd`**. It reads a reference table that lives **only** in `docs/research/`
+  (`docs/research/reference-ability-numbers.csv`: our ability id → the WC3 hero and ability it is audited against, with that ability's
   mana, cooldown, duration and per-rank damage / heal / summon HP). It loads our values from `data/` and **fails** on:
   1. any exact match of mana, cooldown or duration between a functional equivalent and its WC3 counterpart;
   2. any per-rank damage, heal or summon-HP value equal at the same rank for a functional equivalent;
   3. any (mana, cooldown) pair of any of our hero abilities equal to that of any ability of the matching WC3 hero.
-- The test file contains **no** WC3 names (the banned-term checker scans `tests/`); all names stay in the docs-only CSV. New hero kits
-  must add their rows before data entry.
+- The test file contains **no** WC3 names, and neither its file name nor the CSV path it opens contains a banned token (the banned-term
+  checker scans `tests/`, file names included); all names stay in the docs-only CSV. New hero kits must add their rows before data entry.
 
 Every name, VFX, number and visual is ours. No hero reproduces the expressive *combination* of a WC3 kit (ip-safety §2.3).
 
@@ -871,14 +881,16 @@ Notes:
 | Item | Hall tier | Cost | Stock / restock | Effect | Slice |
 |---|---|---|---|---|---|
 | Homeward Horn | T1 | 300 g | 2 / 90 s | Blow it for 3 s (rules.md §6.8 channel), then the hero and **up to 11 of your own units within 6 m** teleport next to the nearest own finished hall | **[SLICE]** |
-| Linden Salve | T1 | 140 g | 3 / 60 s | +250 HP | **[SLICE]** |
-| Sage's Tincture | T1 | 120 g | 3 / 60 s | +150 mana | **[SLICE]** |
-| Tin Watchman | T1 | 60 g | 3 / 45 s | Places a tiny clockwork ward: 10 m vision for 180 s | **[SLICE]** |
-| Chalk of Seeing | T2 | 75 g | 2 / 60 s | Reveals invisible units within 9 m for 15 s (`reveal_invisible_area`) | **[SLICE]** |
+| Linden Salve | T1 | 135 g | 3 / 60 s | +240 HP at once (`heal_instant`) | **[SLICE]** |
+| Sage's Tincture | T1 | 115 g | 3 / 60 s | +140 mana at once (`mana_instant`) | **[SLICE]** |
+| Tin Watchman | T1 | 60 g | 3 / 45 s | Places a tiny clockwork ward: 10 m vision for 180 s (`place_ward`) | **[SLICE]** |
+| Chalk of Seeing | T2 | 70 g | 2 / 60 s | Reveals invisible units within 9 m for 15 s (`reveal_invisible_area`) | **[SLICE]** |
 | Folding Pavise | T2 | 100 g | 2 / 90 s | Unfolds a 3 m wooden barricade (6×1 cells, 300 HP) for 30 s. Blocks pathing | *later* |
 | Lookout in a Crate | T3 | 150 g | 1 / 120 s | Unfolds a finished Lookout at a point within 6 m in 5 s (obeys normal placement rules) | *later* |
 
 Slice cost: the Curio Cabinet uses the bpy half-timber kit (≈ 0 credits); 5 item icons ≈ 1.25 credits.
+Prices and amounts are kept off the common WC3 shop values (a 250 HP heal and a 150 mana restore are WC3 potion numbers), as the
+Weighstall and the clans' Tea Tent already do (neutrals §4.2, clans §9).
 
 ### 7.5 Command cards and hotkeys (Classic preset; rules.md §18.4)
 
@@ -1007,7 +1019,7 @@ on Greenvale (neutrals §3.6).
 | 0:45 | 8 / 12 | New Hodman → **Drill Yard** (160 / 55), then lumber |
 | 0:58 | 9 / 19 | Croft 1 done |
 | 1:05 | 14 / 19 | Oath Hall done → **free hero: Wheel Marshal** starts training (55 s; 5 food reserved now). Hodman 1 → lumber |
-| 1:10 | 14 / 19 | Croft 2 (done about 1:53) |
+| 1:10 | 14 / 19 | Croft 2 (38 s plus the walk: done about 1:50) |
 | 1:50 | 17 / 26 | Drill Yard done → Pavisiers continuously (gold permitting) |
 | 2:00 | 18 / 26 | **Wheel Marshal out.** She and the first Pavisier walk to the nearest green camp (Greenvale: the Charcoal Clamp, 28–35 m) and creep from about 2:10 |
 | 2:15 | 19 / 26 | **Foundry** (150 / 50) |
@@ -1017,10 +1029,10 @@ on Greenvale (neutrals §3.6).
 | 3:45 | 29 / 33 | **Walled Burg** (310 / 200) at about 13 Hodmen (5 gold, 7 lumber, 1 builder). Croft 4 |
 | 4:30 | 34 / 40 | **Curio Cabinet** (130 / 30) near the hall. Pavise Drill if the enemy shows ranged units. Croft 5 at about 5:00. Keep creeping; hero aims for level 3 by 5:30 |
 | 5:55 | 36 / 49 | Walled Burg done (+2 food) → **hero 2: Firewright** and **Wainwright Yard** (140 / 130). Croft 6. A Lookout at the natural expansion |
-| 6:30 | 41 / 49 | **Collegium** (160 / 120); build it at 5:55 beside the Wainwright Yard instead if lumber allows. If Long-Braid has been seen: one **Chalk of Seeing** on the Wheel Marshal |
+| 6:30 | 41 / 49 | **Collegium** (160 / 120); build it at 5:55 beside the Wainwright Yard instead if lumber allows. If the Uncut (the clans' stealth duelist) has been seen: one **Chalk of Seeing** on the Wheel Marshal |
 | 6:45 | 44 / 56 | Lookout → **Gun Tower**. Croft 7 |
 | 7:00 | 47 / 56 | **Bombard Wagons** ×2, **Drawn Barrels**, **Signal Shells** (50 / 50) |
-| 7:40 | 50 / 63 | Collegium done → **Linden Sisters** ×2. **Journeyman Papers** (Smoke of Rue) if the enemy leans on Wind at Your Back or Hail-Hawks |
+| 7:40 | 50 / 63 | Collegium done → **Linden Sisters** ×2. **Journeyman Papers** (Smoke of Rue) if the enemy leans on Wind at Your Back or Hail-Swifts |
 | 8:30–9:30 | 54–58 / 63 | Push: 2 heroes (levels 4–5), 4 Pavisiers, 4 Hookgunners, 2 Bombard Wagons, 2 Linden Sisters. Plant pavises against ranged; Signal Shell or Chalk any Dust Veil; siege the expansion. Level-2 Tempered Blades or Corned Powder during the push. Accept the first upkeep step (51+ food) only for a decisive push. The push leaves between 8:30 and 9:30, depending on creep gold |
 
 **Variants:**
@@ -1107,7 +1119,7 @@ least one mechanic of its own, and the checks against *Warhammer* and *Age of Em
 6. **Netcaster vs a true third flyer:** if playtests miss a third air unit, revisit at full-game scope. The Netcaster was chosen because bipeds are cheap to produce.
 7. **Red-team readability** of burgundy units: verify with the first rendered Pavisier at night grading (§2.2 rule).
 8. **Clans interaction:** counters and timings in §9 and §10 assume a melee-heavy opponent with beast riders. Re-tune against `clans.md`
-   (Long-Braid's Dust Veil, Gustcaller buffs, Sling-Cart range) after the first AI-vs-AI runs.
+   (the Uncut's Dust Veil, Gustcaller buffs, Skymirror's Hail-Swifts, Sling-Cart range) after the first AI-vs-AI runs.
 9. **Line check:** before recording, check every line in §3.2 against the WC3 quote pages (audio §3.2) and the shelved concept doc, so nothing echoes either.
 10. **Wheel Marshal sustain (tuning flags):** Linden Balm cannot target the Marshal herself (default). If solo creeping proves too
     punishing, the fallback is a self-heal at 50 %. Measured Cadence replaced the Steady Ranks regeneration aura; if it tests badly, the
@@ -1161,13 +1173,28 @@ replaced by the stronger fix of another issue.
 | 34 | Minor | Slice AI Levy trigger differed from rules.md §19; no stand-down | New trigger (≥ 6 enemy combat food within 20 m of a Hodman within 22 m of a hall; Stand Down (all) after 10 s) (§10) |
 | 35 | Minor | No T3 shop stock | **Lookout in a Crate** (150 g, 1 / 120 s) (§7.4) |
 
+**Verification pass (same date):** every row above was re-checked against the text. Gaps found in that pass and fixed:
+
+| # | Found | What changed |
+|---|---|---|
+| V1 | The planned test `test_no_wc3_number_fingerprints` and the CSV path it opens contain the banned token `wc3`; the checker scans `tests/` file names and contents, so the test itself would fail the IP check | Renamed `tests/unit/test_number_fingerprints.gd` and `docs/research/reference-ability-numbers.csv` (§6.4, follow-ups) |
+| V2 | The clans doc renamed its stealth hero Long-Braid → **the Uncut** (now in `banned_terms.txt`) and Hail-Hawks → **Hail-Swifts** | §10 6:30 and 7:40 rows and §13 Q8 updated |
+| V3 | Shop items used WC3 potion numbers (250 HP, 150 mana) and a likely WC3 dust price | Linden Salve 135 g / +240 HP; Sage's Tincture 115 g / +140 mana; Chalk of Seeing 70 g (§7.4) |
+| V4 | The Linden Sister joined the slice (issue 19) but had no sample lines | Linden Sister sample table added (§3.2); budget stays 18 lines |
+| V5 | §10 showed the 26 food cap at 1:50 while Croft 2 finished "about 1:53" | Croft 2 done about 1:50 |
+| V6 | The clans follow-up was stale: the Tea Tent is already slice, but has no T2 detection item | Follow-up reworded; juice ITM-03 and neutrals Flour Bomb follow-ups added |
+
 **Follow-ups in other files** (not edited here; each owner doc should take these in its next pass):
 
 - `docs/design/rules.md`: §4.3 kingdom row (Hod Chain: +40 % per carrier at 5 lumber per 10 s; Timber Yard drop-off in the slice);
   §9 and §23 Q14 (drop "kingdom casters start at 40 %"); §10.6 example (the Silver Spire no longer has an anti-summon bonus);
   §11 slice detection sources (Signal Shell and Chalk of Seeing are now slice; Silver Spire stays *later*).
-- `docs/design/slice-plan.md`: §1.11 should read "2:00 first hero"; B16 `kingdom.caster` → **P0**; add the Timber Yard, Collegium and
+- `docs/design/slice-plan.md`: §1.11 should read "2:00 first hero" and the §4.1 M1 check "first hero ≤ 1:30" should read "≤ 2:05";
+  B16 `kingdom.caster` → **P0** (also its rows in the animation, §2.10 icon and VO budget tables); add the Timber Yard, Collegium and
   Curio Cabinet to the procedural building kit list.
-- `docs/design/factions/clans.md`: mirror the shop decision, i.e. tag the **Tea Tent [SLICE]** with T1 consumables and recall and T2 detection.
-- New files at data entry: `docs/research/wc3-hero-ability-reference.csv` and `tests/unit/test_no_wc3_number_fingerprints` (§6.4); a
+- `docs/design/factions/clans.md`: the **Tea Tent** is already slice (T1 consumables and recall). It still has **no T2 detection item**
+  to mirror the Kingdom's Chalk of Seeing; add one (or confirm that "few cheap detectors" is deliberate, rules.md §11).
+- `docs/design/juice/heroes-abilities-vfx.md` ITM-03: Linden Salve is now **+240 HP** (§7.4).
+- `docs/design/neutrals.md` §4.2: the Flour Bomb note still says "counters Long-Braid's Dust Veil"; the hero is now the Uncut.
+- New files at data entry: `docs/research/reference-ability-numbers.csv` and `tests/unit/test_number_fingerprints.gd` (§6.4); a
   VO lint script in `tools/ip/` (§3.3).
