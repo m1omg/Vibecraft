@@ -17,7 +17,7 @@ All commands print a JSON summary on stdout. Outputs are overwritten (idempotent
 Examples:
   python3 tools/texture_tools.py seamless grass.png -o assets/textures/terrain/grass.png --preview
   python3 tools/texture_tools.py array grass.png dirt.png rock.png -o terrain_array.png --size 1024 --godot-import
-  python3 tools/texture_tools.py icon footman_concept.png -o assets/icons/footman --frame "#b08d3c" --disabled
+  python3 tools/texture_tools.py icon soldier_concept.png -o assets/icons/soldier --frame "#b08d3c" --disabled
   python3 tools/texture_tools.py palette-match dirt.png --ref grass.png -o dirt_matched.png --strength 0.6
 """
 from __future__ import annotations
@@ -654,7 +654,7 @@ def build_parser():
                                    "resize to --sizes, optional bevelled frame, optional greyed disabled "
                                    "variant. Writes <out>_<size>.png (and <out>_<size>_dis.png).")
     p.add_argument("input")
-    p.add_argument("-o", "--out", required=True, help="output prefix, e.g. assets/icons/footman")
+    p.add_argument("-o", "--out", required=True, help="output prefix, e.g. assets/icons/soldier")
     p.add_argument("--sizes", default="128,64")
     p.add_argument("--crop", default="auto", help="auto | center | none | x,y,w,h")
     p.add_argument("--pad", type=float, default=0.08, help="padding around the auto/explicit crop (fraction)")

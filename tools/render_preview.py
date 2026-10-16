@@ -2,7 +2,7 @@
 """Visual QA for a GLB: load it in Godot exactly like the game would (GLTFDocument), print a
 JSON report, render a labelled contact sheet PNG.
 
-    python3 tools/render_preview.py assets/models/footman.glb -o /tmp/footman_sheet.png
+    python3 tools/render_preview.py assets/models/soldier.glb -o /tmp/soldier_sheet.png
 
 The sheet shows, left to right: RTS camera (56 deg pitch, from the model's front), front,
 side, back three-quarter, and an "in-game" 256 px crop taken with the real RTS camera

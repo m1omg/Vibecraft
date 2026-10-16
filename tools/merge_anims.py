@@ -4,10 +4,10 @@ Generators such as Meshy export one animation per rigged file. This takes the me
 from the base file (default: the first --clip file, or --base, e.g. the output of
 process_model.py) and adds the animation of every --clip file under the given name.
 
-    /opt/bpyenv/v313/bin/python tools/merge_anims.py -o assets/models/footman.glb \\
-        --base build/footman_lod.glb \\
-        --clip idle=raw/footman_idle.glb --clip walk=raw/footman_walk.glb \\
-        --clip attack=raw/footman_attack.glb --clip death=raw/footman_death.glb
+    /opt/bpyenv/v313/bin/python tools/merge_anims.py -o assets/models/soldier.glb \\
+        --base build/soldier_lod.glb \\
+        --clip idle=raw/soldier_idle.glb --clip walk=raw/soldier_walk.glb \\
+        --clip attack=raw/soldier_attack.glb --clip death=raw/soldier_death.glb
 
 --clip NAME=FILE[:ACTION]  ACTION picks one animation when FILE holds several (default: the
                            longest one). Standard names: idle walk attack death work cast birth.

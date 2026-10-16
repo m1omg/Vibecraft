@@ -1,0 +1,203 @@
+# Terms that must never appear in shipped content, data, asset filenames or generation prompts.
+# One term per line, case-insensitive, matched as whole words. See docs/research/ip-safety.md §2.
+# Brands
+warcraft
+wc3
+starcraft
+blizzard
+battle.net
+reforged
+world of warcraft
+hearthstone
+dota
+# Factions / peoples as branded
+human alliance
+orcish horde
+the horde
+the alliance
+scourge
+night elf
+night elves
+burning legion
+forsaken
+kaldorei
+quel'dorei
+darkspear
+frostwolf
+# World and lore
+azeroth
+lordaeron
+kalimdor
+northrend
+draenor
+outland
+stormwind
+ironforge
+teldrassil
+dalaran
+ashenvale
+silvermoon
+frozen throne
+lich king
+sargeras
+arthas
+thrall
+jaina
+illidan
+tyrande
+uther
+grom
+# Units
+peon
+acolyte
+wisp
+grunt
+footman
+rifleman
+spell breaker
+kodo
+wind rider
+batrider
+tauren
+headhunter
+ghoul
+crypt fiend
+abomination
+meat wagon
+banshee
+frost wyrm
+huntress
+dryad
+druid of the claw
+druid of the talon
+mountain giant
+hippogryph
+chimaera
+faerie dragon
+gryphon rider
+dragonhawk
+sorceress
+mortar team
+flying machine
+# Heroes
+archmage
+mountain king
+blood mage
+blademaster
+far seer
+tauren chieftain
+shadow hunter
+death knight
+dreadlord
+crypt lord
+demon hunter
+keeper of the grove
+priestess of the moon
+pit lord
+firelord
+naga sea witch
+brewmaster
+dark ranger
+beastmaster
+# Buildings
+great hall
+necropolis
+halls of the dead
+black citadel
+tree of life
+tree of ages
+tree of eternity
+ziggurat
+moon well
+altar of kings
+altar of storms
+altar of darkness
+altar of elders
+ancient of war
+ancient of lore
+ancient of wind
+haunted gold mine
+entangled gold mine
+goblin merchant
+goblin laboratory
+# Abilities
+holy light
+divine shield
+devotion aura
+storm bolt
+thunder clap
+flame strike
+siphon mana
+wind walk
+mirror image
+bladestorm
+feral spirit
+war stomp
+endurance aura
+big bad voodoo
+death coil
+death pact
+unholy aura
+animate dead
+frost nova
+dark ritual
+death and decay
+carrion swarm
+vampiric aura
+locust swarm
+mana burn
+entangling roots
+force of nature
+thorns aura
+searing arrows
+trueshot aura
+starfall
+fan of knives
+shadow strike
+bloodlust
+unholy frenzy
+# Items
+claws of attack
+boots of speed
+scroll of town portal
+tome of experience
+orb of frost
+ankh of reincarnation
+kelen's dagger
+gem of true seeing
+potion of clarity
+# Maps
+lost temple
+turtle rock
+twisted meadows
+echo isles
+terenas stand
+amazonia
+gnoll wood
+secret valley
+northern isles
+concealed hill
+last refuge
+# Catch-phrases (fragments)
+work work
+zug zug
+job's done
+jobs done
+ready to work
+something need doing
+stop poking me
+lok'tar
+dabu
+additional pylons
+not enough minerals
+# People (never in prompts)
+samwise
+didier
+metzen
+petras
+glenn rane
+tracy w. bush
+derek duke
+jason hayes
+glenn stafford
+bill roper

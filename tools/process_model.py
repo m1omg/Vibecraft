@@ -1,7 +1,7 @@
 """Normalize an AI-generated GLB (Tripo / Meshy / Hunyuan) into a game-ready Vibecraft model.
 
 Run with the bpy interpreter:
-    /opt/bpyenv/v313/bin/python tools/process_model.py in.glb --out assets/models/footman.glb \\
+    /opt/bpyenv/v313/bin/python tools/process_model.py in.glb --out assets/models/soldier.glb \\
         --target-tris 6000 --height 1.8 --tex-size 1024
 
 Pipeline (each step optional where it makes sense):

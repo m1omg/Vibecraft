@@ -66,14 +66,14 @@ If the sheet shows the wrong side at the red arrow, rerun with `--facing=-x`, `-
 ### Rigged character from Meshy (one clip per file)
 ```bash
 # 1. the mesh: decimate/scale/turn the rig once (any of the files; animation is dropped later)
-$PY tools/process_model.py raw/footman_idle.glb -o build/footman_base.glb --name footman \
+$PY tools/process_model.py raw/soldier_idle.glb -o build/soldier_base.glb --name soldier \
     --target-tris 6000 --height 1.8 --symmetry x --team-mask 300 --team-desaturate
 # 2. all clips onto that base, straight from the raw files
-$PY tools/merge_anims.py -o assets/models/footman.glb --base build/footman_base.glb \
-    --clip idle=raw/footman_idle.glb --clip walk=raw/footman_walk.glb \
-    --clip attack=raw/footman_attack.glb --clip death=raw/footman_death.glb
-cp build/footman_base_team.png assets/models/footman_team.png   # optional texel mask
-python3 tools/render_preview.py assets/models/footman.glb -o /tmp/footman_sheet.png
+$PY tools/merge_anims.py -o assets/models/soldier.glb --base build/soldier_base.glb \
+    --clip idle=raw/soldier_idle.glb --clip walk=raw/soldier_walk.glb \
+    --clip attack=raw/soldier_attack.glb --clip death=raw/soldier_death.glb
+cp build/soldier_base_team.png assets/models/soldier_team.png   # optional texel mask
+python3 tools/render_preview.py assets/models/soldier.glb -o /tmp/soldier_sheet.png
 ```
 `merge_anims` copies bone-local keys verbatim when the clip's skeleton matches the base
 (always true for files of one character; `process_model`'s scale/turn doesn't change bone-local
@@ -83,7 +83,7 @@ retargeted instead (warning). `--clip NAME=FILE:ACTION` picks one action when a 
 
 ### Share clips between two rigged characters (same bone names, different proportions)
 ```bash
-$PY tools/retarget_anims.py --source assets/models/footman.glb --target build/dwarf_base.glb \
+$PY tools/retarget_anims.py --source assets/models/soldier.glb --target build/dwarf_base.glb \
     -o assets/models/dwarf.glb --clip attack --clip death=death --hips-mode vertical
 ```
 Rotation-only, world-space: each matched bone gets the source bone's world rotation relative to
@@ -120,8 +120,8 @@ rects and UVs (`--padding` edge-extends cells against mip bleeding).
 
 ### Icons
 ```bash
-python3 tools/texture_tools.py icon raw/footman_concept.png -o assets/icons/footman \
-    --frame "#b08d3c" --disabled        # footman_128.png footman_64.png (+ _dis variants)
+python3 tools/texture_tools.py icon raw/soldier_concept.png -o assets/icons/soldier \
+    --frame "#b08d3c" --disabled        # soldier_128.png soldier_64.png (+ _dis variants)
 ```
 `--crop auto` trims the uniform background (or alpha) and centres the subject with `--pad`;
 `center`, `none` or `x,y,w,h` are alternatives; `--zoom` tightens/loosens. The frame is a
