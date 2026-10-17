@@ -1,6 +1,6 @@
 # Faction design: `clans` (the Tormai)
 
-*Design date: 2026-10-16, revised the same day after two rounds of IP-safety and WC3-fidelity reviews (see the two Review logs at the end).
+*Design date: 2026-10-16, revised after two rounds of IP-safety and WC3-fidelity reviews (2026-10-16 and 2026-10-17; see the two Review logs at the end).
 Status: full-game design, with the vertical-slice subset marked ✅. Faction id: `clans` (data prefix `clans_`). Opponent in the
 slice: `kingdom`.*
 

@@ -15,6 +15,8 @@ variant height, bounds-centred like autorig does) and <name>_joints.json ({"join
   caster  0.82x slimmer, legs 1.12x, long closed robe hiding the legs, a separate staff
           (own mesh island) through the right hand                                 -> 1.90 m
   worker  1.15x wider, legs 0.75x, head 1.35x bigger                                 -> 1.10 m
+  hero    1.08x wider shoulders, legs 1.06x, a long cape (own mesh island, touching the
+          shoulders, hanging free behind the back and legs down to the knees)       -> 2.10 m
 """
 import argparse
 import json
@@ -84,15 +86,41 @@ def variant(name, P, cx, cy):
         P = big_head(P, 1.35, np.array([cx, cy, NECK]))
         P = widen(P, 1.15, 1.05, cx, cy)
         P = legs(P, 0.75)
+    elif name == "hero":
+        k = 1.0 + 0.08 * smoothstep(WAIST, NECK, P[:, 2])
+        P[:, 0] = cx + (P[:, 0] - cx) * k
+        P = legs(P, 1.06)
     return P
 
 
-HEIGHT = {"brute": 2.10, "caster": 1.90, "worker": 1.10}
+HEIGHT = {"brute": 2.10, "caster": 1.90, "worker": 1.10, "hero": 2.10}
+
+
+def flat_uv(bm, faces, p, exclude=()):
+    """Give `faces` the UV of the existing vertex nearest to p (one flat, opaque texel colour;
+    new geometry would otherwise sample UV (0, 0), often the transparent atlas background)."""
+    uvl = bm.loops.layers.uv.active
+    if uvl is None:
+        return
+    best, bd = None, 1e9
+    for f in bm.faces:
+        if f in faces or f in exclude:
+            continue
+        for lp in f.loops:
+            d = (lp.vert.co - p).length
+            if d < bd:
+                best, bd = lp[uvl].uv.copy(), d
+    if best is None:
+        return
+    for f in faces:
+        for lp in f.loops:
+            lp[uvl].uv = best
 
 
 def add_robe(bm, cx, cy, ztop, zbot, rtop, rbot, seg=40, rings=10):
-    """Closed, slightly flared robe (truncated elliptic cone) around the legs."""
+    """Closed, slightly flared robe (truncated elliptic cone) around the legs. Returns its faces."""
     verts = []
+    faces = []
     for r in range(rings + 1):
         t = r / rings
         z = ztop + (zbot - ztop) * t
@@ -106,12 +134,45 @@ def add_robe(bm, cx, cy, ztop, zbot, rtop, rbot, seg=40, rings=10):
         for s in range(seg):
             a, b = verts[r][s], verts[r][(s + 1) % seg]
             c, d = verts[r + 1][(s + 1) % seg], verts[r + 1][s]
-            bm.faces.new((a, b, c, d))
-    bm.faces.new(list(reversed(verts[0])))
-    bm.faces.new(verts[-1])
+            faces.append(bm.faces.new((a, b, c, d)))
+    faces.append(bm.faces.new(list(reversed(verts[0]))))
+    faces.append(bm.faces.new(verts[-1]))
+    return faces
+
+
+def add_cape(bm, co, cx, ztop, zbot, half_top, half_bot, gap_bot=0.07, thick=0.012, nu=14, nv=18):
+    """Closed thin slab behind the back: touches the body at ztop, hangs `gap_bot` behind the
+    back profile at zbot, wraps slightly around the body. `co` = body vertices (back = +Y)."""
+    def back_y(z):
+        band = co[(np.abs(co[:, 2] - z) < 0.04) & (np.abs(co[:, 0] - cx) < 0.12)]
+        return float(np.percentile(band[:, 1], 90)) if len(band) else float(co[:, 1].max())
+    zs = np.linspace(ztop, zbot, nv + 1)
+    prof = np.maximum.accumulate(np.array([back_y(z) for z in zs]))   # hangs straight, never tucks in
+    grid = {}
+    for side, off in (("out", thick), ("in", 0.0)):
+        for i, z in enumerate(zs):
+            t = i / nv
+            half = half_top + (half_bot - half_top) * t
+            for j in range(nu + 1):
+                u = -1.0 + 2.0 * j / nu
+                y = prof[i] + gap_bot * t ** 1.5 + off - 0.05 * u * u * (1 - 0.5 * t)
+                grid[side, i, j] = bm.verts.new((cx + u * half, y, z))
+    faces = []
+    for i in range(nv):
+        for j in range(nu):
+            o = [grid["out", i, j], grid["out", i, j + 1], grid["out", i + 1, j + 1], grid["out", i + 1, j]]
+            n = [grid["in", i, j], grid["in", i + 1, j], grid["in", i + 1, j + 1], grid["in", i, j + 1]]
+            faces += [bm.faces.new(o), bm.faces.new(n)]
+    rim = [(i, 0) for i in range(nv)] + [(nv, j) for j in range(nu)] + [(i, nu) for i in range(nv, 0, -1)] \
+        + [(0, j) for j in range(nu, 0, -1)]
+    for a, b in zip(rim, rim[1:] + rim[:1]):
+        faces.append(bm.faces.new([grid["out", a[0], a[1]], grid["in", a[0], a[1]], grid["in", b[0], b[1]],
+                                   grid["out", b[0], b[1]]]))
+    return faces
 
 
 def add_staff(bm, p0, p1, radius=0.018, seg=10):
+    """Closed cylinder (own mesh island). Returns its faces."""
     d = (np.array(p1) - np.array(p0))
     L = np.linalg.norm(d)
     d /= L
@@ -124,10 +185,11 @@ def add_staff(bm, p0, p1, radius=0.018, seg=10):
         rings.append([bm.verts.new(tuple(np.array(end) + radius * (math.cos(2 * math.pi * s / seg) * u
                                                                + math.sin(2 * math.pi * s / seg) * w)))
                       for s in range(seg)])
-    for s in range(seg):
-        bm.faces.new((rings[0][s], rings[0][(s + 1) % seg], rings[1][(s + 1) % seg], rings[1][s]))
-    bm.faces.new(list(reversed(rings[0])))
-    bm.faces.new(rings[1])
+    faces = [bm.faces.new((rings[0][s], rings[0][(s + 1) % seg], rings[1][(s + 1) % seg], rings[1][s]))
+             for s in range(seg)]
+    faces.append(bm.faces.new(list(reversed(rings[0]))))
+    faces.append(bm.faces.new(rings[1]))
+    return faces
 
 
 def main():
@@ -135,7 +197,7 @@ def main():
     ap.add_argument("--mesh", required=True)
     ap.add_argument("--rig", required=True)
     ap.add_argument("--out-dir", required=True)
-    ap.add_argument("--variants", default="brute,caster,worker")
+    ap.add_argument("--variants", default="brute,caster,worker,hero")
     args = ap.parse_args(vc.bpy_argv())
     os.makedirs(args.out_dir, exist_ok=True)
 
@@ -172,9 +234,31 @@ def main():
             bm.from_mesh(me)
             zh = float(Jv[names.index("LeftUpLeg"), 2])
             hips_w = abs(float(Jv[names.index("LeftUpLeg"), 0] - Jv[names.index("RightUpLeg"), 0]))
-            add_robe(bm, cx, cy + 0.01, zh + 0.12, 0.012, (hips_w * 0.95, 0.17), (hips_w * 1.45 + 0.05, 0.27))
+            from mathutils import Vector
+            knee = Jv[names.index("LeftLeg")]
+            robe_uv_at = Vector((float(knee[0]) + 0.06, float(knee[1]), float(knee[2])))   # trouser cloth
             hand = Jv[names.index("RightHand")]
-            add_staff(bm, (hand[0] - 0.03, hand[1] - 0.05, 0.03), (hand[0] - 0.03, hand[1] - 0.05, 1.95))
+            hand_uv_at = Vector((float(hand[0]), float(hand[1]), float(hand[2])))           # glove leather
+            robe = add_robe(bm, cx, cy + 0.01, zh + 0.12, 0.012, (hips_w * 0.95, 0.17),
+                            (hips_w * 1.45 + 0.05, 0.27))
+            staff = add_staff(bm, (hand[0] - 0.03, hand[1] - 0.05, 0.03), (hand[0] - 0.03, hand[1] - 0.05, 1.95))
+            new = set(robe) | set(staff)
+            flat_uv(bm, set(robe), robe_uv_at, exclude=new)
+            flat_uv(bm, set(staff), hand_uv_at, exclude=new)
+            bm.to_mesh(me)
+            bm.free()
+            me.update()
+        if name == "hero":
+            from mathutils import Vector
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            co_b = np.array([v.co[:] for v in bm.verts])
+            sh = abs(float(Jv[names.index("LeftArm"), 0] - Jv[names.index("RightArm"), 0])) / 2
+            knee = Jv[names.index("LeftLeg")]
+            cape = add_cape(bm, co_b, cx, float(Jv[names.index("neck"), 2]) - 0.05, float(knee[2]) + 0.02,
+                            0.8 * sh, 1.05 * sh)
+            flat_uv(bm, set(cape), Vector((float(knee[0]) + 0.06, float(knee[1]), float(knee[2]) + 0.15)),
+                    exclude=set(cape))
             bm.to_mesh(me)
             bm.free()
             me.update()
