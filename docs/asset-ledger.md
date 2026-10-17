@@ -58,7 +58,9 @@ Budget policy (agreed with the user):
 
 | 21 | 2026-10-17 | Higgsfield | Building material swatches, 14 × gpt_image_2_5 (art bible T5): kingdom_lime_plaster b7cbfa5d, kingdom_dark_oak_beam 9ec18388, kingdom_burgundy_roof_tiles a9f7ac6a, kingdom_rubble_stone 08219f3f, kingdom_bronze_scale_roof b3a38686, kingdom_painted_planks efb26111, clans_teal_felt b9096ece, clans_saffron_felt 1bb763bb, clans_lattice_wood bc780062, clans_tortoise_shell 0ece60ab, clans_polished_bronze 4d2fdda8, neutral_gold_vein_rock 581b9e83, neutral_drystone c1b90119, neutral_mine_timber eb052838 | 3.5 cr | All approved (assets_src/textures/materials). 2 first-attempt submissions rate-limited, not created |
 | 22 | 2026-10-17 | Higgsfield | Hall concepts, 2 × gpt_image_2_5 (art bible T4): kingdom_moot_hall f5ea16a8, clans_shell_hall 5b28e08f | 0.5 cr | Approved |
-| 23 | 2026-10-17 | Krea | Hall image-to-3D, 2 × TRELLIS v1 tex 2048: moot hall f94c3854-3da3-4dc1-9111-e18142779ce2 (seed 1180), shell hall af8d88a7-0e47-466e-a7c1-259003f3973b (seed 1280) | ~30 CU (est.) | pending |
+| 23 | 2026-10-17 | Krea | Hall image-to-3D, 2 × TRELLIS v1 tex 2048: moot hall f94c3854-3da3-4dc1-9111-e18142779ce2 (seed 1180), shell hall af8d88a7-0e47-466e-a7c1-259003f3973b (seed 1280) | 29.63 CU | Fronts good, sides/back black → rejected for buildings (kept in assets_src/buildings/*/model_trellis.glb). TRELLIS only for small one-sided props from now on |
+
+| 24 | 2026-10-17 | Higgsfield | Hall image-to-3D redo, 2 × tripo_h3_1_image_to_3d face_limit 20000: moot hall 30c30deb-665f-44b3-99d0-0d7a97a0f8fb, shell hall 18634ede-cb91-4aa3-a6ef-6b58c290c8cb | 18 cr (quoted) | pending |
 
 **Bake-off conclusion (2026-10-16):** characters and anything that turns → Higgsfield Tripo H3.1 (9 cr) + Higgsfield
 rigging (8 cr). Static buildings/props → Krea TRELLIS v1 (~15 CU) is acceptable when the back is never seen; otherwise
