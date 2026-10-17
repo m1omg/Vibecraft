@@ -152,7 +152,7 @@ the Thoom and the Gong-Ring council.
 | Bronze mirrors and ribbon fringes sewn on a shaman's robe (Mongolian, Buryat and Siberian practice) | Gustcaller and Skymirror costumes | Mirrors are **tools only**: a visor, a staff-top, pole-tops, sun-mirrors on posts and masts. Robes are plain felt; ribbons hang only from staffs |
 | Milk sprinkled from a carved spoon as a blessing (Mongolian milk libation) | Omen-Mother's heal | She splashes hot sweet tea from a kettle (**Kettle Blessing**) |
 | Carved-face standing stones (Turkic funerary stelae, deer stones) | Naming Stones | Rough stones carved with hail and wind glyphs; no faces, nothing hung on them; a frame of small gongs beside them |
-| Horse-hair tassels below a spearhead, and a sacred count of nine banners (steppe war-standards) | Masts; "the Nine Clans" | Masts carry felt ribbon streamers and gong frames. "The Clans under the Gong-Ring", with no number |
+| Horse-hair tassels below a spearhead, and a sacred count of nine banners (steppe war-standards) | Masts; "the Nine Clans" | Masts carry felt ribbon streamers and gong frames. "The households under the Gong-Ring", with no number |
 | A watching creator-Sky (Tengri) | Lore; the Grappler warcry "The Sky is watching" | The sky is weather. The warcry is "THE WHOLE GRASS IS WATCHING. LOOK GOOD!" |
 | Knucklebone divination: ankle-bones whose four faces are read as horse, camel, sheep and goat (Mongolian *shagai*) | Omen-Mother's omen ability (faces Hookbill, Shell, Ewe, Ram); knucklebones on her hat, a pouch of ankle-bones | **Tea-Leaf Omen**: she swirls her cup and reads the leaves (Kite, Shell, Kettle, Hill). Her hat carries small bronze cups and tea-brick tokens; no bones anywhere |
 | Burial mounds (kurgans) and funerary masks | The defensive caster: a "Mound-Speaker" with an ancestor-mask and an ancestor's second voice | **Hill-Listener**: the second voice is the Sleeping Hills' (a Thoom dream-voice); a bronze echo-horn instead of a mask; **Hands of the Hill** |
@@ -300,11 +300,12 @@ Rules:
 | 5. Signature mechanic | One WC3-derived mechanic only (worker garrison), shown as gong plus rolling felt. The second review found a second one hidden in the war-mill slot (building thorns and burrow-and-tower armour); both are gone (§8) | ✅ |
 | 6. Names and voice | All original and searched beyond the §2.1 list; no "Clans", "Hearth" or "orc" on screen; formal, courteous hospitality comedy; no reworded reference-worker acks (§3.1) | ✅ |
 
-**Result: passes after the second 2026-10-16 review** (6 of 6 axes differ, including silhouette). Both earlier versions also claimed
+**Result: passes after the second review (2026-10-17)** (6 of 6 axes differ, including silhouette). Both earlier versions also claimed
 6 of 6. The first draft carried a Blizzard-coined bird name, a WoW hero-class name, two one-word ward swaps, a percussion war-beast, a
 horned-looking giant helm and real sacred items. The first revision still carried a gong-shaped mirror on a beast, a spinning duelist,
 "Hearth" names, the orc-lore word "Clans" on screen, a second WC3 Orc signature mechanic in the war-mill slot, a 3-of-3 witch-doctor
-kit, real divination and burial imagery, and 15 numbers equal to WC3's. All are fixed; see the two Review logs.
+kit, real divination and burial imagery, and 16 numbers equal to WC3's (15 unit, building and upgrade values plus the ward item's
+charges). All are fixed; see the two Review logs.
 
 **Residual risk:** the *role structure* is a deliberate slot-for-slot mirror (the user's direction). Mitigations:
 - Every kit has original abilities (see the equivalence ledgers in §5.3 and §6.2). The four heroes keep 8 functional
