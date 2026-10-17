@@ -41,3 +41,12 @@ for row in "${UNITS[@]}"; do
   fi
 done
 exit $fail
+
+# Signature buildings (static): Tripo H3.1 raw files face +X; the Moot Hall needs an extra 90 deg yaw so the door faces the camera.
+if [[ $# -eq 0 || "$want" == *" buildings "* ]]; then
+  mkdir -p assets/models/buildings
+  "$PY" tools/process_model.py assets_src/buildings/kingdom_moot_hall/model_tripo_h31.glb -o assets/models/buildings/kingdom_moot_hall.glb \
+    --target-tris 12000 --width 8 --facing +x --yaw 90 --team-mask 300:45:0.3 --name kingdom_moot_hall >"$LOG/kingdom_moot_hall.json" 2>&1 && echo "OK   kingdom_moot_hall"
+  "$PY" tools/process_model.py assets_src/buildings/clans_shell_hall/model_tripo_h31.glb -o assets/models/buildings/clans_shell_hall.glb \
+    --target-tris 12000 --width 8 --facing +x --team-mask 300:45:0.3 --name clans_shell_hall >"$LOG/clans_shell_hall.json" 2>&1 && echo "OK   clans_shell_hall"
+fi
