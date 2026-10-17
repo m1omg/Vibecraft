@@ -1231,19 +1231,24 @@ and none of it needs paid rigging.
 | Icons: 31 items + 16 creep abilities (adds Pine-Tar Dressing and Re-Stuff) | Higgsfield images (0.25 cr each), our own style anchors | ≈ 12 | — |
 | Minimap glyphs (camp pip, nugget, balance, droplet ring, lantern) | Drawn in-house as SVG | 0 | — |
 | Creep vocal sets: 3 families × (aggro, attack, pain, death), 2–3 variants per job (audio §1.6, prompt C1 pattern) | Krea Seed Audio, about 4.63 CU per job | — | 12 jobs ≈ 56 |
-| World SFX: buy, sell, can't-afford, item pickup, bundle glint, spring loop, critter set, crow caws, stone grind | Seed Audio | — | 12 jobs ≈ 56 |
+| World SFX: buy, sell, can't-afford, item pickup, bundle glint, spring loop, inn revive bell, critter set (incl. the goose honk), crow caws, stone grind | Seed Audio | — | 12 jobs ≈ 56 |
 | Shopkeeper VO (9 lines) | Krea ElevenLabs TTS (cost per line still to be probed; audio §4.1) | — | probe |
-| **Total (slice)** | | **≈ 33 cr** (≈ 24 with the procedural scarecrow) | **≈ 112 CU + TTS** |
+| **Total (slice)** | | **≈ 35 cr** (≈ 26 with the procedural scarecrow) | **≈ 112 CU + TTS** |
 
 **[SLICE+] add-ons:** Withy Brute (bpy bound-rod bundles, ~0.5 cr) · Rat-Piper (H3.1 + bpy auto-rig, 9.25 cr; rats procedural; about 26 VO lines) ·
-Rundling shopkeeper (H3.1, 9.25 cr; reused for the Weighmaster later) · Coaching Inn (bpy half-timber kit reused from the kingdom kit,
-retinted to neutral browns, ~1 cr) · Free Company Camp, Beacon Cairn and Dewstone (bpy, ~1.5 cr together).
+Rundling shopkeeper (H3.1, 9.25 cr; reused for the Weighmaster later) · Curl-Up Scale icon (0.25 cr) · Free Company Camp, Beacon Cairn and
+Dewstone (bpy, ~1.5 cr together).
 
 ### 8.2 Prompt and review rules (neutral layer)
 
 - Describe creeps by **function and qualities**, never by analogy. Write "charcoal-burner outlaw with a wide conical leather hood, soot-black face, patched oilcloth coat",
   never "a bandit like in …" (ip-safety §5.2).
-- No pumpkin heads in Tattiebogles prompts. Say "pierced turnip lantern head with drilled holes, no carved face".
+- No pumpkin heads in Tattiebogles prompts. Say "pierced turnip lantern head with randomly scattered drilled holes, no face of any kind".
+  The Crowcaller is "a patched sacking cape, crows perched on outstretched pole-arms", never feathers; the Withy Brute is "tightly bound
+  willow-rod bundles", never "wicker" or "woven".
+- Landmarks: the Dewstone is "a dry upright quartz-veined boulder sweating warm white-gold droplets", never "pool", "well", "fountain" or
+  "glowing water"; the Gold Seam is "an adit in a layered cliff with a windlass headframe", never "mine cart"; the Beacon Cairn is "a low
+  drystone cairn with an iron fire-basket", never "obelisk", "tower" or "crystal".
 - The Cairnwakes and Old Menhir are procedural: no prompt is needed beyond the stone texture.
 - Every generated creep is squint-tested against §10.2 and logged in `docs/asset-ledger.md`, as for faction units.
 
@@ -1265,6 +1270,15 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
              "projectile": {"speed": 14.0, "arc": 0.3, "model": "coal_lump"}},
   "abilities": ["creep_smoke_pot"]
 }
+"creep_cairn_menhir_elder": {
+  "level": 7, "sleeps": "never", "family": "cairnwakes", "flags": ["creep", "construct"],
+  "hp": 1350, "mana": 200, "armor": 5, "armor_type": "heavy",
+  "attack": {"type": "pure", "damage": [36, 44], "cooldown": 2.2, "range": 1.2},
+  "abilities": ["creep_old_ward", "creep_ley_pulse", "creep_set_in_stone"]   // "hardy" is added automatically at level 6+
+}
+
+// data/units.json (neutral hero, attack excerpt)
+"nhero_rat_piper": { "attack": {"type": "heroic", "damage": [2, 10], "cooldown": 2.1, "range": 7.0}, "armor_type": "hero" }
 
 // data/camps.json
 "camp_gv_drystone_fold": {
@@ -1274,27 +1288,81 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
             "B": {"class": ["permanent", "charged"], "level": 3}},
   "props": ["sheepfold_ruin", "gold_seam_expansion"]
 }
+"camp_gv_turnip_patch": {
+  "tileset": "greenvale", "mode": "camp", "sleeps_override": "night",
+  "creeps": [["creep_harvest_fieldkeeper", 2], ["creep_harvest_strawling", 2]],
+  "drops": {"B": {"class": ["permanent", "charged", "powerup"], "level": 2}}
+}
+"camp_gv_smugglers_den": {
+  "tileset": "greenvale", "mode": "camp", "acquire_override": 6.5,
+  "creeps": [["creep_sootcoat_kiln_master", 1], ["creep_sootcoat_collier", 1],
+             ["creep_sootcoat_smoker", 1], ["creep_sootcoat_cutpurse", 1]],
+  // one [dx, dz, facing_deg] per creep, in creeps order, metres from the stall centre (stall 4 x 4 m)
+  "layout": [[4.5, 4.5, 45], [-4.5, 4.5, 135], [-4.5, -4.5, 225], [4.5, -4.5, 315]],
+  "drops": {"A": {"class": ["powerup"], "level": 1}, "B": {"class": ["permanent"], "level": 2}},
+  "guards": "neutral_weighstall"
+}
 
 // data/items.json
 "item_homing_pigeon": {
   "name": "Homing Pigeon", "class": "purchasable", "level": 1, "charges": 1,
   "price": {"gold": 325}, "value": 325, "effect": "recall_to_hall",
-  "channel": 3.0, "radius": 6.0, "max_units": 11, "cooldown": 0
+  "target": "point_nearest_own_hall", "double_tap": "highest_tier_hall",
+  "channel": 5.0, "enemy_interruptible": false, "radius": 6.0, "max_units": 11, "cooldown": 0
+}
+"item_rosehip_draught": {
+  "class": "purchasable", "level": 1, "charges": 1, "price": {"gold": 150}, "value": 150,
+  "effect": "heal_instant", "amount": 260, "cooldown_group": "heal"
+}
+"item_bluebell_cordial": { "effect": "mana_instant", "amount": 160, "cooldown_group": "mana" }
+"item_wanderers_hobnails": {
+  "class": "purchasable", "level": 2, "price": {"gold": 200}, "value": 200,
+  "effect": "stat_bonus", "move_speed": 0.7, "unique": true, "unique_group": "move_speed"
+}
+// also "unique": true on item_coilspring_heels (move_speed), item_thistledown_cloak (evasion),
+// item_drillmasters_pace_stick and item_shepherds_crook (their own aura groups)
+"item_stoutheart_weight": { "class": "purchasable", "level": 2, "price": {"gold": 300}, "effect": "stat_bonus", "max_hp": 175 }
+"item_wiped_slate": { "class": "purchasable", "level": 3, "charges": 1, "price": {"gold": 280}, "effect": "retrain" }
+"item_horseshoe_nail": { "class": "powerup", "level": 1, "effect": "grant_attribute", "str": 1 }
+
+// data/neutrals.json (shop stock; the use range is global: rules.neutral.use_range = 7.0)
+"neutral_weighstall": {
+  "footprint": [8, 8], "buys_items": 0.5, "minimap_glyph": "balance",
+  "stock": [["item_rosehip_draught", 3, 45, 0], ["item_bluebell_cordial", 3, 45, 0],
+            ["item_homing_pigeon", 2, 120, 0], ["item_snoop_peg", 2, 60, 0], ["item_flour_bomb", 2, 60, 0],
+            ["item_picnic_hamper", 2, 90, 180], ["item_wanderers_hobnails", 1, 120, 240],
+            ["item_stoutheart_weight", 1, 120, 240], ["item_wiped_slate", 1, 300, 300]]
+}
+"neutral_coaching_inn": {
+  "footprint": [10, 10], "sign_name": "The Muddy Lantern", "minimap_glyph": "lantern",
+  "services": ["revive"], "heroes": []          // [SLICE+]: ["nhero_rat_piper"]
 }
 
-// data/neutrals.json (shop stock)
-"neutral_weighstall": {
-  "footprint": [8, 8], "patron_range": 4.0, "buys_items": 0.5,
-  "stock": [["item_rosehip_draught", 3, 45, 0], ["item_homing_pigeon", 2, 120, 0],
-            ["item_picnic_hamper", 2, 90, 180], ["item_wanderers_hobnails", 1, 120, 240]]
-}
+// data/factions.json, rules object (proposed additions; owned by rules.md)
+"items":   { "group_cooldown": {"heal": 8.0, "mana": 8.0} },
+"minimap": { "show_unexplored_neutrals": true }   // set from footage (§11)
 ```
 
-- `sleeps`: `"night"` (default), `"day"` or `"never"`. `level` drives XP and bounty. Level 6+ automatically gets `hardy`.
+- `sleeps`: `"night"` (default), `"day"` or `"never"`; a camp's `sleeps_override` wins over every member's family default.
+  `level` drives XP and bounty. Level 6+ automatically gets `hardy`.
+- Attack type ids are `blade, pierce, siege, arcane, heroic, spell, pure`; armour type ids add `adamant` (rules §20.4). The old ids
+  `hero` (attack) and `chaos` must not appear in `data/`. Once the rules §20.4 migration has removed `chaos` from `data/factions.json` and
+  `tests/unit/test_combat.gd`, add `chaos` to `tools/ip/banned_terms.txt` (adding it before then would fail the IP check on today's files).
 - Stock rows are `[item, max, restock_s, available_from_s]`, kept per player.
 - Drops are resolved at match start with `World.rng`, so a replay with the same seed has the same items.
-- **Determinism:** sleep staggers, bounty rolls, drops and critter wander all use the seeded sim RNG.
-  Critter wander may instead use a separate *visual* RNG if critters are moved out of the sim (they affect no gameplay except the goose nip and the sparrow flush).
+- **Determinism:** sleep staggers, bounty rolls and drops use the seeded sim RNG. Critters are visual-only (§6) and use a separate
+  *visual* RNG; the goose nip is cosmetic. Only the sparrow flush is a sim trigger, and it is deterministic (no RNG).
+
+**Headless tests** (`tests/unit/`, alongside rules §22):
+
+| Test | Asserts |
+|---|---|
+| `test_shop_guard_coverage` | Every walkable cell within the 7.0 m use range of the Weighstall lies within acquire range of at least one Smugglers' Den creep (with `acquire_override`), for the authored layout |
+| `test_creep_unreachable_attacker` | A single ranged unit on a cliff above a camp cannot kill it: the camp drops the target after 2 s, returns after 3 s and regenerates at home; the same unit on the camp's level is fought normally |
+| `test_camp_sleep_ratio` | For every map: at most one `day` camp, and at least 60 % of camps sleep at night (after `sleeps_override`) |
+| `test_drop_carrier` | Drop B sits on the first highest-level creep in `creeps` order, Drop A on the first lowest-level creep; summons never carry; the item drops at the carrier's death point |
+| `test_xp_route_slice` | Scripted clear of Clamp → Patch → Hut → own Fold with the hero present: level 2 after the Patch, level 3 after the Fold |
+| `test_recall_point_target` | The Homing Pigeon goes to the own hall nearest the target point; an enemy stun during the 5 s channel does not cancel it; a move order does |
 
 ---
 
@@ -1309,10 +1377,30 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
 | "Murder of Crows" | A WoW hunter talent | **Scatter-Crows** |
 | "Threshing Slam" / "Toppling Shove" / "Toppling Strike" | Clash with `kingdom` Threshing Sweep and `clans` Grappler Shove | **Harrow Slam**, **Barge**, **Rockfall Blow** |
 | Anything with "Hearthstone" or "Hearth" (stone creeps, inn) | Blizzard mark | Not used |
-| "Waystone Inn", "Mended Drum", "Prancing Pony" | Inns from famous novels | **Coaching Inn**; the Greenvale sign is *The Muddy Lantern* |
+| "Waystone Inn", "Mended Drum", "Prancing Pony" | Inns from famous novels | The generic building type **Coaching Inn**, with a per-map sign name (Greenvale: *The Muddy Lantern*) |
+| "Wayfarers' Inn" (first draft) | A coined game location: the inn in Britain in EA's *Ultima* V–VII and the player's tavern in *Tavern Talk* (2024); WoW has "Wayfarer's Rest" | **Coaching Inn** (`neutral_coaching_inn`) + per-map sign name |
 | "Farmer's Almanac" | A real publication's trade name | **Hedge Almanac** |
-| "Queen" for the termite leader | Hive-queen bug-race read (WoW desert insects) | **Mother-Mound's Champion** |
-| WC3 item names (tomes, runes, town portal, sentry ward, appearance dust, ankh, crown of kings, claws, speed boots, protection ring, strength gauntlets, death mask, orbs, escape dagger) | WC3 items (ip-safety §2.1) | Chapbooks, wild berries, Homing Pigeon, Snoop Peg, Flour Bomb, Cat's Ninth Life, Dolmen Keystone, Whetstone Fob, Wanderer's Hobnails, Tin Gorget, Plowman's Belt, Ravening Torc, Nettle-Sting Oil, Coilspring Heels |
+| "Queen" for the termite leader | Hive-queen bug-race read (WoW desert insects) | **The Mother-Mound's Champion** |
+| WC3 item names (tomes, runes, town portal, sentry ward, appearance dust, ankh, crown of kings, claws, speed boots, protection ring, strength gauntlets, death mask, orbs, escape dagger) | WC3 items (ip-safety §2.1) | Smith's Horseshoe Nail, Juggler's Ball, Riddle Knot, wild berries, Homing Pigeon, Snoop Peg, Flour Bomb, Cat's Ninth Life, Dolmen Keystone, Whetstone Fob, Wanderer's Hobnails, Tin Gorget, Plow-Horse Brass, Ravening Torc, Nettle-Sting Oil, Coilspring Heels |
+| "Frostmarch" (tileset) | A coined fantasy-game title: *Talisman: The Frostmarch*, an expansion to a Games Workshop-originated board game, later sold digitally by Nomad Games | **Rimeholt** (no game or IP hit found); camp prefix `rh_` |
+| "Tip the Scales" (Weighmaster Q) | An exact Blizzard ability name twice over: a WoW Evoker talent and a Hearthstone Paladin card; also a Magic: The Gathering card | **Even the Ledger** |
+| "Stampede" (Herd-Bull) | WC3 Beastmaster ultimate; also a WoW Hunter talent and a Hearthstone card | **Herd Rush** (Bellowing Charge reads "As Herd Rush, 12 m") |
+| "Earl of Ash" (level-7 Sootcoat leader) | A lord's title on a level-7 human-outlaw boss with a matrix-ignoring attack and a passive aura: the WC3 bandit lord's role point for point | **Clamp-Father**; the passive Cinder Cloak aura is replaced by the active **Rake the Clamp**; camp **Clamp-Father's Yard** |
+| "Glimmer Font" | Its look (a stone trough of blue-glowing water ringed with lilies) combined the WC3 mana fountain with the night-elf moon well | **Dewstone**: a dry quartz boulder (§5.8) |
+| "Ironwood Knuckles" | "Ironwood" is the signature word of DotA Allstars' "Ironwood Branch", from a WC3 custom map whose ownership Blizzard asserted | **Blackthorn Knuckles** |
+| "Carapace" (Rollback passive) | Echoes the WC3 Crypt Lord's "Spiked Carapace" on a beetle creep | **Dung Crust** |
+| "Chill Touch" (Flurry) | A well-known D&D spell name | **Frostnip** |
+| "Earthbound" (Cairnwakes) | Nintendo's *EarthBound* | **Set in Stone** |
+| "Hollow Harvest", "Wicker Brute", "Turnip King" | WoW's Hallow's End holiday (a Wickerman effigy, the "Wickerman Guardian"); *Worzel Gummidge*, a famous turnip-headed walking scarecrow made by "the Crowman"; Disney's "Pumpkin King" | Family **Tattiebogles** (the Scots folk word for scarecrows); **Withy Brute**; **Old Mangold** (item **Old Mangold's Sickle**; artifact **Mangold Lantern**) |
+| "Moundbuilders", "Mound Mason", "Mound Drummer", "Mound-Mother's Champion" | "Mound Builders" is a real-world term for pre-Columbian Native American cultures, tied to a 19th-century racist myth | **Claywrights** (Claywright Mason, Claywright Drummer), **the Mother-Mound's Champion**; ids `creep_claywright_*`; camp names Mound Gate and Drum Mound kept |
+| "Swarm Rise" (Champion) | Contradicted the family's own "no swarm, no burrowing" rule | **The Mound Opens** |
+| "Shagbull", "Shag Calf" | Not IP: "shag" is vulgar British slang, an unintended joke in an English-countryside setting | **Longfringe Herd**: Longfringe Calf, Longfringe Bull; ids `creep_longfringe_*` |
+| Chapbook of Grit / Knacks / Wits (red, green, blue books), "Veteran's Diary" | With the almanac, a book family on the ground mirroring the WC3 tomes (object + effect) | **Smith's Horseshoe Nail**, **Juggler's Ball**, **Riddle Knot**, **Old Soldier's Tally-Stick**; the Hedge Almanac is the only book |
+| "Woodpecker Gloves" (+15 % attack speed), "Dolmen Crown" (+5 all), "Millstone Girdle" (+6 STR), "Plowman's Belt" (+3 STR) | The WC3 object with the WC3 effect: gloves of haste (+15 %), crown of kings (+5), giant-strength belt (+6), and a belt for STR | **Woodpecker Quill** (+12 %), **Dolmen Keystone** (+4 all, +2 armour), **Millstone Yoke**, **Plow-Horse Brass** |
+| "Marching Fife", "Shepherd's Bell" (aura items) | Every WC3 aura item is an instrument (horn, war drums, chimes, janggo) | **Drillmaster's Pace-Stick**, **Shepherd's Crook** |
+| Proposed merchant additions "Stoutheart Locket" (+150 HP), "Blank Ledger", "Curl-Up Tonic", "Signpost Staff", an armour scroll | Each pairs the WC3 object with its effect: a pendant for +150 HP, a book for retraining, a potion for invulnerability, a staff for teleport, a scroll for armour | **Stoutheart Weight** (+175 HP), **Wiped Slate**, **Curl-Up Scale**, **Pocket Signpost**, **Oilcloth Capes** |
+| "Warm Poultice" (Kiln-Master heal) | Clashes with `kingdom`'s Herb Poultice | **Pine-Tar Dressing** |
+| "Receipt's in the bag." (shopkeeper Buy line) | The same shop-receipt gag as a WC3 merchant's annoyed line | **"Counted, tied, and yours."**; receipts are a visual prop only |
 | WC3 neutral building names | ip-safety §2.1 and mechanics §12.2 | Weighstall, Contraption Barn, Free Company Camp, Coaching Inn, Hale Spring, Dewstone, Twin Milestones, Lucky Barrow |
 | Other games' names for the same item mechanics (a blink dagger, a revive shield, a spell-blocking sphere) | Dota 2 / League of Legends items | Coilspring Heels, Cat's Ninth Life, Hedge-Witch's Knot |
 | "Time is money" / "friend" in the merchant's voice | A famous WoW goblin catchphrase | The shopkeeper never uses either |
@@ -1324,8 +1412,8 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
 
 | Ours | Nearest existing design | Allowed overlap (genre) | Rule for the art and kit |
 |---|---|---|---|
-| Sootcoats | WC3 bandits | Human outlaw creeps | Wide conical leather hoods, soot faces, rakes, billhooks, smoke-pots. No daggers, purple or red hooded cloaks, invisible assassins or a "lord" aura leader |
-| Tattiebogles | Blizzard harvest-golem and pumpkin-headed horseman designs | Scarecrow folklore | Turnip lanterns with drilled holes, never a carved grin; no pumpkins, machinery or horses |
+| Sootcoats | WC3 bandits and their level-7 lord | Human outlaw creeps | Wide conical leather hoods, soot faces, rakes, billhooks, smoke-pots. No daggers, purple or red hooded cloaks, invisible assassins, noble-titled leader or passive-aura leader: the level-7 Clamp-Father is named for his craft and carries an active (Rake the Clamp), not an aura |
+| Tattiebogles | Blizzard harvest-golem and pumpkin-headed horseman designs; **WoW's Hallow's End** (the Wickerman effigy and Wickerman Guardian); ***Worzel Gummidge*** (a turnip-headed walking scarecrow with swappable heads, made by "the Crowman"); Disney's **Pumpkin King** | Scarecrow folklore | Turnip lanterns with randomly drilled holes, never arranged as a face; **no carved or painted face on a turnip, no swappable or detachable heads, no feather-cloaked "crow-man" figure, no wicker effigy body or cage**; no pumpkins, machinery or horses. The family name is the Scots folk word, not a holiday pun |
 | Cairnwakes, Old Menhir | WC3 rock and granite golems | Stone constructs that never sleep | Stacked slabs with visible gaps, menhir heads with cup-and-ring marks. No boulder throw, no rounded rock-man body, no crystal core |
 | Mire Toads | WC3 shore fish-folk | Pond creeps | Real toad anatomy and a hop. No spears, nets, upright posture or gurgled speech |
 | Stoatkin | WC3 hyena-folk and candle-miner rat-folk | Small animal-folk raiders | Stoat anatomy, white coat, black tail tip. No candles, mining, hyena or rat features |
@@ -1334,10 +1422,16 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
 | Claywrights | WC3 spider-folk; Blizzard desert bug race | Insect-folk | Upright cream-coloured clay masons with trowels and reed sun-hats. No spider legs, purple chitin, burrowing or swarm god |
 | Saltbound | WC3 skeletons and the WC3 undead race | Restless dead | A salt-crystal crust and caravan robes. No visible bones, ziggurats, blight or green skull-glow. Cross-check with `deathless` |
 | Rollbacks | WC3 beetle summons | Giant beetles | Brass-green dung-beetles rolling balls. No undead look, burrowing or impale spikes |
-| Rundlings, Weighstall, Contraption Barn | WC3 goblin merchants and lab | A small trader people | Pangolin scales, spectacles, a giant brass balance, fairness comedy. No green skin, big ears, greed, explosives, mech suits or airships |
-| Coaching Inn | WC3 tavern | An inn where heroes are hired | Coaching inn with a stable arch and a lantern sign |
+| Rundlings, Weighstall | WC3 goblin merchant | A small trader people | Pangolin scales, spectacles, a giant brass balance, fairness comedy. No green skin, big ears, greed, explosives, mech suits or airships. The Rundlings fill only the merchant and one hero role, not the lab |
+| Contraption Barn | WC3 goblin laboratory | A neutral workshop that hires out machines | Human hill-country millwrights in a mill-barn with a waterwheel. Its offers no longer map 1:1: the balloon carries 6 food at 200 / 40 and drifts downwind; the ram survives its hits; the fourth offer is a tree-clearing crew, not a paid reveal. No airship, no saw-armed walker robot, no suicide sapper |
+| Coaching Inn | WC3 tavern | An inn where heroes are hired | A generic building type with a per-map sign name; coaching inn with a stable arch and a lantern sign |
+| **Gold Seam** | **WC3 gold mine** (a rocky mound with a timber-braced entrance and gold showing) | A gold mine that workers enter | Squint test: put the Gold Seam next to the WC3 mine at 64 px. Ours must read as **a cut in a layered cliff face** (horizontal strata, a thin bright seam line) with a **windlass headframe** on top, a **spoil heap** and a **wooden sluice**. No free-standing rock mound, no heaped gold nuggets at the entrance, no mine cart or rails. "Collapses when empty" is shared on purpose and is not a differentiator |
+| **Dewstone** | **WC3 mana fountain; night-elf moon well** | A mana landmark | No water body, no blue glow, no stone ring: a dry upright quartz-veined boulder that sweats warm white-gold droplets at dusk, with moths; units regenerating show warm white motes |
+| Hale Spring | WC3 health fountain; night-elf moon well | A healing landmark | A moss-ringed natural spring fed by a hollow-log flume with a tiny waterwheel; no carved stone basin or rim, no glowing water, warm sparkles by day only |
+| **Beacon Cairn** | **StarCraft II Xel'Naga Tower** (capture by standing next to it, wide vision) | A vision landmark | A low stacked drystone cairn with an iron fire-basket; no obelisk, tower, crystal or glowing alien stone; the team-colour flame is the only glow |
+| Items (all) | WC3 item art and object–effect pairs | Generic RPG items | No item pairs the WC3 object with the WC3 effect (gloves for attack speed, a crown for all stats, a belt for STR, books for attributes, instruments for auras, a pendant for +HP, a potion for invulnerability, a staff for teleport, a scroll for armour). Icons are composed from our own descriptions (ip-safety §2.4) |
 | Rat-Piper | Folklore's pied piper (public domain); DC's rat-controller; WC3 ranged hero | A rat controller with a ranged weapon | Stovepipe hat, pocket coat, crossbow, tin whistle. No motley, no gas-mask device, no hooded-ranger look |
-| Old Menhir | WC3 walking-tree buildings and mountain giants | A big walking piece of landscape | Stone only. No roots, branches, leaves or bark |
+| Old Menhir | WC3 walking-tree buildings, mountain giants and the stone-and-hammer mountain hero | A big walking piece of landscape | Stone only. No roots, branches, leaves or bark; no hammer, no beard, no hurled bolt. Kit audit against all three in §5.6.7 |
 | Weighmaster | WC3 goblin gadget heroes | A small merchant-people hero | A Rundling official with a balance-staff. No flasks, no robot suit, no rider |
 
 ### 10.3 Compliance summary
@@ -1345,32 +1439,132 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
 - **Names:** none on the ip-safety §2.1 list; collisions resolved (§10.1).
 - **Text and voice:** every tooltip and line here is new. Before recording, check every line against the WC3 quote pages
   (including the tavern heroes and the goblin merchant) and the WoW goblin lines (audio §3.2).
-- **Numbers:** the systems follow WC3 (camp colours, XP falloff, drop-band shape, upkeep on bounty). The creep stats, item numbers,
-  prices and drop bands are our own values, not a copied balance sheet (mechanics §12.2 gray zone).
+- **Numbers:** the systems and a few common item values deliberately echo WC3 (legal under 17 USC §102(b)): camp colours, XP falloff,
+  drop-band shape, upkeep on bounty, +1 attribute power-ups, +3 / +6 attribute items at L2 / L4, +2 armour at L2, +100 XP, the inn
+  revive formula. The full balance sheet is not copied: creep stats, most item numbers, prices and drop bands are our own values
+  (mechanics §12.2 gray zone), and where an object and an effect together would echo a WC3 item, the object is changed (§10.2 Items).
 - **Maps:** the slice layout in §3.6 is written from rules (ip-safety §2.6). Sketch it in `data/maps/` before building.
-- **UI:** shield-shaped camp pips, a faceted-nugget mine glyph, a closed-eye sleep glyph and an oilcloth loot bundle: no WC3 icon, chest or "Z".
+- **UI:** shield-shaped camp pips, our own neutral-building glyphs (§1.2), a closed-eye sleep glyph, an oilcloth loot bundle and our own
+  command-card art: no WC3 icon, chest or "Z".
 - **Inputs:** no WC3 data, screenshots or fan assets in any prompt or reference (ip-safety §2.7–2.8). Prompts follow §8.2.
-- **Fidelity:** neutral heroes have at most 2 of 4 functional equivalents (§5.6.7). The two signature presentation risks (the merchant people and stone constructs) have explicit art rules (§10.2).
+- **Fidelity:** neutral heroes have at most 2 of 4 functional equivalents against every WC3 hero they were compared with (§5.6.7).
+  The signature presentation risks (the merchant people, the lab, the stone constructs, the scarecrows, the mine and the landmarks) have
+  explicit art rules (§10.2).
+- **Hygiene:** WC3 and Blizzard names appear only in rationale and audit text (Conventions); tooltip-ready cells and voice lines are clean.
 
 ---
 
 ## 11. Open questions and tuning flags
 
-1. **Leash, give-up and return:** 18.75 m, 10 s and 2 %/s regeneration are starting values. WC3's real values are unverified (mechanics §14).
-2. **Bounty pacing:** 4 × level + 2 + rand(0–4), taxed by upkeep, puts about 520 gold on the slice map (about 3.7 Pavisiers). Check it against mining income in scripted playtests.
-3. **Night-active camps:** do new players read the crow-on-head and lantern tells? If not, make the slice Turnip Patch a normal `night` sleeper and keep only the Crow Field night-active.
-4. **Stuffed and Dung Crust** (−25 % Pierce): the slice AI's creep-route picker must weigh camp resistances against army composition (clans Javelineers, kingdom Hookgunners).
-5. **Patron range:** 4 m from the building edge is generous. WC3's 45–60 gu (under 1 m) is reported but its reference point is unverified. Guards must ring the Weighstall so that a 4 m range cannot snipe purchases past them.
-6. **Stock ownership:** per player (chosen for fairness) or shared like WC3 (unverified)? The same question applies to the Free Company Camp and the Contraption Barn.
-7. **Neutral-hero uniqueness:** once per match (first come) is the WC3 feel (reported, unverified). In 1v1, does it create a must-rush pick? An alternative is once per player.
-8. **Information leaks:** the Beacon Cairn's minimap flame and the Sparrow Roost flush both reveal positions on purpose. Everything else must pass the fog-leak test in `juice/combat-and-units.md` ("an enemy in fog fighting a creep produces zero sprites, labels and sounds").
-9. **Old Menhir:** Drystone Wall makes up to 10 m of cells temporarily blocked. Check region relabel cost against the pathing budget (`architecture.md` §7). Also define how Sleep of Stones interacts with The Wagon Ring and other ultimates (stone units are invulnerable; buffs keep ticking).
-10. **The Long Tune:** enthralled units follow a deterministic "follow at most 3.0 m/s" order. Test with cliffs and walls, and the AI's response.
+1. **Leash, give-up and return:** 18.75 m, 10 s, 2 %/s regeneration and the 2 s / 3 s unreachable-attacker timers (§1.3) are starting
+   values. WC3's real values are unverified (mechanics §14).
+2. **Bounty pacing:** 4 × level + 2 + rand(0–4), taxed by upkeep, now puts about 632 gold on the slice map (about 4.5 Pavisiers). Check it
+   against mining income in scripted playtests.
+3. ~~Night-active camps~~ **Closed:** the slice keeps one `day` camp (the Crow Field); the Turnip Patch sleeps at night (`sleeps_override`),
+   and the map rules (§1.5) cap day camps at one per map with at least 60 % night sleepers. Still to watch: do players read the crow tell
+   on the one day camp?
+4. **Stuffed and Dung Crust** (−25 % Pierce): the slice AI's creep-route picker must weigh camp resistances against army composition
+   (clans Javelineers, kingdom Hookgunners).
+5. ~~Patron range~~ **Closed:** the use range is rules §16's **7.0 m** from the building edge. The research's "45 (60 before 1.15)" is
+   probably warcraft.wiki.gg's ×10-scaled notation for 450 / 600 gu (the same notation lists a melee infantry range as 9), so WC3's range is
+   not tighter than ours. The Smugglers' Den's corner layout and `acquire_override: 6.5` cover the whole 7 m band (test
+   `shop_guard_coverage`). Fallback if that feels oppressive in playtests: return to a looser ring and accept max-range "sneak buys" by day
+   as a WC3-style trick.
+6. **Stock ownership:** per player (chosen for fairness) or shared like WC3 (unverified)? The same question applies to the Free Company
+   Camp and the Contraption Barn.
+7. **Neutral-hero uniqueness:** once per match (first come) is the WC3 feel (reported, unverified). The Long Tune is now capped (6 m,
+   8 units, 16 levels, 4 s, breaks on 20 % damage), which removes the main must-rush reason. Re-check in 1v1; the alternative is once per player.
+8. **Information leaks:** the Beacon Cairn's minimap flame and the Sparrow Roost flush both reveal positions on purpose. Minimap camp pips
+   drawn from 0:00 disappear only when the player sees the cleared spot, so they never reveal an enemy's creeping. Everything else must pass
+   the fog-leak test in `juice/combat-and-units.md` ("an enemy in fog fighting a creep produces zero sprites, labels and sounds").
+9. **Old Menhir:** Drystone Wall makes up to 10 m of cells temporarily blocked. Check region relabel cost against the pathing budget
+   (`architecture.md` §7). Also define how Sleep of Stones interacts with The Wagon Ring and other ultimates (stone units are invulnerable;
+   buffs keep ticking). The Hedge-Cutters service (§5.9, *later*) has the same relabel cost when it fells a strip.
+10. **The Long Tune:** enthralled units follow a deterministic "follow at most 3.0 m/s" order. Test with cliffs and walls, and the AI's
+    response. Tie-break for the level-ordered pick: highest level, then nearest, then lowest unit id.
 11. **Weighmaster:** her gold-cost spell needs a gold icon on the command card, a "not enough gold" message, and an AI rule.
-12. **Faction cross-checks:** Saltbound vs `deathless`, and Mire Toads / Tattiebogles / Old Menhir vs `sylvan`, once those faction docs exist. Neither later faction may reuse these motifs, and vice versa.
-13. **An apex flyer family** (the dragon-like red-camp prize of WC3) is not designed. It needs procedural flight (flyers rig poorly) and must avoid colour-coded dragon families and the hatchling-to-adult ladder naming.
-14. **Item count:** 47 against the brief's ~40. If the list must shrink, cut only from pool cells that keep at least two candidates afterwards: for example Shepherd's Crook (L5 permanent), Dewdrop Locket (L2 permanent) and Dropped Purse (L1 power-up). That removes up to 7 items without emptying any drop band.
+12. **Faction cross-checks:** Saltbound vs `deathless`, and Mire Toads / Tattiebogles / Old Menhir / the Dewstone vs `sylvan`. Neither
+    later faction may reuse these motifs, and vice versa.
+13. **An apex flyer family** (the dragon-like red-camp prize of WC3) is not designed. It needs procedural flight (flyers rig poorly) and
+    must avoid colour-coded dragon families and the hatchling-to-adult ladder naming.
+14. **Item count:** 52 against the brief's ~40. If the list must shrink, cut only from pool cells that keep at least two candidates
+    afterwards (for example Shepherd's Crook, Dewdrop Locket and Dropped Purse), or move the two Lucky Barrow fixed items to a later patch.
 15. **"Gold Seam" display name:** if testers miss that it is the gold mine, show "Gold Seam (gold mine)" in the tooltip.
-16. **Critters in the sim:** the goose nip changes HP, so critters live in the sim (seeded wander). If that costs too much, keep the goose in the sim and move the others to a visual-only system.
-17. **Charge merging** of identical consumables (up to 2 × base) is a quality-of-life change from classic WC3. Keep it unless playtests say it hurts shop pressure.
-18. **VO volume:** about 26 lines per neutral hero plus 9 for the shopkeeper. Generate all default-voice VO before **31 Dec 2026** (audio decision; ElevenLabs default voices expire).
+16. ~~Critters in the sim~~ **Closed:** the goose nip is cosmetic, so critters are visual-only in the slice (§6); only the sparrow flush is a
+    deterministic sim trigger.
+17. **Charge merging** of identical consumables (up to 2 × base) is a quality-of-life change from classic WC3. Keep it unless playtests
+    say it hurts shop pressure.
+18. **VO volume:** about 26 lines per neutral hero plus 9 for the shopkeeper. Generate all default-voice VO before **31 Dec 2026**
+    (audio decision; ElevenLabs default voices expire).
+19. **Minimap neutral markers from 0:00** (`rules.minimap.show_unexplored_neutrals`, proposed `true`): verify from recorded WC3 footage
+    whether camps, shops and mines show on the black minimap at the start, then set the flag.
+20. **Second-hero creep XP:** after T2 the slice map has little left to creep (§3.6). *Later:* one more amber camp per side.
+21. **Lift Balloon wind** (*later*): needs a per-map wind vector in `data/maps/` and a readable windsock; check that the 20 % downwind
+    bonus is noticed.
+
+**Required follow-up edits in sibling docs** (owners decide; this doc already assumes them):
+
+| Doc | Edit |
+|---|---|
+| `rules.md` §6.8 (and §21) | Recall items become point-targeted with a 5 s channel that enemy stuns, silences and damage cannot cancel (§4.2); the Homeward Horn and Homeward Felt follow. Otherwise list the Homing Pigeon's difference as a Δ in §21 |
+| `rules.md` §6.8, §16, §20 | Buying an item needs an own hero in use range; a full inventory drops the item at the hero's feet; add `rules.items.group_cooldown` (`heal`, `mana` = 8 s) and `rules.minimap.show_unexplored_neutrals` |
+| `rules.md` §10.2 | "Hardy creeps" row: counts as a hero for control durations (§6.5) and Spell damage; polymorph and remove-from-game cannot target it |
+| `rules.md` §15.1–15.3, §22 | The unreachable-attacker rule replaces the tower rule; camp mode fights a structure that damages it; map sleep rules (≤ 1 `day` camp, ≥ 60 % night sleepers); `sleeps_override`, `acquire_override`, `layout`; tests from §9 |
+| `rules.md` §23 Q1, Q4 | Q1 (no-hero XP) is resolved here in rules' favour ("lost"); Q4's use range is adopted |
+| `slice-plan.md` §1.4, §1.8, §1.9, §2.6 E16 | Turnip Patch sleeps at night (green 8); add Collier's Hut ×2 (coordinates 40–50 m path from each main, away from the Clamp); 11 camps, 113 levels, 2,465 raw XP, ≈ 632 g; the Coaching Inn becomes P1 (revive only) at (106, 106); the Den uses the corner layout; rename Wayfarers' Inn → Coaching Inn and Glimmer Font → Dewstone |
+| `tools/ip/banned_terms.txt` | Add `chaos` once the rules §20.4 migration has removed it from `data/factions.json` and `tests/unit/test_combat.gd` |
+| `visual-art-direction.md` §1.4, §7.2; `juice/*.md`; `sylvan-and-deathless.md` | Rename Frostmarch → Rimeholt, Hollow Harvest → Tattiebogles, Wicker Brute → Withy Brute, Turnip King → Old Mangold, Earthbound → Set in Stone, Glimmer Font → Dewstone, Wayfarers' Inn → Coaching Inn, Chapbooks / Veteran's Diary → the new power-ups (mechanical find-and-replace; nothing is in data yet) |
+
+---
+
+## Review log (2026-10-17: IP-safety and WC3-fidelity reviews)
+
+Where IP and fidelity conflicted, IP won and the closest legal alternative was taken. Severity as given by the reviewers.
+
+| # | Severity | Issue | What changed |
+|---|---|---|---|
+| 1 | Major | Tileset "Frostmarch" is a fantasy-game product title (*Talisman: The Frostmarch*) | Renamed **Rimeholt** everywhere; camp prefix `fm_` → `rh_`; §10.1 row |
+| 2 | Major | "Tip the Scales" is an exact WoW / Hearthstone ability name | Renamed **Even the Ledger**; mechanic unchanged; §5.6.7 audit updated (no VO line names the ability); §10.1 row |
+| 3 | Major | "Stampede" is the WC3 Beastmaster ultimate (and WoW / Hearthstone) | Renamed **Herd Rush**; Bellowing Charge reads "As Herd Rush, 12 m"; §10.1 row |
+| 4 | Major | The Earl of Ash rebuilt the WC3 bandit lord (title, level 7, Pure, passive aura) | **Clamp-Father** (`creep_sootcoat_clamp_father`), camp **Clamp-Father's Yard** (`camp_gv_clamp_fathers_yard`); Cinder Cloak aura replaced by the active **Rake the Clamp** (3 m, 60 Spell damage then 8/s for 3 s, cooldown 12 s); Call the Gang kept; G1 "Never" rule and §10.2 row extended |
+| 5 | Major | Glimmer Font = WC3 mana fountain + moon well | Redesigned as **Dewstone** (`neutral_dewstone`): a dry quartz-veined boulder sweating warm white-gold droplets at dusk, moths; no water, basin, lilies, stone ring or blue glow; warm white motes on units; footprint 4×4; §10.2 squint row; §8.2 prompt rule |
+| 6 | Minor | Items reused WC3 object + effect (gloves +15 %, crown +5, belt +6, coloured books, instrument auras) | Woodpecker Quill +12 %; Dolmen Keystone +4 all, +2 armour; Millstone Yoke; Smith's Horseshoe Nail / Juggler's Ball / Riddle Knot (non-book props, no colour code); Old Soldier's Tally-Stick; Drillmaster's Pace-Stick; Shepherd's Crook; §4.7 pools and §9 ids updated. **Extra:** Plowman's Belt (+3 STR, a belt for STR) → **Plow-Horse Brass** |
+| 7 | Minor | Contraption Barn copied the goblin lab offer by offer, staffed by the merchant people | Staffed by **human hill-country millwrights** (the Rundling model now only for shop, Barrow pedlar and Weighmaster); Lift Balloon **6 food, 200 g / 40 l, +20 % downwind**; Survey Lantern replaced by the original **Hedge-Cutters** service (fells a 6 m × 2 m tree strip); §0.2 row and §10.2 row record it |
+| 8 | Minor | Beacon Cairn was called original, but SC2's Xel'Naga Tower has the mechanic | §0.2 and §5.11 reworded as the reviewer asked; look made a low, broad cairn; §10.2 row against the Xel'Naga Tower |
+| 9 | Minor | "Collapses when empty" is WC3's rule, and the mine look was the generic WC3 image | Moved to "Kept familiar"; the **layered cliff seam** is the differentiator; ore cart and rails replaced by a **windlass headframe, spoil heap and wooden sluice**; §10.2 squint row against the WC3 mine |
+| 10 | Minor | WC3 attack-type ids `hero` and `chaos` | Conventions and §1.1 use `heroic` and `pure`; `adamant` added to the armour list; §9 shows `pure` and `heroic` entries. `chaos` is **not yet** added to `tools/ip/banned_terms.txt`, because `data/factions.json` and `tests/unit/test_combat.gd` still use it until the rules §20.4 migration, and adding it now would fail the IP check; the follow-up is listed in §9 and §11 |
+| 11 | Minor | The "WC3 names only in §0.2, §5.6.7, §10" claim was false | Conventions reworded as the reviewer proposed (rationale and audit text only; never ids, data, UI, filenames or prompts); rule bullets now mark rationale with *Why:*; "Amber (WC3's orange band)" label and other tooltip-ready cells cleaned; §10.3 hygiene line |
+| 12 | Minor | Hollow Harvest near-reads: WoW Hallow's End Wickerman, *Worzel Gummidge*, "Pumpkin King" | Both added to §10.2 with the art rules (no swappable heads, no face on a turnip, no feather-cloaked crow-man, no wicker effigy body); **Withy Brute** (bound willow-rod bundles), **Old Mangold** (Old Mangold's Sickle); family renamed **Tattiebogles**; artifact Hollow Lantern → **Mangold Lantern**; §8.2 prompt rules |
+| 13 | Minor | "Moundbuilders" names a real-world culture tied to a racist myth | **Claywrights** (Claywright Mason, Claywright Drummer, the Mother-Mound's Champion), ids `creep_claywright_*`; a naming rule in S1. **Extra:** "Swarm Rise" contradicted the family's no-swarm, no-burrowing rule → **The Mound Opens** |
+| 14 | Minor | "Wayfarer's Inn" is a used fantasy-inn name (Ultima, *Tavern Talk*; WoW "Wayfarer's Rest") | Building type **Coaching Inn** (`neutral_coaching_inn`) with a per-map sign name (Greenvale: *The Muddy Lantern*); §10.1 rows |
+| 15 | Minor | "Ironwood" is DotA's signature item word | **Blackthorn Knuckles** (`item_blackthorn_knuckles`) |
+| 16 | Minor | "Carapace" echoes the Crypt Lord's Spiked Carapace | **Dung Crust** (−25 % from Pierce, unchanged) |
+| 17 | Minor | "Chill Touch" (D&D) and "Earthbound" (Nintendo) | **Frostnip** and **Set in Stone** |
+| 18 | Minor | Old Menhir audited only against the Brewmaster | Audit adds the Mountain King and the Mountain Giant. Both margin fixes applied: **Lichen Hide** is now "the first attack in any 3 s window is reduced by 25 / 40 / 55, plus 1 / 2 / 3 HP/s", and the **Sleep of Stones** ring pushes 1 m instead of slowing. Count is 1 against each |
+| 19 | Minor | "Receipt's in the bag." reused the WC3 merchant's receipt gag | Replaced with **"Counted, tied, and yours."**; receipts are a visual prop only, kept out of the VO script |
+| 20 | Minor | "Shagbull" reads as British slang | **Longfringe Herd** (Longfringe Calf, Longfringe Bull, Herd-Bull, Grandsire), ids `creep_longfringe_*`, camp `camp_rh_longfringe_herd` |
+| 21 | Major | Only 3 of 9 slice camps slept at night | `sleeps_override` added; **Turnip Patch → `night`** with the crow-slump tell and the line "tame scarecrows that guard by day"; only the **Crow Field** stays `day`; map rules **≤ 1 `day` camp, ≥ 60 % night sleepers** (§1.5); result 7 night, 3 never, 1 day; §3.6 "Why" updated; open question §11 #3 closed; rules §15.3 and slice-plan §1.8 listed as follow-ups; test `camp_sleep_ratio` |
+| 22 | Major | Too little creep XP for level 3 by 5:30 | **Collier's Hut [SLICE] ×2** (green 8, 165 XP, 48 g; 0 new assets), 40–50 m from each main away from the Clamp; **Turnip Patch = Fieldkeeper ×2 + Strawling ×2** (green 8, 170 XP, 48 g, Drop B L2 any); totals **11 camps (6 / 4 / 1), 113 levels, 2,465 raw XP, ≈ 632 g** (the reviewer's 624 g recomputed per camp); §3.6 XP-check table rewritten (Clamp 92 → Patch ≈ 225 (L2) → Hut ≈ 340 → Fold ≈ 540 (L3) by ≈ 5:30); second-hero gap noted (§11 #20) |
+| 23 | Major | §1.6 said heroes elsewhere still get XP, against rules §6.4 | Replaced with the reviewer's sentence (XP lost if no eligible hero within 18.75 m, `rules.xp.no_hero_in_range`); §3.6 notes the route assumes the hero is present |
+| 24 | Major | Inn revive formula contradicted rules §6.7 | Formula deleted; §5.5 points to rules §6.7 and `rules.heroes.inn_revive` (340 g / 80 l at L1 … 1,105 g / 260 l at L10) and adds "needs 5 free food (rules §4.4)" |
+| 25 | Major | Patron range 4 m contradicted rules §16's 7.0 m; the Den could be bypassed | §5.1 uses 7.0 m (rules §16); `patron_range` removed from §9; §11 #5 rewritten and closed. **Deviation:** the reviewer's `acquire_override: 5.0` leaves gaps with four creeps (computed: four creeps need 6.4 m to cover the 7 m band), so the Den stands 3.5 m out from the stall's four corners with **`acquire_override: 6.5`**; test `shop_guard_coverage` added |
+| 26 | Major | Homing Pigeon lost the "save the army with a scroll" pillar | Point-targeted (minimap too), nearest own hall to the point, double-tap = highest-tier hall; **5 s channel not cancelled by enemy stuns, silences or damage**, only by death or own orders; charge spent on completion; data `"target": "point_nearest_own_hall", "channel": 5.0, "enemy_interruptible": false`; rules §6.8 change requested (or a Δ in §21); test `recall_point_target` |
+| 27 | Major | The Long Tune disabled the whole army for 6 s | Radius **6 m**, at most **8 units, 16 levels**, highest level first; **4 s** (2 s on level-5+ units and Hardy creeps); breaks on **20 % max-HP damage**; mana 175, cooldown **180 s**; follow 3.0 m/s and walk 2.4 m/s kept |
+| 28 | Major | Camps could be farmed from unreachable positions | The tower rule is replaced by the reviewer's **unreachable-attacker rule** (2 s drop, 3 s whole-camp return, regenerating 2 %/s, ignore until reachable); camp mode fights a structure that damages it; test `creep_unreachable_attacker`; §1.4 give-up note |
+| 29 | Major | No tavern in the slice | **Coaching Inn [SLICE] (P1), instant revive only**, at (106, 106); hiring the Rat-Piper stays [SLICE+]; inn-hired first hero gets the recall item (rules §3.2); §7 and §8.1 (≈ 0.5–1 cr) updated |
+| 30 | Major | The merchant lacked mid-game decisions | Added with our own names, numbers and **objects** (IP wins over the reviewer's suggested objects, which each paired a WC3 object with its effect): **Stoutheart Weight** [SLICE] +175 HP, 300 g, 1 / 120 s, from 4:00 (`stat_bonus`); **Wiped Slate** [SLICE] skill reset, 280 g, 1 / 300 s, from 5:00 (`retrain`); **Curl-Up Scale** [SLICE+] 6 s self-stasis, 140 g, 1 / 90 s, from 6:00 (`self_invulnerable`); *later* **Pocket Signpost** and **Oilcloth Capes** (sold as Lucky Barrow fixed slots, since the Weighstall card is full). Slice items 31 (32 with SLICE+), icons ≈ 12 cr, scripts listed |
+| 31 | Minor | No creep heals or dispels | Kiln-Master **Pine-Tar Dressing** (heals an allied creep 150 HP, 6 m, 50 mana, 8 s); named so it does not clash with `kingdom`'s Herb Poultice. Optional Crowcaller **Re-Stuff** (120 HP on a Tattiebogle ally, 60 mana, 10 s) also added; §1.7 heal AI row; 2 icons |
+| 32 | Minor | Hardy did not shorten stuns and other control | Hardy now counts as a hero for control durations (rules §6.5) and Spell damage; polymorph and remove-from-game cannot target it; rules §10.2 follow-up listed |
+| 33 | Minor | Item cooldowns per id; potions could be chain-drunk | `cooldown_group` per hero (rules §6.8); Rosehip in `heal`, Bluebell in `mana`; proposed `rules.items.group_cooldown` 8 s; §9 sketch |
+| 34 | Minor | Give range, buying without a hero, full inventory, `unique` flags | Give 1.5 m to own heroes; buying needs an own hero in use range, services any unit; full inventory drops at the hero's feet; `unique` on Hobnails, Coilspring Heels, Thistledown Cloak, Pace-Stick and Crook (tables and §9) |
+| 35 | Minor | Hall gap 4 m and natural 55–65 m contradicted rules §3.3 | "6.0 m edge to edge (rules §3.3)", "natural at 40–60 m path distance; exact positions in slice-plan §1.4"; §5.2 "about 5 workers saturate at the 6.0 m gap" |
+| 36 | Minor | Critter density formula gave 80–100 critters | "Hand-placed on the slice map (10–14)"; generated maps "about 0.4 per chunk of open ground, at most 14 per map" |
+| 37 | Minor | The goose nip dealt real damage | Nip is `"cosmetic": true` (animation, honk, hit flash; no HP change, no damage event); critters are visual-only in the slice; sparrow flush is a deterministic trigger; §11 #16 closed |
+| 38 | Minor | Drop-carrier ties, summons, and no camp layout | Tie-break by `creeps` order, summons never carry, item drops where the carrier dies; new §1.9 with `layout` and the default 2.5 m ring; test `drop_carrier` |
+| 39 | Minor | No script for permanent attribute gains | `grant_attribute` added; with `retrain`, 14 slice scripts (`self_invulnerable` is SLICE+) |
+| 40 | Minor | Minimap pips only after exploring; only the mine had a glyph | Flag `rules.minimap.show_unexplored_neutrals` (proposed `true`, set from footage): markers from 0:00, a cleared pip disappears only once seen; our own glyphs for the Weighstall (balance), Hale Spring (droplet ring), Coaching Inn (lantern) and later buildings (§1.2) |
+| 41 | Minor | Stand Still / Settle always on in melee | Both now need **neither moving nor attacking** (ambush armour that drops on the first swing); Fold fight re-estimated at ≈ 3,030 Blade-effective HP (was ≈ 3,310), ≈ 40 s at ≈ 75 dps |
+| 42 | Minor | Level-6 baseline not monotone | Level 6 melee: **1,000–1,100 HP, 30–34 average damage**; the ranged / caster note kept (the level-6 casters and ranged creeps fit 60–75 %) |
+| 43 | Minor | `help_radius` named but unused | Deleted; the sentence now says other camps never join, however close |
+| 44 | Minor | Audit closing line and §10.3 "our own values" overstated | Audit line reworded as proposed (The Long Tune counted as a Charm equivalent); §10.3 now says systems and a few common item values deliberately echo WC3 (legal under §102(b)) and the full balance sheet is not copied |
+| 45 | Minor | No neutral command cards | §5.1 card table: Weighstall (R B H P F K W T L C J + Tab; stock badges, restock sweep, "from 4:00" grey-out, no-hero grey-out, sell gesture), Lucky Barrow, Coaching Inn (hire buttons with portrait and 425 / 135, grey when taken; Revive per dead hero with the rules §6.7 cost), Free Company Camp, Contraption Barn |

@@ -235,7 +235,7 @@ and the player decides lantern by lantern when to spend it.
 | Statuses | **`daylit`**: day sight and day-keyed passives (Larkbow *Warm Strings*). Every Glaer unit is daylit by day. **`noonlit`**: daylit **plus +1.5 HP/s** for units (heroes too) and **+1 HP/s** for structures |
 | Zones and statuses | A noonlight **zone** (a lit lantern, *Open the Shutters*, *Bottled Noon*, *Lantern Drop*, the *Noon-Stone Chip*, *Midsummer Hour*) makes Glaer inside noonlit **and reveals invisible enemies inside**. A noonlit **status** carried on a unit (*Lantern Hymn*, the *Summer Bead*) reveals nothing. Neither has any other effect on enemies, and noonlight does not wake creeps |
 | Terrain-regen rule | Faction terrain regeneration (noonlight, the sunlit yard and the Wakeful Pall) **skips `mechanical` units**, **applies to spell-immune units**, and is **not natural regeneration**, so noonlit Glaer still regenerate while standing on enemy Pall |
-| **Sunlit yard** (by day) | Glaer **structures** within a Lodge's 14 m or a Glare Post's 10 m regenerate **+1 HP/s** by day, at no cost. Units get nothing from it, and it reveals nothing |
+| **Sunlit yard** (by day) | Glaer **structures** within a Lodge's 14 m or a Glare Post's 10 m regenerate **+1 HP/s** by day, at no cost (it does not stack with a lit lantern's +1). Units get nothing from it, and it reveals nothing |
 | **Open the Shutters** (Lodge ability, **O**) | Spend **20 lumber**: a **16 m** noonlight anywhere within 30 m of the Lodge for **15 s**, day or night. Cooldown 60 s. It works with *Burn at Dusk* off |
 | Presentation | Lantern-cages glow honey-orange (HDR) and warm motes drift. Inside the circle the night grade lifts to the day grade (a shader light mask). Our own "shutter clack", a soft resin crackle while a lantern burns, and a two-note rising chime |
 | Counterplay | Kill Glare Posts, raid the woodline so the lanterns starve, fight away from lit lanterns, and catch Glaer armies on the march at night |
@@ -310,7 +310,7 @@ takes damage from an attacker it cannot see). Hang lanterns on woodline trees af
 
 Sight is 21.9 / 12.5 m for all units except the Tapster (12.5 / 9.4). Noonlight raises night sight to the day value.
 Caster training ranks **Second Verse** (T2) and **Full Chorus** (T3): **+45 HP, +50 mana and +1 damage per rank**. These are our own
-values (the kingdom uses +35 / +60 / +1 and the clans +60 / +90 / +2; round 3 moved the HP off a WC3 training value, §A5.5), and the
+values (the kingdom uses +35 / +60 / +1 and the clans +60 / +90 / +2; the round-3 HP change is in the §A5.5 audit), and the
 names are the Glaer's own choir terms. Casters start with the global 75 mana.
 
 **Projectiles** (rules §7.7; hero missiles are in the §A6 hero table):
