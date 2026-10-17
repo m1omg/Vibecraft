@@ -54,7 +54,7 @@ Budget policy (agreed with the user):
 | 18 | 2026-10-16 | Higgsfield | Library clip on soldier rig: Over_Shoulder_Throw (421) for javelins (job 2d5a1bae-ec34-41c1-b466-5584dc31ccbf) | 8 cr | OK → rig_throw.glb |
 
 | 19 | 2026-10-17 | Higgsfield | Slice character concepts, 11 × gpt_image_2_5 (art bible T1/T2, front view): kingdom_hodman 14cde04c, kingdom_hookgunner cf3c4b37, kingdom_linden_sister 7469fa91, kingdom_wheel_marshal cc855464, kingdom_firewright b0e02346, clans_yurtwright 470c4f54, clans_grappler 640c3376, clans_javelineer 4fa0b77c, clans_gustcaller d56c881c, clans_hero_uncut 14b57291, clans_skymirror c36b23f0 | 2.75 cr | All approved (assets_src/characters/*/concept.png) |
-| 20 | 2026-10-17 | Higgsfield | Slice character image-to-3D, 11 × tripo_h3_1_image_to_3d face_limit 12000: hodman ff290282, hookgunner 3bed1f66, linden_sister bfe46a5c, wheel_marshal 9087ca80, firewright 10cc020f, yurtwright f9a84f73, grappler 39864df3, javelineer 7f069bd3, gustcaller 2158bceb, uncut 3328ec7b, skymirror 0cf13a61 | 99 cr (quoted) | pending |
+| 20 | 2026-10-17 | Higgsfield | Slice character image-to-3D, 11 × tripo_h3_1_image_to_3d face_limit 12000: hodman ff290282, hookgunner 3bed1f66, linden_sister bfe46a5c, wheel_marshal 9087ca80, firewright 10cc020f, yurtwright f9a84f73, grappler 39864df3, javelineer 7f069bd3, gustcaller 2158bceb, uncut 3328ec7b, skymirror 0cf13a61 | 99 cr | All 11 completed → assets_src/characters/*/model_tripo_h31.glb (raw, faces +X) |
 
 **Bake-off conclusion (2026-10-16):** characters and anything that turns → Higgsfield Tripo H3.1 (9 cr) + Higgsfield
 rigging (8 cr). Static buildings/props → Krea TRELLIS v1 (~15 CU) is acceptable when the back is never seen; otherwise
