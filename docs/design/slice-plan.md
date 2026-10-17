@@ -473,12 +473,12 @@ The kingdom worker gets a rig-only call as bake-off track C. The four remaining 
 | B7 | `clans.infantry` (huge wrestler) | 2.0 m | 4k / 512² | bpy (fallback 5) | — | 0.75 + 9 | P0 |
 | B8 | `clans.ranged` | 1.85 m | 3.5k / 512² | Higgsfield | **attack_throw**: 421, alt 239, 398 | 0.75 + 9 + 8 | P0 |
 | B9 | `clans.caster` | 1.8 m | 3.5k / 512² | bpy (fallback 5) | — | 0.75 + 9 | P0 |
-| B10 | `clans.hero1` (AGI duelist; braid and flared coat) | 2.2 m | 6k / 1024² | Higgsfield | **run**: 14, alt 16, 510 (all units' locomotion at 4–5.5 m/s) | 0.75 + 9 + 8 | P0 |
+| B10 | `clans.hero1` (AGI duelist; trailing braid and split coat) | 2.2 m | 6k / 1024² | Higgsfield | **run**: 14, alt 16, 510 (all units' locomotion at 4–5.5 m/s) | 0.75 + 9 + 8 | P0 |
 | B11 | `clans.hero2` (INT seer) | 2.2 m | 6k / 1024² | Higgsfield | **work_chop**: 237 (hosted here, used by both workers) | 0.75 + 9 + 8 | P0 |
 | B12 | Creep: Sootcoat base. Cutpurse, Smoker and Collier come from prop and tint swaps; the Kiln-Master is the same mesh at 1.12× with a bpy apron and hood | 1.7 m | 3k / 512² | bpy (fallback 5) | — | 0.75 + 9 | P0 |
 | B13 | Creep: Hollow Harvest (Strawling, Fieldkeeper, Crowcaller). bpy poles, sack head, cloth cards and turnip lantern; stiff-knee procedural walk | 1.2–2.0 m | 1.5k | Rigid bones | — | 0.5 (textures) | P0 |
 | B14 | Creep: Cairnwakes (Cairnling, Drystone Walker, Menhir Elder). bpy slab stacks, rigid bones, retinted per tileset | 1.4–3.0 m | 1–2.5k | Rigid bones | — | 0.5 (2 stone textures) | P0 |
-| B15 | Summons and birds: Crow (creep summon), Hail-Hawk (`clans.hero2` summon, spirit shader). bpy low-poly bird, wing-flap in the vertex shader | 0.4 m | 300 | None | — | 0 | P0 |
+| B15 | Summons and birds: Crow (creep summon), Hail-Swift (`clans.hero2` summon: a ground summon skimming 0.6 m, opaque packed-hail material, no spirit shader). bpy low-poly bird, wing-flap in the vertex shader | 0.4 m | 300 | None | — | 0 | P0 |
 | B16 | `kingdom.caster` (healer) | 1.7 m | 3.5k / 512² | bpy (fallback 5) | — | 0.75 + 9 | **P1** (next grant) |
 | B17 | Critters: hare, goose. bpy primitives; procedural hop and waddle | 0.3–0.6 m | 200 | None | — | 0.25 | P1 |
 | B18 | Fieldkeeper as an AI mesh, only if the procedural scarecrow fails review | 1.9 m | 2.5k | bpy | — | 9.75 | P2 |
@@ -513,8 +513,8 @@ That rule lets each 8 cr rig call buy one new shared clip.
 | attack_throw | 421, host `clans.ranged` | in B8 | P0 |
 | work_chop | 237, host `clans.hero2` | in B11 | P0 |
 | Procedural keyframes in bpy on the library skeleton, **needed by the loop**: build (chop arc at chest height), carry (arm hold layered over walk), push (arms forward over walk, for siege crews), doze (sit plus breathing; sleeping creeps must read as asleep at night) | `tools/` bpy script, 0 cr | 0 | P0 |
-| Procedural keyframes, **polish**: cheer (ready / level-up / victory), slam (heavy swing into the ground; fallback attack_heavy), arm (militia 1.5 s; fallback a 1.5 s idle with the prop swap), spin (root yaw over attack_1h, for `clans.hero1`; fallback attack_1h), stagger (additive) | `tools/` bpy script, 0 cr | 0 | P1 |
-| Higgsfield top-ups, only where a procedural clip fails review: push 261, doze 268, cheer 59, slam 127, spin 238, heavy walk 119 | Library rig, 8 cr each (next grant) | ≤ 48 | P2 |
+| Procedural keyframes, **polish**: cheer (ready / level-up / victory), slam (heavy swing into the ground; fallback attack_heavy), arm (militia 1.5 s; fallback a 1.5 s idle with the prop swap), lash (a straight forward braid snap over attack_1h, for `clans.hero1`'s Braid Lash; fallback attack_1h; never a spin, clans §2.5), stagger (additive) | `tools/` bpy script, 0 cr | 0 | P1 |
+| Higgsfield top-ups, only where a procedural clip fails review: push 261, doze 268, cheer 59, slam 127, heavy walk 119 (spin 238 cut: nothing spins on `clans.hero1`, clans §2.5) | Library rig, 8 cr each (next grant) | ≤ 48 | P2 |
 
 **Runtime layers on top of every clip** (juice docs): bob, lean, squash on hit, lunge, topple and sink, flinch.
 Siege wheels spin by distance travelled. Buildings and doodads use vertex-shader motion.
@@ -533,7 +533,7 @@ Siege wheels spin by distance travelled. Buildings and doodads use vertex-shader
 | `clans.infantry` | 0 | run (0.9×) | heavy 128 | 8 | — | Heavy walk (P2 clip 119, else procedural) |
 | `clans.ranged` | 0 | run | throw 421 | 8 | — | — |
 | `clans.caster` | 0 | walk / run | cast 125 | 8 | cast 125 | — |
-| `clans.hero1` | 0 | run | 219 (sabre) | 8 | spin (procedural) | Braid swing is secondary motion: 3 extra bpy bones parented to `Head` and driven at runtime by a spring (the 24-bone library rig has no braid chain, so clips ignore them) |
+| `clans.hero1` | 0 | run | 219 (sabre) | 8 | lash (procedural, a straight snap; nothing spins, clans §2.5) | Braid swing is secondary motion: 3 extra bpy bones parented to `Head` and driven at runtime by a spring (the 24-bone library rig has no braid chain, so clips ignore them) |
 | `clans.hero2` | 0 | run | cast 125 | 8 | cast 125 | Mirror-polish idle (procedural) |
 | Sootcoats | 0 | run | 219; Smoker uses throw 421 | 8 | — | Doze (procedural) for night sleep |
 
@@ -558,7 +558,7 @@ Costs are `gpt_image_2_5` reference and texture images. Geometry is 0 cr unless 
 | E4 | `kingdom` kit swatches ×6: lime plaster with painted beams, dark oak, burgundy roof tile, fieldstone plinth, bronze/iron, folk-painted boards | `gpt_image_2_5` → seamless → palette-match | 1.5 | P0 |
 | E5 | `kingdom` hall as an AI model (upgrade if the procedural hall reads weak) | The track B winner: TRELLIS 15 CU, SAM 3 1 cr, or H3.1 9 cr | 15 CU, or 1–9 cr (next grant) | P1 |
 | E6 | `clans` hall T1 (tortoise-shell dome), with T2 banners and gong props in bpy | **AI 3D**: the track B winner (H3.1 `face_limit` 20,000 → 10k tris / 2048², SAM 3, or TRELLIS). Fallback: the yurt kit with a bpy shell-plate dome | 9 cr (1 if SAM 3 wins; 0 cr if TRELLIS wins, already paid as the control) + 0.75 concept | P0 |
-| E7 | `clans` supply (with the felt roll-up animation), barracks (yurt plus fenced ring), altar (stone ring with mirrors), lumber + blacksmith (casting pit), caster building (mirror yurt), tower (spear-mast) | **Procedural "yurt kit"**: lattice cylinder, dome, felt bands, team-colour band, ring fences, standing stones, mast | 0.5 (2 references) | P0 |
+| E7 | `clans` supply (with the felt roll-up animation), barracks (yurt plus fenced ring), altar (glyph stones beside a small gong frame; nothing hung on the stones), lumber + blacksmith (casting pit), caster building (mirror yurt), tower (bow-mast: a mast with a mounted horn bow) | **Procedural "yurt kit"**: lattice cylinder, dome, felt bands, team-colour band, ring fences, standing stones, mast | 0.5 (2 references) | P0 |
 | E8 | `clans` kit swatches ×6: teal felt with stitched pattern, saffron felt, lattice wood, bronze/verdigris, shell plate, carved stone | `gpt_image_2_5` | 1.5 | P0 |
 | E9 | Construction states | `build_progress` reveal shader + faction kit props (kingdom scaffold, clans felt stack) | 0 | P0 |
 | E10 | Rubble and destruction decal + debris chunks | bpy + 1 texture | 0.25 | P1 |
@@ -680,7 +680,7 @@ compare every line with the classic quote pages and with ip-safety §2.2. Names 
 
 | Group | Jobs |
 |---|---|
-| Combat | S01 light swing (blade and sabre) · S02 heavy swing (mace, war-pick) · S03 hit metal · S04 hit wood (pavise, lattice) · S05 hit flesh/leather (no gore) · S06 hit stone · S07 hit straw/felt · S08 hand-cannon "whump-crack" + smoke hiss (`kingdom.ranged`, gun tower) · S09 javelin throw (`clans.ranged`, spear-mast) · S10 missile impacts (bullet, javelin into wood, body, dirt) · S11 bombard boom (`kingdom.siege`, `kingdom.hero2` ultimate) · S12 sling-arm thwack + rope creak (`clans.siege`) · S13 siege impact · S14 building hit + crumble |
+| Combat | S01 light swing (blade and sabre) · S02 heavy swing (mace, war-pick) · S03 hit metal · S04 hit wood (pavise, lattice) · S05 hit flesh/leather (no gore) · S06 hit stone · S07 hit straw/felt · S08 hand-cannon "whump-crack" + smoke hiss (`kingdom.ranged`, gun tower) · S09 javelin throw (`clans.ranged`) and horn-bow loose (bow-mast) · S10 missile impacts (bullet, javelin into wood, body, dirt) · S11 bombard boom (`kingdom.siege`, `kingdom.hero2` ultimate) · S12 sling-arm thwack + rope creak (`clans.siege`) · S13 siege impact · S14 building hit + crumble |
 | Deaths | S15 kingdom non-verbal deaths · S16 clans non-verbal deaths · S17 hero-death stings (one per faction) |
 | Creeps (non-verbal sets) | S18 Sootcoats (cough, "Hup!", effort huff, pain, death) · S19 Hollow Harvest (creak, straw rustle, dry hiss, collapse, crow caw) · S20 Cairnwakes (grind, slab clack, hum, crumble) |
 | Spell schools (riser → release → tail) | S21 Hearth · S22 Ember · S23 Gale · S24 Gloam · S25 Orrery · S26 Stone · S27 hero level-up signature (×3) · S28 caster bolt + haste whoosh |
@@ -815,7 +815,7 @@ Input: the `kingdom.infantry` A-pose concept, made with `gpt_image_2_5` (0.25 cr
 
 ### 3.2 Round 2 (M1, days 1–5): three open questions, three tracks
 
-**Track A — hero shapes.** Concept: `clans.hero1` (flared coat, ground-length braid with a weight, oversized sabre). It has the thinnest parts and the most cloth in the slice.
+**Track A — hero shapes.** Concept: `clans.hero1` (split riding coat, ground-length trailing braid with a weight, normal-length straight sabre carried low). It has the thinnest parts and the most cloth in the slice.
 
 | Generator | Settings | Cost | Notes |
 |---|---|---|---|
@@ -1045,7 +1045,7 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
 | ranged | Hookgunner | Javelineer |
 | caster | Linden Sister `[SLICE+]` → P1 here | Gustcaller |
 | siege | Bombard Wagon | Sling-Cart |
-| hero1 | Wheel Marshal (STR) | Long-Braid (AGI) |
+| hero1 | Wheel Marshal (STR) | the Uncut (AGI) |
 | hero2 | Firewright (INT) | Skymirror (INT) |
 | hall T1 → T2 | Moot Hall → Walled Burg | Shell Hall → Banner Shell |
 | farm / supply | Croft | Home Yurt |
@@ -1054,8 +1054,8 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
 | blacksmith / lumber | Foundry | Casting Pit |
 | workshop | Wainwright Yard | — (siege comes from the barracks) |
 | caster building | Collegium (P1) | Mirror Yurt |
-| tower | Lookout → Gun Tower | Spear-Mast |
-| advisor | the Reeve | (clans advisor) |
+| tower | Lookout → Gun Tower | Bow-Mast |
+| advisor | the Reeve | the gong-keeper |
 
 ## Appendix B. Higgsfield animation catalogue ids referenced above
 

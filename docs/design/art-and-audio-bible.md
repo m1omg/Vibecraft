@@ -14,7 +14,7 @@ add their own palette, clause, frame inlay, voice and music sections.*
 | Topic | Authority |
 |---|---|
 | Names, rosters, numbers, lore | The faction docs, `neutrals.md` and `rules.md`. This bible never renames anything |
-| How every asset looks (style, palette, team colour, silhouette, prompts, terrain, UI art) | **This bible.** It replaces the faction bullets of visual §7.1 ("Hearth Wardens", "Thornborn") and the prompt kit of visual §7.3 for all generation from now on |
+| How every asset looks (style, palette, team colour, silhouette, prompts, terrain, UI art) | **This bible.** It replaces the faction bullets of visual §7.1 (the two retired working names) and the prompt kit of visual §7.3 for all generation from now on |
 | How every asset sounds (voice, line counts, SFX list, music) | **This bible.** It replaces the Wardens/Thornborn lines, casting and UI sounds of audio §3.2–§3.4, the level-up prompt (audio §4.4 #15) and the six music prompts (audio §4.5) |
 | When an effect or sound fires, its timing and its mix priority | The juice specs and audio §3.5 (buses, caps). This bible supplies the content they trigger |
 
@@ -32,7 +32,7 @@ never by name.
 |---|---|
 | **Global style** | "Storm-lit Heroic Diorama": chunky heroic forms built to be read from a −56° camera, light painted into the colours, quiet terrain, loud units, and only VFX allowed to bloom (§1) |
 | **Kingdom look** (Brennmark) | Burgundy and ivory masses, dark bronze and blackened iron accents. Kettle-hat discs, tall pavises, flails, hook-guns, wagons. Half-timber, lime plaster, onion domes, folk-painted wood (§2.1, §4.2) |
-| **Clans look** (Tormai Clans) | Dark ink-teal and saffron felt, warm polished bronze, slate-grey skin with pale hail-speckles, heavy tuskless jaws. Cones and streamers over flat lamellar flaps. Low domes and carved masts (§2.2, §4.3) |
+| **Clans look** (the Tormai; the UI never says "Clans") | Dark ink-teal and saffron felt, warm polished bronze, slate-grey skin with pale hail-speckles, heavy tuskless jaws. Cones and streamers over flat lamellar flaps. Low domes and carved masts (§2.2, §4.3) |
 | **Neutral look** | Creeps carry no team colour and use palettes that belong to neither army. Rundling traders in brass, sage and cream (§2.3) |
 | **Team colour** | 12 tuned colours with light and dark ramps, on 10–15 % of each unit's visible silhouette, keyed as pure magenta `#FF00FF` in concept art. Slice defaults: player 1 Royal Blue, player 2 Crimson. Key art never shows the kingdom in blue (§2.4, §3) |
 | **Prompts** | One fixed `STYLE_SUFFIX_V1`, one fixed `NEGATIVE_V1`, one fixed clause per faction, and one template per asset class (14 classes). Seeds are fixed per asset family and 3–5 of our own approved images serve as style anchors (§5) |
@@ -102,10 +102,10 @@ modern atmosphere that the reference RTS did not have.
 |---|---|---|---|---|---|---|
 | Worker | Hodman | Yurtwright (10 % taller people) | — | 1.2 m / 1.4 m | 1.5–3k | 512² |
 | Infantry, ranged, caster | Pavisier, Hookgunner, Linden Sister | Grappler (1.9 m), Javelineer, Gustcaller | Sootcoats, Fieldkeeper (1.7 m) | 1.6–1.9 m | 2–4k | 512² |
-| Hero (1.25× infantry) | Wheel Marshal, Firewright | Long-Braid, Skymirror | Rat-Piper [SLICE+] | 2.1–2.3 m | 4–8k | 1024² |
+| Hero (1.25× infantry) | Wheel Marshal, Firewright | the Uncut, Skymirror | Rat-Piper [SLICE+] | 2.1–2.3 m | 4–8k | 1024² |
 | Wheeled siege | Bombard Wagon (2.6 m long) | Sling-Cart (2.4 m long, arm 2.8 m up) | — | 1.4–2.8 m | 2–4k (bpy) | 1024² atlas |
 | Large creep | — | — | Drystone Walker, Menhir Elder | 2.4–3.0 m | 1–3k (bpy slabs) | 512² stone |
-| Small building | Croft, Lookout | Home Yurt, Spear-Mast | Gold Seam | 3–7 m | 3–6k | 1024² |
+| Small building | Croft, Lookout | Home Yurt, Bow-Mast | Gold Seam | 3–7 m | 3–6k | 1024² |
 | Barracks-class building | Drill Yard, Foundry, Oath Hall, Wainwright Yard | Grapple Yard, Casting Pit, Naming Stones, Mirror Yurt | Weighstall (7 m balance beam) | 4–6 m | 4–8k | 1024²–2048² |
 | Hall | Moot Hall → Walled Burg | Shell Hall → Banner Shell | — | 7–8 m | 6–12k | 2048² |
 | Tree | — | — | Greenvale oak, linden, hazel | 5–7 m | 0.5–1.5k + 2 LODs | 512² atlas |
@@ -156,7 +156,7 @@ reference races' signature effects (no fel green, no frost blue, no violet shado
 | `K_WHEEL_GHOST` | `#F3E6C4` (×1.6) | The Wagon Ring's ghostly wheels, Oath Hall revive |
 | `C_SUNGLINT` | `#FFD27A` (×2.0–3.0) | Skymirror's Sunglint, mirror flashes, Sun-Gong |
 | `C_DUST` | `#C9A46A` (×1.2) | Dust Veil, Wind at Your Back, Through the Tall Grass, Gustcaller bolts |
-| `C_MOON` | `#C8D4E8` (×1.6) | Moonglint, Hail-Hawks, Swallowed Sun's rim |
+| `C_MOON` | `#C8D4E8` (×1.6) | Moonglint, Hail-Swifts, Swallowed Sun's rim |
 | `N_SOOT` / `N_EMBER` | `#3E3935` / `#E07A2A` | Sootcoat smoke and coals |
 | `N_LICHEN` | `#E8E29A` (×1.4) | Cairnwake glyphs, Ley Pulse |
 | `N_LANTERN` | `#FFC46B` (×1.6) | Hollow Harvest turnip lanterns |
@@ -311,9 +311,9 @@ generated as `light = c + (1 − c) × 0.40` and `dark = c × 0.55`. The shader 
 | Javelineer | Hood streamer, sash, javelin bundle wrap | Streamer |
 | Gustcaller | Shoulder mantle, streamer ribbons on the staff | Mantle |
 | Sling-Cart | Felt sling, rope-wrap on the arm, crew hat bands | Sling |
-| Long-Braid | Sash, braid ribbon near the bronze weight | Sash |
+| The Uncut | Sash, braid ribbon near the bronze weight | Sash |
 | Skymirror | Felt shoulder mantle, staff ribbons | Mantle |
-| Buildings | The felt band around every dome, banner tassels, Shell Hall door hangings | Dome band |
+| Buildings | The felt band around every dome, banner ribbons, Shell Hall door hangings | Dome band |
 
 ### 3.4 Acceptance checks (scripted in `tools/`, run on every concept and final texture)
 
@@ -369,15 +369,15 @@ Render a flat-black thumbnail from the game camera at 64 px (units) or 128 px (b
 | Javelineer | A hooded head plus a **vertical bundle of javelins** and a stick arm | A tusked, mohawked spear thrower |
 | Gustcaller | A long robe triangle with **ribbon streamers** and a forked staff | A wolf-pelted lightning caster |
 | Sling-Cart | Two wheels plus a **tall angled throwing arm** with a sling | A rock-hurling catapult made of bones |
-| Long-Braid | A **flared coat circle**, a long braid line ending in a weight, a crescent sabre | A masked duelist with a topknot and a straight blade |
-| Skymirror | A **mirror visor disc** over the face and a mirror-topped staff | A blind seer riding a wolf |
+| The Uncut | A split coat with a **long braid line trailing to the ground** behind her, ending in a weight; a short straight sabre carried low. **No circular motion in idle or abilities** (clans §2.1, §2.5) | A masked duelist with a topknot and an oversized blade; any spinning figure, whirled braid or dust column |
+| Skymirror | A **brow-band mirror pushed up on the forehead** (eyes visible) and a mirror-topped staff | A blind seer riding a wolf; anything covering his eyes at idle |
 | Shell Hall → Banner Shell | A low **hex-plated dome** with a gong mast at the door; T2 adds tall banners | A spiky hide-and-bone hall with tusks |
 | Home Yurt | A small round dome with a smoke ring and a felt skirt | A burrow mound with spikes |
 | Grapple Yard | A round fenced ring beside a long yurt | An arena of skull posts |
-| Naming Stones | A ring of upright carved stones hung with small mirrors | A blood altar with spikes |
-| Casting Pit | A sunken pit, a cone kiln and stacked logs | A war mill with saw blades |
-| Mirror Yurt | A tall dome **studded with glinting discs** | A spirit lodge of skins and skulls |
-| Spear-Mast | A tall carved **mast** with a windbreak platform and tassels | A watch tower of lashed logs with skulls |
+| Naming Stones | A ring of rough upright stones carved with hail and wind glyphs, a frame of small gongs beside them; nothing hung on the stones, no faces | A blood altar with spikes |
+| Casting Pit | A sunken pit, a cone kiln and stacked logs | A reference-race lumber mill with saw blades |
+| Mirror Yurt | A tall dome **ringed by bronze sun-mirrors on tilting posts** (nothing sewn or studded on the felt) | A reference-race caster lodge of skins and skulls |
+| Bow-Mast | A tall carved **mast** with a windbreak platform, felt ribbon streamers and a **mounted horn bow** | A lookout of lashed logs with skulls; any javelin or spear thrower |
 
 ### 4.4 Neutral layer
 
@@ -609,7 +609,7 @@ Icon rules:
 | Command (move, stop, hold, attack, patrol, build, gather, repair, rally) | A simple shared pictogram: a waymark post (move), a closed gate (stop), a stake with a rope ring (hold), crossed blades (attack), a looping footpath (patrol), a mallet and plumb line (build), a sack and a log (gather), a mallet and nails (repair), a pennant on a stake (rally) | slate-black `#1A1E24` | pale cream |
 
 Never reproduce the composition of a well-known reference icon (ip-safety §2.4). Our rules of thumb: heals show plants, cloth and
-cups, never hands; haste shows ribbons around a boot; stealth shows a dust devil; reveal shows a mirror.
+cups, never hands; haste shows ribbons around a boot; stealth shows a low, flat dust puff (never a dust devil or whirl); reveal shows a mirror.
 
 **T10. Hero portrait** (2D bust for the hero buttons, loading plates and tooltips; the console portrait is a live 3D view).
 
@@ -675,10 +675,10 @@ helmet or felt hat (clans §12.3).
 | Yurtwright (1201) | T1 | stocky big-jawed humanoid craftsperson with slate blue-grey skin and pale speckles on the forearms, a very heavy square lower jaw with flat square teeth and no tusks, small rounded ears, a tall peaked felt hat with ear-flaps, a quilted ink-teal felt coat with saffron trim, a bundle of red-brown folding lattice-wood strapped on the back | the hat band and the bundle strap | a wooden mallet |
 | Grappler (1202) | T1 | huge broad wrestler-warrior with slate blue-grey skin and pale speckles on the shoulders, a very heavy square lower jaw with flat square teeth behind a bronze chin-guard and no tusks, a conical bronze helmet, three rows of saffron-laced rectangular lamellar flaps on the shoulders, a sleeveless deep ink-teal quilted felt coat, thick bronze wrist-guards | a long helmet streamer and a felt sash | an oversized flanged bronze mace |
 | Javelineer (1203) | T1 | lean athletic adult big-jawed humanoid with slate blue-grey skin and no tusks, a saffron felt hood, a sleeveless ink-teal felt tunic, a quiver-bundle of bronze-weighted javelins on the back | a hood streamer, a sash and the javelin-bundle wrap | a wooden spear-thrower stick in one hand and one javelin in the other |
-| Gustcaller (1204) | T1 | older big-jawed humanoid weather-caster with slate blue-grey skin and no tusks, a long saffron felt robe hung with ribbon streamers, a small round polished bronze mirror on the chest, a tall peaked felt hat | a felt shoulder mantle and the ribbons on the staff | a forked wooden staff trailing ribbons |
-| Long-Braid (1210) | T2 | lean fast big-jawed humanoid woman duelist with slate blue-grey skin, no tusks and no mask, a bronze chin-guard, a flared saffron riding coat whose skirt spins out wide, one huge braid reaching the ground and ending in a bronze weight; `PROP`: the braid | a sash and a ribbon near the braid weight | an oversized curved sabre |
-| Skymirror (1211) | T2 | old broad big-jawed humanoid seer with slate blue-grey skin and no tusks, an ink-teal felt coat stitched with many small bronze mirrors, a large polished bronze mirror hanging over his eyes like a visor; `PROP`: a long staff topped by a second round bronze mirror | a felt shoulder mantle and the staff ribbons | the mirror staff |
-| Shell Hall (1280) | T4 | a large nomad council hall built beneath a gigantic sun-bleached ancient tortoise-shell dome with big hexagonal plates, deep ink-teal and saffron felt hangings, a carved red-brown lattice-wood doorway, small felt yurts attached around the base, a bronze gong on a wooden frame by the door, carved masts with horse-hair tassels | the felt band around the dome and the door hangings | — |
+| Gustcaller (1204) | T1 | older big-jawed humanoid weather-caster with slate blue-grey skin and no tusks, a long **plain** saffron felt robe with nothing sewn or hung on it, a folding felt fan at the belt, a tall peaked felt hat | a felt shoulder mantle and the ribbons on the staff | a tall wind-vane staff (a bronze vane on a pivot) with felt ribbons tied to the staff only |
+| The Uncut (1210) | T2 | lean fast big-jawed humanoid woman duelist with slate blue-grey skin, no tusks and no mask, a bronze chin-guard, a split saffron riding coat hanging straight, one huge braid trailing on the ground behind her and ending in a bronze weight; `PROP`: the braid. Negative add-on: spinning, whirling, swirl, whirlwind, dust column, flared skirt circle, curved sword, oversized blade, topknot | a sash and a ribbon near the braid weight | a normal-length straight horse-sabre carried low |
+| Skymirror (1211) | T2 | old broad big-jawed humanoid seer with slate blue-grey skin and no tusks, a plain quilted ink-teal felt coat with bronze studs (no mirrors sewn on), a polished bronze mirror on a brow-band pushed up on his forehead, eyes visible and keen; `PROP`: a long staff topped by a second round bronze mirror. Negative add-on: blindfold, covered eyes, visor over the eyes, mirror-hung robe, fringes | a felt shoulder mantle and the staff ribbons | the mirror staff |
+| Shell Hall (1280) | T4 | a large nomad council hall built beneath a gigantic sun-bleached ancient tortoise-shell dome with big hexagonal plates, deep ink-teal and saffron felt hangings, a carved red-brown lattice-wood doorway, small felt yurts attached around the base, a bronze gong on a wooden frame by the door, carved masts with felt ribbon streamers | the felt band around the dome and the door hangings | — |
 
 **Neutral (Greenvale).** `FACTION_CLAUSE = NEUTRAL_CLAUSE_V1` with the family's palette words; no magenta.
 
@@ -1026,7 +1026,7 @@ finished, mine low, mine exhausted, upkeep rises, no hall left (cripple).
 | Hookgunner (ranged) | 18 | Javelineer (ranged) | 18 |
 | Bombard Wagon crew (two voices) | 16 | Gustcaller (caster) | 19 |
 | Wheel Marshal (hero) | 26 | Sling-Cart crew (two voices) | 16 |
-| Firewright (hero) | 26 | Long-Braid (hero) | 26 |
+| Firewright (hero) | 26 | The Uncut (hero) | 26 |
 | The Reeve (advisor) | 16 | Skymirror (hero) | 26 |
 | | | The gong-keeper (advisor) | 16 |
 | **Kingdom total** | **139** | **Clans total** | **158** |
@@ -1073,15 +1073,15 @@ with shifted formants.
 | Sling-Cart crew | Yes | Two brothers | One deep and slow, one quicker and higher | Overlapping | `[deadpan]` / `[eager]` | `rubberband=pitch=0.9:formant=shifted` on both | They finish each other's sentences wrongly | Audition two presets |
 | Proven Javelineer | Later | Javelineer voice, older | Same, rougher | Slower | `[proud]` | pitch 0.92 | "Nine battles" | Same as Javelineer |
 | Pole-Carver | Later | Middle-aged man | Dry, deadpan mid | Slow | `[deadpan]` | pitch 0.9 | Complains about wood grain | Audition |
-| Mound-Speaker | Later | Very old | Whispery, doubled by an octave-down "ancestor" | Very slow | `[whispers]` | Octave-down double + chorus | Two voices that interrupt each other | Audition |
-| Kirrik Rider | Later | Young man | Fast-talking | Fast | `[excited]` | pitch 0.94 | The bird shrieks over line ends (SFX) | Audition |
-| Gongback rider | Later | Adult | Loud, half-deaf | Medium | `[shouts]` | Gong ring layered | "WHAT?" | Audition |
+| Hill-Listener | Later | Very old | Whispery, interrupted by the slow, rumbling dream-voice of the Sleeping Hills (never an ancestor) | Very slow | `[whispers]` | Octave-down double + chorus; the bronze echo-horn hums under the second voice | Two voices that interrupt each other | Audition |
+| Hookbill Rider | Later | Young man | Fast-talking | Fast | `[excited]` | pitch 0.94 | The bird shrieks over line ends (SFX) | Audition |
+| Glintback rider | Later | Adult | Sun-dazzled, cheerful | Medium | `[cheerful]` | A bright glint chime layered (no gong: no instrument rides the beast) | Shades his eyes with his hat brim: "Hold still, you're too bright." (no squint jokes) | Audition |
 | Sky-Kite | Later | Young woman | Airy, thrilled | Quick | `[excited]` | Wind layer | Whoops | Audition |
-| Thoom | Later | Giant | Very deep, long vowels | Very slow | `[slow]`, `[hungry]` | `rubberband=pitch=0.75:formant=shifted`, large room | A long "mmmm"; always thinking about dinner (never cattle jokes) | Audition |
-| **Long-Braid** | Yes | Woman | Low, dry, confident | Clipped | `[low]`, `[dry]`, `[confident]` | `rubberband=pitch=0.9:formant=preserved`, small plate reverb | Keeps a duel tally | `FGY2WhTYpPnrIDTdsKH5` (clans §3.3) |
-| **Skymirror** | Yes | Old man | Sonorous, vain, rounded | Slow | `[grand]`, `[vain]` | `rubberband=pitch=0.88:formant=shifted`; light shimmer on prophecy lines | Polishes mid-sentence (cloth squeak SFX); prophecies about trivial things | `nPczCjzI2devNBz1zQrb` |
+| Thoom | Later | Giant | Very deep, long vowels | Very slow | `[slow]`, `[anxious]` | `rubberband=pitch=0.75:formant=shifted`, large room | A long "mmmm"; an anxious host who checks that everyone is warm and has had tea (never food, hunger, dinner or cattle jokes; clans §3.1) | Audition |
+| **The Uncut** | Yes | Woman | Low, dry, confident | Clipped | `[low]`, `[dry]`, `[confident]` | `rubberband=pitch=0.9:formant=preserved`, small plate reverb | Keeps a duel tally | `FGY2WhTYpPnrIDTdsKH5` (clans §3.3) |
+| **Skymirror** | Yes | Old man | Sonorous, vain, rounded | Slow | `[grand]`, `[vain]` | `rubberband=pitch=0.88:formant=shifted`; light shimmer on mirror-sight lines | Polishes mid-sentence (cloth squeak SFX); narrates tiny far-off things the mirror shows, never fortunes or yes/no answers | `nPczCjzI2devNBz1zQrb` |
 | Cauldron-Father | Later | Giant | Ultra-deep, gentle | Very slow | `[gentle]`, `[warm]` | pitch 0.72, huge room | Calls everyone "little one" | Audition |
-| Omen-Mother | Later | Grandmother | Crackly, sly | Quick-witted | `[sly]`, `[amused]` | pitch 0.95, formant shifted | Rattles her knucklebones (SFX) | Audition |
+| Omen-Mother | Later | Grandmother | Crackly, sly | Quick-witted | `[sly]`, `[amused]` | pitch 0.95, formant shifted | Swirls her tea cup (a small bronze-cup clink SFX); no bones | Audition |
 | **The gong-keeper** (advisor) | Yes | Elder | Measured, sonorous mid-low | Measured | `[measured]` | Bronze-plate reverb tail | Announces everything as if striking the gong | `onwK4e9ZLuTAKqWW03F9` (clans §3.3) |
 
 ### 8.5 Neutral voices
@@ -1126,28 +1126,28 @@ Five original candidates per category; recording uses the counts in §8.2 (the r
 
 | Category | Candidates |
 |---|---|
-| Ready | "Hm-hm. Twelve poles, one roof, one wright. Ready." · "My mallet is warm, and my tea is warmer." · "A wright for the clan. Show me flat ground." · "I have counted the lattice twice. We may begin." · "Here I am, with felt enough for a family." |
-| What | "Hm-hm?" · "The wright hears you." · "Is it a roof you need, or a mending?" · "Speak. I am only counting stitches." · "Yes, yes, I am here. Where else would I be?" |
+| Ready | "Hm-hm. Twelve poles, one roof, one wright. Ready." · "My mallet is warm, and my tea is warmer." · "A wright for the household. Show me flat ground." · "I have counted the lattice twice. We may begin." · "Here I am, with felt enough for a family." |
+| What | "The mallet is in my hand." · "The wright hears you." · "Is it a roof you need, or a mending?" · "Speak. I am only counting stitches." · "Yes, yes, I am here. Where else would I be?" |
 | Yes | "With care." · "Step by step, pole by pole." · "I go, and I bring the kettle." · "Of course. The grass will not mind." · "Hm. Sensible." |
 | Attack | "Forgive me. This will be firm." · "Sorry. Mallet first, apology after." · "Please hold still, guest." · "I mend roofs. I can also unmend heads." · "Hm-hm. A small correction." |
 | Warcry | "NOT ON MY FELT!" · "WIPE YOUR FEET, GUESTS!" · "THE DOOR IS THIS WAY! OUT!" · "WHO TRACKS MUD INTO A YURT?!" · "THE KETTLE IS NOT FOR YOU!" |
-| Annoyed (in order) | 1. "Hm. One tap is a greeting." 2. "Three taps is a question. I have answered it." 3. "Seven taps. In my clan, seven taps means you want stew." 4. "Eleven taps. There is no custom for eleven. You are inventing customs." 5. "Sit. I will pour the tea. You will hold the cup with both hands, where I can see them." |
+| Annoyed (in order) | 1. "Hm. One tap is a greeting." 2. "Three taps is a question. I have answered it." 3. "Seven taps. In my household, seven taps means you want stew." 4. "Eleven taps. There is no custom for eleven. You are inventing customs." 5. "Sit. I will pour the tea. You will hold the cup with both hands, where I can see them." |
 | Built | "Twelve poles, one roof, no leaks. Done." · "The felt is tied. Bring the cushions." · "Another dome under the Long Sky." · "Raised. Somebody owes me tea." · "Finished. I counted every knot. Twice." |
 | Mechanic (Sound the Gong, Roll the Felt, All Clear) | "The gong! Inside, everyone, inside!" · "Rolling up the felt. Slings ready." · "In through the door, out go the stones." · (All Clear) "All clear? Good. My stew is going cold." · (All Clear) "Hm-hm. The guests have left. Rude, but quiet." |
 | Death (non-verbal set) | A deep "hhuff" and a soft felt thump · a surprised "Hm?" cut short · a tired sigh and the mallet clattering · a fading "Who… will count…" · a low throat-hum that drops away |
 
 ### 8.9 Example lines: Grappler (clans heavy infantry)
 
-These replace the draft annoyed sequence in clans §3.3 (same idea, new wording); keep one, not both.
+Alternates for clans §3.3, which is the source of record since the clans doc's second review; record one annoyed run, not both. Every line here was re-checked against clans §3.1 (no "clan", no bare interjection on the worker, no sky deity, no sacred number).
 
 | Category | Candidates |
 |---|---|
-| Ready | "Hm-hm. The ring is drawn. I am in it." · "Grappler. Shoulders loose, jaw ready." · "I have bowed to the Sky. Now I bow to you. Lightly." · "Bring me a guest who likes the ground." · "Braids bound, bronze polished. Who wrestles?" |
-| What | "Hm?" · "The Grappler attends." · "Big ears. Small patience. Speak." · "Yes? I was stretching." · "Is there someone to lift?" |
+| Ready | "Hm-hm. The ring is drawn. I am in it." · "Grappler. Shoulders loose, jaw ready." · "I have bowed to the grass. Now I bow to you. Lightly." · "Bring me a guest who likes the ground." · "Braids bound, bronze polished. Who wrestles?" |
+| What | "Speak, Ring-Elder." · "The Grappler attends." · "Big ears. Small patience. Speak." · "Yes? I was stretching." · "Is there someone to lift?" |
 | Yes | "As a hill moves. Slowly. Surely." · "Walking." · "I go." · "Respectfully, yes." · "Hm-hm. Agreed." |
 | Attack | "Allow me to introduce you to the ground." · "Excuse my grip." · "Pardon. This is a throw." · "Take hold!" · "Your shoulders, please. Both of them." |
-| Warcry | "INTO THE GRASS!" · "THE RING IS OPEN!" · "BOW, THEN BREAK!" · "THE NINE CLANS ARE WATCHING!" · "LOW AND STRONG!" |
-| Annoyed (in order) | 1. "You lay a hand on my arm. That is how a bout begins." 2. "Again? Now we have touched shoulders. We are rivals." 3. "A third time. In my clan, that is an engagement." 4. "I must ask my mother. She will want to see your grip." 5. "She says no. Too small. I am so sorry." |
+| Warcry | "INTO THE GRASS!" · "THE RING IS OPEN!" · "BOW, THEN BREAK!" · "THE WHOLE GRASS IS WATCHING!" · "LOW AND STRONG!" |
+| Annoyed (in order) | 1. "You lay a hand on my arm. That is how a bout begins." 2. "Again? Now we have touched shoulders. We are rivals." 3. "A third time. In my household, that is an engagement." 4. "I must ask my mother. She will want to see your grip." 5. "She says no. Too small. I am so sorry." |
 | Mechanic (Shove, at most once per 10 s) | "Step back, please." · "Out of the ring!" · "And… away." · "A point to me." · "Hm! Stay down." |
 | Death (non-verbal set) | A huge strained "hnngh" and a ground-shaking thud · a quiet, surprised "…pinned." · a long exhale and the bronze helmet ringing on the ground · a gracious, fading "A fair… throw…" · a startled bellow that drops an octave |
 
@@ -1157,20 +1157,20 @@ These replace the draft annoyed sequence in clans §3.3 (same idea, new wording)
 |---|---|---|
 | Need gold | "The strongbox is light." | "The purse is thin. More sun-teeth, please." |
 | Need lumber | "We're short on timber." | "We are short of lattice-wood." |
-| Need supply | "Raise more crofts." | "Raise more yurts. Our guests are sleeping in the rain." |
+| Need supply | "Raise more crofts." | "Every yurt is full. Our guests are sleeping in the rain." |
 | Hero slot full | "Every captain's chair is taken." | "Every seat by the fire is taken." |
 | Cannot build there | "The ground won't take it there." | "The ground says no." |
-| Buildings attacked | "Our hall is taking a beating!" | "Someone is striking our roofs!" |
+| Buildings attacked | "Our hall is taking a beating!" | "Someone is striking our felt!" (halls: "Someone is striking the Shell!") |
 | Units attacked | "Our people are in a fight!" | "Our kin are fighting!" |
 | Workers attacked | "They're after the hodmen!" | "They are chasing the wrights!" |
-| Hero fallen | "A captain is down. The Oath Hall can raise them." | "A name has fallen. The Stones will call it back." |
+| Hero fallen | "A captain is down. The Oath Hall can raise them." | "A name has gone quiet. The Stones will call it back." |
 | Hero ready | "A captain stands sworn." | "A name stands up from the Stones." |
 | Research finished | "The guild reports it's done." | "The bronze has cooled." |
 | Hall tier finished | "The burg is walled." | "The banners are raised." |
 | Mine low | "The seam is running thin." | "The sun-teeth are wearing thin." |
 | Mine exhausted | "The seam is spent." | "The sun-teeth are gone from this hill." |
 | Upkeep rises | "Wages are eating the strongbox." | "Many mouths, small pot. The purse shrinks." |
-| No hall left | "We've no hall! Raise one, or the whole valley will know." | "We have no roof! Raise one before the whole Sky sees." |
+| No hall left | "We've no hall! Raise one, or the whole valley will know." | "Without a hall the whole steppe will see us. Raise one!" |
 
 Kingdom lines for gold, lumber, supply, cannot build, buildings attacked, hero ready, research and upkeep come from kingdom §3.2;
 clans lines for gold, lumber, supply, cannot build, units attacked, hero fallen, research and mine low come from clans §3.3. The rest
@@ -1295,7 +1295,7 @@ Melee = **swing layer** (by `fx.weapon`) + **impact layer** (by `fx.material`) +
 
 Material map for the slice: kingdom infantry and wagons → `metal` (plate, kettle hats) or `wood` (pavise hits from the front); Hodman,
 Hookgunner → `flesh` (quilted); Tormai → `flesh` heavy (felt) with `metal` on helmets and lamellar; Hollow Harvest → `straw` (an
-extension to the juice material set; §13); Cairnwakes → `stone`; Hail-Hawks and the Wagon Ring's wheels → `ethereal`.
+extension to the juice material set; §13); Cairnwakes → `stone`; Hail-Swifts → `stone` (opaque packed hail, no spirit material); the Wagon Ring's wheels → `ethereal`.
 
 ### 9.4 Ranged, siege and wheels
 
@@ -1309,7 +1309,7 @@ extension to the juice material set; §13); Cairnwakes → `stone`; Hail-Hawks a
 | `bombard_hit` | O | a cannonball landing: a deep earthy thump, dirt and stones spraying, a short rumble | 4 × 1.0 | P0 |
 | `javelin_throw` | O | a spear-thrower whipping a javelin away: a quick wooden snap and a fast whoosh | 4 × 0.5 | P0 |
 | `javelin_hit` | O | a bronze-tipped javelin hitting: a solid thunk into wood, a thud into a body, a ping off metal, a thud into earth | 4 × 0.4 | P0 |
-| `spearmast_fire` | O | a heavy wooden javelin launcher on a tall mast: a rope creak and a deep twang, then a fast whoosh | 3 × 0.8 | P0 |
+| `bowmast_fire` | O | a big horn bow on a swivel atop a tall mast: a rope creak, a deep bowstring twang, then a fast arrow whoosh | 3 × 0.8 | P0 |
 | `slingcart_throw` | O | a two-wheeled throwing-arm cart: a rope creak, the wooden arm whipping forward, a heavy thump against the stop beam | 3 × 1.2 | P0 |
 | `claypot_hit` | O | a heavy clay pot smashing on the ground: a crash of shards, a dull thump, a puff of dust | 4 × 0.8 | P0 |
 | `sling_stones` | O | a leather sling whirling twice and releasing a stone, then the stone cracking against wood | 4 × 0.8 | P0 |
@@ -1364,7 +1364,7 @@ extension to the juice material set; §13); Cairnwakes → `stone`; Hail-Hawks a
 | Naming Stones | many small bronze mirrors on cords chiming gently in the wind |
 | Casting Pit | a kiln roaring, a crucible pour with a hiss, charcoal crackling |
 | Mirror Yurt | shimmering mirror chimes and a soft gust of wind |
-| Spear-Mast | a tall wooden mast creaking in the wind, horse-hair tassels fluttering, a rope tapping |
+| Bow-Mast | a tall wooden mast creaking in the wind, felt ribbons fluttering, a bowstring tapping |
 
 ### 9.6 Spells, abilities, items and hero events
 
@@ -1379,23 +1379,23 @@ extension to the juice material set; §13); Cairnwakes → `stone`; Hail-Hawks a
 | `ab_grand_bombard` | O | a heavy bronze cannon dropped onto a timber platform: wheels thudding, chains settling (its shots reuse `bombard_fire` pitched down 15 %) | 2 × 1.5 | P0 |
 | `ab_plant_pavise` | O | a tall wooden shield planted into earth with a solid stake thunk and boards knocking | 3 × 0.6 | P0 |
 | `ab_braced_rest` | O | a wooden forked rest planted into turf with a light thunk | 3 × 0.3 | P1 |
-| `ab_dust_veil` | O | a whirling dust devil spinning up with a rising whoosh and sand hiss, then vanishing with a soft puff | 3 × 1.4 | P0 |
+| `ab_dust_veil` | O | a low rush of dust rolling outward along dry grass with a soft sand hiss, then a dry "fwump" as it settles; nothing whirling or rising | 3 × 1.4 | P0 |
 | `ab_veil_strike` | O | a sudden strike out of nowhere: a sharp sabre slice with a burst of sand | 3 × 0.6 | P1 |
 | `ab_braid_lash` | O | a heavy braided rope whipping out with a crack, a bronze weight hitting with a thunk, a body dragged a short way over grass | 3 × 1.0 | P0 |
 | `ab_keen_edge` | O | a curved sabre ringing clean and bright after a decisive cut, a shimmering high metallic ring | 3 × 0.6 | P0 |
-| `ab_tall_grass` (2 jobs) | O + O | a rushing gust through tall grass rising to a hiss; then long sweeping crescent slashes through tall grass, fast airy rips | 2 × 1.2; 4 × 0.5 | P0 |
+| `ab_tall_grass` (2 jobs) | O + O | a rushing gust through tall grass rising to a hiss; then long straight slashes through tall grass, fast airy rips | 2 × 1.2; 4 × 0.5 | P0 |
 | `ab_sunglint` | O | a blinding flash of sunlight from a polished bronze mirror: a bright shimmering chime swell and a searing high ping | 3 × 1.0 | P0 |
 | `ab_moonglint` | O | a cold pale glint of moonlight off a mirror: a glassy soft chime with an airy shiver | 3 × 1.0 | P0 |
 | `ab_far_mirror` | O | a polished mirror rippling like water: a soft shimmering swell and a distant wind | 2 × 1.5 | P0 |
-| `ab_hail_hawks` | O | hailstones pattering on stone and swirling into wings, then a sharp hawk cry, cold and magical | 2 × 1.8 | P0 |
-| `hawk_attack` | O | a spectral hawk diving: a wing flap and a sharp peck | 4 × 0.4 | P1 |
+| `ab_hail_swifts` | O | hailstones pattering on stone and packing together into small birds, then an ice crackle and a wind snap; cold, no bird cry | 2 × 1.8 | P0 |
+| `swift_attack` | O | a packed-hail swift skimming low over the grass: a quick wing flick and an icy pellet tick | 4 × 0.4 | P1 |
 | `ab_swallowed_sun` (3 jobs) | O + L + O | the daylight being swallowed: a deep inverted swell where all sound is sucked inward into a low hollow drone; then that drone alone as a loop; then light pouring back with a bright airy release | 2 × 2.0; L 10 s; 2 × 1.0 | P0 |
 | `ab_wind_back` | O | a quick rising whirl of dusty wind with flapping ribbons | 3 × 1.0 | P0 |
 | `ab_unbind` | O | ribbons and threads snapping loose in a strong gust, with a soft dispersing whoosh | 3 × 1.0 | P0 |
 | `ab_shove` | O | a heavy wrestler's shove: two bodies colliding with a thick thud and a stumble of feet | 3 × 0.6 | P0 |
 | `aura_learn` | O | a calm low drum heartbeat with a soft woody hum starting up | 2 × 1.0 | P2 |
 | `revive_kingdom` | O | an iron wheel turning in a stone floor, a deep resonant bell, a rising warm whoosh | 2 × 2.0 | P0 |
-| `revive_clans` | O | bronze mirrors chiming around standing stones, a deep gong bloom, a rising breath of wind | 2 × 2.0 | P0 |
+| `revive_clans` | O | small bronze gongs chiming beside standing stones, a deep gong bloom, a rising breath of wind | 2 × 2.0 | P0 |
 | `cr_smoke_pot` | O | a clay smoke-pot cracking open and thick smoke billowing out with a hiss | 3 × 1.2 | P0 |
 | `cr_fumes` | O | a thick sputtering cloud of acrid fumes erupting with a muffled puff | 2 × 1.2 | P1 |
 | `cr_ember_rake` | O | an iron rake scraping and flicking burning embers, a sizzle and crackle | 3 × 0.6 | P1 |
@@ -1425,7 +1425,7 @@ extension to the juice material set; §13); Cairnwakes → `stone`; Hail-Hawks a
 | `lp_weighstall` | L | a market stall in the wind: the chains of a big brass balance creaking, a canvas awning flapping, a soft wind chime | 8 s | P1 |
 | `lp_standing_ring` | L | a ring of ancient standing stones: a very low steady hum with faint gravel shifting | 8 s | P1 |
 | `amb_base_kingdom` | A | a small market town heard from its edge: storks clattering their beaks on rooftops, a far-off smith's hammer, a cart creak, an indistinct murmur with no words | 30 s | P1 |
-| `amb_base_clans` | A | a felt-tent camp: felt flaps in the wind, distant chimes of small bronze plates, a kettle bubbling, horse-hair tassels fluttering, an indistinct murmur with no words | 30 s | P1 |
+| `amb_base_clans` | A | a felt-tent camp: felt flaps in the wind, distant chimes of small bronze plates, a kettle bubbling, felt ribbons fluttering, an indistinct murmur with no words | 30 s | P1 |
 | `lp_mine_night` | L | lanterns hissing at a mine entrance, slow water drips inside | 8 s | P2 |
 
 Day and night beds crossfade over about 8 s, with the stinger on top. Sweeteners play positionally every 8–25 s within 40 m of the
@@ -1503,14 +1503,14 @@ death on topple contact. Sleeping camps play only their snore loop (Sootcoats) o
 | **Kingdom 1, "Market-Day Muster"** | 210000 | Instrumental fantasy strategy-game score for a stubborn, warm-hearted kingdom of craftsmen who defend their towns with wagons and early gunpowder. A Central European village band gone to war, not a symphony orchestra: hurdy-gurdy drone, bright fiddle melody, hammered dulcimer arpeggios, frame drum and a crisp field snare, two low natural horns, a soft wordless male hum far in the background. D Mixolydian, 92 BPM, proud, sturdy and good-humoured with a hint of melancholy. Melody idea: a short five-note figure that climbs step by step and holds its last two notes. Structure: hurdy-gurdy and dulcimer intro (20 seconds), main theme on fiddle, a marching B section where the horns take the melody over the snare, a lighter interlude of dulcimer and plucked fiddle, the full theme again, then a calm outro that resolves on the tonic. Mid-level dynamics, background music that never overwhelms, no lyrics, no big choir, no brass fanfare. |
 | **Kingdom 2, "Boards and Thunder"** | 220000 | Instrumental fantasy strategy-game score, the battle-ready side of a town-militia kingdom. Village band instruments only: two field snares in an interlocking march ostinato, a deep frame drum, a bagpipe drone, fiddle double-stops, hammered dulcimer tremolos, two low natural horns calling in short two-note signals, and occasional distant low drum booms like faraway cannon. G Dorian, 100 BPM, determined and gritty but never grim. Structure: snare ostinato and drone intro (15 seconds), a driving A section led by fiddle, a B section of horn calls answered by dulcimer, a tense drum-only bridge, the A section returning fuller, and a firm final cadence on G. Background music, no lyrics, no orchestra, no choir. |
 | **Kingdom 3, "Linden Night Watch"** | 200000 | Instrumental fantasy strategy-game score for a quiet evening on the walls of a small kingdom town. A soft hurdy-gurdy drone, a lyrical solo fiddle, gentle hammered dulcimer, a low natural horn far away, a very soft frame-drum heartbeat. A Dorian, 84 BPM, warm, reflective and a little homesick. Structure: dulcimer and drone intro (20 seconds), fiddle melody, a B section where the horn answers from far away, a sparse interlude of plucked dulcimer, the melody once more, and a soft ending that resolves on A. Low intensity, no lyrics, no choir, no harp. |
-| **Clans 1, "Herd Road"** | 210000 | Instrumental fantasy strategy-game score for proud, courteous nomad clans of the open grasslands. Deep frame drums in a galloping 6/8 over 4/4, struck and bowed bronze gongs, a raspy two-string bowed fiddle carrying the melody, jaw harp pulses, long low bronze horns, a swelling wordless deep overtone chant, hand claps and stamps. D Dorian, 92 BPM, proud, windswept and warm. Melody idea: a falling three-note figure that comes to rest after a held note. Structure: gong swell and jaw-harp intro (20 seconds), fiddle theme over galloping drums, a B section where the horns and the chant swell together, a sparse windy interlude, the theme again with full percussion, a resolving outro on D. Background music, no lyrics, no taiko, no electric guitar, no brass section. |
-| **Clans 2, "The Gong-Ring Gathers"** | 220000 | Instrumental fantasy strategy-game score for a great council of nomad clans gathering around a ring of bronze gongs. Slow, stately and ceremonial: a big frame drum on every second beat, bowed gong swells, two long bronze horns calling and answering across a valley, the two-string bowed fiddle with a slow noble melody, a low wordless overtone drone, hand claps that build in the second half. E Mixolydian, 84 BPM, dignified, warm and faintly humorous. Structure: bowed-gong intro (20 seconds), horn calls, the fiddle melody, a B section where claps and drums build, a quiet drone bridge, the melody with the full ensemble, a resolving close on E with one last gong. Background music, no lyrics, no orchestra. |
+| **Clans 1, "Herd Road"** | 210000 | Instrumental fantasy strategy-game score for proud, courteous nomad households of the open grasslands. Deep frame drums in a galloping 6/8 over 4/4, struck and bowed bronze gongs, a raspy two-string bowed fiddle carrying the melody, jaw harp pulses, long low bronze horns, a swelling wordless deep overtone chant, hand claps and stamps. D Dorian, 92 BPM, proud, windswept and warm. Melody idea: a falling three-note figure that comes to rest after a held note. Structure: gong swell and jaw-harp intro (20 seconds), fiddle theme over galloping drums, a B section where the horns and the chant swell together, a sparse windy interlude, the theme again with full percussion, a resolving outro on D. Background music, no lyrics, no taiko, no electric guitar, no brass section. |
+| **Clans 2, "The Gong-Ring Gathers"** | 220000 | Instrumental fantasy strategy-game score for a great council of nomad households gathering around a ring of bronze gongs. Slow, stately and ceremonial: a big frame drum on every second beat, bowed gong swells, two long bronze horns calling and answering across a valley, the two-string bowed fiddle with a slow noble melody, a low wordless overtone drone, hand claps that build in the second half. E Mixolydian, 84 BPM, dignified, warm and faintly humorous. Structure: bowed-gong intro (20 seconds), horn calls, the fiddle melody, a B section where claps and drums build, a quiet drone bridge, the melody with the full ensemble, a resolving close on E with one last gong. Background music, no lyrics, no orchestra. |
 | **Clans 3, "Long Grass Gallop"** | 200000 | Instrumental fantasy strategy-game score for a fast ride across endless grassland. Galloping frame drums and stamps at a driving tempo, a jaw-harp rhythm, a plucked long-necked two-string lute, the raspy two-string bowed fiddle in fast runs, bright bronze gong accents, a short burst of deep overtone chant at the climax. A Dorian, 100 BPM, exhilarating and wind-blown. Structure: lute and jaw-harp intro (15 seconds), drums enter, the fiddle theme, a B section with call and response between lute and fiddle, a breathless drum break, the theme at full power, an outro that slows and resolves on A. Background music, no lyrics, no taiko, no electric guitar. |
-| **Menu, "Two Roads"** | 105000 | Instrumental main-menu theme for an original heroic fantasy strategy game about a town-militia kingdom and proud nomad clans. It begins with a lone hurdy-gurdy drone and one soft bronze gong bloom; then a fiddle states a climbing five-note melody and a raspy two-string fiddle answers with a falling one, two cultures meeting. Frame drums enter, then hammered dulcimer and long bronze horns, building to a broad, warm climax at about 1:10, then thinning back to the hurdy-gurdy drone and a gong so it can loop. D Dorian, 80 BPM, hopeful, grand but intimate, no lyrics, no choir, no orchestra. |
+| **Menu, "Two Roads"** | 105000 | Instrumental main-menu theme for an original heroic fantasy strategy game about a town-militia kingdom and proud nomad households. It begins with a lone hurdy-gurdy drone and one soft bronze gong bloom; then a fiddle states a climbing five-note melody and a raspy two-string fiddle answers with a falling one, two cultures meeting. Frame drums enter, then hammered dulcimer and long bronze horns, building to a broad, warm climax at about 1:10, then thinning back to the hurdy-gurdy drone and a gong so it can loop. D Dorian, 80 BPM, hopeful, grand but intimate, no lyrics, no choir, no orchestra. |
 | **Victory, kingdom** | 12000 | Short instrumental victory flourish for a town-militia kingdom: a crisp field-snare roll, two low natural horns and a fiddle playing a bright rising phrase in D major, hammered dulcimer sparkle, a bagpipe drone swelling under the last chord, ending on a strong held tonic chord with a natural decay. About 12 seconds, no vocals. |
-| **Victory, clans** | 12000 | Short instrumental victory flourish for proud nomad clans: galloping frame drums accelerating, one huge bronze gong strike, long bronze horns playing a broad rising phrase in D Mixolydian, hand claps, ending on a held chord inside the gong's shimmering bloom. About 12 seconds, no vocals. |
+| **Victory, clans** | 12000 | Short instrumental victory flourish for proud nomad households: galloping frame drums accelerating, one huge bronze gong strike, long bronze horns playing a broad rising phrase in D Mixolydian, hand claps, ending on a held chord inside the gong's shimmering bloom. About 12 seconds, no vocals. |
 | **Defeat, kingdom** | 12000 | Short instrumental defeat cue for a town-militia kingdom: a slow hurdy-gurdy drone, a lone fiddle playing a falling phrase in D minor that does not resolve, a muffled frame-drum heartbeat, fading into silence. About 12 seconds, somber, no vocals. |
-| **Defeat, clans** | 12000 | Short instrumental defeat cue for nomad clans: a slow bowed gong swell, a low bronze horn phrase that falls and stops short, one soft frame-drum beat, a wind-like low overtone drone fading into silence. About 12 seconds, no vocals. |
+| **Defeat, clans** | 12000 | Short instrumental defeat cue for nomad households: a slow bowed gong swell, a low bronze horn phrase that falls and stops short, one soft frame-drum beat, a wind-like low overtone drone fading into silence. About 12 seconds, no vocals. |
 
 ### 10.4 Post-processing and import
 

@@ -285,7 +285,7 @@ At 4 m the two are equal (≈ 0.93). Clans trade early tempo (first delivery 13.
 |---|---|---|---|
 | WC3 reference | 385 g / 205 l, 180 s, 1500 HP, +12 food | +320 / 210, 140 s, 2000 HP | +360 / 210, 140 s, 2500 HP |
 | `kingdom` | Moot Hall 400 / 200, 170 s, 1550 HP, +12 | Walled Burg +310 / 200, 130 s, 2050 HP, +14 | Crown Burg +350 / 220, 140 s, 2600 HP, +16 (needs Oath Hall + Foundry) |
-| `clans` | Shell Hall 375 / 190, 150 s, 1550 HP, +10 | Banner Shell +305 / 195, 130 s, 2050 HP, +10 (needs Naming Stones) | Sun-Gong Shell +330 / 215, 145 s, 2600 HP, +10 |
+| `clans` | Shell Hall 375 / 190, 155 s, 1550 HP, +10 | Banner Shell +305 / 195, 130 s, 2050 HP, +10 (needs Naming Stones) | Sun-Gong Shell +330 / 215, 145 s, 2600 HP, +10 |
 | `sylvan` | Stilt Lodge, +10 | Lantern Lodge, +12 (needs Calling Pier) | Amber Lodge, +14 (needs Resinworks) |
 | `deathless` | Wake Barrow, +10 | Long Barrow, +12 (needs Cenotaph) | Grand Barrow, +14 (needs Ossuary) |
 
@@ -1333,7 +1333,7 @@ Units: m, s, m/s, per second. "—" = unitless.
 
 | Field | `kingdom` | `clans` | `sylvan` *(later)* | `deathless` *(later)* |
 |---|---|---|---|---|
-| `name` | "Brennmark" | "Tormai Clans" | "Glaermere" | "Long Wake" |
+| `name` | "Brennmark" | "Tormai" | "Glaermere" | "Long Wake" |
 | `worker` | `kingdom_hodman` | `clans_yurtwright` | `sylvan_tapster` | `deathless_sexton` |
 | `hall` (T1, existing field) | `kingdom_moot_hall` | `clans_shell_hall` | `sylvan_stilt_lodge` | `deathless_wake_barrow` |
 | `hall_tiers` | [moot_hall, walled_burg, crown_burg] | [shell_hall, banner_shell, sun_gong_shell] | [stilt_lodge, lantern_lodge, amber_lodge] | [wake_barrow, long_barrow, grand_barrow] |
@@ -1465,7 +1465,7 @@ Hall-tier ids are written with the faction prefix in data (`kingdom_walled_burg`
                 "start_units": {"kingdom_hodman": 5}, "start_gold": 500, "start_lumber": 150,
                 "recall_item": "item_homeward_horn", "lumber_per_trip": 10, "chop_interval": 0.8, "fells_trees": true,
                 "workers_per_tree": 0, "max_builders": 3, "extra_builder_rate": 0.6},
-    "clans":   {"name": "Tormai Clans", "worker": "clans_yurtwright", "hall": "clans_shell_hall",
+    "clans":   {"name": "Tormai", "worker": "clans_yurtwright", "hall": "clans_shell_hall",
                 "hall_tiers": ["clans_shell_hall", "clans_banner_shell", "clans_sun_gong_shell"],
                 "altar": "clans_naming_stones", "supply": "clans_home_yurt",
                 "lumber_drop": ["clans_shell_hall", "clans_banner_shell", "clans_sun_gong_shell", "clans_casting_pit"],

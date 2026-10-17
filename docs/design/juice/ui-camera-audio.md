@@ -35,7 +35,7 @@
 - Easings are the Penner functions in `Juice` (combat FND-1): `out_quad`, `in_quad`, `out_cubic`, `in_cubic`, `in_out_sine`, `out_back(c1)`, `in_back`, `out_bounce`. **This doc adds `in_out_cubic`, `out_quart` and `out_quint` to `Juice`.** Named curves POP_IN, PUNCH, SHAKE, RISE_FADE and FLARE are the economy doc's `JuiceCurves` (§2.4).
 - "Own" means the local player.
 - **★** marks a twist WC3 did not have.
-- Faction ids `kingdom` (Brennmark) and `clans` (Tormai Clans). The HUD skin, cursor, UI sounds and advisor always follow the **local player's** faction.
+- Faction ids `kingdom` (Brennmark) and `clans` (the Tormai; the UI never shows "Clans"). The HUD skin, cursor, UI sounds and advisor always follow the **local player's** faction.
 
 ---
 

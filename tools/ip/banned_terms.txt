@@ -47,6 +47,16 @@ illidan
 tyrande
 uther
 grom
+maiev
+malfurion
+cenarius
+shandris
+sylvanas
+elune
+kel'thuzad
+anub'arak
+mal'ganis
+tichondrius
 # Units
 peon
 acolyte
@@ -241,3 +251,7 @@ stasis trap
 # Prompt words (pull unwanted looks into AI generations; banned in prompts by docs/design/factions/sylvan-and-deathless.md §B2.
 # The checker applies every term to every scanned path; that is harmless for these words, which shipped content never needs.)
 canopic
+# Third sylvan-and-deathless review (2026-10-17): a near-spelling of a WC3 heroine and a synonym swap of a WoW healer specialization
+meive
+mistweaver
+hazeweaver
