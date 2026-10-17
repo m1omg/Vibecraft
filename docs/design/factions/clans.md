@@ -11,8 +11,8 @@ combat and the damage matrix §7, day/night §13, creeps §15), which supersedes
 
 **Units of measure.** Distances in metres (1 m = 64 WC3 gu), speeds in m/s, times in seconds. **Footprints in 0.5 m pathing
 cells** (`architecture.md`), in step with `kingdom.md`. Sight is day / night. Damage and armour types use the rules §7.1 names
-(Blade, Pierce, Siege, Arcane, Heroic, Pure, Spell; Light, Medium, Heavy, Fortified, Hero, Unarmored); data ids are lower-case
-(`heroic`, `pure`; rules §20.4). Melee range is edge-to-edge, as in `architecture.md`.
+(Blade, Pierce, Siege, Arcane, Heroic, Raw, Spell; Light, Medium, Heavy, Fortified, Hero, Unarmored); data ids are lower-case
+(`heroic`, `raw`; rules §20.4). Melee range is edge-to-edge, as in `architecture.md`.
 
 ---
 
@@ -706,7 +706,7 @@ damage unless a row says otherwise.
 
 | Ability | Unlock | Effect | Mana | CD | Range | Kind |
 |---|---|---|---|---|---|---|
-| **Between Breaths** (toggle) | Base | Applies the rules **`spectral`** flag verbatim (rules §7.2: immune to Blade, Pierce, Siege, Heroic and **Pure** attacks; cannot attack), with this ability's own magic multiplier: it takes **+60%** (×1.60) from Arcane and Spell instead of the flag's ×1.66. Presentation: a cocoon of ochre-silver smoke rises from the bowl and wraps it; the body stays **opaque** and greys out. No blue-white glow | 0 | 2 s | self | ≈WC3 (ethereal) |
+| **Between Breaths** (toggle) | Base | Applies the rules **`spectral`** flag verbatim (rules §7.2: immune to Blade, Pierce, Siege, Heroic and **Raw** attacks; cannot attack), with this ability's own magic multiplier: it takes **+60%** (×1.60) from Arcane and Spell instead of the flag's ×1.66. Presentation: a cocoon of ochre-silver smoke rises from the bowl and wraps it; the body stays **opaque** and greys out. No blue-white glow | 0 | 2 s | self | ≈WC3 (ethereal) |
 | **Kin-Thread** | Second Ribbon (T3) | Links up to **3** allies within 8 m for 60 s (the Hill-Listener may be one of the 3). 40% of the damage any linked unit takes is spread among the others | **70** | 2 s | 8 m | ≈WC3 (damage link) |
 | **Hands of the Hill** | Elder Ribbon (T3) | 3 m area. After 0.75 s, clay-and-smoke hands of the Sleeping Hills rise and root enemy ground units for 3 s (heroes 1.5 s), dealing 25 Spell damage per second | 100 | 20 s | 8 m | Original (replaces the WC3 resurrect) |
 
@@ -1083,7 +1083,7 @@ Weighstall's Rosehip Draught and Bluebell Cordial (260 / 160). Heals share the i
 | **Brick-Tea Shavings** (`item_clans_brick_tea`) | T1 | 65 g | 3 / 30 s | Restores 120 mana over 10 s; stops if the drinker takes damage | ✅ |
 | **Overnight Steep** (`item_clans_overnight_steep`) | T1 | 105 g | 3 / 60 s | A cup left steeping all night, bitter enough to make a sleeping Thoom sit up: **+130 mana at once** (`mana_instant`). Group `mana` | ✅ |
 | **Hail-Eye Pebble** (`item_clans_hail_eye_pebble`; 3 charges) | T1 | 90 g | 2 / 60 s | Sets a pale hail-white pebble, invisible to enemies, within 5 m: **14 m vision for 4 min**. Vision only: it does **not** see invisible units (`place_ward`) | ✅ |
-| **Homeward Felt** (`item_homeward_felt`) | T1 | 325 g | 2 / 100 s | After a 3 s channel, the hero and up to 11 of your units within 6 m return to your nearest hall (rules §6.8). The first hero also gets one free (rules §3.2) | ✅ |
+| **Homeward Felt** (`item_homeward_felt`) | T1 | 325 g | 2 / 100 s | **Target a point or an own finished hall** (minimap clicks work; hotkey twice = highest-tier hall). After a **5 s** channel (rules §6.8: enemy stuns, silences and damage do not stop it; your own Stop or move order does), the hero and up to 11 of your non-structure units within 6 m return to your finished hall nearest that point. The first hero also gets one free (rules §3.2) | ✅ |
 | **Folded Yurt** (`item_clans_folded_yurt`) | T2 | 170 g / 35 l | 1 / 90 s | Unfolds into a finished Home Yurt (+10 food) at a target point within 6 m in 4 s (normal placement rules). It reuses the Home Yurt mesh, so it costs only an icon | ✅ |
 | **Glint Charm** (`item_clans_glint_charm`) | T2 | 210 g | 1 / 120 s | Permanent: **+1 armour**, and the hero's attacks **reveal** the target for 3 s (it stays visible through fog; vision only, not detection). Not an attack orb: no bonus damage and no on-hit proc | later |
 
@@ -1538,3 +1538,7 @@ Where IP and fidelity conflicted, IP won and the closest legal alternative was u
 | 32 | Minor | Tier table incomplete; upgraded halls did not restate their functions | T1 row adds Smoke-Ring Watch and the full shop stock; T2 row adds Wrestler's Training, Throwing-Sticks, Packed Clay Pots, Hobble-Bola, Bronze Banding and the T2 stock. All three hall rows say "trains Yurtwright; gold and lumber drop-off; Sound the Gong / All Clear; unlocks tier N and hero N" |
 | 33 | Minor | Through the Tall Grass was weak for a 120 s ultimate | 100% of the post-crit hit in an **8 m × 2 m** line, **+40%** attack speed, ignores slows; Q2 sets a scripted target (≈800 damage to other units against 4 clumped Pavisiers) and checks strength in both directions; the juice VFX row uses the new numbers |
 | 34 | Minor | Cross-doc drift and arithmetic | Packed Clay Pots is "the counterpart of the Kingdom's Case Shot (they slow, we widen the splash)"; the Higgsfield subtotal is ≈91 cr; Q9 lists the slice-plan items (B15 fixed; the advisor count, the B8 rig and the B7–B9 heights left to its owner) |
+
+**Cross-doc changes from the rules.md review (2026-10-17):** attack id `pure` → `raw` (display **Raw**); the Homeward Felt follows the
+new rules §6.8 recall (point target, 5 s, enemy-proof). The §13 Q8 rules follow-ups (§6.5 `allow_heroes`, per-source `spectral_multiplier`,
+`dispel_mode`, the §18.2 Enter row, the §19 push-trigger override and lumber-worker note) are now in rules.md.

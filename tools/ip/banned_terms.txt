@@ -255,3 +255,19 @@ canopic
 meive
 mistweaver
 hazeweaver
+# rules.md review (2026-10-17): WC3 worker-mobilisation commands, Blizzard place and organisation names, retired Vibecraft names
+stand down
+battle stations
+back to work
+silver spire
+sunstore
+hollow harvest
+master training
+ironbark
+# Art-and-audio bible review (2026-10-17): retired names that must not return as asset ids or filenames
+# (the "_" form catches snake_case ids such as ab_x_y_01.wav; the checker already maps "_" to " " in file names)
+far mirror
+far_mirror
+steady ranks
+steady_ranks
+hollow_harvest

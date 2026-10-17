@@ -750,7 +750,7 @@ Faction economy:
 | B4 | Caster "Hexweaver" | T2 Spirit Hut | 150 / 25 / 2 | 30 s | 300 | 0 (Unarmored) | Arcane 9–11 | 1.75 | 550 (8.6) | 270 (4.2) | **Thornsnare**: roots for 3 s, 60 mana; **Fervor**: +25 % attack speed for 30 s (autocast) |
 | B5 | Living siege "Boulderback" | T2 Beast Pen | 210 / 60 / 4 | 40 s | 700 | 1 (Heavy) | Siege 55–70, splash 40/120 gu | 3.5 | 900 (14.1) | 220 (3.4) | Ground only; regenerates 1 HP/s |
 | B6 | Raider "Stagrunner" | T2 Beast Pen | 180 / 40 / 3 | 32 s | 560 | 1 (Medium) | Blade 16–20 | 1.5 | melee | 380 (5.9) | **Bola**: knocks a flyer to the ground or slows a ground unit by 50 % for 4 s |
-| B7 | Heavy "Ironbark Colossus" | T2 Beast Pen (needs T2) | 340 / 100 / 6 | 50 s | 1300 | 2 (Heavy) | Blade 24–32 | 2.0 | melee | 240 (3.75) | **Taunt** (radius 300 gu); takes 50 % less damage from Pierce (an exception to the matrix) |
+| B7 | Heavy "Burlback Colossus" | T2 Beast Pen (needs T2) | 340 / 100 / 6 | 50 s | 1300 | 2 (Heavy) | Blade 24–32 | 2.0 | melee | 240 (3.75) | **Taunt** (radius 300 gu); takes 50 % less damage from Pierce (an exception to the matrix) |
 | B8 | Flyer "Duskwing" | T2 Roost | 230 / 50 / 3 | 35 s | 480 | 0 (Light) | Pierce 20–26 | 1.75 | 400 (6.25) | 350 (5.5) | Flying; hits air and ground; **stealthed at night while not attacking** |
 
 Faction B buildings mirror Faction A's roles:

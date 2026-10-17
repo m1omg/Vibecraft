@@ -18,7 +18,7 @@ or the culture behind them.
 **Units and conventions used below**
 
 - Distances are in metres (1 m = 64 WC3 gu). Speeds are in m/s, and footprints are in 0.5 m pathing cells (`architecture.md`).
-- Attack types: Blade, Pierce, Siege, Arcane, Heroic, Spell, Pure (data ids `blade, pierce, siege, arcane, heroic, spell, pure`; rules.md §7.1).
+- Attack types: Blade, Pierce, Siege, Arcane, Heroic, Spell, Raw (data ids `blade, pierce, siege, arcane, heroic, spell, raw`; rules.md §7.1).
 - Armour types: Light, Medium, Heavy, Fortified, Hero, Unarmored, Adamant (data ids `light, medium, heavy, fortified, hero, unarmored, adamant`;
   no Brennish unit wears Adamant).
 - "G+A" means the attack hits ground and air units.
@@ -476,7 +476,7 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
 | Repair | Hodman autocast (default off); costs 30 % of the building's cost pro rata. A full repair takes **1.5 × the building's build time** for one Hodman; each extra repairer adds the same rate (rules.md §4.8) | |
 | **Levy Horn** (WC3-derived signature, re-presented) | See below | The one WC3 signature mechanic this faction uses |
 | **Wagon Fort** (original signature) | Wall Wagon deploy and chain (§5.4) | |
-| Night | No unit modifiers. Buildings glow at night. The **Night Watch** research lets buildings keep day sight at night | |
+| Night | No unit modifiers. Buildings glow at night. The **Curfew Bells** research (the towns ring curfew and the watch keeps the walls lit) lets buildings and towers keep day sight at night | |
 
 **Levy Horn: rules**
 
@@ -484,8 +484,9 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
   is greyed, with the tooltip "Too far from a hall".
 - **Levy Horn** (hall button, no target): every Hodman within 22 m of that hall arms. A Hodman inside the mine when the horn sounds arms
   as it exits.
-- **Leash:** a Flail Levy more than **30 m** from every friendly hall stands down after **5 s** (a "levy far from home" countdown shows over it).
-- **Stand Down (all)** (hall button, no cooldown): every Flail Levy of the player stands down at once. Each Levy also has its own Stand Down.
+- **Leash:** a Flail Levy more than **30 m** from every friendly hall lays down its flail after **5 s** (a "levy far from home" countdown shows over it).
+- **Lay Down Flails (all)** (hall button, no cooldown): every Flail Levy of the player lays down its flail at once and goes back to work. Each
+  Levy also has its own **Lay Down the Flail**. The names pair with *Take Up the Flail* and avoid WC3's own command name (rules.md review log #1).
 
 **Levy Horn: how it differs from WC3's militia call-up**
 
@@ -494,9 +495,9 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
 | Trigger | A hall command and a per-peasant command; the peasant runs to a hall to transform | Hall horn and a per-Hodman command, both usable only near a hall |
 | Where workers transform | At the hall, after running there | **In place**, after 1.5 s (they unsling the flail and swap the straw hat for a kettle hat) |
 | Range | Peasants around the hall (radius unverified) | Hodmen within **22 m** of a hall; Levies leash at 30 m |
-| Cooldown | None | 60 s on the hall horn. 20 s per worker after standing down |
-| Duration | 45 s | **40 s**, or until Stand Down |
-| After it ends | Back to work order | Automatically resumes the last gather or build order. Carried resources are kept |
+| Cooldown | None | 60 s on the hall horn. 20 s per worker after laying down the flail |
+| Duration | 45 s | **40 s**, or until Lay Down Flails |
+| After it ends | A hall command returns them to work | Automatically resumes the last gather or build order. Carried resources are kept |
 | Presentation | Hall command and call sound | Low wooden horn blast, and a burgundy levy flag runs up the hall's pole |
 
 ---
@@ -598,11 +599,11 @@ Autocast toggles with a right-click (global rule). "Research" names the upgrade 
 | Ability | Type | Numbers |
 |---|---|---|
 | Gather / Build / Repair | Commands | Repair: autocast, default **off**. Building with extra Hodmen uses the Hod Chain. See §4 |
-| Take Up the Flail | Instant, self | **Only within 22 m of a finished friendly hall** (greyed otherwise: "Too far from a hall"). Becomes a Flail Levy for 40 s after 1.5 s of arming. 20 s lockout after standing down |
-| Stand Down (as Levy) | Instant | Back to Hodman, resumes the last order |
-| Levy leash | Passive (Levy) | More than 30 m from every friendly hall: stands down after 5 s |
+| Take Up the Flail | Instant, self | **Only within 22 m of a finished friendly hall** (greyed otherwise: "Too far from a hall"). Becomes a Flail Levy for 40 s after 1.5 s of arming. 20 s lockout after laying down the flail |
+| Lay Down the Flail (as Levy) | Instant | Back to Hodman, resumes the last order |
+| Levy leash | Passive (Levy) | More than 30 m from every friendly hall: lays down the flail after 5 s |
 | (Hall) Levy Horn | No target | All Hodmen within 22 m of the hall arm (a Hodman inside the mine arms as it exits). Cooldown 60 s. No cost |
-| (Hall) Stand Down (all) | No target | Every Flail Levy of the player stands down. No cooldown |
+| (Hall) Lay Down Flails (all) | No target | Every Flail Levy of the player lays down its flail. No cooldown |
 
 **Pavisier [SLICE]**
 
@@ -828,7 +829,7 @@ Moot Hall (T1) ──upgrade──► Walled Burg (T2, needs Oath Hall) ──up
 │              └ Ironrider  [needs Crown Burg + Foundry]  └ Wall Wagon [needs Crown Burg]
 ├─ Timber Yard ── Lookout ─┬─ Gun Tower         ├─ Stork Loft [needs Timber Yard]
 │                          ├─ Bombard Rondel [needs Wainwright Yard]   ── Netcaster
-│                          └─ Silver Spire   [needs Collegium]          └ Stork Rider [needs Crown Burg]
+│                          └─ Assay Tower    [needs Collegium]          └ Stork Rider [needs Crown Burg]
 ├─ Foundry ── weapon / armour / powder upgrades (level 2 needs T2, level 3 needs T3)
 └─ Curio Cabinet ── items (stock grows with hall tier)
 ```
@@ -844,7 +845,7 @@ All buildings have **Fortified** armour 5 (scout towers 2; rules.md §8) and 14 
 
 | id | Building | Role | Requires | Gold | Lumber | Time (s) | HP | Armour | Footprint | Food | Function | Slice |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `kingdom_moot_hall` | Moot Hall | Main hall, T1 | — | 400 | 200 | 170 | 1550 | 5 | 10×10 | +12 | Trains Hodmen; **Levy Horn**; **Stand Down (all)**; gold and lumber drop-off | **[SLICE]** |
+| `kingdom_moot_hall` | Moot Hall | Main hall, T1 | — | 400 | 200 | 170 | 1550 | 5 | 10×10 | +12 | Trains Hodmen; **Levy Horn**; **Lay Down Flails (all)**; gold and lumber drop-off | **[SLICE]** |
 | `kingdom_walled_burg` | Walled Burg | Main hall, T2 (upgrade) | Moot Hall, **Oath Hall** | +310 | +200 | 130 | 2050 | 5 | 10×10 | +14 | Unlocks tier 2 and hero 2 | **[SLICE]** |
 | `kingdom_crown_burg` | Crown Burg | Main hall, T3 (upgrade) | Walled Burg, Oath Hall, Foundry | +350 | +220 | 140 | 2600 | 6 | 10×10 | +16 | Unlocks tier 3 and hero 3 | *later* |
 | `kingdom_croft` | Croft | Supply | — | 95 | 20 | 38 | 500 | 5 | 4×4 | +7 | Food | **[SLICE]** |
@@ -859,7 +860,7 @@ All buildings have **Fortified** armour 5 (scout towers 2; rules.md §8) and 14 
 | `kingdom_lookout` | Lookout | Scout tower | **Timber Yard** | 35 | 20 | 25 | 320 | 2 | 4×4 | — | Sight 25 / 18 m; no attack | **[SLICE]** |
 | `kingdom_gun_tower` | Gun Tower | Gun tower | Lookout | +75 | +45 | 35 | 520 | 5 | 4×4 | — | See §7.3 | **[SLICE]** |
 | `kingdom_bombard_rondel` | Bombard Rondel | Cannon tower | Lookout, Wainwright Yard | +100 | +100 | 40 | 520 | 5 | 4×4 | — | See §7.3 | *later* |
-| `kingdom_silver_spire` | Silver Spire | Anti-magic tower | Lookout, Collegium | +80 | +90 | 40 | 520 | 5 | 4×4 | — | See §7.3 | *later* |
+| `kingdom_assay_tower` | Assay Tower | Anti-magic tower | Lookout, Collegium | +80 | +90 | 40 | 520 | 5 | 4×4 | — | See §7.3 | *later* |
 
 Notes:
 
@@ -874,17 +875,17 @@ Notes:
 | Lookout | — | — | — | — | — | Sight 25 / 18 m; cheap scouting post |
 | Gun Tower | Pierce | 21–25 | 1.0 | 10.9 | G+A | Two crew with hook-guns behind a parapet |
 | Bombard Rondel | Siege | 70–86, splash 1.25 m full / 2.5 m half | 2.6 | 12.5 (minimum 2) | G | A squat round stone **rondel** (a drum-shaped artillery tower) with a bronze barrel in an embrasure |
-| Silver Spire | Arcane | 13–15 | 1.6 | 10.0 | G+A | **Each hit interrupts channelling** and adds **+1 s** to every ability cooldown the target currently has running (abilities that are ready are unaffected). True sight 9.4 m. Visual: a slim tower with a silver weighing-scale finial |
+| Assay Tower | Arcane | 13–15 | 1.6 | 10.0 | G+A | **Each hit interrupts channelling** and adds **+1 s** to every ability cooldown the target currently has running (abilities that are ready are unaffected). True sight 9.4 m. Visual: a slim tower with a silver weighing-scale finial |
 
 ### 7.4 Curio Cabinet items (faction shop; the first hero's free item is the Homeward Horn)
 
 | Item | Hall tier | Cost | Stock / restock | Effect | Slice |
 |---|---|---|---|---|---|
-| Homeward Horn | T1 | 300 g | 2 / 90 s | Blow it for 3 s (rules.md §6.8 channel), then the hero and **up to 11 of your own units within 6 m** teleport next to the nearest own finished hall | **[SLICE]** |
+| Homeward Horn | T1 | 300 g | 2 / 90 s | **Target a point or an own finished hall** (minimap clicks work; hotkey twice = highest-tier hall). Blow it for **5 s** (rules.md §6.8: enemy stuns, silences and damage do not stop it; your own Stop or move order does), then the hero and **up to 11 of your own non-structure units within 6 m** appear beside your finished hall nearest that point | **[SLICE]** |
 | Linden Salve | T1 | 135 g | 3 / 60 s | +240 HP at once (`heal_instant`) | **[SLICE]** |
 | Sage's Tincture | T1 | 115 g | 3 / 60 s | +140 mana at once (`mana_instant`) | **[SLICE]** |
 | Tin Watchman | T1 | 60 g | 3 / 45 s | Places a tiny clockwork ward: 10 m vision for 180 s (`place_ward`) | **[SLICE]** |
-| Chalk of Seeing | T2 | 70 g | 2 / 60 s | Reveals invisible units within 9 m for 15 s (`reveal_invisible_area`) | **[SLICE]** |
+| Tailor's Chalk (`item_tailors_chalk`) | T2 | 70 g | 2 / 60 s | Reveals invisible units within 9 m for 15 s (`reveal_invisible_area`) | **[SLICE]** |
 | Folding Pavise | T2 | 100 g | 2 / 90 s | Unfolds a 3 m wooden barricade (6×1 cells, 300 HP) for 30 s. Blocks pathing | *later* |
 | Lookout in a Crate | T3 | 150 g | 1 / 120 s | Unfolds a finished Lookout at a point within 6 m in 5 s (obeys normal placement rules) | *later* |
 
@@ -902,17 +903,17 @@ heroes add Learn **O** and abilities **Q / W / E / R** (§6.1). Production build
 | Hodman | Gather **G**, Return Cargo **C**, Repair **R** (autocast toggle by right-click), **Build Basic B**, **Build Advanced V**, Take Up the Flail **F** |
 | Build Basic (B) | Moot Hall **H**, Croft **C**, Oath Hall **O**, Drill Yard **D**, Timber Yard **T**, Foundry **F**, Lookout **L**; Esc back |
 | Build Advanced (V) | Collegium **G**, Wainwright Yard **W**, Stork Loft **S**, Curio Cabinet **U**; Esc back |
-| Flail Levy | Stand Down **D** |
-| Moot Hall / Walled Burg / Crown Burg | Hodman **H**, Levy Horn **L**, Stand Down (all) **D**, Upgrade to the next tier **U**, Rally **R** |
+| Flail Levy | Lay Down the Flail **D** |
+| Moot Hall / Walled Burg / Crown Burg | Hodman **H**, Levy Horn **L**, Lay Down Flails (all) **D**, Upgrade to the next tier **U**, Rally **R** |
 | Oath Hall | Wheel Marshal **M**, Orrery Sage **O**, Flail Hetman **H**, Firewright **F** (a dead hero's button becomes Revive in place), Rally **R** |
 | Drill Yard | Pavisier **P**, Hookgunner **G**, Ironrider **I**, Pavise Drill **D**, Drawn Barrels **B**, Couched Lance **L**, Heavy Remounts **E**, Rally **R** |
-| Timber Yard | Lime Mortar **M**, Bow Saws **S**, Felling Crews **F**, Ashlar Courses **A**, Iron Cramps **I**, Night Watch **N** |
+| Timber Yard | Lime Mortar **M**, Bow Saws **S**, Felling Crews **F**, Ashlar Courses **A**, Iron Cramps **I**, Curfew Bells **C** |
 | Foundry | Tempered Blades **T**, Corned Powder **P**, Gothic Plate **G**, Quilted Gambesons **Q** |
 | Collegium | Linden Sister **L**, Lacewright **W**, Assayer **A**, Linden Journeyman Papers **J**, Linden Master's Seal **M**, Lacewright Journeyman Papers **U**, Lacewright Master's Seal **E**, Silver Seal **S**, Rally **R** |
 | Wainwright Yard | Bombard Wagon **B**, Brass Kestrel **K**, Wall Wagon **W**, Case Shot **C**, Signal Shells **S**, Spring Coils **P**, Hunting Stoop **H**, Wagon Chains **N**, Rally **R** |
 | Stork Loft | Netcaster **N**, Stork Rider **S**, Smoke Pall **P**, Pitch Firepots **F**, Long Flights **L**, Rally **R** |
-| Lookout | Gun Tower **G**, Bombard Rondel **B**, Silver Spire **S** |
-| Curio Cabinet | Homeward Horn **H**, Linden Salve **L**, Sage's Tincture **T**, Tin Watchman **W**, Chalk of Seeing **C**, Folding Pavise **F**, Lookout in a Crate **K** |
+| Lookout | Gun Tower **G**, Bombard Rondel **B**, Assay Tower **A** |
+| Curio Cabinet | Homeward Horn **H**, Linden Salve **L**, Sage's Tincture **T**, Tin Watchman **W**, Tailor's Chalk **C**, Folding Pavise **F**, Lookout in a Crate **K** |
 | Unit abilities | Pavisier: Plant Pavise **Q**. Bombard Wagon: Attack Ground **G**, Signal Shell **Q**. Wall Wagon: Attack Ground **G**, Wagon Fort **Q**. Linden Sister: Herb Poultice **Q**, Smoke of Rue **W**, Linden Wreath **E**. Lacewright: Tangle Thread **Q**, Muslin Veil **W**, Lace Cocoon **E**. Assayer: Silver Seal **Q**. Netcaster: Weighted Net **Q**, Smoke Pall **W**. Brass Kestrel: Hunting Stoop **Q** |
 | Heroes | Wheel Marshal: Linden Balm **Q**, Brace the Wheel **W**, Measured Cadence **E**, The Wagon Ring **R**. Orrery Sage: Burning Lens **Q**, Clockwork Halberdier **W**, Lucid Hours **E**, Hour Rewound **R**. Flail Hetman: Hurled Chain **Q**, Threshing Sweep **W**, Chaff and Grain **E**, Wagon-Breaker Charge **R**. Firewright: Naphtha Flask **Q**, Fuse Mark **W**, Incendiary Wadding **E**, Grand Bombard **R** |
 
@@ -952,7 +953,7 @@ override the 10 % default):
 | Felling Crews | T3, Bow Saws | 210 g / 0 l | 75 s | +5 lumber per trip (15 → 20) | *later* |
 | Ashlar Courses | T2, Lime Mortar | 150 / 75 | 70 s | Again +2 armour, +15 % max HP | *later* |
 | Iron Cramps | T3, Ashlar Courses | 175 / 125 | 80 s | Again +2 armour, +15 % max HP | *later* |
-| Night Watch | T2 | 75 / 75 | 45 s | Kingdom buildings and towers keep day sight at night | *later* |
+| Curfew Bells | T2 | 75 / 75 | 45 s | The towns ring curfew and the watch keeps the walls lit: kingdom buildings and towers keep day sight at night (`kingdom_curfew_bells`) | *later* |
 
 **Drill Yard**
 
@@ -1001,7 +1002,7 @@ override the 10 % default):
 |---|---|---|---|---|
 | **0. Opening** (Moot Hall, no army) | 0:00–2:00 | Hodmen to 5 on gold; Oath Hall, Croft and Drill Yard. **Oath Hall done about 1:05; hero 1 out about 2:00** | **Levy Horn**: 5–8 Flail Levies near the hall repel any early rush | Losing mining time if the levy is overused |
 | **1. Tier 1** (Moot Hall) | 2:00–5:55 | Pavisiers, then Hookgunners after the Foundry; **Timber Yard at the tree line (about 2:30)**; Curio Cabinet for salves and the recall horn; hero creeps green camps to level 3; level-1 weapons; Lookouts at chokes | Hero level 3 with 4 Pavisiers and 2–3 Hookgunners | Slow army; vulnerable to fast raiders on the woodline (answer: Levy Horn plus a Lookout → Gun Tower) |
-| **2. Tier 2** (Walled Burg) | 5:55–12:00 | Hero 2; **Collegium Linden Sisters** (healing; Smoke of Rue strips enemy buffs and kills summons; the full game adds Lacewright slows and Assayers); Bombard Wagons with Signal Shells and Case Shot; Chalk of Seeing against invisible heroes; Brass Kestrel scouting and Netcasters *(later)*; Drawn Barrels; level-2 upgrades; expansion behind a Gun Tower | Firewright plus Hookgunners with Incendiary Wadding behind planted Pavisiers, Linden Sisters healing behind them; Bombard Wagons crack defences | Caster losses to burst; upkeep (stay ≤ 50 food or commit) |
+| **2. Tier 2** (Walled Burg) | 5:55–12:00 | Hero 2; **Collegium Linden Sisters** (healing; Smoke of Rue strips enemy buffs and kills summons; the full game adds Lacewright slows and Assayers); Bombard Wagons with Signal Shells and Case Shot; Tailor's Chalk against invisible heroes; Brass Kestrel scouting and Netcasters *(later)*; Drawn Barrels; level-2 upgrades; expansion behind a Gun Tower | Firewright plus Hookgunners with Incendiary Wadding behind planted Pavisiers, Linden Sisters healing behind them; Bombard Wagons crack defences | Caster losses to burst; upkeep (stay ≤ 50 food or commit) |
 | **3. Tier 3** (Crown Burg) *(later)* | 12:00+ | Hero 3; Ironriders, Stork Riders, Wall Wagon forts; Master casters; level-3 upgrades; ultimates at hero level 6 | The Wagon Ring holds a collapsing line, then Hour Rewound gives back the lost HP and half the cooldowns, so the same army fights the next round; Ironrider Couched Lance flanks; chained Wagon Forts lock a map lane | Heavy gold cost; immobile fort lines can be bypassed |
 
 ---
@@ -1029,7 +1030,7 @@ on Greenvale (neutrals §3.6).
 | 3:45 | 29 / 33 | **Walled Burg** (310 / 200) at about 13 Hodmen (5 gold, 7 lumber, 1 builder). Croft 4 |
 | 4:30 | 34 / 40 | **Curio Cabinet** (130 / 30) near the hall. Pavise Drill if the enemy shows ranged units. Croft 5 at about 5:00. Keep creeping; hero aims for level 3 by 5:30 |
 | 5:55 | 36 / 49 | Walled Burg done (+2 food) → **hero 2: Firewright** and **Wainwright Yard** (140 / 130). Croft 6. A Lookout at the natural expansion |
-| 6:30 | 41 / 49 | **Collegium** (160 / 120); build it at 5:55 beside the Wainwright Yard instead if lumber allows. If the Uncut (the clans' stealth duelist) has been seen: one **Chalk of Seeing** on the Wheel Marshal |
+| 6:30 | 41 / 49 | **Collegium** (160 / 120); build it at 5:55 beside the Wainwright Yard instead if lumber allows. If the Uncut (the clans' stealth duelist) has been seen: one **Tailor's Chalk** on the Wheel Marshal |
 | 6:45 | 44 / 56 | Lookout → **Gun Tower**. Croft 7 |
 | 7:00 | 47 / 56 | **Bombard Wagons** ×2, **Drawn Barrels**, **Signal Shells** (50 / 50) |
 | 7:40 | 50 / 63 | Collegium done → **Linden Sisters** ×2. **Journeyman Papers** (Smoke of Rue) if the enemy leans on Wind at Your Back or Hail-Swifts |
@@ -1045,10 +1046,10 @@ on Greenvale (neutrals §3.6).
   natural plus 2 Lookouts → Gun Towers (the Timber Yard is already up).
 - **Slice AI** (rules.md §19, kingdom flavour):
   - Follow the standard order above.
-  - Sound the Levy Horn when **≥ 6 enemy combat food is within 20 m of any Hodman that is within 22 m of a hall**; press **Stand Down (all)**
+  - Sound the Levy Horn when **≥ 6 enemy combat food is within 20 m of any Hodman that is within 22 m of a hall**; press **Lay Down Flails (all)**
     10 s after none remain.
   - Retreat the hero below 35 % HP.
-  - Buy Chalk of Seeing (T2), or fire a Signal Shell, as soon as an invisible enemy hero has been seen.
+  - Buy Tailor's Chalk (T2), or fire a Signal Shell, as soon as an invisible enemy hero has been seen.
   - Attack at army food ≥ 40 or when an enemy hero is seen creeping within 31 m.
 
 ---
@@ -1062,8 +1063,8 @@ on Greenvale (neutrals §3.6).
 | Heroes | **Wheel Marshal** (STR tank/support), **Firewright** (INT fire; the ultimate reuses the Bombard mesh) | 2 |
 | Buildings | Moot Hall (→ Walled Burg), Croft, Oath Hall, Drill Yard, **Timber Yard** (lumber drop-off, tower gate), Foundry, **Collegium**, Wainwright Yard, **Curio Cabinet** (faction shop: recall, salves, detection), Lookout (→ Gun Tower) | 10 |
 | Research | Foundry 4 lines × 2 levels, Pavise Drill, Drawn Barrels, Case Shot, Signal Shells, Lime Mortar, Linden Journeyman Papers | 14 |
-| Items (Curio Cabinet) | Homeward Horn, Linden Salve, Sage's Tincture, Tin Watchman (T1); Chalk of Seeing (T2) | 5 |
-| Detection | Signal Shell (Bombard Wagon), Chalk of Seeing (shop, T2), and the neutral Flour Bomb (Weighstall) | 3 sources |
+| Items (Curio Cabinet) | Homeward Horn, Linden Salve, Sage's Tincture, Tin Watchman (T1); Tailor's Chalk (T2) | 5 |
+| Detection | Signal Shell (Bombard Wagon), Tailor's Chalk (shop, T2), and the neutral Flour Bomb (Weighstall) | 3 sources |
 | Hall tiers | T1 and T2 only (2 hero slots) | |
 
 **Asset plan and Higgsfield credit estimate (balance 269.75 cr)**
@@ -1109,7 +1110,7 @@ least one mechanic of its own, and the checks against *Warhammer* and *Age of Em
    in-engine scale test. The rest of the building footprints scale with it.
 2. **Croft +7 food at 95 gold:** check the 0–3 minute supply timing in playtests. If players get supply-blocked at the hero, use +6 food at 85 gold.
 3. **Levy Horn range (now the default):** Take Up the Flail only within 22 m of a finished hall, and a Levy more than 30 m from every
-   friendly hall stands down after 5 s (§4). Tune 22 / 30 m and the 5 s grace if playtests show either "levy rushes" or a horn too
+   friendly hall lays down its flail after 5 s (§4). Tune 22 / 30 m and the 5 s grace if playtests show either "levy rushes" or a horn too
    short to defend the woodline.
 4. **Braced Shot plus Plant Pavise** may make static Brennish lines too strong against ranged armies. Plant Pavise is now −45 % Pierce
    with **Siege unchanged**, so Sling-Carts and bombards still break a planted line. Tune the Braced bonus (15 %) first; if siege then
@@ -1198,3 +1199,5 @@ replaced by the stronger fix of another issue.
 - `docs/design/neutrals.md` §4.2: the Flour Bomb note still says "counters Long-Braid's Dust Veil"; the hero is now the Uncut.
 - New files at data entry: `docs/research/reference-ability-numbers.csv` and `tests/unit/test_number_fingerprints.gd` (§6.4); a
   VO lint script in `tools/ip/` (§3.3).
+
+**Cross-doc renames from the rules.md review (2026-10-17):** Stand Down → **Lay Down Flails** (per Levy: Lay Down the Flail; hotkey D); Silver Spire → **Assay Tower** (`kingdom_assay_tower`; a Blizzard place name); Night Watch → **Curfew Bells** (`kingdom_curfew_bells`; a WoW human militia); Chalk of Seeing → **Tailor's Chalk** (`item_tailors_chalk`); attack id `pure` → `raw`; the Homeward Horn follows the new rules.md §6.8 recall (point target, 5 s, enemy-proof). Details: rules.md review log.
