@@ -29,6 +29,7 @@
     {"def": "clans_pole_carver", "field": "cost.time", "ours": 32, "ref": 30, "analogue": "orc witch doctor"},
     {"def": "clans_up_hail_darts", "field": "dps", "ours": 5, "ref": 4, "analogue": "wind rider poison"},
     {"def": "clans_up_tallow", "field": "dps", "ours": 10, "ref": 12, "analogue": "burning oil (6 per 0.5 s)"},
+    {"def": "item_clans_hail_eye_pebble", "field": "charges", "ours": 3, "ref": 2, "analogue": "race-shop vision-ward item"},
     {"def": "clans_yurtwright", "field": "cost.time", "ours": 15, "ref": 15, "analogue": "orc worker", "exempt": "global worker train time shared by every faction (rules §4.4)"},
     {"def": "clans_hero_uncut", "field": "abilities.dust_veil.bonus_damage", "ours": [45, 80, 115], "ref": [40, 70, 100], "analogue": "stealth opener"},
     {"def": "clans_hero_uncut", "field": "abilities.dust_veil.mana", "ours": 70, "ref": 75, "analogue": "stealth opener"},

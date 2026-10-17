@@ -17,6 +17,15 @@ variant height, bounds-centred like autorig does) and <name>_joints.json ({"join
   worker  1.15x wider, legs 0.75x, head 1.35x bigger                                 -> 1.10 m
   hero    1.08x wider shoulders, legs 1.06x, a long cape (own mesh island, touching the
           shoulders, hanging free behind the back and legs down to the knees)       -> 2.10 m
+Robustness variants (the failure modes found in QA):
+  armsin12  the rig's own skinned mesh posed with both upper arms 12 deg closer to the body:
+            hands touch the thighs, elbows touch the waist (joints = the posed rig) -> 1.75 m
+  staff2h   a 2.2 cm staff (own dense mesh island) through both fists, at hand height -> 1.75 m
+  polearm   a 2.2 cm polearm (own dense island) from below the right hand diagonally across the
+            chest past the left shoulder                                           -> 1.75 m
+  knees     bulky knee armour: legs 1.3x wider around the knees, so the thighs touch above
+            them (the leg sections merge below the crotch)                          -> 1.75 m
+  squat     1.35x wider, legs 0.6x, head 1.3x: short legs barely lift the feet     -> 1.20 m
 """
 import argparse
 import json
@@ -90,10 +99,95 @@ def variant(name, P, cx, cy):
         k = 1.0 + 0.08 * smoothstep(WAIST, NECK, P[:, 2])
         P[:, 0] = cx + (P[:, 0] - cx) * k
         P = legs(P, 1.06)
+    elif name == "squat":
+        P = big_head(P, 1.3, np.array([cx, cy, NECK]))
+        P = widen(P, 1.35, 1.2, cx, cy)
+        P = legs(P, 0.6)
     return P
 
 
-HEIGHT = {"brute": 2.10, "caster": 1.90, "worker": 1.10, "hero": 2.10}
+def knee_armour(co, J, names, k=1.3):
+    """Scale the legs horizontally about each knee axis in a band around the knee (joints keep)."""
+    co = co.copy()
+    hx = J[names.index("Hips"), 0]
+    for side in ("Left", "Right"):
+        kj = J[names.index(side + "Leg")]
+        sel = np.sign(co[:, 0] - hx) == np.sign(kj[0] - hx)
+        w = smoothstep(kj[2] - 0.12, kj[2] - 0.04, co[:, 2]) * (1 - smoothstep(kj[2] + 0.04, kj[2] + 0.12, co[:, 2]))
+        sc = 1.0 + (k - 1.0) * w * sel
+        co[:, 0] = kj[0] + (co[:, 0] - kj[0]) * sc
+        co[:, 1] = kj[1] + (co[:, 1] - kj[1]) * sc
+    return co
+
+
+def add_dense_staff(bm, p0, p1, radius=0.022, seg=10, step=0.02):
+    """Cylinder with a ring every `step` (own mesh island, like a generated weapon). Returns faces."""
+    p0, p1 = np.array(p0, float), np.array(p1, float)
+    d = p1 - p0
+    L = np.linalg.norm(d)
+    d /= L
+    up = np.array([1.0, 0, 0]) if abs(d[0]) < 0.9 else np.array([0, 1.0, 0])
+    u = np.cross(d, up)
+    u /= np.linalg.norm(u)
+    w = np.cross(d, u)
+    nr = max(2, int(L / step) + 1)
+    rings = [[bm.verts.new(tuple(p0 + d * L * i / (nr - 1) + radius * (math.cos(2 * math.pi * s / seg) * u
+                                                                     + math.sin(2 * math.pi * s / seg) * w)))
+              for s in range(seg)] for i in range(nr)]
+    faces = []
+    for i in range(nr - 1):
+        for s in range(seg):
+            faces.append(bm.faces.new((rings[i][s], rings[i][(s + 1) % seg], rings[i + 1][(s + 1) % seg],
+                                       rings[i + 1][s])))
+    faces.append(bm.faces.new(list(reversed(rings[0]))))
+    faces.append(bm.faces.new(rings[-1]))
+    return faces
+
+
+def posed_rig_mesh(rig_path, arms_in_deg):
+    """The rig's own skinned mesh with both upper arms turned `arms_in_deg` towards the body (about
+    the forward axis), baked static. Returns (mesh object, posed joints array, bone names)."""
+    vc.reset_scene()
+    objs = vc.import_glb(rig_path)
+    arm = max([o for o in objs if o.type == "ARMATURE"], key=lambda a: len(a.data.bones))
+    meshes = [o for o in objs if o.type == "MESH" and not o.name.lower().startswith("icosphere")
+              and any(m.type == "ARMATURE" for m in o.modifiers)]
+    ad = arm.animation_data
+    if ad:
+        ad.action = None
+        for tr in list(ad.nla_tracks):
+            ad.nla_tracks.remove(tr)
+    arm.data.pose_position = "POSE"
+    for pb in arm.pose.bones:
+        pb.rotation_mode = "QUATERNION"
+        pb.rotation_quaternion = (1, 0, 0, 0)
+        pb.location = (0, 0, 0)
+    mw = arm.matrix_world
+    from mathutils import Quaternion, Vector
+    for bn, sgn in (("LeftArm", 1.0), ("RightArm", -1.0)):
+        rest_w = (mw @ arm.data.bones[bn].matrix_local).to_quaternion()
+        Rw = Quaternion(Vector((0, 1, 0)), math.radians(arms_in_deg) * sgn)
+        arm.pose.bones[bn].rotation_quaternion = rest_w.inverted() @ Rw @ rest_w
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    names = [b.name for b in arm.data.bones]
+    J = np.array([list(mw @ arm.pose.bones[n].head) for n in names])
+    baked = []
+    for o in meshes:
+        me = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
+        me.transform(o.matrix_world)
+        new = bpy.data.objects.new(o.name + "_posed", me)
+        bpy.context.scene.collection.objects.link(new)
+        baked.append(new)
+    vc.delete_objects([o for o in objs if o not in baked])
+    if len(baked) > 1:
+        vc.select_only(baked, baked[0])
+        bpy.ops.object.join()
+    return baked[0], J, names
+
+
+HEIGHT = {"brute": 2.10, "caster": 1.90, "worker": 1.10, "hero": 2.10, "armsin12": 1.75, "staff2h": 1.75,
+          "polearm": 1.75, "knees": 1.75, "squat": 1.20}
 
 
 def flat_uv(bm, faces, p, exclude=()):
@@ -197,7 +291,8 @@ def main():
     ap.add_argument("--mesh", required=True)
     ap.add_argument("--rig", required=True)
     ap.add_argument("--out-dir", required=True)
-    ap.add_argument("--variants", default="brute,caster,worker,hero")
+    ap.add_argument("--variants", default="brute,caster,worker,hero",
+                    help="comma list of: brute caster worker hero armsin12 staff2h polearm knees squat")
     args = ap.parse_args(vc.bpy_argv())
     os.makedirs(args.out_dir, exist_ok=True)
 
@@ -209,26 +304,56 @@ def main():
 
     summary = {"variants": []}
     for name in [v.strip() for v in args.variants.split(",") if v.strip()]:
-        vc.reset_scene()
-        objs = vc.import_glb(args.mesh)
-        meshes = [o for o in objs if o.type == "MESH"]
-        for o in meshes:
-            o.data.transform(o.matrix_world)
-            o.matrix_world = Matrix.Identity(4)
-        if len(meshes) > 1:
-            vc.select_only(meshes, meshes[0])
-            bpy.ops.object.join()
-        body = meshes[0]
+        cx, cy = float(J[names.index("Hips"), 0]), float(J[names.index("Hips"), 1])
+        if name == "armsin12":
+            body, Jv, pnames = posed_rig_mesh(args.rig, 12.0)
+            assert pnames == names
+        else:
+            vc.reset_scene()
+            objs = vc.import_glb(args.mesh)
+            meshes = [o for o in objs if o.type == "MESH"]
+            for o in meshes:
+                o.data.transform(o.matrix_world)
+                o.matrix_world = Matrix.Identity(4)
+            if len(meshes) > 1:
+                vc.select_only(meshes, meshes[0])
+                bpy.ops.object.join()
+            body = meshes[0]
+            Jv = None
         me = body.data
         n = len(me.vertices)
         co = np.empty(n * 3)
         me.vertices.foreach_get("co", co)
         co = co.reshape(-1, 3)
-        cx, cy = float(J[names.index("Hips"), 0]), float(J[names.index("Hips"), 1])
-        new = variant(name, co, cx, cy)
-        me.vertices.foreach_set("co", new.ravel())
-        me.update()
-        Jv = variant(name, J, cx, cy)
+        if Jv is None:
+            new = knee_armour(co, J, names) if name == "knees" else variant(name, co, cx, cy)
+            me.vertices.foreach_set("co", new.ravel())
+            me.update()
+            Jv = J.copy() if name == "knees" else variant(name, J, cx, cy)
+        if name in ("staff2h", "polearm"):
+            from mathutils import Vector
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            lh, rh = Jv[names.index("LeftHand")], Jv[names.index("RightHand")]
+            if name == "staff2h":      # through both fists, slightly below the wrists
+                a = np.array([lh[0], lh[1] - 0.02, lh[2] - 0.05])
+                b = np.array([rh[0], rh[1] - 0.02, rh[2] - 0.05])
+                d = b - a
+                p0, p1 = a - 0.45 * d, b + 0.45 * d
+            else:                      # from below the right fist across the chest past the left shoulder
+                ls = Jv[names.index("LeftArm")]
+                cov = co[(np.abs(co[:, 2] - 1.25) < 0.05) & (np.abs(co[:, 0] - cx) < 0.1)]
+                yfront = float(cov[:, 1].min()) - 0.06 if len(cov) else float(ls[1]) - 0.2
+                ph = np.array([rh[0], rh[1] - 0.02, rh[2] - 0.04])
+                pu = np.array([ls[0] + 0.05, yfront, ls[2] + 0.35])
+                p0 = ph - (pu - ph) * 0.45
+                p0[2] = max(p0[2], 0.03)
+                p1 = pu
+            faces = add_dense_staff(bm, tuple(p0), tuple(p1), radius=0.022)
+            flat_uv(bm, set(faces), Vector(tuple(rh)), exclude=set(faces))
+            bm.to_mesh(me)
+            bm.free()
+            me.update()
         if name == "caster":
             bm = bmesh.new()
             bm.from_mesh(me)

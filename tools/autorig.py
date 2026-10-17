@@ -3,42 +3,67 @@
 Replaces paid auto-rigging (Meshy / Higgsfield 3d_rigging). Run with the bpy interpreter:
 
     /opt/bpyenv/v313/bin/python tools/autorig.py raw/soldier.glb -o assets/models/soldier.glb \\
-        --template assets_src/characters/kingdom_infantry/rig_walk.glb --facing +x --height 1.75 \\
+        --template assets_src/characters/kingdom_infantry/rig_walk.glb --height 1.75 \\
         --clip idle=.../rig_idle.glb --clip walk=.../rig_walk.glb \\
         --clip attack=.../rig_attack_sword.glb --clip death=.../rig_death.glb \\
         --target-tris 4500 --team-mask 300:45:0.3 --name soldier
 
 Pipeline
   1. import the static mesh(es), bake transforms, join, weld exact duplicates; turn it to face +Z
-     (glTF front) from --facing, scale to --height, feet on 0, centred on the bounds
+     (glTF front): from --facing, or detected from the feet when --facing is not given (a given
+     facing the feet contradict with confidence >= 0.9 stops the run, exit 2, unless --force);
+     scale to --height, feet on 0, centred on the bounds
   2. LANDMARKS: the mesh is voxelised (H/160 voxels, flood-filled solid, distance-to-surface per
      voxel). Horizontal slices of the "core" (voxels at least 2-3 voxels inside the surface, which
      drops thin props: blades, shield plates, capes, aprons, hat brims) give: two leg sections
-     tracked up from the floor until they merge (crotch), the torso section per height (centre,
-     width, depth), the shoulder top (where the torso+arms width collapses to the neck), the head
-     top (on the head axis, so plumes and crests are ignored), and the arm sections tracked down
-     from the armpit to the fist. Every template joint is expressed relative to these features ON
-     THE TEMPLATE'S OWN MESH (calibration: height between feature levels, fraction across the
-     local torso/leg section, fraction along the arm path), and the same relative position is
-     looked up on the target. Missing features (robes hide the legs, arms touching the body)
-     fall back to template proportions scaled per region; the JSON says which joint came from what.
+     tracked up from the floor until they merge (crotch; a section that grows - knee armour, a
+     skirt, a hand on the thigh - doesn't end the track, legs that merge again after separating
+     are thighs touching, a merge much wider than the legs is a hem), the torso section per height
+     (centre, width, depth), the shoulder top (where the torso+arms width collapses to the neck,
+     searched above crotch + 0.35 H so hands or a prop joined to the hips can't pass for the
+     shoulders), the head top (on the head axis, so plumes and crests are ignored), and the arm
+     sections tracked down from the armpit to the fist (pieces of an arm pressed against the body
+     are chained). These levels are checked against the template's proportions (KNOT_LIMITS); an
+     implausible one is replaced by the template proportion and listed in level_fallbacks. Every
+     template joint is expressed relative to these features ON THE TEMPLATE'S OWN MESH
+     (calibration: height between feature levels, fraction across the local torso/leg section,
+     fraction along the arm path), and the same relative position is looked up on the target.
+     Missing features (robes hide the legs, arms touching the body) fall back to template
+     proportions scaled per region; the JSON says which joint came from what. A limb more than
+     40 deg off the template's rest pose is an error (exit 3, output still written) unless --force.
   3. ARMATURE: exactly the template's bones, names, hierarchy and rest orientations (rolls), only
      the joint positions move, so clips map 1:1 (merge_anims would even copy keys verbatim).
   4. SKIN: voxel-remeshed watertight proxy (--voxel x height) -> Blender automatic weights (bone
-     heat) on a helper armature whose bones run joint-to-joint -> Data Transfer (nearest face,
-     interpolated) to the real mesh -> held props (geometry that is thin or disconnected and touches
-     only the hand/forearm: swords, shields, staffs) are bound 100% to the hand -> clean < 0.01,
-     limit 4, normalise. Nearest-bone-segment weights fill anything bone heat missed.
+     heat) on a helper armature whose bones run joint-to-joint (when bone heat finds no solution,
+     retried at other voxel sizes; envelope weights only if all fail: an error unless --weights
+     envelope / --force) -> Data Transfer (nearest face, interpolated) to the real mesh -> held
+     props bound 100% to one hand: thin or disconnected geometry touching only a hand/forearm
+     (swords, shields), and long thin pieces (staffs, spears, polearms) even when they cross the
+     body or are held in both hands (to the hand with more contact; two-handed: the one nearest
+     the centre) -> clean < 0.01, limit 4, normalise. Nearest-bone-segment weights fill anything
+     bone heat missed.
   5. CLIPS: every --clip NAME=FILE[:ACTION] is retargeted with vc_bpy.retarget_action (the code
-     behind retarget_anims.py), then the clip's mean facing (left/right axis of hips+shoulders over
-     the clip) is measured and removed with a constant yaw on the root bone, so the body faces the
-     unit's forward on average (library idle/attack clips turn ~60 deg away). Hips motion is kept
-     vertical (in place) except for death (full), see --hips-mode.
+     behind retarget_anims.py). The clip's mean facing is removed with a constant yaw on the root
+     bone, measured on the torso (left/right axis of hips+shoulders; idle, walk, death, heavy,
+     throw) or the head (where the character looks; attack, cast, whose fighting stance turns the
+     torso), see --face-ref. Hips travel: in place (vertical) for walk/run, full for death and for clips
+     whose hips end where they start (attack, cast: the lunge keeps the planted foot fixed), see
+     --hips-mode. Two-bone foot IK makes the ankles follow the source ankles scaled by the leg ratio,
+     then raises them so the skinned feet never sink into the floor and lift at least
+     max(2.5 cm, 1.5 % H) in each step of walk/run.
   6. unless --raw: process_model.py is run on the result (decimate, team mask, textures, turn to
      face -Z for Godot), so OUT is game-ready.
-  7. QA (JSON on stdout): landmark source per joint, skin stats, per clip the max vertex
-     displacement / height and edge stretch (deformed/rest, flagged > 2), facing after the fix,
-     foot slide, and with --reference-rig/--reference-joints the joint position error in cm.
+  7. QA (JSON on stdout), measured on the written GLB as the game loads it: landmark source per
+     joint, rest-pose angle vs the template per limb, skin stats (unweighted verts, max influences),
+     per clip the max vertex displacement / height, edge stretch (deformed/rest length, flagged
+     > 2), facing by torso / head / feet, planted-toe slide and stance speed, the skinned feet's
+     height range, the lowest point vs the floor, the rigidity of long thin prop islands, and with
+     --reference-rig/--reference-joints the joint position error in cm. `--qa-only RIGGED.glb`
+     prints the same clip metrics for any rigged GLB (e.g. a paid rig, as a baseline).
+
+Exit codes: 0 ok; 2 stopped before rigging (facing contradicted by the feet); 3 output written but
+flagged (see "errors" in the JSON: rest pose > 40 deg off, bone heat failed); --force turns both
+into warnings.
 
 Coordinates in the JSON are glTF/Godot axes of the normalised +Z-facing rig (x = character's left,
 y = up, z = forward), metres. --debug-png draws the joints on front/side voxel projections.
@@ -68,6 +93,10 @@ import vc_bpy as vc  # noqa: E402
 # yaw (deg, CCW about up) that turns a model facing <key> (glTF axes) to face +Z
 FACING_TO_PZ = {"+z": 0.0, "-z": 180.0, "+x": -90.0, "-x": 90.0, "auto": 0.0}
 DEFAULT_HIPS_MODE = {"death": "full"}
+REST_DIFF_WARN = 25.0       # deg: limb vs template rest pose -> warning
+REST_DIFF_ERROR = 40.0      # deg: -> error (exit 3) unless --force. Broken fits measured 52-78 deg; a
+#                             legit mesh with the sword arm more forward (bakeoff_trellis_4k) has 35 deg
+HEAT_VOXEL_RETRIES = (1.0, 1.125, 1.25, 0.875)   # bone heat proxy voxel size factors, tried in order
 ANALYSIS_SLICES = 160
 
 
@@ -84,35 +113,46 @@ def facing_arg(v):
 def parse_args():
     ap = argparse.ArgumentParser(prog="autorig.py", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("input", help="static character .glb (any armature in it is discarded)")
-    ap.add_argument("-o", "--out", required=True, help="output .glb")
-    ap.add_argument("--template", required=True,
+    ap.add_argument("input", help="static character .glb (any armature in it is discarded); with --qa-only a rigged "
+                                  "GLB to measure")
+    ap.add_argument("-o", "--out", help="output .glb (required unless --qa-only)")
+    ap.add_argument("--template",
                     help="rigged GLB whose skeleton (names, hierarchy, rest orientations) is fitted; its own skinned "
-                         "mesh, if present, calibrates where joints sit relative to body landmarks")
-    ap.add_argument("--facing", type=facing_arg, default="+z", metavar="{+z,-z,+x,-x,auto}",
-                    help="direction the INPUT faces in glTF axes (raw Tripo: +x; glTF convention / Meshy: +z "
-                         "[default]; process_model output: -z). Write negatives as --facing=-x. 'auto' guesses it "
-                         "from the feet (toes point forward); a given facing is always checked the same way and a "
-                         "disagreement is warned about")
+                         "mesh calibrates where joints sit relative to body landmarks (required unless --qa-only)")
+    ap.add_argument("--facing", type=facing_arg, default=None, metavar="{+z,-z,+x,-x,auto}",
+                    help="direction the INPUT faces in glTF axes (raw Tripo: +x; glTF convention / Meshy: +z; "
+                         "process_model output: -z). Write negatives as --facing=-x. Default (or 'auto'): detected "
+                         "from the feet (toes point forward; +z when the feet are hidden). A given facing is checked "
+                         "the same way: if the feet disagree by >= 45 deg with confidence >= 0.9 the run stops "
+                         "(exit 2) unless --force")
+    ap.add_argument("--force", action="store_true",
+                    help="turn errors (facing contradicted by the feet, limbs > 35 deg off the template's rest pose, "
+                         "bone heat failed) into warnings and exit 0")
     ap.add_argument("--yaw", type=float, default=0.0, help="extra input turn, degrees CCW from above, after --facing")
     ap.add_argument("--height", type=float, default=0.0, help="character height in metres (default: template's)")
     c = ap.add_argument_group("clips")
     c.add_argument("--clip", action="append", default=[], metavar="NAME=FILE[:ACTION]",
                    help="animation to transfer (any rig with the template's bone names); repeatable")
     c.add_argument("--hips-mode", action="append", default=[], metavar="NAME=MODE",
-                   help="hips translation per clip: vertical (in place, default), full (keeps travel, default for "
-                        "death), none")
-    c.add_argument("--no-face-fix", action="store_true", help="don't remove the clips' mean yaw")
+                   help="hips translation per clip: vertical (in place), full (keeps the travel), none. Default: "
+                        "vertical for walk/run, full for death, and full for other clips whose source hips end where "
+                        "they start (attack, cast: the lunge keeps the planted foot fixed), else vertical")
+    c.add_argument("--face-ref", action="append", default=[], metavar="NAME=REF",
+                   help="what the facing fix aligns with the unit's forward per clip: torso (hips+shoulders, "
+                        "default), head (where the character looks; default for attack and cast, whose fighting "
+                        "stance turns the torso away; torso is used instead when the head direction is not "
+                        "consistent over the clip), none (no fix)")
+    c.add_argument("--no-face-fix", action="store_true", help="don't remove the clips' mean yaw (all clips)")
     c.add_argument("--no-foot-ik", action="store_true",
                    help="don't correct the legs with IK (feet then slide when proportions differ from the clip's rig)")
+    c.add_argument("--no-ground", action="store_true",
+                   help="foot IK without the ground clamp (feet may sink into the floor; no minimum step height)")
     s = ap.add_argument_group("skinning")
     s.add_argument("--voxel", type=float, default=0.008, help="proxy voxel size as a fraction of height (0.008)")
     s.add_argument("--no-props", action="store_true", help="don't bind held props rigidly to the hand")
     s.add_argument("--weights", choices=["heat", "envelope"], default="heat",
                    help="heat = bone heat on a voxel proxy (default), envelope = nearest bone segments only")
     lm = ap.add_argument_group("landmarks")
-    lm.add_argument("--no-calibrate", action="store_true",
-                    help="use built-in landmark coefficients instead of calibrating on the template's mesh")
     lm.add_argument("--joints", default=None,
                     help="JSON {bone: [x, y, z]} (glTF axes of the normalised +Z-facing model) overriding joints")
     lm.add_argument("--debug-png", default=None, help="write front/side voxel projections with the joints")
@@ -120,9 +160,10 @@ def parse_args():
     p = ap.add_argument_group("game-ready output (process_model.py)")
     p.add_argument("--raw", action="store_true",
                    help="skip process_model: OUT is the full-res rig facing +Z (glTF), not game-ready")
-    p.add_argument("--target-tris", type=int, default=0)
-    p.add_argument("--team-mask", default=None)
-    p.add_argument("--team-desaturate", action="store_true")
+    p.add_argument("--target-tris", type=int, default=0, help="decimate to about N triangles (0 = keep)")
+    p.add_argument("--team-mask", default=None, metavar="HUE[:TOL[:SATMIN]]",
+                   help="split the team-coloured faces into material <name>_TEAM (see process_model.py)")
+    p.add_argument("--team-desaturate", action="store_true", help="grey the team texels (see process_model.py)")
     p.add_argument("--name", default=None, help="mesh/material base name (default: output stem)")
     p.add_argument("--tex-size", type=int, default=1024)
     p.add_argument("--pm-arg", action="append", default=[], help="extra argument for process_model; repeatable")
@@ -132,9 +173,14 @@ def parse_args():
                    help="rigged GLB in the same space (e.g. the paid rig of this very mesh): joint error in cm")
     q.add_argument("--reference-joints", default=None, help="JSON {bone: [x,y,z]} (glTF axes) for the joint error")
     q.add_argument("--qa-frames", type=int, default=24, help="frames sampled per clip for the QA metrics")
-    ap.add_argument("--fps", type=int, default=vc.FPS_DEFAULT)
+    q.add_argument("--qa-only", action="store_true",
+                   help="only print the QA metrics of an already rigged GLB (e.g. a paid rig, for comparison)")
+    ap.add_argument("--fps", type=int, default=vc.FPS_DEFAULT, help="clip sampling rate (30)")
     ap.add_argument("--json", default=None, help="also write the JSON summary here")
-    return ap.parse_args(vc.bpy_argv())
+    args = ap.parse_args(vc.bpy_argv())
+    if not args.qa_only and not (args.out and args.template):
+        ap.error("-o/--out and --template are required (unless --qa-only)")
+    return args
 
 
 # =========================================================================== numpy voxel tools
@@ -325,8 +371,29 @@ def _centre_score(c, x0, H):
     return c["mass"] * math.exp(-((c["cx"] - x0) / (0.08 * H)) ** 2)
 
 
-def analyse_body(g, H):
-    """Body features of a voxelised character standing on z=0, facing -Y (Blender), left = +X."""
+TEMPLATE_CROTCH_RATIO = 0.37   # crotch height / H of an average humanoid (used before a template is known)
+
+
+def shoulder_top(g, H, F, zlo):
+    """Shoulder top: the widest torso(+arms) section above `zlo`, then up to where the width
+    collapses towards the neck (< 0.6 x that width). `zlo` keeps the search above the hands: hands
+    or a held prop touching the hips/thighs make a wider section at hand height."""
+    torso = F["torso"]
+    ks = sorted(k for k in torso if zlo < g.kz(k) < 0.97 * H)
+    if not ks:
+        return None, None
+    wv = {k: torso[k]["x1"] - torso[k]["x0"] for k in ks}
+    kmax = max(ks, key=lambda k: (wv[k], -k))
+    for k in range(kmax, g.shape[2]):
+        if k not in torso or (torso[k]["x1"] - torso[k]["x0"]) < 0.6 * wv[kmax]:
+            return g.kz(k) - 0.5 * g.v, wv[kmax]
+    return None, wv[kmax]
+
+
+def analyse_body(g, H, ref=None):
+    """Body features of a voxelised character standing on z=0, facing -Y (Blender), left = +X.
+    `ref`: the template's feature levels as fractions of its height ({"zc": .., "za": .., ...});
+    used to bound the searches (None while analysing the template itself)."""
     v = g.v
     nz = g.shape[2]
     F = {"H": H}
@@ -345,32 +412,123 @@ def analyse_body(g, H):
             if _centre_score(best, F["x0"], H) > 1.0:
                 torso[k] = best
     F["torso"] = torso
-    F["legs"] = track_legs(g, H, F, comps3)
+    F["_cache3"] = comps3
+    zc_ref = (ref or {}).get("zc") or TEMPLATE_CROTCH_RATIO
+    F["legs"] = track_legs(g, H, F, comps3, zc_ref)
     F["zc"] = F["legs"]["zc"] if F["legs"]["ok"] else None
     # x0 refined: torso centre between crotch and chest
     zc = F["legs"].get("zc") if F["legs"]["ok"] else 0.35 * H
     ks = [k for k in torso if zc + 0.05 * H < g.kz(k) < 0.7 * H]
     if ks:
         F["x0"] = float(np.median([torso[k]["cx"] for k in ks]))
-    # shoulder top: where the torso(+arms) width collapses towards the neck
-    ks = sorted(k for k in torso if 0.45 * H < g.kz(k) < 0.97 * H)
-    F["zs"] = None
-    if ks:
-        wv = {k: torso[k]["x1"] - torso[k]["x0"] for k in ks}
-        kmax = max(ks, key=lambda k: (wv[k], -k))
-        F["w_sh"] = wv[kmax]
-        for k in range(kmax, nz):
-            if k not in torso or (torso[k]["x1"] - torso[k]["x0"]) < 0.6 * wv[kmax]:
-                F["zs"] = g.kz(k) - 0.5 * v
-                break
-    if F["zs"] is None or F["zs"] < 0.5 * H:
+    # shoulder top: where the torso(+arms) width collapses towards the neck. The widest section is
+    # searched above the hands: crotch + 0.35 H (never above 0.70 H, the template's is 0.81 H)
+    zc_est = F["zc"] if F["zc"] is not None else zc_ref * H
+    F["zs_search_from"] = max(0.45 * H, min(zc_est + 0.35 * H, 0.70 * H))
+    F["zs"], F["w_sh"] = shoulder_top(g, H, F, F["zs_search_from"])
+    if F["zs"] is not None and F["zs"] < 0.5 * H:
         F["zs"] = None
-    F["arms"] = track_arms(g, H, F, comps3)
-    zas = [F["arms"][s]["za"] for s in "LR" if F["arms"][s]["ok"]]
-    F["za"] = float(np.mean(zas)) if zas else None
+    F["ref"] = ref
+    F["arms"] = track_arms(g, H, F, comps3, ref)
+    F["za"] = armpit_level(F)
+    exts = [F["arms"][s]["extent"] for s in "LR" if F["arms"][s]["ok"]]
+    F["arm_extent"] = float(np.mean(exts)) / H if exts else None
     F["zt"] = head_top(g, H, F)
     F["feet"] = footprints(g, H, F)
+    F["knot_fallback"] = {}
     return F
+
+
+def armpit_level(F):
+    """Armpit = top of the arm tracks. An arm pressed against the body separates lower and a shield
+    rim or pauldron can start higher, so when the sides disagree the one nearer the level the
+    template's proportions predict wins (the higher one without a template)."""
+    zas = [F["arms"][s]["za"] for s in "LR" if F["arms"][s]["ok"]]
+    if not zas:
+        return None
+    if max(zas) - min(zas) > 0.04 * F["H"]:
+        za_exp = next((F["arms"][s].get("za_exp") for s in "LR" if F["arms"][s].get("za_exp")), None)
+        return float(min(zas, key=lambda z: abs(z - za_exp)) if za_exp is not None else max(zas))
+    return float(np.mean(zas))
+
+
+# allowed deviation of the target's feature levels from the template's, as ratios of
+# (target value / template value); outside -> that level falls back to template proportions
+KNOT_LIMITS = {"zs": (0.80, 1.20),            # shoulder top / H
+               "trunk": (0.80, 1.20),         # (shoulder top - crotch) / H
+               "zc": (0.60, 1.30),            # crotch / H (short-legged workers/dwarves are ~0.7)
+               "za": (0.70, 1.35),            # (shoulder top - armpit) / H
+               "zt": (0.90, 1.08)}            # head top / H
+TRUNK_TIGHT = (0.92, 1.08)    # trunk ratio allowed when the legs merged only after a section grew
+
+
+def check_knots(Fg, Ft, only=None):
+    """Sanity-check the target's feature levels against the template's proportions. A level that
+    is off (a hand or a prop joined to the hips made a wider section than the shoulders, an arm
+    that only separates from the body at the hand, legs merged at a skirt hem) is dropped, so the
+    height map uses template proportions there; Fg["knot_fallback"] says which and why."""
+    H, Ht = Fg["H"], Ft["H"]
+    bad = Fg.setdefault("knot_fallback", {})
+    ratios = Fg.setdefault("knot_ratios", {})
+    want = set(only or ("zt", "zs", "zc", "za"))
+
+    def q(name, a, b):
+        r = a / b if abs(b) > 1e-9 else 1.0
+        ratios[name] = round(float(r), 3)
+        lo, hi = KNOT_LIMITS[name]
+        return lo <= r <= hi
+
+    if "zt" in want and Fg.get("zt") is not None and Ft.get("zt") and not q("zt", Fg["zt"] / H, Ft["zt"] / Ht):
+        bad["zt"] = f"head top at {Fg['zt'] / H:.3f} H (template {Ft['zt'] / Ht:.3f} H)"
+        Fg["zt"] = None
+    if "zs" in want and Fg.get("zs") is not None and Ft.get("zs") and not q("zs", Fg["zs"] / H, Ft["zs"] / Ht):
+        bad["zs"] = f"shoulder top at {Fg['zs'] / H:.3f} H (template {Ft['zs'] / Ht:.3f} H)"
+        Fg["zs"] = None
+    if "zc" in want and Fg.get("zc") is not None and Ft.get("zc"):
+        ok = q("zc", Fg["zc"] / H, Ft["zc"] / Ht)
+        trunk_t = (Ft["zs"] - Ft["zc"]) / Ht if Ft.get("zs") else None
+        if ok and Fg.get("zs") is not None and trunk_t:
+            ok = q("trunk", (Fg["zs"] - Fg["zc"]) / H, trunk_t)
+            if ok and str(Fg["legs"].get("end", "")).startswith("merged (after") \
+                    and not TRUNK_TIGHT[0] <= ratios["trunk"] <= TRUNK_TIGHT[1]:
+                # the legs merged above bulky geometry (knee armour, fat thighs touching): the merge
+                # may be the thighs, not the crotch. Keep the leg tracks, take the crotch height from
+                # the template's trunk proportion
+                zc_new = Fg["zs"] - trunk_t * H
+                bad["zc"] = (f"legs merged at {Fg['zc'] / H:.3f} H after a section grew; trunk {ratios['trunk']:.2f}x "
+                             f"the template's: crotch set to {zc_new / H:.3f} H from the template's trunk")
+                Fg["legs"]["zc_detected"] = Fg["zc"]
+                Fg["zc"] = Fg["legs"]["zc"] = zc_new
+        if not ok:
+            bad["zc"] = f"crotch at {Fg['zc'] / H:.3f} H (template {Ft['zc'] / Ht:.3f} H)"
+            Fg["zc"] = None
+            Fg["legs"]["ok"] = False
+            Fg["legs"]["why"] = "crotch level implausible vs the template's proportions: " + bad["zc"]
+    if "za" in want and Fg.get("za") is not None and Ft.get("za") and Ft.get("zs"):
+        zs_g = Fg["zs"] if Fg.get("zs") is not None else Fg.get("zs_est")
+        if zs_g is None:
+            zs_g = zmap_fn(Ft, Fg)(Ft["zs"])
+        if not q("za", (zs_g - Fg["za"]) / H, (Ft["zs"] - Ft["za"]) / Ht):
+            bad["za"] = f"armpit at {Fg['za'] / H:.3f} H (template {Ft['za'] / Ht:.3f} H)"
+            Fg["za"] = None
+    return bad
+
+
+def apply_knot_checks(g, Fg, Ft):
+    """check_knots, and when the shoulder top was implausible: estimate it from the template's
+    proportions and track the arms again from there (their armpit came from the bad level)."""
+    bad = check_knots(Fg, Ft)
+    if "zs" in bad:
+        H = Fg["H"]
+        Fg["za"] = None
+        Fg["zs_est"] = zmap_fn(Ft, Fg)(Ft["zs"])
+        Fg["arms"] = track_arms(g, H, Fg, Fg["_cache3"], Fg.get("ref"))
+        Fg["za"] = armpit_level(Fg)
+        if "zt" not in bad:
+            Fg["zt"] = head_top(g, H, Fg)
+            check_knots(Fg, Ft, only=("zt",))
+        check_knots(Fg, Ft, only=("za",))
+    return bad
 
 
 def _comps3(g, k, cache):
@@ -379,8 +537,11 @@ def _comps3(g, k, cache):
     return cache[k]
 
 
-def track_legs(g, H, F, cache):
-    """Two leg sections followed up from the floor until they merge (crotch)."""
+def track_legs(g, H, F, cache, zc_ref=TEMPLATE_CROTCH_RATIO):
+    """Two leg sections followed up from the floor until they merge (crotch). A section that grows
+    a lot (bulky knee armour, a skirt brushing the knees, a hand touching the thigh) only marks a
+    tentative end: tracking goes on and a later merge wins. The growth level is used only when the
+    legs never merge and it is above 0.6 x the template's crotch level."""
     nz = g.shape[2]
     k0 = g.zk(0.035 * H)
     res = {"ok": False}
@@ -395,9 +556,30 @@ def track_legs(g, H, F, cache):
         return res
     L, R = (a, b) if a["cx"] > b["cx"] else (b, a)
     tracks = {"L": [L], "R": [R]}
-    end_k, how = None, None
+    sizes = {"L": [L["n"]], "R": [R["n"]]}    # section sizes before any growth (median reference)
+    end_k, how, grew_k = None, None, None
+    zmin_grow = 0.6 * zc_ref * H
+    merge = None       # set while the legs are merged: thighs that touch (armour, fat) separate again
     for k in range(k0 + 1, nz):
         cs = _comps3(g, k, cache)
+        if merge is not None:
+            prev = dilate(merge["mask"], diag=True)
+            ov = [ci for ci, c in enumerate(cs) if (c["mask"] & prev).any()]
+            nmin = 0.3 * min(np.median(sizes["L"]), np.median(sizes["R"]))
+            big = sorted((ci for ci in ov if cs[ci]["n"] >= nmin), key=lambda ci: -cs[ci]["n"])
+            if len(big) >= 2 and (cs[big[0]]["cx"] - merge["cx"]) * (cs[big[1]]["cx"] - merge["cx"]) < 0:
+                a, b = cs[big[0]], cs[big[1]]
+                L, R = (a, b) if a["cx"] > b["cx"] else (b, a)
+                tracks["L"].append(L)
+                tracks["R"].append(R)
+                res.setdefault("resplit_at", []).append(round(g.kz(merge["k"]) - 0.5 * g.v, 3))
+                merge = None
+                continue
+            if not ov or g.kz(k) - g.kz(merge["k"]) > 0.06 * H:
+                end_k, how = merge["k"], "merged"
+                break
+            merge["mask"] = cs[max(ov, key=lambda ci: cs[ci]["n"])]["mask"]
+            continue
         pick = {}
         for side in "LR":
             prev = dilate(tracks[side][-1]["mask"], diag=True)
@@ -411,23 +593,47 @@ def track_legs(g, H, F, cache):
             end_k, how = k, "track lost"
             break
         if pick["L"] == pick["R"]:
-            end_k, how = k, "merged"
-            break
-        grew = any(cs[pick[s]]["n"] > 3.0 * np.median([c["n"] for c in tracks[s]]) and len(tracks[s]) > 5
-                   for s in "LR")
-        if grew:
-            end_k, how = k, "section grew"
-            break
+            c = cs[pick["L"]]
+            merge = {"k": k, "mask": c["mask"], "cx": c["cx"], "comp": c}
+            continue
+        grew = any(cs[pick[s]]["n"] > 3.0 * np.median(sizes[s]) and len(sizes[s]) > 5 for s in "LR")
+        if grew and grew_k is None and g.kz(k) > zmin_grow:
+            grew_k = k
         for s in "LR":
             tracks[s].append(cs[pick[s]])
+            if grew_k is None:
+                sizes[s].append(cs[pick[s]]["n"])
+    if end_k is None and merge is not None:
+        end_k, how = merge["k"], "merged"
     if end_k is None:
-        res["why"] = "leg sections never merged"
-        return res
+        if grew_k is None:
+            res["why"] = "leg sections never merged"
+            return res
+        end_k, how = grew_k, "section grew"
+    elif how == "track lost" and grew_k is not None:
+        end_k, how = grew_k, "section grew"
+    if grew_k is not None and how == "merged":
+        how = "merged (after a section grew at %.2f m)" % (g.kz(grew_k) - 0.5 * g.v)
+    # keep only the sections below the crotch (tracks went on after a growth)
+    for s in "LR":
+        tracks[s] = [c for c in tracks[s] if c["k"] < end_k]
     zc = g.kz(end_k) - 0.5 * g.v
-    res.update(zc=zc, tracks=tracks, end=how)
+    res.update(zc=zc, tracks=tracks, end=how, n_ref={s: float(np.median(sizes[s])) for s in "LR"})
     res["ok"] = zc > 0.15 * H
     if not res["ok"]:
         res["why"] = f"legs separate only below {zc:.2f} m (robe/long coat?)"
+        return res
+    if how.startswith("merged"):
+        # a skirt / robe hem: the merged section is much wider than the two legs below it
+        merged = merge["comp"]
+        lo = min(tracks["L"][-1]["x0"], tracks["R"][-1]["x0"])
+        hi = max(tracks["L"][-1]["x1"], tracks["R"][-1]["x1"])
+        span = hi - lo + g.v
+        mw = merged["x1"] - merged["x0"] + g.v
+        res["merge_width_ratio"] = round(float(mw / span), 3)
+        if mw > 1.5 * span:
+            res["ok"] = False
+            res["why"] = f"legs merge into a section {mw / span:.1f}x wider than the legs at {zc:.2f} m (skirt/robe hem?)"
     return res
 
 
@@ -436,14 +642,17 @@ def _aspect(c, v):
     return min(ex, ey) / max(ex, ey)
 
 
-def track_arms(g, H, F, cache):
+def track_arms(g, H, F, cache, ref=None):
     """Arm sections lateral to the torso, tracked down from the armpit (A-pose). Every lateral
     section either continues a track (overlap with its previous section) or, when it touches the
     torso, starts one; the winner is the longest track of thick, roundish sections (shield
     plates and blades are thin, so they lose even when they are longer)."""
     out = {}
     x0 = F["x0"]
-    ztop = F["zs"] if F["zs"] else 0.85 * H
+    ztop = F["zs"] or F.get("zs_est") or 0.85 * H
+    za_exp = None
+    if ref and ref.get("zs") and ref.get("za"):
+        za_exp = ztop - (ref["zs"] - ref["za"]) * H
     for side, sgn in (("L", 1.0), ("R", -1.0)):
         active, done = [], []
         for k in range(g.zk(ztop), g.zk(0.2 * H), -1):
@@ -488,10 +697,39 @@ def track_arms(g, H, F, cache):
             return extent(t) * min(1.0, dt / 5.0) ** 2 * min(1.0, asp / 0.4)
 
         cands = [t for t in done if len(t) >= 4 and extent(t) > 0.06 * H]
-        best = max(cands, key=lambda t: (score(t), -t[0]["k"])) if cands else []
-        r = {"ok": bool(best)}
+        # an arm pressed against the body at the elbow shows as pieces: chain a piece to one that
+        # starts a little below its end at about the same lateral position
+        chains = []
+        for t in sorted(cands, key=lambda t: -t[0]["k"]):
+            ch = list(t)
+            while True:
+                nxt_t = [u for u in cands if u[0]["k"] < ch[-1]["k"]
+                         and g.kz(ch[-1]["k"]) - g.kz(u[0]["k"]) <= 0.1 * H
+                         and abs(u[0]["cx"] - ch[-1]["cx"]) <= 0.06 * H]
+                if not nxt_t:
+                    break
+                ch += max(nxt_t, key=lambda u: (u[0]["k"], score(u)))
+            if len(ch) > len(t):
+                chains.append(ch)
+        cands += chains
+        if ref and ref.get("arm_extent"):   # pieces much shorter than the template's arm: not an arm
+            cands = [t for t in cands if extent(t) >= 0.45 * ref["arm_extent"] * H]
+        if za_exp is not None:              # starting at hand height: a hand/prop piece, the arm is fused
+            cands = [t for t in cands if g.kz(t[0]["k"]) >= za_exp - 0.2 * H]
+
+        def rank(t):
+            sc = score(t)
+            if za_exp is not None:      # tracks that start far below the expected armpit (hand/weapon pieces)
+                dz = za_exp - g.kz(t[0]["k"])       # or well above it (pauldron, shield rim)
+                sc *= math.exp(-(dz / (0.15 * H if dz > 0 else 0.06 * H)) ** 2)
+            return sc
+
+        best = max(cands, key=lambda t: (rank(t), -t[0]["k"])) if cands else []
+        r = {"ok": bool(best), "za_exp": za_exp, "_cands": [(round(g.kz(t[0]["k"]), 3), round(g.kz(t[-1]["k"]), 3), round(rank(t), 3),
+                                          round(t[0]["cx"], 3), round(t[-1]["cx"], 3)) for t in cands]}
         if best:
             r["za"] = g.kz(best[0]["k"]) + 0.5 * g.v
+            r["extent"] = extent(best)
             r["path"] = [np.array([c["cx"], c["cy"], g.kz(c["k"])]) for c in best]
             r["n"] = len(best)
             r["candidates"] = len(cands)
@@ -503,7 +741,7 @@ def track_arms(g, H, F, cache):
 
 def head_top(g, H, F):
     """Top of the head on the vertical head axis (ignores plumes/crests off the axis)."""
-    zs = F["zs"] or 0.8 * H
+    zs = F["zs"] or F.get("zs_est") or 0.8 * H
     torso = F["torso"]
     ks = [k for k in torso if zs + 0.03 * H < g.kz(k) < zs + 0.12 * H]
     if not ks:
@@ -698,7 +936,9 @@ def torso_at(F, g, z):
 def leg_line(F, g, side):
     tr = F["legs"]["tracks"][side]
     zc = F["legs"]["zc"]
-    pts = [(g.kz(c["k"]), c["cx"], c["cy"]) for c in tr if 0.45 * zc <= g.kz(c["k"]) <= 0.97 * zc]
+    nref = F["legs"].get("n_ref", {}).get(side)
+    pts = [(g.kz(c["k"]), c["cx"], c["cy"]) for c in tr if 0.45 * zc <= g.kz(c["k"]) <= 0.97 * zc
+           and (nref is None or c["n"] <= 2.5 * nref)]      # not knee armour / a hand on the thigh
     if len(pts) < 3:
         pts = [(g.kz(c["k"]), c["cx"], c["cy"]) for c in tr]
     P = np.array(pts)
@@ -901,7 +1141,43 @@ def solve_joints(T, Ft, gt, C, Fg, g):
             src[n] = "fallback:template-arm" if idx < 2 else "template-offset"
             continue
     # leaves that hang off arms / legs beyond the modelled joints keep template offsets
+    # trunk joints whose height came from template proportions (a feature level failed its check)
+    kf = dict(Fg.get("knot_fallback") or {})
+    kf.update({k: "not detected" for k in KNOTS if Fg.get(k) is None and Ft.get(k) is not None and k not in kf})
+    if kf:
+        levels = sorted([(0.0, "")] + [(Ft[k], k) for k in KNOTS if Ft.get(k) is not None] + [(Ft["H"], "")])
+        for n in J:
+            if C[n]["role"] == "leg" and Fg.get("knot_fallback", {}).get("zc") and Fg["legs"]["ok"] \
+                    and C[n]["idx"] in (0, 1):
+                src[n] = "fallback:height(zc)"      # leg geometry, crotch height from template proportions
+                continue
+            if C[n]["role"] not in ("hips", "trunk") or src[n] not in ("torso-section", "head-frame"):
+                continue
+            for i in range(1, len(levels) - 1):
+                if levels[i][1] in kf and levels[i - 1][0] < C[n]["z"] < levels[i + 1][0]:
+                    src[n] = f"fallback:height({levels[i][1]})"
+                    break
     return J, src
+
+
+def rest_pose_diff(T, J):
+    """Angle (deg) between each fitted limb segment and the template's (upper arm, forearm, thigh,
+    shin): the clips are transferred relative to the rest pose, so a different rest pose (e.g. a
+    T-pose mesh on an A-pose template) stays as a constant offset in every clip."""
+    out = {}
+    for n in T["names"]:
+        role, side, idx = T["roles"][n]
+        kid = main_child(n, T)
+        if kid is None or not ((role == "leg" and idx in (0, 1)) or (role == "arm" and idx == 0)
+                               or (role == "trunk" and side and any(T["roles"][c][0] == "arm" for c in [kid]))):
+            continue
+        a = T["joints"][kid] - T["joints"][n]
+        b = J[kid] - J[n]
+        if np.linalg.norm(a) < 1e-6 or np.linalg.norm(b) < 1e-6:
+            continue
+        c = float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+        out[n] = round(math.degrees(math.acos(max(-1.0, min(1.0, c)))), 1)
+    return out
 
 
 def _torso_width_ratio(Ft, gt, Fg, g, zt_, zg):
@@ -1248,9 +1524,46 @@ def mesh_islands(obj):
     return inv, counts
 
 
-def detect_props(g, Fg, J, T, body_P, islands):
-    """Vertices of held props (thin or disconnected geometry touching only a hand/forearm).
-    Returns {hand_bone: vertex index array}, info."""
+LONG_THIN_RATIO = 6.0      # first / second principal extent of a staff, spear, polearm
+LONG_PROP_SPAN = 0.3       # x H: minimum length of a long held prop
+
+
+def _principal(P):
+    """Centre, main axis, extent along it and extent along the second axis of a point set."""
+    c = P.mean(0)
+    X = P - c
+    if len(P) < 3:
+        return c, np.array([0.0, 0.0, 1.0]), 0.0, 0.0
+    _, _, Vt = np.linalg.svd(X, full_matrices=False)
+    t1, t2 = X @ Vt[0], X @ Vt[1]
+    return c, Vt[0], float(t1.max() - t1.min()), float(t2.max() - t2.min())
+
+
+def _choose_hand(contact, dist):
+    """Hand that holds a long prop: the one with clearly more contact; a two-handed grip (both
+    within 2x) goes to the hand nearest the prop's centre (ties: the right hand, the weapon hand
+    of the library clips)."""
+    sides = [s for s in sorted(contact) if contact[s] > 0]
+    if len(sides) == 1:
+        return sides[0], False
+    hi = max(sides, key=lambda s: contact[s])
+    lo = min(sides, key=lambda s: contact[s])
+    if contact[hi] >= 2.0 * contact[lo]:
+        return hi, False
+    a, b = sorted(sides, key=lambda s: dist[s])
+    if dist[b] - dist[a] < 0.1 * max(dist[a], 1e-6) and "R" in sides:
+        return "R", True
+    return a, True
+
+
+def detect_props(g, Fg, J, T, body_P, islands, W=None, wnames=None):
+    """Vertices of held props, bound 100 % to one hand so they stay rigid. Three kinds:
+    thin or disconnected geometry touching only a hand/forearm (swords, shields); long thin pieces
+    (staffs, spears, polearms; also when they cross the body or are held in both hands), as voxel
+    appendages split by the hands/body (collinear pieces are grouped) or as separate mesh islands,
+    bound to the hand with the most contact (two-handed: the hand nearest the centre); long thin
+    islands that touch no hand (a spear on the back) are bound to their dominant bone.
+    Returns {bone: vertex index array}, info."""
     H = Fg["H"]
     v = g.v
     r = 3
@@ -1267,6 +1580,7 @@ def detect_props(g, Fg, J, T, body_P, islands):
     # arm regions (forearm + hand segments, swollen by the local arm radius)
     roles = T["roles"]
     seg_by_side = {}
+    hand_seg = {}
     hand_bone = {}
     for n in T["names"]:
         role, side, idx = roles[n]
@@ -1279,6 +1593,7 @@ def detect_props(g, Fg, J, T, body_P, islands):
                 else:
                     b = J[n] + (J[n] - J[T["parents"][n]]) * 0.6
                 hand_bone[side] = n
+                hand_seg[side] = (a, b)
             else:  # forearm: only its distal third counts as "hand" (elbow pads are not props)
                 kid = main_child(n, T)
                 if kid is None:
@@ -1304,7 +1619,15 @@ def detect_props(g, Fg, J, T, body_P, islands):
     other_near = dilate(other_body, diag=True)
     solid_vox = int(g.solid.sum())
     prop_vox = {s: np.zeros(g.shape, bool) for s in seg_by_side}
+    # never give one hand's prop the other hand's surroundings (a shield joined by thin cloth to the
+    # other hand resting on the thigh)
+    not_hand = {s: np.zeros(g.shape, bool) for s in seg_by_side}
+    for s in seg_by_side:
+        for o in seg_by_side:
+            if o != s:
+                not_hand[s] |= region[o]
     comps = []
+    thin = []
     for ci, n in enumerate(sz_a):
         if n < 8:
             break
@@ -1313,32 +1636,77 @@ def detect_props(g, Fg, J, T, body_P, islands):
         touch_other = int((m & other_near).sum())
         ext = g.center(np.argwhere(m))
         span = float(np.linalg.norm(ext.max(0) - ext.min(0)))
+        c0, u0, r1, r2 = _principal(ext)
         entry = {"voxels": int(n), "span_m": round(span, 3), "touch_hand": touch, "touch_body": touch_other}
+        if r1 >= 0.08 * H and r1 >= LONG_THIN_RATIO * max(r2, 2 * v):
+            thin.append({"m": m, "c": c0, "u": u0, "touch": touch, "ext": ext, "entry": entry})
+            entry["thin_ratio"] = round(r1 / max(r2, 2 * v), 1)
         side = max(sorted(touch), key=lambda s: touch[s]) if touch else None
         if side and touch[side] > 0:
             if n < 0.25 * solid_vox and span > 0.08 * H and touch[side] >= 0.5 * touch_other:
-                prop_vox[side] |= m
+                prop_vox[side] |= m & ~not_hand[side]
                 entry["prop_of"] = side
         elif not (m & body_near).any():
             entry["floating"] = True
             for s in sorted(seg_by_side):
                 dmin = min(float(np.min(seg_dist(ext, a, b))) for a, b in seg_by_side[s])
                 if dmin < 0.06 * H:
-                    prop_vox[s] |= m
+                    prop_vox[s] |= m & ~not_hand[s]
                     entry["prop_of"] = s
                     break
         comps.append(entry)
+    # long thin props split into pieces by the hands holding them / the body they cross:
+    # group collinear pieces, a group long enough that touches a hand is one rigid prop
+    par = list(range(len(thin)))
+
+    def find(i):
+        while par[i] != i:
+            par[i] = par[par[i]]
+            i = par[i]
+        return i
+
+    for i in range(len(thin)):
+        for j in range(i + 1, len(thin)):
+            a, b = thin[i], thin[j]
+            if abs(float(np.dot(a["u"], b["u"]))) < math.cos(math.radians(15)):
+                continue
+            d1 = np.linalg.norm(np.cross(b["c"] - a["c"], a["u"]))
+            d2 = np.linalg.norm(np.cross(a["c"] - b["c"], b["u"]))
+            if max(d1, d2) < 0.03 * H:
+                par[find(j)] = find(i)
+    groups = {}
+    for i in range(len(thin)):
+        groups.setdefault(find(i), []).append(thin[i])
+    long_groups = []
+    for grp in groups.values():
+        ext = np.concatenate([t["ext"] for t in grp])
+        c0, u0, r1, r2 = _principal(ext)
+        contact = {s: sum(t["touch"].get(s, 0) for t in grp) for s in seg_by_side}
+        if r1 < LONG_PROP_SPAN * H or not any(contact.values()):
+            continue
+        dist = {s: float(seg_dist(c0[None], *hand_seg[s])[0]) if s in hand_seg else 1e9 for s in seg_by_side}
+        side, two = _choose_hand(contact, dist)
+        for s in prop_vox:
+            for t in grp:
+                prop_vox[s] &= ~t["m"]
+        for t in grp:
+            prop_vox[side] |= t["m"] & ~not_hand[side]
+            t["entry"]["prop_of"] = side
+            t["entry"]["long_prop"] = True
+        long_groups.append({"pieces": len(grp), "length_m": round(r1, 3), "prop_of": side, "two_handed": two,
+                            "contact": contact})
+    info["long_props"] = long_groups
     info["appendages"] = comps[:12]
-    out = {}
+    assign = {}
     vi = g.index(body_P)
     for s, m in prop_vox.items():
         if not m.any():
             continue
         # vertices whose voxel (or a 1-voxel neighbour) is prop, and not inside the main body
         mm = dilate(m, diag=True) & ~main
-        sel = mm[vi[:, 0], vi[:, 1], vi[:, 2]]
-        out[hand_bone[s]] = np.nonzero(sel)[0]
-    # disconnected mesh islands near a hand
+        for row in np.nonzero(mm[vi[:, 0], vi[:, 1], vi[:, 2]])[0]:
+            assign[int(row)] = hand_bone[s]
+    # disconnected mesh islands
     inv, counts = islands
     if len(counts) > 1:
         mainisl = int(np.argmax(counts))
@@ -1347,18 +1715,50 @@ def detect_props(g, Fg, J, T, body_P, islands):
                 continue
             rows = np.nonzero(inv == isl)[0]
             P = body_P[rows]
-            best = None
+            near = {}
+            dmin = {}
             for s, segs in seg_by_side.items():
                 dh = np.min(np.stack([seg_dist(P, a, b) for a, b in segs], 1), axis=1)
-                frac = float((dh < 0.06 * H).mean())
+                near[s] = dh < 0.06 * H
+                dmin[s] = float(dh.min())
+            c0, u0, r1, r2 = _principal(P)
+            if r1 >= LONG_PROP_SPAN * H and r1 >= LONG_THIN_RATIO * max(r2, 1e-6):
+                # contact = length of the prop's axis (1 cm samples) inside a hand (a low-poly staff has
+                # vertices only at its ends)
+                t = (P - c0) @ u0
+                ax = c0 + np.arange(t.min(), t.max() + 1e-9, 0.01)[:, None] * u0
+                contact = {}
+                for s, segs in seg_by_side.items():
+                    da = np.min(np.stack([seg_dist(ax, a, b) for a, b in segs], 1), axis=1)
+                    contact[s] = int((da < 0.5 * r2 + 0.04 * H).sum())
+                if any(contact.values()):
+                    dist = {s: float(seg_dist(c0[None], *hand_seg[s])[0]) if s in hand_seg else 1e9 for s in near}
+                    side, two = _choose_hand(contact, dist)
+                    bone = hand_bone[side]
+                    rec = {"verts": int(len(rows)), "prop_of": side, "long_prop": True, "two_handed": two,
+                           "length_m": round(r1, 3), "contact_cm": contact}
+                elif W is not None:
+                    bone = wnames[int(np.argmax(W[rows].sum(0)))]
+                    rec = {"verts": int(len(rows)), "rigid_to": bone, "long_prop": True, "length_m": round(r1, 3)}
+                else:
+                    continue
+                for row in rows:
+                    assign[int(row)] = bone
+                info.setdefault("islands", []).append(rec)
+                continue
+            best = None
+            for s in near:
+                frac = float(near[s].mean())
                 if frac > 0.2 and (best is None or frac > best[1]):
                     best = (s, frac)
             if best:
-                # only if the island is closer to the hand than to the torso axis
-                s = best[0]
-                out.setdefault(hand_bone[s], np.zeros(0, np.int64))
-                out[hand_bone[s]] = np.union1d(out[hand_bone[s]], rows)
-                info.setdefault("islands", []).append({"verts": int(len(rows)), "prop_of": s})
+                for row in rows:
+                    assign.setdefault(int(row), hand_bone[best[0]])
+                info.setdefault("islands", []).append({"verts": int(len(rows)), "prop_of": best[0]})
+    out = {}
+    for row, bone in sorted(assign.items()):
+        out.setdefault(bone, []).append(row)
+    out = {k: np.array(v, np.int64) for k, v in out.items()}
     info["prop_verts"] = {k: int(len(v)) for k, v in out.items()}
     return out, info
 
@@ -1383,25 +1783,44 @@ def skin(body, T, J, Fg, g, args, H):
     P, _ = body_arrays(body)
     method = args.weights
     if method == "heat":
-        proxy, pinfo = bone_heat_proxy(body, skin_arm, args.voxel * H)
-        info["proxy"] = pinfo
-        if pinfo["proxy_unweighted"] > 0.02 * pinfo["proxy_verts"]:
-            vc.warn(f"bone heat left {pinfo['proxy_unweighted']} proxy verts unweighted; envelope fallback there")
-        transfer_weights(body, proxy, deform)
-        vc.delete_objects([proxy])
+        # Blender's bone heat sometimes finds no solution for a bone on one voxel proxy and leaves the
+        # whole proxy unweighted; another voxel size usually works, so retry before giving up
+        attempts = []
+        proxy = None
+        for f in HEAT_VOXEL_RETRIES:
+            proxy, pinfo = bone_heat_proxy(body, skin_arm, args.voxel * f * H)
+            pinfo["voxel_frac"] = round(args.voxel * f, 5)
+            attempts.append(pinfo)
+            if pinfo["proxy_unweighted"] <= 0.02 * pinfo["proxy_verts"]:
+                break
+            vc.delete_objects([proxy])
+            proxy = None
+        info["proxy"] = attempts[-1]
+        info["heat_attempts"] = [{k: a[k] for k in ("voxel_frac", "proxy_verts", "proxy_unweighted")} for a in attempts]
+        if proxy is not None:
+            if len(attempts) > 1:
+                vc.warn(f"bone heat failed at voxel {attempts[0]['voxel_frac']} H, succeeded at "
+                        f"{attempts[-1]['voxel_frac']} H")
+            transfer_weights(body, proxy, deform)
+            vc.delete_objects([proxy])
+        else:
+            vc.warn(f"bone heat failed at every voxel size tried {[a['voxel_frac'] for a in attempts]}: envelope "
+                    f"(nearest bone segment) weights everywhere, expect worse deformation")
+            method = "envelope"
+    info["method_effective"] = method
     body.vertex_groups.active_index = 0
     for n in deform:
         if body.vertex_groups.get(n) is None:
             body.vertex_groups.new(name=n)
     W = vertex_weight_matrix(body, deform)
     unweighted = np.nonzero(W.sum(1) < 1e-3)[0] if method == "heat" else np.arange(len(P))
-    info["method"] = method
+    info["method"] = args.weights
     info["envelope_filled_verts"] = int(len(unweighted))
     if len(unweighted):
         names, order, w = envelope_weights(P[unweighted], segs, x0=Fg["x0"], sides=sides)
         set_weights_rows(body, unweighted, names, order, w)
     if not args.no_props:
-        props, pinfo = detect_props(g, Fg, J, T, P, mesh_islands(body))
+        props, pinfo = detect_props(g, Fg, J, T, P, mesh_islands(body), vertex_weight_matrix(body, deform), deform)
         info["props"] = pinfo
         for bone, rows in props.items():
             if len(rows):
@@ -1446,18 +1865,26 @@ def bind_action(arm, act):
     return ad
 
 
-def clip_yaws(arm, act, frames):
-    """Per-frame facing of the posed body (left/right axis of hips+shoulders), radians vs rest."""
+def clip_yaws(arm, act, frames, ref="torso"):
+    """Per-frame facing of the posed body vs rest, radians CCW from above, with a weight:
+    torso = left/right axis of hips+shoulders; head = the head bone's forward direction (where the
+    character looks: the aim of attack-type clips, whose fighting stance turns the torso)."""
     pairs = lateral_bones(arm)
     rest = Vector()
     for a, b in pairs:
         rest += arm.data.bones[a].head_local - arm.data.bones[b].head_local
     ry = math.atan2(rest.y, rest.x)
+    fwd = rest.cross(Vector((0, 0, 1)))
+    hb = head_bone_name([b.name for b in arm.data.bones]) if ref == "head" else None
+    hrest_inv = arm.data.bones[hb].matrix_local.to_3x3().inverted() if hb else None
     scn = bpy.context.scene
     bind_action(arm, act)
     out = []
     for f in frames:
         scn.frame_set(int(math.floor(f)), subframe=f - math.floor(f))
+        if hb:
+            out.append(_yaw_between(arm.pose.bones[hb].matrix.to_3x3() @ hrest_inv @ fwd, fwd))
+            continue
         lat = Vector()
         for a, b in pairs:
             lat += arm.pose.bones[a].head - arm.pose.bones[b].head
@@ -1465,17 +1892,33 @@ def clip_yaws(arm, act, frames):
     return out
 
 
-def remove_mean_yaw(arm, act, hips, max_frames=400):
-    """Rotate the root bone about the vertical axis through its rest position by the clip's mean yaw."""
+def remove_mean_yaw(arm, act, hips, ref="torso", max_frames=400):
+    """Rotate the root bone about the vertical axis through its rest position by the clip's mean
+    yaw, measured with `ref` (see clip_yaws)."""
     a0, a1 = vc.action_range(act)
     frames = list(np.arange(math.floor(a0), math.ceil(a1) + 1, 1.0))
     if len(frames) > max_frames:
         frames = list(np.linspace(a0, a1, max_frames))
-    ys = clip_yaws(arm, act, frames)
+    if ref == "head" and head_bone_name([b.name for b in arm.data.bones]) is None:
+        ref = "torso"
+    ys = clip_yaws(arm, act, frames, ref)
     sw = sum(w for _, w in ys) or 1.0
-    mean = math.atan2(sum(math.sin(y) * w for y, w in ys) / sw, sum(math.cos(y) * w for y, w in ys) / sw)
+    cs = (sum(math.cos(y) * w for y, w in ys) / sw, sum(math.sin(y) * w for y, w in ys) / sw)
+    consistency = math.hypot(*cs)       # 1 = the reference points the same way all clip long
+    note = None
+    if ref == "head" and consistency < HEAD_REF_MIN_CONSISTENCY:
+        note = f"head direction inconsistent ({consistency:.2f}): torso used"
+        ref = "torso"
+        ys = clip_yaws(arm, act, frames, ref)
+        sw = sum(w for _, w in ys) or 1.0
+        cs = (sum(math.cos(y) * w for y, w in ys) / sw, sum(math.sin(y) * w for y, w in ys) / sw)
+        consistency = math.hypot(*cs)
+    mean = math.atan2(cs[1], cs[0])
     spread = max(abs(((y - mean + math.pi) % (2 * math.pi)) - math.pi) for y, _ in ys)
-    res = {"mean_yaw_before_deg": round(math.degrees(mean), 2), "yaw_spread_deg": round(math.degrees(spread), 2)}
+    res = {"reference": ref, "mean_yaw_before_deg": round(math.degrees(mean), 2),
+           "yaw_spread_deg": round(math.degrees(spread), 2), "consistency": round(consistency, 3)}
+    if note:
+        res["note"] = note
     pb = arm.pose.bones[hips]
     bone = arm.data.bones[hips]
     rest = bone.matrix_local.copy()
@@ -1529,7 +1972,7 @@ def remove_mean_yaw(arm, act, hips, max_frames=400):
     for i in range(4):
         vc.fcurve_set_keys(cb, f'pose.bones["{hips}"].rotation_quaternion', i, key_frames, [q[i] for q in quats],
                            group=hips)
-    after = clip_yaws(arm, act, frames)
+    after = clip_yaws(arm, act, frames, ref)
     sw = sum(w for _, w in after) or 1.0
     m2 = math.atan2(sum(math.sin(y) * w for y, w in after) / sw, sum(math.cos(y) * w for y, w in after) / sw)
     res.update(applied=True, mean_yaw_after_deg=round(math.degrees(m2), 2))
@@ -1548,36 +1991,133 @@ def leg_chains(arm):
     return out if len(out) == 2 else {}
 
 
-def sample_source_feet(src, act, legs, frames, hips):
-    """World positions of the source ankles and hips per frame (+ rest)."""
+def sample_source_feet(src, act, legs, frames, hips, toes=None):
+    """World positions of the source ankles, toes and hips per frame (+ rest)."""
     mw = src.matrix_world
     bind_action(src, act)
     scn = bpy.context.scene
+    toes = {s: t for s, t in (toes or {}).items() if t in src.pose.bones}
     data = {"rest": {s: mw @ src.data.bones[ch[2]].head_local for s, ch in legs.items()},
             "hips_rest": mw @ src.data.bones[hips].head_local, "frames": frames, "ankle": {s: [] for s in legs},
-            "hips": []}
+            "toe": {s: [] for s in toes}, "hips": []}
     for f in frames:
         scn.frame_set(int(math.floor(f)), subframe=f - math.floor(f))
         for s, ch in legs.items():
             data["ankle"][s].append(mw @ src.pose.bones[ch[2]].head)
+        for s, t in toes.items():
+            data["toe"][s].append(mw @ src.pose.bones[t].head)
         data["hips"].append(mw @ src.pose.bones[hips].head)
     src.animation_data.action = None
     return data
 
 
-def foot_ik(arm, act, legs, S, ratio, yaw_align, mode, yaw_fix, pivot):
+def foot_geometry(body, arm, legs):
+    """Rest positions of each foot's vertices (>= 0.5 weight on the foot bone and its children) and
+    their weights on the shin, the foot and the foot's children (renormalised), for linear-blend
+    evaluation: {side: (bone names, N x 3 positions, N x B weights)}; and the floor level (their
+    lowest rest point)."""
+    gname = {g.index: g.name for g in body.vertex_groups}
+    out, lows = {}, []
+    P, _ = body_arrays(body)
+    for side, (_, lo, ft) in legs.items():
+        sub = [ft]
+        stack = [ft]
+        while stack:
+            for c in arm.data.bones[stack.pop()].children:
+                sub.append(c.name)
+                stack.append(c.name)
+        bl = [lo] + sub
+        col = {b: i for i, b in enumerate(bl)}
+        rows, ws = [], []
+        for vtx in body.data.vertices:
+            w = np.zeros(len(bl))
+            for gr in vtx.groups:
+                j = col.get(gname.get(gr.group))
+                if j is not None:
+                    w[j] += gr.weight
+            if w[1:].sum() >= 0.5:
+                rows.append(vtx.index)
+                ws.append(w / w.sum())
+        if not rows:
+            return None, 0.0
+        out[side] = (bl, P[rows], np.array(ws))
+        lows.append(float(P[rows][:, 2].min()))
+    return out, min(lows)
+
+
+def foot_ik(arm, act, legs, S, ratio, yaw_align, mode, yaw_fix, pivot, geo=None, floor=0.0, height=1.75,
+            locomotion=False):
     """Two-bone IK per leg so each ankle follows the source ankle's motion (scaled by the leg ratio,
     relative to its own rest position): a planted source foot stays planted on a body with other
-    proportions. The knee keeps its bend plane, the foot keeps its world orientation."""
+    proportions. The knee keeps its bend plane, the foot keeps its world orientation.
+    With the foot geometry `geo`, the ankle target is then raised so the foot's lowest skinned point
+    never goes below the floor, and in steps (source ankle lifted) the foot clears the floor by at
+    least max(2.5 cm, 1.5 % H) at the top of the swing (short legs scale the source lift down to nothing)."""
     Ya = Matrix.Rotation(yaw_align, 3, "Z")
     Yf = Matrix.Rotation(yaw_fix, 3, "Z")
     bones = arm.data.bones
     rest_rel = {n: (bones[n].parent.matrix_local.inverted() @ bones[n].matrix_local) for ch in legs.values() for n in ch}
+    rest_inv = {b.name: b.matrix_local.inverted() for b in bones}
     frames = S["frames"]
     q_out = {n: [] for ch in legs.values() for n in ch}
+    clear_min = max(0.025, 0.015 * height)
+    swing = {}
+    for side in legs:
+        z = np.array([p.z for p in S["ankle"][side]])
+        lift = (z - np.percentile(z, 10)) * ratio
+        top = float(lift.max()) if len(lift) else 0.0
+        # 0 at contact, 1 near the top of every step (saturates at 75 % of the highest lift)
+        swing[side] = np.clip(lift / (0.75 * top), 0, 1) ** 2 if (locomotion and top >= 0.01 * height) \
+            else np.zeros(len(z))
     bind_action(arm, act)
     scn = bpy.context.scene
-    moved, clamped = 0.0, 0
+    moved, clamped, raised, raised_max = 0.0, 0, 0, 0.0
+
+    def solve(Hp, K0, A0, Mu, Ml, Mf, D):
+        """Two-bone IK: new (thigh, shin, foot) matrices with the ankle as close to D as reachable."""
+        l1, l2 = (K0 - Hp).length, (A0 - K0).length
+        dv = D - Hp
+        d = dv.length
+        dmin, dmax = abs(l1 - l2) + 1e-4, (l1 + l2) * 0.999
+        out_of_reach = d > dmax or d < dmin
+        d = min(max(d, dmin), dmax)
+        dn = dv.normalized() if dv.length > 1e-9 else (A0 - Hp).normalized()
+        D = Hp + dn * d
+        pole = (K0 - Hp) - dn * (K0 - Hp).dot(dn)
+        if pole.length < 1e-6:
+            pole = (K0 - (Hp + A0) * 0.5)
+            pole = pole - dn * pole.dot(dn)
+        pole = pole.normalized() if pole.length > 1e-9 else Vector((0, -1, 0))
+        a = (l1 * l1 - l2 * l2 + d * d) / (2 * d)
+        h = math.sqrt(max(l1 * l1 - a * a, 0.0))
+        K1 = Hp + dn * a + pole * h
+        sw1 = (K0 - Hp).rotation_difference(K1 - Hp).to_matrix().to_4x4()
+        Mu_n = Matrix.Translation(Hp) @ sw1 @ Matrix.Translation(-Hp) @ Mu
+        follow = Mu_n @ Mu.inverted()
+        Ml_f = follow @ Ml
+        A1 = (follow @ Mf).translation
+        sw2 = (A1 - K1).rotation_difference(D - K1).to_matrix().to_4x4()
+        Ml_n = Matrix.Translation(K1) @ sw2 @ Matrix.Translation(-K1) @ Ml_f
+        Mf_n = Mf.to_3x3().to_4x4()
+        Mf_n.translation = (Ml_n @ Ml.inverted() @ Mf).translation
+        return Mu_n, Ml_n, Mf_n, out_of_reach
+
+    def lowest(side, Ml_n, Mf_n, Mf):
+        """Lowest point of the linear-blend-skinned foot with these shin/foot matrices."""
+        bl, Vr, Wb = geo[side]
+        Mfi = Mf.inverted()
+        Z = np.zeros(len(Vr))
+        for j, bn in enumerate(bl):
+            if j == 0:
+                M = Ml_n @ rest_inv[bn]
+            elif j == 1:
+                M = Mf_n @ rest_inv[bn]
+            else:
+                M = Mf_n @ Mfi @ arm.pose.bones[bn].matrix @ rest_inv[bn]
+            M = np.array(M)
+            Z += Wb[:, j] * (Vr @ M[2, :3] + M[2, 3])
+        return float(Z.min())
+
     for fi, f in enumerate(frames):
         scn.frame_set(int(math.floor(f)), subframe=f - math.floor(f))
         dh = S["hips"][fi] - S["hips_rest"]
@@ -1590,33 +2130,21 @@ def foot_ik(arm, act, legs, S, ratio, yaw_align, mode, yaw_fix, pivot):
             A_rest = bones[ft].head_local.copy()
             disp = Ya @ (S["ankle"][side][fi] - S["rest"][side] - sub) * ratio
             D = pivot + Yf @ (A_rest + disp - pivot)
-            l1, l2 = (K0 - Hp).length, (A0 - K0).length
-            dv = D - Hp
-            d = dv.length
-            dmin, dmax = abs(l1 - l2) + 1e-4, (l1 + l2) * 0.999
-            if d > dmax or d < dmin:
-                clamped += 1
-                d = min(max(d, dmin), dmax)
-            dn = dv.normalized() if dv.length > 1e-9 else (A0 - Hp).normalized()
-            D = Hp + dn * d
-            pole = (K0 - Hp) - dn * (K0 - Hp).dot(dn)
-            if pole.length < 1e-6:
-                pole = (K0 - (Hp + A0) * 0.5)
-                pole = pole - dn * pole.dot(dn)
-            pole = pole.normalized() if pole.length > 1e-9 else Vector((0, -1, 0))
-            a = (l1 * l1 - l2 * l2 + d * d) / (2 * d)
-            h = math.sqrt(max(l1 * l1 - a * a, 0.0))
-            K1 = Hp + dn * a + pole * h
-            sw1 = (K0 - Hp).rotation_difference(K1 - Hp).to_matrix().to_4x4()
-            Mu_n = Matrix.Translation(Hp) @ sw1 @ Matrix.Translation(-Hp) @ Mu
-            follow = Mu_n @ Mu.inverted()
-            Ml_f = follow @ Ml
-            A1 = (follow @ Mf).translation
-            sw2 = (A1 - K1).rotation_difference(D - K1).to_matrix().to_4x4()
-            Ml_n = Matrix.Translation(K1) @ sw2 @ Matrix.Translation(-K1) @ Ml_f
-            Mf_n = Mf.to_3x3().to_4x4()
-            Mf_n.translation = (Ml_n @ Ml.inverted() @ Mf).translation
-            moved = max(moved, (D - A0).length)
+            Mu_n, Ml_n, Mf_n, oor = solve(Hp, K0, A0, Mu, Ml, Mf, D)
+            if geo is not None:
+                target = floor + clear_min * float(swing[side][fi])
+                lift = 0.0
+                for _ in range(3):      # the shin share of the heel weights makes it slightly non-linear
+                    need = target - lowest(side, Ml_n, Mf_n, Mf)
+                    if need <= 2e-4:
+                        break
+                    lift += need
+                    Mu_n, Ml_n, Mf_n, oor = solve(Hp, K0, A0, Mu, Ml, Mf, D + Vector((0, 0, lift)))
+                if lift > 0:
+                    raised += 1
+                    raised_max = max(raised_max, lift)
+            clamped += int(oor)
+            moved = max(moved, (Mf_n.translation - A0).length)
             for n, M, Mp in ((up, Mu_n, Mh), (lo, Ml_n, Mu_n), (ft, Mf_n, Ml_n)):
                 B = (Mp @ rest_rel[n]).inverted() @ M
                 q_out[n].append(B.to_quaternion().normalized())
@@ -1628,17 +2156,61 @@ def foot_ik(arm, act, legs, S, ratio, yaw_align, mode, yaw_fix, pivot):
         arm.pose.bones[n].rotation_mode = "QUATERNION"
         for i in range(4):
             vc.fcurve_set_keys(cb, f'pose.bones["{n}"].rotation_quaternion', i, frames, [q[i] for q in qs], group=n)
-    return {"max_correction_m": round(moved, 4), "frames_out_of_reach": clamped}
+    res = {"max_correction_m": round(moved, 4), "frames_out_of_reach": clamped}
+    if geo is not None:
+        res.update(ground_raised_keys=raised, ground_raised_max_m=round(raised_max, 4),
+                   swing_clearance_m=round(clear_min, 3) if any(w.any() for w in swing.values()) else 0.0)
+    return res
 
 
-def transfer_clips(arm, clips, args):
-    hm = dict(DEFAULT_HIPS_MODE)
+LOCOMOTION_CLIPS = ("walk", "run")
+FACE_REF_DEFAULT = {"attack": "head", "cast": "head"}
+HEAD_REF_MIN_CONSISTENCY = 0.85   # resultant length of the per-frame head directions; below: torso
+
+
+def default_hips_mode(name, src, src_act, hips):
+    """vertical for locomotion (the game moves the unit), full for death, and for other clips full
+    when the source hips end where they start (an attack lunge then keeps the planted foot fixed
+    instead of sliding it back), else vertical (no pop when the clip repeats)."""
+    if name in DEFAULT_HIPS_MODE:
+        return DEFAULT_HIPS_MODE[name], "default"
+    if name.startswith(LOCOMOTION_CLIPS):
+        return "vertical", "locomotion"
+    a0, a1 = vc.action_range(src_act)
+    bind_action(src, src_act)
+    scn = bpy.context.scene
+    P = []
+    for f in (a0, a1):
+        scn.frame_set(int(math.floor(f)), subframe=f - math.floor(f))
+        P.append(src.matrix_world @ src.pose.bones[hips].head)
+    src.animation_data.action = None
+    hh = max(vc.leg_height(src, src.data.bones[hips]), 1e-6)
+    drift = (P[1] - P[0]).to_2d().length
+    if drift <= 0.05 * hh:
+        return "full", f"hips return to the start ({drift * 100:.1f} cm)"
+    return "vertical", f"hips end {drift * 100:.1f} cm from the start"
+
+
+def transfer_clips(arm, clips, args, body=None, height=1.75):
+    hm = {}
     for s in args.hips_mode:
         k, _, v = s.partition("=")
         if v not in ("vertical", "full", "none"):
             raise SystemExit(f"--hips-mode {s!r}: mode must be vertical, full or none")
         hm[k] = v
+    fr = dict(FACE_REF_DEFAULT)
+    for s in args.face_ref:
+        k, _, v = s.partition("=")
+        if v not in ("torso", "head", "none"):
+            raise SystemExit(f"--face-ref {s!r}: reference must be torso, head or none")
+        fr[k] = v
     hips = vc.find_hips(arm).name
+    legs = leg_chains(arm)
+    names = [b.name for b in arm.data.bones]
+    roles = bone_roles(names, {b.name: (b.parent.name if b.parent else None) for b in arm.data.bones})
+    toes = {sd: n for n, (role, sd, idx) in roles.items() if role == "leg" and idx == 3}
+    geo, floor = (foot_geometry(body, arm, legs) if (body is not None and legs and not args.no_ground)
+                  else (None, 0.0))
     out, stash = [], []
     for name, path, want in clips:
         before_a = set(bpy.data.actions)
@@ -1657,26 +2229,43 @@ def transfer_clips(arm, clips, args):
             src_act = sel[0]
         else:
             src_act = max(acts, key=lambda a: vc.action_range(a)[1] - vc.action_range(a)[0])
-        mode = hm.get(name, "vertical")
+        if name in hm:
+            mode, why = hm[name], "--hips-mode"
+        else:
+            mode, why = default_hips_mode(name, src, src_act, vc.find_hips(src).name)
         new, slot, info = vc.retarget_action(src, src_act, arm, "__clip_" + name, hips_mode=mode)
         entry = {"name": name, "file": os.path.abspath(path), "source_action": src_act.name, "hips_mode": mode,
-                 "frames": info["frames"], "bones_matched": info["bones_matched"], "leg_ratio": info["leg_ratio"],
-                 "unmatched_target_bones": info["unmatched_target_bones"]}
-        legs = leg_chains(arm)
+                 "hips_mode_why": why, "frames": info["frames"], "bones_matched": info["bones_matched"],
+                 "leg_ratio": info["leg_ratio"], "unmatched_target_bones": info["unmatched_target_bones"]}
         feet_src = None
-        if legs and not args.no_foot_ik and all(all(b in src.pose.bones for b in ch) for ch in legs.values()):
+        if legs and all(all(b in src.pose.bones for b in ch) for ch in legs.values()):
             frames = sorted({kp.co.x for fc in vc.action_fcurves(new) for kp in fc.keyframe_points})
-            feet_src = sample_source_feet(src, src_act, legs, frames, info["hips"][0])
+            feet_src = sample_source_feet(src, src_act, legs, frames, info["hips"][0], toes)
+            # the source clip's own planted-toe slide (same metric as the QA), scaled to this body: by
+            # the leg ratio (hips lunge) or the foot-length ratio (foot roll), whichever is larger
+            hsrc = height / max(info["leg_ratio"], 1e-6)
+            fr_ = [(arm.data.bones[toes[sd]].head_local - arm.data.bones[ch[2]].head_local).length
+                   / max((src.data.bones[toes[sd]].head_local - src.data.bones[ch[2]].head_local).length
+                         * src.matrix_world.to_scale()[0], 1e-9)
+                   for sd, ch in legs.items() if sd in toes and toes[sd] in src.data.bones]
+            sc = max(info["leg_ratio"], float(np.mean(fr_)) if fr_ else 0.0)
+            entry["source_slide_scale"] = round(sc, 4)
+            entry["source_planted_toe_slide_cm"] = {
+                sd: round(stance_metrics(np.array([list(p) for p in pts]), args.fps, hsrc)[0] * sc * 100, 1)
+                for sd, pts in feet_src["toe"].items() if pts}
         for a in [a for a in bpy.data.actions if a not in before_a and a is not new]:
             bpy.data.actions.remove(a)
         vc.delete_objects(objs)
         fix = {"_yaw": 0.0, "_pivot": Vector((0, 0, 0))}
-        if not args.no_face_fix:
-            fix = remove_mean_yaw(arm, new, hips)
+        ref = "none" if args.no_face_fix else fr.get(name, next((v for k, v in FACE_REF_DEFAULT.items()
+                                                                if name.startswith(k)), "torso"))
+        if ref != "none":
+            fix = remove_mean_yaw(arm, new, hips, ref)
             entry["facing_fix"] = {k: v for k, v in fix.items() if not k.startswith("_")}
-        if feet_src is not None:
+        if feet_src is not None and not args.no_foot_ik:
             entry["foot_ik"] = foot_ik(arm, new, legs, feet_src, info["leg_ratio"], math.radians(info["yaw_align_deg"]),
-                                       mode, fix["_yaw"], fix["_pivot"])
+                                       mode, fix["_yaw"], fix["_pivot"], geo=geo, floor=floor, height=height,
+                                       locomotion=name.startswith(LOCOMOTION_CLIPS))
         out.append(entry)
         stash.append((new, slot))
     for a, _ in stash:
@@ -1739,6 +2328,67 @@ def reference_joints(args):
     return None
 
 
+def stance_metrics(P, fps, H):
+    """Toe positions, one row per frame -> (planted slide m, stance speed m/s, stance phases).
+    Stance = runs of >= 3 frames with the toe low (within 2 % H of its 20th-percentile height, so a
+    one-frame dip at toe-off doesn't hide the rest of the stance); when the low frames move like a
+    treadmill (in-place walk), frames moving unlike the median low frame (the foot swinging forward
+    close to the floor) are not stance either. Slide = largest horizontal distance a
+    toe travels within one stance phase: the real slide in in-place clips, the stride in `walk`;
+    stance speed = median horizontal speed over the stance phases (walk: the speed the unit must
+    move at for the planted feet not to slide)."""
+    if len(P) < 3:
+        return 0.0, None, 0
+    z = P[:, 2]
+    V = np.gradient(P[:, :2], axis=0) * fps
+    low = z <= np.percentile(z, 20) + 0.02 * H
+    vmed = np.median(V[low], axis=0)
+    st = low
+    if np.linalg.norm(vmed) > 0.2 * H / 1.75:      # treadmill (in-place walk): drop the forward swing
+        st = low & (np.linalg.norm(V - vmed, axis=1) <= 0.5 * float(np.linalg.norm(vmed)))
+    segs, cur = [], []
+    for i, flag in enumerate(st):
+        if flag:
+            cur.append(i)
+        elif cur:
+            segs.append(cur)
+            cur = []
+    if cur:
+        segs.append(cur)
+    segs = [sg for sg in segs if len(sg) >= 3]
+    slide, speeds = 0.0, []
+    for sg in segs:
+        Q = P[sg, :2]
+        slide = max(slide, float(np.linalg.norm(Q - Q[0], axis=1).max()))
+        speeds.append(float(np.linalg.norm(Q[-1] - Q[0])) * fps / (sg[-1] - sg[0]))
+    return slide, (float(np.median(speeds)) if speeds else None), len(segs)
+
+
+def _wmean_deg(vals):
+    sw = sum(w for _, w in vals) or 1.0
+    return math.degrees(math.atan2(sum(math.sin(a) * w for a, w in vals) / sw,
+                                   sum(math.cos(a) * w for a, w in vals) / sw))
+
+
+def _yaw_between(v, ref):
+    """Signed angle (rad, CCW from above) from the horizontal part of ref to that of v, and the
+    horizontal length of v (weight)."""
+    return (math.atan2(ref[0] * v[1] - ref[1] * v[0], ref[0] * v[0] + ref[1] * v[1]), math.hypot(v[0], v[1]))
+
+
+def head_bone_name(names):
+    return next((n for n in names if n.split(":")[-1].lower() == "head"), None)
+
+
+def kabsch_residual(A0, B0):
+    """Largest distance left after the best rigid motion A0 -> B0 (non-rigid deformation), m."""
+    a, b = A0 - A0.mean(0), B0 - B0.mean(0)
+    U, _, Vt = np.linalg.svd(a.T @ b)
+    d = np.sign(np.linalg.det(Vt.T @ U.T))
+    R = Vt.T @ np.diag([1.0, 1.0, d]) @ U.T
+    return float(np.linalg.norm(b - a @ R.T, axis=1).max())
+
+
 def qa_glb(path, n_frames, fps):
     """Skin + deformation metrics of a rigged GLB as the game will load it."""
     vc.reset_scene(fps)
@@ -1766,7 +2416,89 @@ def qa_glb(path, n_frames, fps):
     for tr in list(ad.nla_tracks):
         ad.nla_tracks.remove(tr)
     pairs = lateral_bones(arm)
-    feet = [b for b in ("LeftToeBase", "RightToeBase", "LeftFoot", "RightFoot") if b in arm.pose.bones]
+    names = [b.name for b in arm.data.bones]
+    roles = bone_roles(names, {b.name: (b.parent.name if b.parent else None) for b in arm.data.bones})
+    amw = arm.matrix_world
+    feet, foot_bone = {}, {}
+    for side in "LR":     # toe bone of each leg chain (else the foot)
+        ch = sorted((idx, n) for n, (role, sd, idx) in roles.items() if role == "leg" and sd == side and idx in (2, 3))
+        if ch:
+            feet[side] = ch[-1][1]
+            foot_bone[side] = ch[0][1]
+    floor0 = float(rest[:, 2].min())
+    # foot vertices (>= 0.5 weight on the foot/toe bones of a side)
+    gname = {g.index: g.name for g in body.vertex_groups}
+    wfoot = {s: np.zeros(n) for s in feet}
+    side_of = {}
+    for s in feet:
+        for nme, (role, sd, idx) in roles.items():
+            if role == "leg" and sd == s and idx >= 2:
+                side_of[nme] = s
+    for vtx in me.vertices:
+        for gr in vtx.groups:
+            sd = side_of.get(gname.get(gr.group))
+            if sd:
+                wfoot[sd][vtx.index] += gr.weight
+    foot_rows = {s: np.nonzero(w >= 0.5)[0] for s, w in wfoot.items()}
+    # their full skin weights, for a linear-blend evaluation at every frame (cheap, no mesh eval)
+    bidx = {b.name: i for i, b in enumerate(arm.data.bones)}
+    amw_np = np.array(amw)
+    to_arm = np.linalg.inv(amw_np) @ mw
+    foot_lbs = {}
+    for sd, rows in foot_rows.items():
+        if not len(rows):
+            continue
+        Wf = np.zeros((len(rows), len(bidx)))
+        for i, r in enumerate(rows):
+            for gr in me.vertices[int(r)].groups:
+                j = bidx.get(gname.get(gr.group))
+                if j is not None:
+                    Wf[i, j] = gr.weight
+        Wf /= np.maximum(Wf.sum(1, keepdims=True), 1e-9)
+        used = np.nonzero(Wf.any(0))[0]
+        Pa = rest[rows] @ np.linalg.inv(mw)[:3, :3].T + np.linalg.inv(mw)[:3, 3]
+        Pa = Pa @ to_arm[:3, :3].T + to_arm[:3, 3]
+        foot_lbs[sd] = (used, Wf[:, used], Pa)
+    rest_inv_np = [np.linalg.inv(np.array(b.matrix_local)) for b in arm.data.bones]
+    # long thin mesh islands (staffs, spears): rigidity check. Vertices split at UV seams by the
+    # glTF export are welded by position first
+    _, canon = np.unique(np.round(rest / (1e-5 * H)).astype(np.int64), axis=0, return_inverse=True)
+    canon = canon.ravel()
+    lab = np.arange(canon.max() + 1)
+    ce = canon[E]
+    while True:
+        la, lb = lab[ce[:, 0]], lab[ce[:, 1]]
+        d = la != lb
+        if not d.any():
+            break
+        np.minimum.at(lab, np.maximum(la[d], lb[d]), np.minimum(la[d], lb[d]))
+        while True:
+            nl = lab[lab]
+            if np.array_equal(nl, lab):
+                break
+            lab = nl
+    _, inv, counts = np.unique(lab[canon], return_inverse=True, return_counts=True)
+    inv = inv.ravel()
+    props = []
+    for isl in range(len(counts)):
+        rows = np.nonzero(inv == isl)[0]
+        if len(rows) < 8 or isl == int(np.argmax(counts)):
+            continue
+        _, _, r1, r2 = _principal(rest[rows])
+        if r1 >= LONG_PROP_SPAN * H and r1 >= LONG_THIN_RATIO * max(r2, 1e-6):
+            props.append(rows)
+    res["long_prop_islands"] = len(props)
+    # facing references
+    up = Vector((0, 0, 1))
+    rest_lat = Vector()
+    for a, b in pairs:
+        rest_lat += arm.data.bones[a].head_local - arm.data.bones[b].head_local
+    rest_lat = amw.to_3x3() @ rest_lat
+    fwd = rest_lat.cross(up)
+    hb = head_bone_name(names)
+    hrest = (amw.to_3x3() @ arm.data.bones[hb].matrix_local.to_3x3()) if hb else None
+    foot_rest = {s: amw.to_3x3() @ (arm.data.bones[feet[s]].head_local - arm.data.bones[foot_bone[s]].head_local)
+                 for s in feet if feet[s] != foot_bone[s]}
     for act in sorted(bpy.data.actions, key=lambda a: a.name):
         if not vc.action_bone_names(act):
             continue
@@ -1774,9 +2506,9 @@ def qa_glb(path, n_frames, fps):
         a0, a1 = vc.action_range(act)
         frames = np.linspace(a0, a1, max(2, n_frames))
         maxd, smax, s999, nbad = 0.0, 0.0, 0.0, 0
-        dg = bpy.context.evaluated_depsgraph_get()
-        yaws = []
-        foot_track = {b: [] for b in feet}
+        yaws, hyaws, fyaws = [], [], []
+        lowest = []
+        prop_res = 0.0
         for f in frames:
             scn.frame_set(int(math.floor(f)), subframe=float(f - math.floor(f)))
             dg = bpy.context.evaluated_depsgraph_get()
@@ -1794,29 +2526,56 @@ def qa_glb(path, n_frames, fps):
             smax = max(smax, float(r.max()))
             s999 = max(s999, float(np.percentile(r, 99.9)))
             nbad = max(nbad, int((r > 2.0).sum()))
+            lowest.append(float(co[:, 2].min()) - floor0)
+            for rows in props:
+                prop_res = max(prop_res, kabsch_residual(rest[rows], co[rows]))
             lat = Vector()
             for a, b in pairs:
                 lat += arm.pose.bones[a].head - arm.pose.bones[b].head
-            yaws.append((math.atan2(lat.y, lat.x), math.hypot(lat.x, lat.y)))
-            for b in feet:
-                foot_track[b].append(np.array(arm.matrix_world @ arm.pose.bones[b].head))
-        rest_lat = Vector()
-        for a, b in pairs:
-            rest_lat += arm.data.bones[a].head_local - arm.data.bones[b].head_local
-        ry = math.atan2(rest_lat.y, rest_lat.x)
-        sw = sum(w for _, w in yaws) or 1.0
-        my = math.atan2(sum(math.sin(y - ry) * w for y, w in yaws) / sw, sum(math.cos(y - ry) * w for y, w in yaws) / sw)
-        slide = {}
-        for b, pts in foot_track.items():
+            lat = amw.to_3x3() @ lat
+            yaws.append(_yaw_between(lat, rest_lat))
+            if hb:
+                Rh = amw.to_3x3() @ arm.pose.bones[hb].matrix.to_3x3()
+                hyaws.append(_yaw_between(Rh @ hrest.inverted() @ fwd, fwd))
+            fv = [_yaw_between(amw.to_3x3() @ (arm.pose.bones[feet[s]].head - arm.pose.bones[foot_bone[s]].head), v0)
+                  for s, v0 in foot_rest.items()]
+            if fv:
+                fyaws.append((math.atan2(sum(math.sin(a) for a, _ in fv), sum(math.cos(a) for a, _ in fv)),
+                              sum(w for _, w in fv)))
+        # toes and the skinned feet: every frame (bones + linear blend of the foot vertices, cheap)
+        toe_track = {s: [] for s in feet}
+        foot_low = {s: [] for s in foot_lbs}
+        pbs = arm.pose.bones
+        for f in np.arange(math.floor(a0), math.ceil(a1) + 1e-6, 1.0):
+            scn.frame_set(int(f))
+            for side, b in feet.items():
+                toe_track[side].append(np.array(amw @ pbs[b].head))
+            for side, (used, Wu, Pa) in foot_lbs.items():
+                Z = np.zeros(len(Pa))
+                for k, j in enumerate(used):
+                    M = amw_np @ np.array(pbs[j].matrix) @ rest_inv_np[j]
+                    Z += Wu[:, k] * (Pa @ M[2, :3] + M[2, 3])
+                foot_low[side].append(float(Z.min()) - floor0)
+        toe_range, planted, speed = {}, {}, {}
+        for side, pts in toe_track.items():
             P = np.array(pts)
             if len(P):
-                slide[b] = round(float(np.linalg.norm(P[:, :2].max(0) - P[:, :2].min(0))) * 100, 1)
+                toe_range[side] = round(float(np.linalg.norm(P[:, :2].max(0) - P[:, :2].min(0))) * 100, 1)
+                sl, sp, _ = stance_metrics(P, fps, H)
+                planted[side] = round(sl * 100, 1)
+                speed[side] = None if sp is None else round(sp, 3)
         name = act.name.split("|")[0]
         res["clips"][name] = {
             "frames_sampled": len(frames), "max_disp_ratio": round(maxd / H, 3),
             "stretch_max": round(smax, 3), "stretch_p999": round(s999, 3), "edges_over_2x": nbad,
-            "stretch_flag": smax > 2.0, "mean_facing_deg": round(math.degrees(my), 1),
-            "foot_slide_cm": slide,
+            "stretch_flag": smax > 2.0, "mean_facing_deg": round(_wmean_deg(yaws), 1),
+            "facing_deg": {"torso": round(_wmean_deg(yaws), 1),
+                           "head": round(_wmean_deg(hyaws), 1) if hyaws else None,
+                           "feet": round(_wmean_deg(fyaws), 1) if fyaws else None},
+            "toe_range_cm": toe_range, "planted_toe_slide_cm": planted, "stance_speed_mps": speed,
+            "lowest_point_cm": [round(min(lowest) * 100, 1), round(max(lowest) * 100, 1)] if lowest else None,
+            "foot_low_cm": {s: [round(min(v) * 100, 1), round(max(v) * 100, 1)] for s, v in foot_low.items() if v},
+            "prop_rigidity_cm": round(prop_res * 100, 2) if props else None,
         }
     return res
 
@@ -1878,10 +2637,10 @@ def features_summary(F, g):
 
 # =========================================================================== main
 
-def run_process_model(rig_glb, out, args, H, name):
+def run_process_model(rig_glb, out, args, H, name, json_path):
     pm = os.path.join(HERE, "process_model.py")
     pm_args = [rig_glb, "-o", out, "--facing", "+z", "--height", repr(H), "--name", name,
-               "--tex-size", str(args.tex_size)]
+               "--tex-size", str(args.tex_size), "--json", json_path]
     if args.target_tris:
         pm_args += ["--target-tris", str(args.target_tris)]
     if args.team_mask:
@@ -1898,15 +2657,24 @@ def run_process_model(rig_glb, out, args, H, name):
     sys.stderr.write(p.stderr[-4000:])
     if p.returncode != 0:
         raise SystemExit(f"process_model failed ({p.returncode}):\n{p.stdout[-3000:]}\n{p.stderr[-3000:]}")
+    # read the summary from --json: a child bpy started from a bpy process inherits OCIO env vars
+    # and logs a colour-management line to stdout before the JSON
     try:
-        return json.loads(p.stdout)
-    except json.JSONDecodeError:
+        with open(json_path) as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
         return {"raw_stdout": p.stdout[-2000:]}
 
 
 def main():
     args = parse_args()
     t_start = time.time()
+    if args.qa_only:
+        result = {"input": os.path.abspath(args.input), "qa": qa_glb(args.input, args.qa_frames, args.fps)}
+        result["seconds"] = round(time.time() - t_start, 1)
+        result["warnings"] = vc.warnings()
+        vc.emit_json(result, args.json)
+        return
     out = os.path.abspath(args.out)
     name = args.name or os.path.splitext(os.path.basename(out))[0]
     clips = [parse_clip(c) for c in args.clip]
@@ -1927,18 +2695,24 @@ def main():
     # ---- target mesh
     vc.reset_scene(args.fps)
     body = import_static(args.input, name)
-    result["normalise"] = normalise_body(body, args.facing, args.yaw, H)
+    facing = args.facing or "auto"
+    result["facing_in"] = facing if args.facing else "auto (no --facing given)"
+    result["normalise"] = normalise_body(body, facing, args.yaw, H)
     result["tris_in"] = vc.mesh_tris(body)
     V, Fc = body_arrays(body)
+    errors = []
 
     # ---- landmarks
     t0 = time.time()
     g = Grid(V, Fc, H / ANALYSIS_SLICES)
     yaw_det, conf = detect_forward(g, H)
     fc = {"detected_turn_deg": None if yaw_det is None else round(yaw_det, 1), "confidence": round(conf, 2)}
-    if args.facing == "auto":
+    if facing == "auto":
         if yaw_det is None or conf < 0.3:
-            vc.warn("--facing auto: could not tell the facing from the feet; assuming +z")
+            vc.warn("facing auto: could not tell the facing from the feet (robe? feet hidden?); assuming the input "
+                    "faces +z (glTF front): pass --facing if it doesn't")
+            fc["applied_turn_deg"] = 0.0
+            fc["undetected"] = True
         else:
             turn = 90.0 * round(yaw_det / 90.0)
             if turn % 360:
@@ -1947,23 +2721,37 @@ def main():
                 V, Fc = body_arrays(body)
                 g = Grid(V, Fc, H / ANALYSIS_SLICES)
             fc["applied_turn_deg"] = -turn
-    elif yaw_det is not None and conf >= 0.5 and abs(((yaw_det + 180) % 360) - 180) > 45:
-        vc.warn(f"the feet suggest the model faces {yaw_det:+.0f} deg (CCW from above) away from the assumed "
-                f"front: check --facing (or use --facing auto)")
+    elif yaw_det is not None and abs(((yaw_det + 180) % 360) - 180) >= 45 and conf >= 0.5:
+        msg = (f"--facing {facing}: the feet say the model then faces {yaw_det:+.0f} deg (CCW from above, confidence "
+               f"{conf:.2f}) away from the front; the input probably faces another way (raw Tripo: +x; omit "
+               f"--facing to detect it)")
+        if conf >= 0.9 and not args.force:
+            errors.append(msg + " [error: pass --force to rig it as given anyway]")
+            result["facing_check"] = fc
+            result["errors"] = errors
+            result["warnings"] = vc.warnings()
+            vc.emit_json(result, args.json)
+            sys.exit(2)
+        vc.warn(msg)
     result["facing_check"] = fc
-    Fg = analyse_body(g, H)
-    if "V" in T and not args.no_calibrate:
-        Vt = T["V"].copy()
-        Vt[:, 2] -= T["floor"]
-        gt = Grid(Vt, T["F"], T["height"] / ANALYSIS_SLICES)
-        Ft = analyse_body(gt, T["height"])
-        Jt = {k: v - np.array([0, 0, T["floor"]]) for k, v in T["joints"].items()}
-        T2 = dict(T, joints=Jt)
-        C = calibrate(T2, Ft, gt)
-        calib = "template mesh"
-    else:
-        raise SystemExit("template has no skinned mesh to calibrate landmarks on (--no-calibrate needs built-in "
-                         "coefficients, not available for this template)")
+    # the template's own mesh first: its proportions bound the target's searches and checks
+    if "V" not in T:
+        raise SystemExit("template has no skinned mesh to calibrate the landmarks on: use a rigged GLB that "
+                         "includes its mesh (e.g. any Meshy/Higgsfield rig file) as --template")
+    Vt = T["V"].copy()
+    Vt[:, 2] -= T["floor"]
+    gt = Grid(Vt, T["F"], T["height"] / ANALYSIS_SLICES)
+    Ft = analyse_body(gt, T["height"])
+    Jt = {k: v - np.array([0, 0, T["floor"]]) for k, v in T["joints"].items()}
+    T2 = dict(T, joints=Jt)
+    C = calibrate(T2, Ft, gt)
+    calib = "template mesh"
+    tref = {k: Ft[k] / Ft["H"] for k in KNOTS if Ft.get(k) is not None}
+    tref["arm_extent"] = Ft.get("arm_extent")
+    Fg = analyse_body(g, H, tref)
+    knot_bad = apply_knot_checks(g, Fg, Ft)
+    if knot_bad:
+        vc.warn(f"feature levels implausible vs the template's proportions, template proportions used there: {knot_bad}")
     J, src = solve_joints(T2, Ft, gt, C, Fg, g)
     if args.joints:
         with open(args.joints) as f:
@@ -1975,8 +2763,23 @@ def main():
     result["landmarks"] = {
         "calibration": calib, "analysis_voxel_m": round(g.v, 5), "seconds": round(time.time() - t0, 2),
         "features": features_summary(Fg, g), "template_features": features_summary(Ft, gt),
+        "level_ratios_vs_template": Fg.get("knot_ratios", {}), "level_fallbacks": knot_bad,
         "joints": {n: {"pos": to_gltf(J[n]), "source": src[n]} for n in T["names"]},
     }
+    rpd = rest_pose_diff(T2, J)
+    result["landmarks"]["rest_pose_diff_deg"] = rpd
+    off = {k: v for k, v in rpd.items() if v > REST_DIFF_WARN}
+    bad_rest = {k: v for k, v in rpd.items() if v > REST_DIFF_ERROR}
+    if bad_rest:
+        msg = (f"limbs point {bad_rest} deg away from the template's rest pose (> {REST_DIFF_ERROR:.0f}: T-pose / arms "
+               f"raised / wrong landmarks? see --debug-png): every clip keeps that offset (rotation-only retarget)")
+        if args.force:
+            vc.warn(msg)
+        else:
+            errors.append(msg + " [error: fix the input or --joints, or pass --force]")
+    elif off:
+        vc.warn(f"limbs point {off} deg away from the template's rest pose (T-pose vs A-pose?): clips keep that "
+                f"offset (rotation-only retarget)")
     fallbacks = sorted(n for n in T["names"] if src[n].startswith("fallback"))
     result["landmarks"]["fallback_joints"] = fallbacks
     if fallbacks:
@@ -1998,6 +2801,12 @@ def main():
     t0 = time.time()
     arm = build_export_armature(T, J)
     result["skin"] = skin(body, T, J, Fg, g, args, H)
+    if result["skin"]["method_effective"] != args.weights:
+        msg = "bone heat failed for every proxy voxel size: the unit has envelope weights (worse deformation)"
+        if args.force:
+            vc.warn(msg)
+        else:
+            errors.append(msg + " [error: try --voxel, or accept with --weights envelope / --force]")
     body.parent = arm
     body.matrix_parent_inverse = Matrix.Identity(4)
     mod = body.modifiers.new("Armature", "ARMATURE")
@@ -2008,7 +2817,7 @@ def main():
 
     # ---- clips
     t0 = time.time()
-    result["clips"], stash = transfer_clips(arm, clips, args)
+    result["clips"], stash = transfer_clips(arm, clips, args, body, H)
     result["clips_seconds"] = round(time.time() - t0, 2)
     reset_pose(arm)
     if stash:
@@ -2022,7 +2831,7 @@ def main():
         rig_glb = out
     vc.export_glb(rig_glb, animations=bool(stash))
     if not args.raw:
-        pm = run_process_model(rig_glb, out, args, H, name)
+        pm = run_process_model(rig_glb, out, args, H, name, os.path.join(tmpdir.name, "process_model.json"))
         result["process_model"] = {k: pm.get(k) for k in ("tris_after", "verts_after", "dims_godot_m", "materials",
                                                          "team_mask", "skin", "warnings", "file_bytes") if k in pm}
     if args.keep_rig and not args.raw:
@@ -2039,7 +2848,12 @@ def main():
     result["file_bytes"] = os.path.getsize(out)
     result["seconds"] = round(time.time() - t_start, 1)
     result["warnings"] = vc.warnings()
+    result["errors"] = errors
     vc.emit_json(result, args.json)
+    if errors:
+        for e in errors:
+            print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(3)
 
 
 if __name__ == "__main__":
