@@ -430,7 +430,7 @@ Render a flat-black thumbnail from the game camera at 64 px (units) or 128 px (b
 | Fieldkeeper / Crowcaller | Crossed-pole frame, sack head, pitchfork; a crow on the head while asleep | A pumpkin-headed or machine-bodied scarecrow |
 | Cairnwakes | **Stacked flat slabs** with visible gaps; menhir head with cup-and-ring marks | A rounded boulder man with a glowing core |
 | Weighstall | A **giant brass balance beam** (about 7 m) over a striped stall | A goblin-style shack with rockets |
-| Gold Seam | A **timbered adit** in a gold-veined rock face with an ore-cart stub | A haunted or vine-wrapped mine |
+| Gold Seam | A low, square, **timber-framed adit** cut into a short **layered cliff** with a thin bright quartz-and-gold strata line; a **windlass headframe** on the lip; a spoil heap; a wooden sluice; two night lanterns (neutrals §5.2, §10.2) | A free-standing rock mound with gold nuggets heaped at the door; a mine cart or rails; a haunted or vine-wrapped mine |
 | Hale Spring | A spring pool fed by a **log flume with a tiny waterwheel** | A glowing stone fountain |
 | Coaching Inn (*The Muddy Lantern*) | Two storeys of half-timber in neutral browns, a **stable arch** with a horse trough, two smoking chimneys and a great **hanging lantern sign** | A thatched tavern with a foaming-mug sign, or the kingdom's burgundy roofs |
 

@@ -271,3 +271,17 @@ far_mirror
 steady ranks
 steady_ranks
 hollow_harvest
+# Slice-plan review (2026-10-17): retired neutral names (neutrals.md §10.1 and Review log #5, #6, #12, #14; renamed Tattiebogles,
+# Dewstone, Coaching Inn, Withy Brute and the §4.3 power-ups). "hollow harvest" is listed above.
+glimmer font
+glimmer_font
+wayfarers' inn
+wayfarer's inn
+wayfarers inn
+wayfarers_inn
+wayfarer's rest
+wayfarers_rest
+wicker brute
+wicker_brute
+chapbook
+chapbooks
