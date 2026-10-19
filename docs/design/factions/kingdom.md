@@ -42,7 +42,7 @@ or the culture behind them.
 | **Palette** | Burgundy, ivory, dark bronze and blackened iron, with oak brown (§2.2). Not blue/white/gold, and no lion |
 | **Signature mechanics** | **Levy Horn**: workers near a hall arm themselves in place as a temporary flail levy. This is the faction's one WC3-derived mechanic (militia), shown differently. Multi-builder sites (the **Hod Chain**, §4) are a cross-faction rule in this game, not a Kingdom signature. **Wagon Fort**: Wall Wagons deploy into fortified gun-wagons and chain into walls. This mechanic is original |
 | **Play pattern** | Sturdy, slow, expensive. Strong infantry walls behind gunpowder, the best towers, flexible casters, late heavy cavalry and air. Weak to mobile harassment early and to magic-damage burst on its unarmoured casters |
-| **Slice content** | Hodman (+ Flail Levy), Pavisier, Hookgunner, Bombard Wagon, Linden Sister. Heroes: Wheel Marshal and Firewright. 10 buildings: Moot Hall → Walled Burg, Croft, Oath Hall, Drill Yard, Timber Yard, Foundry, Collegium, Wainwright Yard, Curio Cabinet, Lookout → Gun Tower. 14 research (§11) |
+| **Slice content** | Hodman (+ Flail Levy), Pavisier, Hookgunner, Bombard Wagon, Linden Sister. Heroes: Wheel Marshal and Firewright. 10 buildings: Moot Hall → Walled Burg, Croft, Oath Hall, Drill Yard, Timber Yard, Foundry, Collegium, Wainwright Yard, Curio Cabinet, Lookout → Gun Tower. 14 research (§11). **P1** (next Higgsfield grant, slice-plan §2.3): the Lacewright, the Flail Hetman as hero 3 and the T3 data tier (Crown Burg, Burgher's Oath, Linden Guild Seal) |
 
 ---
 
@@ -301,7 +301,7 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
   | Linden Sister | Brisk, motherly: "Sit. Drink this." |
   | Lacewright | Precise and soft-spoken, counts stitches, a little menacing |
   | Assayer | A bureaucrat who weighs everything: "Seven grains light. Fraud." |
-  | Bombard Wagon | Two crew who bicker |
+  | Bombard Wagon | One speaking gunner, the deadpan Elder; the young loader is non-verbal (coughs and effort grunts). Rates every shot out of ten, never above six |
   | Wall Wagon | A teamster who talks to his wagon |
   | Brass Kestrel | No voice: clockwork whirr and a two-note whistle |
   | Netcaster | A cheerful stork-catcher |
@@ -319,6 +319,10 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
 
 ### 3.2 Sample lines (original; checked against the WC3 human and orc quote pages per audio §3.2; reject any line a fan would recognise)
 
+**Source of record (2026-10-19).** The recorded counts per category are the art bible §8.2's (annoyed runs of 5 lines, 7 for the
+Hookgunner and the heroes); the bible's §8.6–§8.7 and §8.10 candidates and the slice-plan §2.12 Bombard Wagon lines are the recorded
+scripts for those speakers, and the tables below are this faction's candidate pool. Every line obeys the VO lint in §3.3.
+
 **Hodman (worker)**
 
 | Category | Lines |
@@ -327,8 +331,8 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
 | What | "Mm? Mind the bricks." · "Hodman. Guild card's in me hat." · "Talk quick, Agnes is heavy." |
 | Yes | "Lifting with the knees." · "Agnes and I'll see to it." · "Fine, fine. It's on the ledger." |
 | Attack (as Flail Levy) | "This was not in the contract!" · "Flail's out, mind your heads!" · "Like threshing, only it shouts back." |
-| Annoyed (played in order) | "That's a prod. I'm noting it." → "Two prods. Guild says that's a fee." → "Agnes thinks you've got cold fingers." → "Not saying I'll strike. Just saying I own a flail." |
-| Built (job-complete category) | "Raised, roofed, and only slightly crooked." |
+| Annoyed (played in order) | "That's a click. I'm writing it down." → "Another click. Guild rate's a copper a click." → "We're at half a silver. Agnes is impressed." → "Agnes says you've got the hands of a pickpocket." → "Right. That's a full silver. Agnes is drawing up the invoice. She has lovely handwriting." |
+| Built (id `built`) | "Raised, roofed, and only slightly crooked." |
 
 **Pavisier (line infantry)**
 
@@ -360,15 +364,16 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
 | Attack | "Hook on the boards. Fire!" · "Give them the thunder!" · "Cover your ears, lads!" |
 | Annoyed (in order) | "What? I can't hear you clicking." → "Oh, that. Yes, I felt that one." → "My ears ring, my back aches, and now this." → "One more and I'll fire this thing indoors." |
 
-**Bombard crew (two bickering gunners: the Elder and the Younger)**
+**Bombard Wagon gunner (one speaker: the Elder; the young loader is non-verbal).** A bickering two-voice crew on this slot would copy
+the reference RTS's two-gunner double act, so it was retired (art bible §8.1 rule 7; slice-plan §2.12, whose lines these are).
 
 | Category | Lines |
 |---|---|
-| Ready | "Wheels chocked, barrel swabbed." · "Two crew, one bombard, no agreement." · "She's loaded. — Who loaded her? — I did. — Did you, though?" |
-| What | "Bombard crew. — Mostly me." · "Barrel's warm, talk fast." · "We're listening. — He's not." |
-| Yes | "Push! — I am pushing!" · "Heave together. — Together, he says." · "Shifting her. Slowly." |
-| Attack | "Touch it off! — You touch it off!" · "Mind the kick!" · "Ranging shot... and again, properly." |
-| Annoyed (in order) | "Careful, she's loaded. — Is she? — She is now." → "He packed the charge. If it goes off, it's on his ledger." → "We drew straws for this job. I lost. — You lost twice." → "Do that again and I'll let him aim." |
+| Ready | "Barrel's swabbed. Nobody touch the fuse." |
+| What | "Talk slow. Measuring powder." |
+| Yes | "Chock the wheels." |
+| Attack | "Ranging shot first." |
+| Annoyed (in order) | "Measure twice, fire once. You've measured eleven times." → "The lad's coughing, not laughing. Probably." → "Now he's laughing. Powder doesn't like laughing. Neither do I." → "Right. I'm chalking 'the boss' on the next ball. Neat letters, mind." (a 5th line is written with the full set, art bible §8.2) |
 
 **Firewright (hero, cheerful pyromaniac)**
 
@@ -420,21 +425,22 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
 
 - **Line budget:** follows audio §3.2. For the slice:
 
-  | Voice | Lines |
-  |---|---|
-  | Hodman | 19 |
-  | Pavisier | 18 |
-  | Hookgunner | 18 |
-  | Bombard crew | 16 |
-  | Linden Sister | 18 |
-  | Wheel Marshal | 26 |
-  | Firewright | 26 |
-  | Reeve (advisor) | 21 |
-  | **Total** | **162** |
+  | Voice | Lines (art bible §8.2) | P0 (slice-plan §2.12) |
+  |---|---|---|
+  | Hodman (also voices the Flail Levy) | 21 | 15 |
+  | Pavisier (2 toggle lines) | 20 | 14 |
+  | Hookgunner (the faction's standout, 7 annoyed) | 21 | 14 |
+  | Bombard Wagon gunner (one voice) | 17 | 8 |
+  | Linden Sister | 21 | 14 |
+  | Wheel Marshal | 31 | 20 |
+  | Firewright | 31 | 20 |
+  | Reeve (advisor; art bible §8.10) | 19 | 18 |
+  | **Total** | **181** | **123** |
 
   Probe TTS cost with one 5-line batch first (README open question 3).
 - **VO lint (run on the VO script before recording; to be added to `tools/ip/` with the script):**
-  1. No "poke", "poked" or "poking" in any **Annoyed** line (the word fans tie to a banned WC3 click-spam line).
+  1. No "poke", "poked", "poking", "tap", "tapped", "tapping", "prod" or "jab" in any line: clicks are called clicks (slice-plan §2.12).
+     No Ready line starts with "Ready to". No crew splits a line between two voices.
   2. Reeve lines: no "[build verb] more [supply building]" pattern; no "done" on a completion event; no "…under attack".
   3. Every line passes `check_banned_terms.py` and the quote-page check (§13 Q9).
   4. No line echoes a song, film, book or slogan (§3.1 "never pop culture"). Rejected in review so far: plank-in-the-wall, the turning
@@ -445,7 +451,7 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
   - Hodman: an older male voice with a slight rasp.
   - Pavisier: a young male voice.
   - Hookgunner: an EQ notch to sound slightly muffled.
-  - Bombard crew: two contrasting male voices (older gravelly, younger quick), alternating within a line.
+  - Bombard Wagon: one gravelly gunner voice (art bible §8.3); the loader's coughs and grunts are SFX.
   - Linden Sister: a brisk, warm middle-aged female voice.
   - Firewright: a bright, quick male tenor; a faint crackle layer under ability lines only.
 - **Faction music:**
@@ -471,7 +477,7 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
 | Gold | Workers walk 10 gold per trip to a hall | Genre standard |
 | Lumber | 10 per trip (15 with Bow Saws, 20 with Felling Crews; both *later*). Drop-off at a hall or the **Timber Yard** (in the slice; build it at the tree line); 1 lumber per 0.8 s chop | Trees are felled when empty (50 lumber). With a Timber Yard 4 m from the trees a Hodman makes ≈ 0.93 lumber/s, the same as a clans Yurtwright (rules.md §4.3) |
 | Food | Moot Hall 12 → Walled Burg 14 → Crown Burg 16; **Croft +7** | About 12 Crofts reach the cap of 100 |
-| Hero slots | T1: 1, T2: 2, T3: 3. First hero free (5 food) with a free Homeward Horn | Global |
+| Hero slots | T1: 1, T2: 2, T3: 3. First hero free (5 food) with a free Way-Home Horn | Global |
 | Construction: the **Hod Chain** | Scaffold-raised. One Hodman builds. Up to **2 more** may join as **hod carriers** (they ferry materials up the scaffold): each adds **+40 %** build rate and costs **5 lumber per 10 s** while carrying (paid continuously; a carrier stops when lumber runs out). Rate: 1 / 1.4 / 1.8 × | Multi-builder sites are a **cross-faction rule** in this game (rules.md §4.3: sylvan and deathless 2 builders each), re-presented here with a lumber cost. Not a Kingdom signature (§12 row 5) |
 | Repair | Hodman autocast (default off); costs 30 % of the building's cost pro rata. A full repair takes **1.5 × the building's build time** for one Hodman; each extra repairer adds the same rate (rules.md §4.8) | |
 | **Levy Horn** (WC3-derived signature, re-presented) | See below | The one WC3 signature mechanic this faction uses |
@@ -480,7 +486,8 @@ Generate the pavise and the falchion separately as props (the weapon is its own 
 
 **Levy Horn: rules**
 
-- **Take Up the Flail** (per Hodman) is usable only within **22 m** of a finished friendly hall (any tier). Outside that range the button
+- **Take Up the Flail** (per Hodman) is usable only within **22 m** of a finished friendly hall (any tier), measured edge to edge from the
+  hall's footprint (as is the 30 m leash below; slice-plan §1.6). Outside that range the button
   is greyed, with the tooltip "Too far from a hall".
 - **Levy Horn** (hall button, no target): every Hodman within 22 m of that hall arms. A Hodman inside the mine when the horn sounds arms
   as it exits.
@@ -533,7 +540,7 @@ Policy (mechanics §12.2): keep each **role**, never a unit's whole **kit**. Eve
 | `kingdom_hookgunner` | Hookgunner | Drill Yard | Foundry | 200 | 30 | 3 | 27 | 3 | **[SLICE]** |
 | `kingdom_ironrider` | Ironrider | Drill Yard | Crown Burg, Foundry | 250 | 70 | 4 | 40 | 4 | *later* |
 | `kingdom_linden_sister` | Linden Sister | Collegium | — | 125 | 20 | 2 | 26 | 2 | **[SLICE]** |
-| `kingdom_lacewright` | Lacewright | Collegium | — | 150 | 25 | 2 | 32 | 2 | *later* |
+| `kingdom_lacewright` | Lacewright | Collegium | — | 150 | 25 | 2 | 32 | 2 | P1 (slice-plan B22) |
 | `kingdom_assayer` | Assayer | Collegium | — | 200 | 40 | 3 | 30 | 3 | *later* |
 | `kingdom_bombard_wagon` | Bombard Wagon | Wainwright Yard | — | 190 | 60 | 3 | 34 | 3 | **[SLICE]** |
 | `kingdom_wall_wagon` | Wall Wagon | Wainwright Yard | Crown Burg | 260 | 80 | 4 | 46 | 4 | *later* |
@@ -718,7 +725,7 @@ Autocast toggles with a right-click (global rule). "Research" names the upgrade 
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Wheel Marshal | `kingdom_wheel_marshal` | STR | 23 (+2.6) | 12 (+1.4) | 16 (+1.7) | 1–7 | 1 | 2.2 | 1.0 (melee) | G | 4.5 | **[SLICE]** |
 | Orrery Sage | `kingdom_orrery_sage` | INT | 15 (+1.6) | 14 (+1.0) | 20 (+3.1) | 2–8 | −1 | 2.1 | 7.8 (missile) | G+A | 4.4 | *later* |
-| Flail Hetman | `kingdom_flail_hetman` | STR | 24 (+2.5) | 17 (+1.8) | 13 (+1.3) | 1–9 | 0 | 2.0 | 1.1 (melee) | G | 4.6 | *later* |
+| Flail Hetman | `kingdom_flail_hetman` | STR | 24 (+2.5) | 17 (+1.8) | 13 (+1.3) | 1–9 | 0 | 2.0 | 1.1 (melee) | G | 4.6 | P1 (slice-plan B24) |
 | Firewright | `kingdom_firewright` | INT | 16 (+1.8) | 12 (+1.0) | 21 (+3.0) | 3–9 | −1 | 2.2 | 7.0 (missile) | G+A | 4.4 | **[SLICE]** |
 
 Derived values (HP / mana / armour / damage / cooldown):
@@ -740,10 +747,10 @@ Derived values (HP / mana / armour / damage / cooldown):
 
 | Ability | Rank | Mana | Cooldown | Range / area | Effect |
 |---|---|---|---|---|---|
-| **Linden Balm** (Q; allied unit target, **not herself**) | 1 / 2 / 3 | 70 | 7 s | 8 m | Heals the allied target for **190 / 360 / 530**. Other allies within 2.5 m of the target heal 25 % of that (the Marshal included if she stands there). Does not work on mechanical units. VFX: drifting linden blossoms. Icon: a linden sprig over a wheel hub (never a glowing hand or a light pillar) |
-| **Brace the Wheel** (W; no target) | 1 / 2 / 3 | 60 | 15 s | 4 / 5 / 6 m | Taunts enemy **non-hero** units in the radius to attack her for 2 / 3 / 4 s. She gains +4 / +6 / +8 armour for 6 s. VFX: she grounds the wheel-shield and a **wheel-rim shockwave** (an ivory ring with spoke ticks) rolls out to the radius; no red shout, no roar |
+| **Linden Balm** (Q; allied unit target; **on herself at 50 % effect**) | 1 / 2 / 3 | 80 | 7 s | 8 m | Heals the allied target for **150 / 290 / 430** (75 / 145 / 215 when she targets herself). Other allies within 2.5 m of the target heal 25 % of that (the Marshal included if she stands there). Does not work on mechanical units. VFX: drifting linden blossoms. Icon: a linden sprig over a wheel hub (never a glowing hand or a light pillar) |
+| **Brace the Wheel** (W; no target) | 1 / 2 / 3 | 60 | 15 s | 4 / 5 / 6 m | Taunts enemy **non-hero** units in the radius to attack her for 2 / 3 / 4 s. She gains +4 / +6 / +8 armour for 6 s. VFX: she plants the wheel-shield's rim and a **wheel-rim ring** (`fx_wheel_rim_ring`: an ivory ring with spoke ticks) rolls out from the rim to the radius; no dust burst, no camera shake, no red shout, no roar, so it never reads as a ground slam |
 | **Measured Cadence** (E; aura) | 1 / 2 / 3 | — | — | 9 m | Allied units gain **+6 / +10 / +14 % attack speed**. VFX: a faint drum-beat pulse ring under her every 1.5 s. Regeneration is left to the Linden Sister |
-| **The Wagon Ring** (R; ultimate, no target) | — | 175 | 160 s | 11 m | A ghostly ring of wagon wheels rises around her. For **7 s**, allied non-structure units in the ring when cast **cannot drop below 1 HP**. When it ends, each affected unit restores 15 % of its max HP. Not dispellable (ultimate) |
+| **The Wagon Ring** (R; ultimate, no target) | — | 150 | 160 s | 11 m | Painted wagon boards and wheels slam down into a barricade ring around her (art bible `K_WAGON`; never a ghostly or glowing ring, dome, halo or light pillar). For **7 s**, allied non-structure units in the ring when cast **cannot drop below 1 HP**. When it ends, each affected unit restores 15 % of its max HP. Not dispellable (ultimate) |
 
 #### Orrery Sage (INT caster, the "court magus" role) *(later)*
 
@@ -758,7 +765,7 @@ Derived values (HP / mana / armour / damage / cooldown):
 | **Lucid Hours** (E; aura) | 1 / 2 / 3 | — | — | 9 m | Allies gain +0.6 / +1.2 / +1.8 mana/s |
 | **Hour Rewound** (R; ultimate, no target) | — | 200 | 150 s | 10 m | Marks the Sage and allied non-structure units in range (summons included) and snapshots each one's HP. After **8 s**, or when she recasts it, each marked unit still alive **regains 60 % of the HP it lost since the mark**, and its **current ability cooldowns are halved**. **Nobody moves.** It does not resurrect. Not dispellable (ultimate). VFX: a translucent clock dial over each marked unit whose hand sweeps back |
 
-#### Flail Hetman (STR/AGI melee stunner) *(later)*
+#### Flail Hetman (STR/AGI melee stunner) *(later; P1 in the slice as hero 3)*
 
 - **Look:** a towering ex-thresher in a quilted burgundy jack, iron gorget and wide kettle hat. He carries a giant **three-club
   war-flail** (iron-shod clubs on chains) over his shoulder.
@@ -788,7 +795,7 @@ Derived values (HP / mana / armour / damage / cooldown):
 
 | Brennish hero | WC3 role match | Functional equivalents (counted strictly) | Original mechanics | Count |
 |---|---|---|---|---|
-| Wheel Marshal | Paladin | Linden Balm (targeted heal; like the WC3 heal it cannot target the caster) | Brace the Wheel (taunt plus armour); Measured Cadence (**offensive** attack-speed aura; the WC3 aura is defensive armour); The Wagon Ring (cannot drop below 1 HP, instead of a resurrection) | **1** |
+| Wheel Marshal | Paladin | Linden Balm (targeted heal; unlike the WC3 heal it may target the caster, at 50 %); The Wagon Ring (a group save in the resurrection slot: nobody can drop below 1 HP, instead of raising the dead; counted strictly since 2026-10-19) | Brace the Wheel (taunt plus armour); Measured Cadence (**offensive** attack-speed aura; the WC3 aura is defensive armour) | **2** (the limit; any kit change re-runs this audit) |
 | Orrery Sage | Archmage | Clockwork Halberdier (combat summon, melee instead of ranged); Lucid Hours (mana-regeneration aura) | Burning Lens (instant line nuke plus damage mark, not a channelled area rain); Hour Rewound (a delayed partial **heal-back and cooldown refund in place**; no unit moves, so it is not a group teleport) | **2** |
 | Flail Hetman | Mountain King | Hurled Chain (thrown single-target stun); Threshing Sweep (melee area attack: cone and knockback instead of a slowing circle) | Chaff and Grain (cleave plus attack-speed slow, not a stun chance); Wagon-Breaker Charge (line charge, not a self-transform) | **2** |
 | Firewright | Blood Mage | Naphtha Flask (fire area damage over time); Grand Bombard (big summon ultimate: stationary artillery instead of a flying firebird) | Fuse Mark (delayed bomb on a unit); Incendiary Wadding (burning-ammo aura for ranged allies) | **2** |
@@ -800,7 +807,9 @@ Derived values (HP / mana / armour / damage / cooldown):
 - Flail Hetman: stun / area slam / cleave / charge. The WC3 pattern has a passive stun chance and a self-transform ultimate.
 - Firewright: area DoT / delayed bomb / ally burn aura / artillery summon. The WC3 pattern has a banish and a mana drain.
 
-**Numbers are ours.** No mana cost, cooldown, duration or per-rank value of an ability listed as a functional equivalent matches the WC3
+**Numbers are ours.** Policy since 2026-10-19 (slice-plan M1 #11): every mana cost, cooldown, duration and per-rank value of a functional
+equivalent differs by **at least 20 %** from the WC3 value it mirrors (Linden Balm 150 / 290 / 430 and 80 mana; The Wagon Ring 150 mana).
+No mana cost, cooldown, duration or per-rank value of an ability listed as a functional equivalent matches the WC3
 ability it mirrors, and no ability's (mana, cooldown) pair matches any ability of the matching WC3 hero. This is enforced by a data test:
 
 - **`tests/unit/test_number_fingerprints.gd`**. It reads a reference table that lives **only** in `docs/research/`
@@ -842,22 +851,23 @@ Wagon; the Lookout upgrades only to the Gun Tower. **The Lookout requires the Ti
 ### 7.2 Building table
 
 All buildings have **Fortified** armour 5 (scout towers 2; rules.md §8) and 14 m sight (towers excepted). Footprints are in 0.5 m cells
-(`architecture.md`: hall 10×10, barracks 8×8, farm 4×4, tower 4×4).
+and follow the art bible §1.3 class sizes (decided 2026-10-19; the sim footprint equals the mesh width): hall 16×16 (8 m); production,
+altar, shop and research 12×12 (6 m); supply 8×8 (4 m); tower 4×4 (2 m).
 
 | id | Building | Role | Requires | Gold | Lumber | Time (s) | HP | Armour | Footprint | Food | Function | Slice |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `kingdom_moot_hall` | Moot Hall | Main hall, T1 | — | 400 | 200 | 170 | 1550 | 5 | 10×10 | +12 | Trains Hodmen; **Levy Horn**; **Lay Down Flails (all)**; gold and lumber drop-off | **[SLICE]** |
-| `kingdom_walled_burg` | Walled Burg | Main hall, T2 (upgrade) | Moot Hall, **Oath Hall** | +310 | +200 | 130 | 2050 | 5 | 10×10 | +14 | Unlocks tier 2 and hero 2 | **[SLICE]** |
-| `kingdom_crown_burg` | Crown Burg | Main hall, T3 (upgrade) | Walled Burg, Oath Hall, Foundry | +350 | +220 | 140 | 2600 | 6 | 10×10 | +16 | Unlocks tier 3 and hero 3 | *later* |
-| `kingdom_croft` | Croft | Supply | — | 95 | 20 | 38 | 500 | 5 | 4×4 | +7 | Food | **[SLICE]** |
-| `kingdom_oath_hall` | Oath Hall | Hero altar | — | 175 | 45 | 60 | 900 | 5 | 6×6 | — | Trains and revives heroes. Heroes swear on an iron wheel set in the floor | **[SLICE]** |
-| `kingdom_drill_yard` | Drill Yard | Barracks | — | 160 | 55 | 60 | 1350 | 5 | 8×8 | — | Pavisier, Hookgunner, Ironrider; their research | **[SLICE]** |
-| `kingdom_timber_yard` | Timber Yard | Lumber drop-off and masonry | — | 125 | 0 | 55 | 1000 | 5 | 8×8 | — | **Lumber drop-off**; masonry and lumber research; **enables towers**. Build it at the tree line | **[SLICE]** (Lime Mortar only) |
-| `kingdom_foundry` | Foundry | Weapons and armour smithy | — | 150 | 50 | 65 | 1200 | 5 | 6×6 | — | Weapon, powder and armour lines | **[SLICE]** |
-| `kingdom_collegium` | Collegium | Caster hall | Walled Burg | 160 | 120 | 65 | 1050 | 5 | 8×8 | — | Casters; Journeyman Papers and Guild Seal | **[SLICE]** (Linden Sister only) |
-| `kingdom_wainwright_yard` | Wainwright Yard | Siege workshop | Walled Burg, Foundry | 140 | 130 | 60 | 1200 | 5 | 8×8 | — | Bombard Wagon, Brass Kestrel, Wall Wagon | **[SLICE]** |
-| `kingdom_stork_loft` | Stork Loft | Air roost | Walled Burg, Timber Yard | 150 | 140 | 60 | 1150 | 5 | 8×8 | — | Netcaster, Stork Rider. Visual: a tall timber tower crowned with a huge stork nest | *later* |
-| `kingdom_curio_cabinet` | Curio Cabinet | Faction shop | — | 130 | 30 | 60 | 480 | 5 | 6×6 | — | Sells items (§7.4) | **[SLICE]** |
+| `kingdom_moot_hall` | Moot Hall | Main hall, T1 | — | 400 | 200 | 170 | 1550 | 5 | 16×16 | +12 | Trains Hodmen; **Levy Horn**; **Lay Down Flails (all)**; gold and lumber drop-off | **[SLICE]** |
+| `kingdom_walled_burg` | Walled Burg | Main hall, T2 (upgrade) | Moot Hall, **Oath Hall** | +310 | +200 | 130 | 2050 | 5 | 16×16 | +14 | Unlocks tier 2 and hero 2 | **[SLICE]** |
+| `kingdom_crown_burg` | Crown Burg | Main hall, T3 (upgrade) | Walled Burg, Oath Hall, Foundry | +350 | +220 | 140 | 2600 | 6 | 16×16 | +16 | Unlocks tier 3 and hero 3 | *later* |
+| `kingdom_croft` | Croft | Supply | — | 95 | 20 | 38 | 500 | 5 | 8×8 | +7 | Food | **[SLICE]** |
+| `kingdom_oath_hall` | Oath Hall | Hero altar | — | 175 | 45 | 60 | 900 | 5 | 12×12 | — | Trains and revives heroes. Heroes swear on an iron wheel set in the floor | **[SLICE]** |
+| `kingdom_drill_yard` | Drill Yard | Barracks | — | 160 | 55 | 60 | 1350 | 5 | 12×12 | — | Pavisier, Hookgunner, Ironrider; their research | **[SLICE]** |
+| `kingdom_timber_yard` | Timber Yard | Lumber drop-off and masonry | — | 125 | 0 | 55 | 1000 | 5 | 12×12 | — | **Lumber drop-off**; masonry and lumber research; **enables towers**. Build it at the tree line | **[SLICE]** (Lime Mortar only) |
+| `kingdom_foundry` | Foundry | Weapons and armour smithy | — | 150 | 50 | 65 | 1200 | 5 | 12×12 | — | Weapon, powder and armour lines | **[SLICE]** |
+| `kingdom_collegium` | Collegium | Caster hall | Walled Burg | 160 | 120 | 65 | 1050 | 5 | 12×12 | — | Casters; Journeyman Papers and Guild Seal | **[SLICE]** (Linden Sister only) |
+| `kingdom_wainwright_yard` | Wainwright Yard | Siege workshop | Walled Burg, Foundry | 140 | 130 | 60 | 1200 | 5 | 12×12 | — | Bombard Wagon, Brass Kestrel, Wall Wagon | **[SLICE]** |
+| `kingdom_stork_loft` | Stork Loft | Air roost | Walled Burg, Timber Yard | 150 | 140 | 60 | 1150 | 5 | 12×12 | — | Netcaster, Stork Rider. Visual: a tall timber tower crowned with a huge stork nest | *later* |
+| `kingdom_curio_cabinet` | Curio Cabinet | Faction shop | — | 130 | 30 | 60 | 480 | 5 | 12×12 | — | Sells items (§7.4) | **[SLICE]** |
 | `kingdom_lookout` | Lookout | Scout tower | **Timber Yard** | 35 | 20 | 25 | 320 | 2 | 4×4 | — | Sight 25 / 18 m; no attack | **[SLICE]** |
 | `kingdom_gun_tower` | Gun Tower | Gun tower | Lookout | +75 | +45 | 35 | 520 | 5 | 4×4 | — | See §7.3 | **[SLICE]** |
 | `kingdom_bombard_rondel` | Bombard Rondel | Cannon tower | Lookout, Wainwright Yard | +100 | +100 | 40 | 520 | 5 | 4×4 | — | See §7.3 | *later* |
@@ -866,7 +876,8 @@ All buildings have **Fortified** armour 5 (scout towers 2; rules.md §8) and 14 
 Notes:
 
 - Hall upgrades keep the footprint. Food from the hall replaces, not adds: 12 → 14 → 16.
-- The architecture contract (10-cell hall, 5 m) governs until the slice playtest. The visual doc's 8 m hall proposal is an open question (§13).
+- Footprints are decided (art bible §1.3, 2026-10-19): the 8 m hall replaces the old 10-cell (5 m) architecture contract; the example in
+  `architecture.md` still needs that update (rules §23 #10). The slice map is re-validated with these sizes in M1 (slice-plan §1.4).
 - The Croft uses the global structure armour 5 ("Crofts are sturdy" comes from their 500 HP and the Lime Mortar research, not an override).
 
 ### 7.3 Towers (upgrade paths are exclusive: a Lookout becomes one of three)
@@ -878,15 +889,15 @@ Notes:
 | Bombard Rondel | Siege | 70–86, splash 1.25 m full / 2.5 m half | 2.6 | 12.5 (minimum 2) | G | A squat round stone **rondel** (a drum-shaped artillery tower) with a bronze barrel in an embrasure |
 | Assay Tower | Arcane | 13–15 | 1.6 | 10.0 | G+A | **Each hit interrupts channelling** and adds **+1 s** to every ability cooldown the target currently has running (abilities that are ready are unaffected). True sight 9.4 m. Visual: a slim tower with a silver weighing-scale finial |
 
-### 7.4 Curio Cabinet items (faction shop; the first hero's free item is the Homeward Horn)
+### 7.4 Curio Cabinet items (faction shop; the first hero's free item is the Way-Home Horn)
 
 | Item | Hall tier | Cost | Stock / restock | Effect | Slice |
 |---|---|---|---|---|---|
-| Homeward Horn | T1 | 300 g | 2 / 90 s | **Target a point or an own finished hall** (minimap clicks work; hotkey twice = highest-tier hall). Blow it for **5 s** (rules.md §6.8: enemy stuns, silences and damage do not stop it; any order you give the hero does), then the hero and **up to 23 of your own non-structure units within 9.4 m** appear beside your finished hall nearest that point | **[SLICE]** |
+| Way-Home Horn (`item_way_home_horn`) | T1 | 300 g | 2 / 90 s | **Target a point or an own finished hall** (minimap clicks work; hotkey twice = highest-tier hall). Blow it for **5 s** (rules.md §6.8: enemy stuns, silences and damage do not stop it; any order you give the hero does), then the hero and **up to 23 of your own non-structure units within 9.4 m** appear beside your finished hall nearest that point | **[SLICE]** |
 | Linden Salve | T1 | 135 g | 3 / 60 s | +240 HP at once (`heal_instant`) | **[SLICE]** |
 | Sage's Tincture | T1 | 115 g | 3 / 60 s | +140 mana at once (`mana_instant`) | **[SLICE]** |
 | Tin Watchman | T1 | 60 g | 3 / 45 s | Places a tiny clockwork ward: 10 m vision for 180 s (`place_ward`) | **[SLICE]** |
-| Tailor's Chalk (`item_tailors_chalk`) | T2 | 70 g | 2 / 60 s | Reveals invisible units within 9 m for 15 s (`reveal_invisible_area`) | **[SLICE]** |
+| Tailor's Chalk (`item_tailors_chalk`) | T2 | 70 g | 2 / 60 s | Reveals invisible units within 9 m for 15 s (`reveal_invisible_area`). VFX: the hero snaps a chalked tailor's line that marks the 9 m ring; revealed units show white tacking-stitch outlines; never a thrown powder, dust cloud or puff (art bible §2.3). Sound `it_chalk_line` | **[SLICE]** |
 | Folding Pavise | T2 | 100 g | 2 / 90 s | Unfolds a 3 m wooden barricade (6×1 cells, 300 HP) for 30 s. Blocks pathing | *later* |
 | Lookout in a Crate | T3 | 150 g | 1 / 120 s | Unfolds a finished Lookout at a point within 6 m in 5 s (obeys normal placement rules) | *later* |
 
@@ -907,14 +918,14 @@ heroes add Learn **O** and one mnemonic letter per ability (§6.1; Heroes row). 
 | Flail Levy | Lay Down the Flail **D** |
 | Moot Hall / Walled Burg / Crown Burg | Hodman **H**, Levy Horn **L**, Lay Down Flails (all) **D**, Upgrade to the next tier **U**, Rally **R** |
 | Oath Hall | Wheel Marshal **M**, Orrery Sage **O**, Flail Hetman **H**, Firewright **F** (a dead hero's button becomes Revive in place), Rally **R** |
-| Drill Yard | Pavisier **P**, Hookgunner **G**, Ironrider **I**, Pavise Drill **D**, Drawn Barrels **B**, Couched Lance **L**, Heavy Remounts **E**, Rally **R** |
+| Drill Yard | Pavisier **P**, Hookgunner **G**, Ironrider **I**, Pavise Drill **D**, Drawn Barrels **B**, Couched Lance **L**, Heavy Remounts **E**, Burgher's Oath **O**, Rally **R** |
 | Timber Yard | Lime Mortar **M**, Bow Saws **S**, Felling Crews **F**, Ashlar Courses **A**, Iron Cramps **I**, Curfew Bells **C** |
 | Foundry | Tempered Blades **T**, Corned Powder **P**, Gothic Plate **G**, Quilted Gambesons **Q** |
 | Collegium | Linden Sister **L**, Lacewright **W**, Assayer **A**, Linden Journeyman Papers **J**, Linden Guild Seal **G**, Lacewright Journeyman Papers **U**, Lacewright Guild Seal **E**, Silver Seal **S**, Rally **R** |
 | Wainwright Yard | Bombard Wagon **B**, Brass Kestrel **K**, Wall Wagon **W**, Case Shot **C**, Signal Shells **S**, Spring Coils **P**, Hunting Stoop **H**, Wagon Chains **N**, Rally **R** |
 | Stork Loft | Netcaster **N**, Stork Rider **S**, Smoke Pall **P**, Pitch Firepots **F**, Long Flights **L**, Rally **R** |
 | Lookout | Gun Tower **G**, Bombard Rondel **B**, Assay Tower **A** |
-| Curio Cabinet | Homeward Horn **H**, Linden Salve **L**, Sage's Tincture **T**, Tin Watchman **W**, Tailor's Chalk **C**, Folding Pavise **F**, Lookout in a Crate **K** |
+| Curio Cabinet | Way-Home Horn **H**, Linden Salve **L**, Sage's Tincture **T**, Tin Watchman **W**, Tailor's Chalk **C**, Folding Pavise **F**, Lookout in a Crate **K** |
 | Unit abilities | Pavisier: Plant Pavise **Q**. Bombard Wagon: Attack Ground **G**, Signal Shell **Q**. Wall Wagon: Attack Ground **G**, Wagon Fort **Q**. Linden Sister: Herb Poultice **Q**, Smoke of Rue **W**, Linden Wreath **E**. Lacewright: Tangle Thread **Q**, Muslin Veil **W**, Lace Cocoon **E**. Assayer: Silver Seal **Q**. Netcaster: Weighted Net **Q**, Smoke Pall **W**. Brass Kestrel: Hunting Stoop **Q** |
 | Heroes (same letters on the Learn card) | Wheel Marshal: Linden Balm **L**, Brace the Wheel **B**, Measured Cadence **C**, The Wagon Ring **R**. Orrery Sage: Burning Lens **B**, Clockwork Halberdier **C**, Lucid Hours **L**, Hour Rewound **R**. Flail Hetman: Hurled Chain **C**, Threshing Sweep **T**, Chaff and Grain **G**, Wagon-Breaker Charge **B**. Firewright: Naphtha Flask **N**, Fuse Mark **F**, Incendiary Wadding **W**, Grand Bombard **B** |
 
@@ -964,14 +975,15 @@ override the 10 % default):
 | Drawn Barrels | T2 | 80 / 130 | 45 s | Hookgunner range 7.0 → 9.0 m | **[SLICE]** |
 | Couched Lance | T3 | 150 / 150 | 60 s | Ironrider charge passive | *later* |
 | Heavy Remounts | T3 | 125 / 150 | 50 s | Ironrider only: +100 HP, +1 armour | *later* |
+| Burgher's Oath (`kingdom_burghers_oath`) | T3 | 175 / 150 | 60 s | Every Pavisier becomes a **Sworn Pavisier** (the Pavisier mesh at 1.1× with a texture swap): +150 HP, +1 armour, +2 damage and **Close Order** (+2 armour while another Pavisier stands within 2.5 m). The T3 parity counterpart of the clans' Proving Rite | P1 (slice-plan E17) |
 
 **Collegium** (each caster trade has Journeyman Papers at T2 and a Guild Seal at T3, like a guild; Guild Seal ids `kingdom_<caster>_guild_seal`, e.g. `kingdom_linden_guild_seal`)
 
 | Upgrade | Requires | Cost | Time | Effect | Slice |
 |---|---|---|---|---|---|
 | Linden Sister: Journeyman Papers | T2 | 120 / 60 | 60 s | Smoke of Rue; +35 HP, +60 mana, +1 damage | **[SLICE]** |
-| Linden Sister: Guild Seal | T3 | 180 / 140 | 75 s | Linden Wreath; +35 HP, +60 mana, +1 damage | *later* |
-| Lacewright: Journeyman Papers | T2 | 120 / 60 | 60 s | Muslin Veil; same stat bonus | *later* |
+| Linden Sister: Guild Seal (`kingdom_linden_guild_seal`) | T3 | 180 / 140 | 75 s | Linden Wreath; +35 HP, +60 mana, +1 damage | P1 (slice-plan E17) |
+| Lacewright: Journeyman Papers | T2 | 120 / 60 | 60 s | Muslin Veil; same stat bonus | P1 (with the Lacewright) |
 | Lacewright: Guild Seal | T3 | 180 / 140 | 75 s | Lace Cocoon; same stat bonus | *later* |
 | Silver Seal | T2 | 80 / 100 | 45 s | Assayer area silence | *later* |
 
@@ -1035,7 +1047,7 @@ on Greenvale (neutrals §3.6).
 | 6:45 | 44 / 56 | Lookout → **Gun Tower**. Croft 7 |
 | 7:00 | 47 / 56 | **Bombard Wagons** ×2, **Drawn Barrels**, **Signal Shells** (50 / 50) |
 | 7:40 | 50 / 63 | Collegium done → **Linden Sisters** ×2. **Journeyman Papers** (Smoke of Rue) if the enemy leans on Wind at Your Back or Hail-Swifts |
-| 8:30–9:30 | 54–58 / 63 | Push: 2 heroes (levels 4–5), 4 Pavisiers, 4 Hookgunners, 2 Bombard Wagons, 2 Linden Sisters. Plant pavises against ranged; Signal Shell or Chalk any Dust Veil; siege the expansion. Level-2 Tempered Blades or Corned Powder during the push. Accept the first upkeep step (51+ food) only for a decisive push. The push leaves between 8:30 and 9:30, depending on creep gold |
+| 8:30–9:30 | 54–58 / 63 | Push: hero 1 at level 4 and hero 2 at level 3 (3–4 and 2–3 when both players contest the shared camps; neutrals §3.6, slice-plan §1.11), 4 Pavisiers, 4 Hookgunners, 2 Bombard Wagons, 2 Linden Sisters. Plant pavises against ranged; Signal Shell or Chalk any Dust Veil; siege the expansion. Level-2 Tempered Blades or Corned Powder during the push. Accept the first upkeep step (51+ food) only for a decisive push. The push leaves between 8:30 and 9:30, depending on creep gold |
 
 **Variants:**
 
@@ -1064,9 +1076,10 @@ on Greenvale (neutrals §3.6).
 | Heroes | **Wheel Marshal** (STR tank/support), **Firewright** (INT fire; the ultimate reuses the Bombard mesh) | 2 |
 | Buildings | Moot Hall (→ Walled Burg), Croft, Oath Hall, Drill Yard, **Timber Yard** (lumber drop-off, tower gate), Foundry, **Collegium**, Wainwright Yard, **Curio Cabinet** (faction shop: recall, salves, detection), Lookout (→ Gun Tower) | 10 |
 | Research | Foundry 4 lines × 2 levels, Pavise Drill, Drawn Barrels, Case Shot, Signal Shells, Lime Mortar, Linden Journeyman Papers | 14 |
-| Items (Curio Cabinet) | Homeward Horn, Linden Salve, Sage's Tincture, Tin Watchman (T1); Tailor's Chalk (T2) | 5 |
+| Items (Curio Cabinet) | Way-Home Horn, Linden Salve, Sage's Tincture, Tin Watchman (T1); Tailor's Chalk (T2) | 5 |
 | Detection | Signal Shell (Bombard Wagon), Tailor's Chalk (shop, T2), and the neutral Tattle-Burrs (Weighstall) | 3 sources |
 | Hall tiers | T1 and T2 only (2 hero slots) | |
+| **P1** (next Higgsfield grant; slice-plan §2.3, E17) | Lacewright (Collegium caster 2), Flail Hetman (hero 3), the T3 data tier: Crown Burg, Burgher's Oath (Sworn Pavisier), Linden Guild Seal, Bow Saws → Felling Crews, level-3 Foundry lines; or the inn's Rat-Piper as hero 3 | |
 
 **Asset plan and Higgsfield credit estimate (balance 269.75 cr)**
 
@@ -1075,13 +1088,13 @@ on Greenvale (neutrals §3.6).
 | Hodman, Pavisier, Hookgunner (bipeds; weapons, hod and pavise as separate props) | Concept image (0.25 cr) → Tripo H3.1 image-to-3D (9 cr) → bpy auto-rig plus shared procedural clips | 3 × 9.25 ≈ 28 cr |
 | Wheel Marshal, Firewright (bipeds; wheel-shield, flail-free) | Same; Higgsfield rig plus 1 clip (8 cr) only if the bpy rig fails | 2 × 9.25 (+16) ≈ 19–35 cr |
 | Bombard Wagon | Cart, wheels and barrel built procedurally in bpy (lathe plus boxes) with AI 2D textures; crew = Hodman mesh in kettle hats | ≈ 1 cr |
-| Linden Sister | Like the bipeds (slice-plan B16 `kingdom.caster`, now **P0**) | ≈ 9.25 cr |
+| Linden Sister | Like the bipeds (slice-plan B16, P0; made, ledger #19–#20) | ≈ 9.25 cr |
 | Moot Hall + Walled Burg | One AI hero building (9 cr); T2 = bpy kitbash (stone plinth, wagon ring, taller dome) | ≈ 10 cr |
 | Croft, Oath Hall, Drill Yard, Timber Yard, Foundry, Collegium, Wainwright Yard, Curio Cabinet, Lookout / Gun Tower | **Procedural half-timber kit** in bpy (plaster box, beam trims, tile roof, stepped gable, onion dome, scaffold) with AI-painted textures | ≈ 3 cr |
 | Icons (about 45: units, abilities, research, 5 items, new buildings) | Higgsfield images (0.25 cr each) or Krea 2 Medium (9 CU each) | ≈ 11.25 cr or ≈ 405 CU |
 | **Total** | | **≈ 80–100 Higgsfield cr** (leaves room for the clans faction and retries) |
 
-Audio: about 162 lines (§3.3) plus about 15 faction SFX through Krea (≈ 70 CU for SFX; TTS cost to be probed).
+Audio: 181 recorded lines (§3.3; 123 at P0, slice-plan §2.12) plus about 15 faction SFX through Krea (≈ 70 CU for SFX; TTS cost to be probed).
 
 ---
 
@@ -1107,8 +1120,7 @@ least one mechanic of its own, and the checks against *Warhammer* and *Age of Em
 
 ## 13. Open questions and tuning flags
 
-1. **Hall footprint:** 10×10 cells (architecture contract) or 16×16 (the visual doc's 8 m hall)? Decide after the first
-   in-engine scale test. The rest of the building footprints scale with it.
+1. ~~Hall footprint~~ **Closed (2026-10-19):** 16×16 cells (8 m), with the art bible §1.3 class sizes for every other building (§7.2).
 2. **Croft +7 food at 95 gold:** check the 0–3 minute supply timing in playtests. If players get supply-blocked at the hero, use +6 food at 85 gold.
 3. **Levy Horn range (now the default):** Take Up the Flail only within 22 m of a finished hall, and a Levy more than 30 m from every
    friendly hall lays down its flail after 5 s (§4). Tune 22 / 30 m and the 5 s grace if playtests show either "levy rushes" or a horn too
@@ -1123,8 +1135,8 @@ least one mechanic of its own, and the checks against *Warhammer* and *Age of Em
 8. **Clans interaction:** counters and timings in §9 and §10 assume a melee-heavy opponent with beast riders. Re-tune against `clans.md`
    (the Uncut's Dust Veil, Gustcaller buffs, Skymirror's Hail-Swifts, Sling-Cart range) after the first AI-vs-AI runs.
 9. **Line check:** before recording, check every line in §3.2 against the WC3 quote pages (audio §3.2) and the shelved concept doc, so nothing echoes either.
-10. **Wheel Marshal sustain (tuning flags):** Linden Balm cannot target the Marshal herself (default). If solo creeping proves too
-    punishing, the fallback is a self-heal at 50 %. Measured Cadence replaced the Steady Ranks regeneration aura; if it tests badly, the
+10. **Wheel Marshal sustain (tuning flags):** Linden Balm now targets the Marshal herself at 50 % effect (the old fallback is the default
+    since 2026-10-19, slice-plan M1). Measured Cadence replaced the Steady Ranks regeneration aura; if it tests badly, the
     fallback is Steady Ranks at +0.75 / 1.5 / 2.25 HP/s, ×1.5 (not ×2) below 40 % HP.
 11. **Case Shot slow** (−25 % for 3 s on every splash victim, near-permanent on a clump at 3.4 s per shot) may be strong against the
     melee-heavy clans. Tune to 2 s first.

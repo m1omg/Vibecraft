@@ -123,7 +123,7 @@ class Mat:
 
     def __init__(self, key, image, repeat=2.0, size=512, alpha=False, cutoff=0.5, double=False,
                  sway=False, emissive=False, emissive_factor=(1.0, 1.0, 1.0), roughness=1.0, tag="",
-                 base_factor=(1.0, 1.0, 1.0), emissive_image=None):
+                 base_factor=(1.0, 1.0, 1.0), emissive_image=None, extras=None, uv_kind="tiled"):
         self.key = key
         self.image = image
         self.repeat = repeat          # metres per texture repeat (box / cylinder projection)
@@ -138,6 +138,10 @@ class Mat:
         self.tag = tag                # name suffix: SWAY, GLOW, LAMP, WATER ...
         self.base_factor = base_factor
         self.emissive_image = emissive_image   # optional separate emissive texture (callable -> PIL)
+        self.extras = dict(extras or {})       # merged into the glTF material extras
+        # "tiled": world-scale box / grain projection, texel density = size / repeat (checked by the kit);
+        # "atlas": cards, decals, painted atlases and unique paint (density set per part, not checked)
+        self.uv_kind = uv_kind
 
     def gltf_name(self, asset_id):
         tags = []
@@ -192,12 +196,59 @@ def make_seamless(im, blend=0.125, flatten="auto"):
     return big.crop((ox, oy, ox + W, oy + H))
 
 
-def swatch(path, seamless=True, tint=None, sat=None, gamma=None, blend=0.125):
-    """Load a painted swatch (optionally made seamless in memory, tinted / desaturated)."""
+def hsv_limit(rgb, scale=1.0, cap=None, knee=0.06):
+    """Scale the HSV saturation of an (..., 3) float image by `scale` and soft-clip it at `cap`,
+    keeping hue and value (max channel). Used to hold albedo under the bible §1.4 caps."""
+    rgb = np.asarray(rgb, np.float32)
+    mx = rgb.max(axis=-1, keepdims=True)
+    mn = rgb.min(axis=-1, keepdims=True)
+    s = (mx - mn) / np.maximum(mx, 1e-5)
+    s2 = s * scale
+    if cap is not None:
+        k0 = cap - knee
+        s2 = np.where(s2 > k0, cap - knee * np.exp(-(s2 - k0) / knee), s2)
+    f = np.where(s > 1e-5, s2 / np.maximum(s, 1e-5), 1.0)
+    return mx - (mx - rgb) * f
+
+
+def value_compress(rgb, knee=0.6, slope=0.55):
+    """Compress HSV value above `knee` (narrower highlight range, fewer sparkly texels)."""
+    rgb = np.asarray(rgb, np.float32)
+    v = rgb.max(axis=-1, keepdims=True)
+    v2 = np.where(v > knee, knee + (v - knee) * slope, v)
+    return rgb * (v2 / np.maximum(v, 1e-5))
+
+
+def sat_stats(im):
+    """(median, p95) HSV saturation of the opaque texels of a PIL image."""
+    a = np.asarray(im.convert("RGBA"), np.float32) / 255.0
+    rgb = a[..., :3][a[..., 3] > 0.5]
+    mx, mn = rgb.max(axis=1), rgb.min(axis=1)
+    s = np.where(mx > 1e-4, (mx - mn) / np.maximum(mx, 1e-4), 0.0)
+    return float(np.median(s)), float(np.percentile(s, 95))
+
+
+def swatch(path, seamless=True, tint=None, sat=None, gamma=None, blend=0.125, s_scale=None, s_cap=None,
+           crop=None, tile=1, rot90=False):
+    """Load a painted swatch (optionally cropped to a sub-rect (fractions x0, y0, x1, y1), made
+    seamless in memory, tiled `tile` times across, rotated 90 deg, tinted / desaturated, saturation-capped)."""
     def fn():
         im = load_rgb(path).convert("RGB")
+        if crop is not None:
+            W, H = im.size
+            im = im.crop((int(crop[0] * W), int(crop[1] * H), int(crop[2] * W), int(crop[3] * H)))
         if seamless:
             im = make_seamless(im, blend=blend)
+        if tile > 1:
+            t = Image.new("RGB", (im.width * tile, im.height))
+            for k in range(tile):
+                t.paste(im, (k * im.width, 0))
+            im = t
+        if im.width != im.height:
+            n = max(im.width, im.height)
+            im = im.resize((n, n), Image.LANCZOS)
+        if rot90:
+            im = im.transpose(Image.Transpose.ROTATE_90)
         a = np.asarray(im, np.float32) / 255.0
         if sat is not None:
             lum = a.mean(axis=2, keepdims=True)
@@ -206,9 +257,11 @@ def swatch(path, seamless=True, tint=None, sat=None, gamma=None, blend=0.125):
             a = a * np.asarray(tint, np.float32)
         if gamma is not None:
             a = np.power(np.clip(a, 0, 1), gamma)
+        if s_scale is not None or s_cap is not None:
+            a = hsv_limit(np.clip(a, 0, 1), s_scale or 1.0, s_cap)
         return Image.fromarray((np.clip(a, 0, 1) * 255 + 0.5).astype(np.uint8), "RGB")
     return lambda: cached_image(("swatch", path, seamless, tuple(tint) if tint is not None else None, sat,
-                                 gamma, blend), fn)
+                                 gamma, blend, s_scale, s_cap, tuple(crop) if crop else None, tile, rot90), fn)
 
 
 def encode_image(mat: Mat):
@@ -279,9 +332,14 @@ def dilate_rgb(im: Image.Image, iterations=12):
     return to_img(out, "RGBA")
 
 
-def foliage_atlas(path, hue_tint=None, sat=1.0, val=1.0, blossom=None, seed=1, size=1024):
+def foliage_atlas(path, hue_tint=None, sat=1.0, val=1.0, blossom=None, seed=1, size=1024, s_scale=None,
+                  s_cap=None, v_knee=None, blossom_n=None, blossom_r=(2.2, 3.6), blossom_cluster=1,
+                  blossom_spread=0.0, blossom_centre=(232, 206, 110)):
     """Leaf-clump atlas (2x2 clumps) from the painted foliage cards, recoloured, optional
-    blossom specks (list of hex colours), colour padded into the transparent area."""
+    blossom specks (list of hex colours; `blossom_cluster` florets per speck spread over
+    `blossom_spread` px so the specks read at RTS distance), saturation scaled / capped (bible
+    §1.4: foliage <= 60 %), highlight values compressed above `v_knee`, colour padded into the
+    transparent area."""
     def fn():
         im = load_rgb(path).convert("RGBA")
         if im.size != (size, size):
@@ -293,13 +351,17 @@ def foliage_atlas(path, hue_tint=None, sat=1.0, val=1.0, blossom=None, seed=1, s
         if hue_tint is not None:
             rgb = rgb * np.asarray(hue_tint, np.float32)
         rgb = rgb * val
+        if v_knee is not None:
+            rgb = value_compress(np.clip(rgb, 0, 1), v_knee, 0.5)
+        if s_scale is not None or s_cap is not None:
+            rgb = hsv_limit(np.clip(rgb, 0, 1), s_scale or 1.0, s_cap)
         if blossom:
             rng = np.random.default_rng(seed)
             H, W = al.shape[:2]
             layer = Image.new("RGBA", (W * 2, H * 2), (0, 0, 0, 0))
             d = ImageDraw.Draw(layer)
             alpha_np = al[..., 0]
-            n = int(W * H / 900)
+            n = blossom_n if blossom_n is not None else int(W * H / 900)
             for _ in range(n):
                 x, y = rng.integers(8, W - 8), rng.integers(8, H - 8)
                 if alpha_np[y, x] < 0.95:
@@ -309,13 +371,21 @@ def foliage_atlas(path, hue_tint=None, sat=1.0, val=1.0, blossom=None, seed=1, s
                     continue
                 col = blossom[rng.integers(0, len(blossom))]
                 c = tuple(int(v * 255) for v in hexcol(col)) + (255,)
-                r = rng.uniform(2.2, 3.6) * 2
-                for k in range(5):
-                    ang = k * 1.2566 + rng.uniform(0, 1.2)
-                    px, py = 2 * x + math.cos(ang) * r * 0.9, 2 * y + math.sin(ang) * r * 0.9
-                    d.ellipse([px - r * 0.7, py - r * 0.7, px + r * 0.7, py + r * 0.7], fill=c)
-                d.ellipse([2 * x - r * 0.45, 2 * y - r * 0.45, 2 * x + r * 0.45, 2 * y + r * 0.45],
-                          fill=(232, 206, 110, 255))
+                sh = tuple(int(v * 255 * 0.78) for v in hexcol(col)) + (255,)
+                for j in range(blossom_cluster):
+                    fx = x + (rng.normal(0, blossom_spread) if j else 0.0)
+                    fy = y + (rng.normal(0, blossom_spread) if j else 0.0)
+                    if not (4 < fx < W - 4 and 4 < fy < H - 4) or alpha_np[int(fy), int(fx)] < 0.9:
+                        continue
+                    r = rng.uniform(*blossom_r) * 2
+                    for k in range(5):
+                        ang = k * 1.2566 + rng.uniform(0, 1.2)
+                        px, py = 2 * fx + math.cos(ang) * r * 0.9, 2 * fy + math.sin(ang) * r * 0.9
+                        d.ellipse([px - r * 0.7, py - r * 0.7 + r * 0.25, px + r * 0.7, py + r * 0.7 + r * 0.25],
+                                  fill=sh)
+                        d.ellipse([px - r * 0.7, py - r * 0.7, px + r * 0.7, py + r * 0.7], fill=c)
+                    d.ellipse([2 * fx - r * 0.45, 2 * fy - r * 0.45, 2 * fx + r * 0.45, 2 * fy + r * 0.45],
+                              fill=tuple(blossom_centre) + (255,))
             layer = layer.resize((W, H), Image.LANCZOS)
             la = np.asarray(layer, np.float32) / 255.0
             m = la[..., 3:] * al
@@ -323,7 +393,8 @@ def foliage_atlas(path, hue_tint=None, sat=1.0, val=1.0, blossom=None, seed=1, s
         out = np.concatenate([np.clip(rgb, 0, 1), al], axis=2)
         return dilate_rgb(to_img(out, "RGBA"), 24)
     return lambda: cached_image(("foliage", path, tuple(hue_tint) if hue_tint is not None else None, sat, val,
-                                 tuple(blossom) if blossom else None, seed, size), fn)
+                                 tuple(blossom) if blossom else None, seed, size, s_scale, s_cap, v_knee, blossom_n,
+                                 tuple(blossom_r), blossom_cluster, blossom_spread, tuple(blossom_centre)), fn)
 
 
 def _paint_strokes(W, H, strokes, ss=2):
@@ -631,7 +702,8 @@ class Part:
         self.mat = mat
         self.uv = uv
         self.smooth = smooth           # degrees for corner normals
-        self.nmode = "angle"           # 'angle' | 'sphere' | 'up'
+        self.nmode = "angle"           # 'angle' | 'sphere' | 'up' | 'fixed' (self.nfixed)
+        self.nfixed = (0.0, 0.0, 1.0)
         self.ncenter = None
         self.nblend = 0.85
         self.tint = np.ones((len(self.v), 3))
@@ -1325,6 +1397,8 @@ class Asset:
                 p.cn = nrm(rn[p.t] * 0.9 + p.cn * 0.1)
             elif p.nmode == "up":
                 p.cn = np.tile(np.array([0, 0, 1.0]), (len(p.t), 3, 1))
+            elif p.nmode == "fixed":
+                p.cn = np.tile(nrm(np.asarray(p.nfixed, float)), (len(p.t), 3, 1))
             else:
                 p.cn = corner_normals(p.v, p.t, p.smooth)
             # --- AO per vertex
@@ -1496,6 +1570,7 @@ def write_glb(path, aid, nodes, mats, extras):
             ex["uv2"] = "x=sway weight (0), y=normalized height"
         if m.tag:
             ex["role"] = m.tag
+        ex.update(m.extras)
         md["extras"] = ex
         materials.append(md)
 

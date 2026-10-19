@@ -16,6 +16,10 @@ Emerald vs clans Royal Blue; the worker completion id stays `built` against the 
 every classic value), `controls_parity` and flying units; the creep flow is planned for contested shared camps; a third Gold Seam sits
 in the Standing Ring; P1 adds a second caster and a third hero per side; P0 annoyed runs grow to 5 lines (Krea P1 cap 294 CU).*
 
+*Revision 5 (2026-10-19, synthesis; `gdd.md`): role placeholders replaced by the final names; the clans rope-holder declined (one clans
+builder, Hod Chain kept); footprints follow the art bible §1.3 (8 m halls, 6 m seams, stall and inn); the voice table follows the art
+bible §8.2 counts (371 lines); the §7 follow-ups carry a status; B7–B11 heights follow clans §2.1.*
+
 **Read with:** `docs/research/ip-safety.md` (§0, §2, §3.2), `docs/research/gameplay-mechanics.md` (§11, §13),
 `docs/research/README.md`, `docs/research/visual-art-direction.md` (§1.4, §3, §7), `docs/research/audio-direction.md` (§3–§4),
 `docs/research/ai-asset-pipeline.md` (§2, §3), `docs/design/rules.md`, `docs/design/neutrals.md`, the faction docs
@@ -26,13 +30,14 @@ in the Standing Ring; P1 adds a second caster and a third hero per side; P0 anno
 - The point-symmetric generator map (`MapGenerator.test_map`) *as the slice map*. It stays as a test fixture.
 - Neutrals §3.6 *positions and distances*, where they differ (listed in §1.14). Neutrals keeps ownership of camp templates, items and creep stats.
 
-**Naming convention in this doc.** Faction units and buildings are named by **role**: `kingdom.worker`, `clans.hero1` and so on.
-The synthesis step substitutes display names. Appendix A maps each role to the working name in today's faction docs.
+**Naming convention in this doc.** Faction units, heroes and buildings carry their **final display names** (substituted for the old role
+placeholders at synthesis, 2026-10-19). Data ids are in `docs/design/slice-content.json`; Appendix A keeps the role-slot → name index for
+scripts and tests that address units by role.
 Neutral names (creep families, Weighstall, Hale Spring) come from `neutrals.md`. "Greenvale" is the docs' name for the tileset, whose
 internal id is `gv`; players see it as **Downland** (§1.12).
 
 **Hero 1 / hero 2.** In §1 and §4, "hero 1" and "hero 2" mean the **first and second hero trained**. In §2 and Appendix A the role ids
-(`kingdom.hero1`, `clans.hero2` …) are fixed kits. Both slice heroes are offered at the altar from T1 and the free token covers either,
+(the kingdom's Wheel Marshal and Firewright, the clans' Uncut and Skymirror) are fixed kits. Both slice heroes are offered at the altar from T1 and the free token covers either,
 so either kit can be hero 1 (clans §10: the Uncut first 60 %, the Skymirror 40 %). The route timings in §1.11 are written for a melee
 hero 1; §1.13 `creep_route` runs both first-hero choices per faction.
 
@@ -50,7 +55,7 @@ hero 1; §1.13 `creep_route` runs both first-hero choices per faction.
 | **Map** | **Wether Downs**. Greenvale tileset (shown to players as Downland), 96 × 96 tiles of 2 m (192 m square), 2 players. Mirror-symmetric across the NW–SE diagonal: P1 starts SW, P2 starts NE. Four test lanes (shortest through the basin, centre via the shop, NW spring flank, SE ring flank). **16 creep camps** (8 green, 7 amber, 1 red; 11 sleep at night); three of the shared camps are contested by both players' heroes (§1.11). **5 Gold Seams**: main and natural per player, plus a contested third inside the Standing Ring. Central Weighstall; NW Hale Spring and Cairn Gate; SE Standing Ring and Coaching Inn |
 | **Rush distance** | Main hall to main hall is **206 m** of path: about 49 s for infantry at 4.2 m/s and 69 s for workers. Main to natural is 57.5 m of path |
 | **3D policy** | Characters and both signature halls: **Higgsfield Tripo H3.1** (9 cr). Done for 12 characters and both halls (ledger #10, #20, #24); the Sootcoat creep (B12) is the last mesh. Everything else is **procedural bpy with AI-painted textures** |
-| **Rigging** | All 12 characters are rigged with the **free CPU auto-rigger** (`tools/autorig.py`, commit 2bb913d) on the library skeleton (the `kingdom.infantry` Higgsfield rig). Higgsfield is used only to buy library clips on that rig (8 cr each; 7 owned, 2 more at P0). Secondary motions are procedural keyframes |
+| **Rigging** | All 12 characters are rigged with the **free CPU auto-rigger** (`tools/autorig.py`, commit 2bb913d) on the library skeleton (the Pavisier's Higgsfield rig). Higgsfield is used only to buy library clips on that rig (8 cr each; 7 owned, 2 more at P0). Secondary motions are procedural keyframes |
 | **Budgets (derived from ledger #24, 2026-10-17)** | Higgsfield **≈ 77.5 cr** (reserve 20 → **57.5 spendable**). Krea **≈ 1,500 CU** (reserve 150 → **1,350 spendable**). Revision 2's live readings were 228.5 cr and 1,529.6 CU; ledger #15–#24 spent 151 cr and 29.6 CU since. Ledger #25 records the next live reading |
 | **P0 spend plan** | Higgsfield **45.0 cr** still to spend (B12, 2 clips, textures, icons), leaving a **12.5 cr margin** that a fixed fallback ladder spends (§2.15). Krea **1,056 CU** (style anchors, UI frames, P0 audio), leaving a **294 CU P1 cap**. P1 audio is funded only if the M1 audio probes land at estimate. The second caster and third hero per side (P1) come from the next Higgsfield grant (§2.3) |
 | **Banned generators** | Every Krea 3D model except TRELLIS v1 (measured 148–222 CU each). Higgsfield Meshy textured (30 cr quoted) and the Higgsfield "mesh + rig + clip" bundle (38 cr quoted; the same result costs 9 + 8 = 17 cr piecewise) |
@@ -113,7 +118,7 @@ look-alike review (M1 acceptance `map_lookalike`, §4.1) checks it before the AI
 | Cliff levels | 0 (basin, spring dell), 1 (fields, naturals, flanks), 2 (mains, knolls). `CLIFF_H` 1.75 m today; the research recommends 2.0 m (README §8). The map works with either |
 | Ramps | 2 tiles long, one level per ramp (architecture §7). **Every ramp is 4 tiles wide (8 m)**, the main ramps included |
 | Symmetry | Mirror across the NW–SE diagonal: (x, z) → (z, x). P1 (SW) maps to P2 (NE). The NW corner, the centre and the SE corner lie on the axis and map to themselves |
-| Hall pads | 8 × 8 m reserved per hall. This covers both the 5 m (10-cell) architecture footprint and the 8 m footprint in the art and clans docs (kingdom §13 Q1). The map script takes a parameter **`hall_footprint_m` = F** and **derives every hall centre from it**, so the seam gap is exactly **6.0 m edge to edge** for either footprint: hall centre = seam edge + 6.0 + F/2 along the seam-to-hall axis. P1 main: x = 20 (seam east edge) + 6.0 + F/2 = **30.0 for F = 8 m, 28.5 for F = 5 m** (P2 mirrored in z). Natural: z = 174 − 6.0 − F/2 = 164.0 / 165.5. The pad stays reserved at 8 × 8 m; a 5 m hall sits at its seam-side end, never at the pad centre. Worker trips, and so M1 #2, depend on this gap (≈ 8.6 gold/s at a 7.5 m gap) |
+| Hall pads | 8 × 8 m reserved per hall: the **decided** hall footprint is 16 × 16 cells = 8 m (art bible §1.3, 2026-10-19; F = 8 m), and the 5 m variant below is kept only so the layout script can still build the old test fixture. The map script takes a parameter **`hall_footprint_m` = F** and **derives every hall centre from it**, so the seam gap is exactly **6.0 m edge to edge** for either footprint: hall centre = seam edge + 6.0 + F/2 along the seam-to-hall axis. P1 main: x = 20 (seam east edge) + 6.0 + F/2 = **30.0 for F = 8 m, 28.5 for F = 5 m** (P2 mirrored in z). Natural: z = 174 − 6.0 − F/2 = 164.0 / 165.5. The pad stays reserved at 8 × 8 m; a 5 m hall sits at its seam-side end, never at the pad centre. Worker trips, and so M1 #2, depend on this gap (≈ 8.6 gold/s at a 7.5 m gap) |
 | Distances | "Straight" is centre to centre. "Path" is octile A* on the 2 m tile grid, respecting cliffs and ramps. The in-engine string-pulled path is about 3–6 % shorter |
 | Lanes | The four main-to-main routes used by the tests: **shortest**, **centre** (via the Weighstall), **NW** (via the Hale Spring) and **SE** (via the Standing Ring), each also tested in its mirrored copy (§1.10) |
 
@@ -220,10 +225,10 @@ P2 coordinates are P1's with x and z swapped. Axis features appear once.
 | Id | Landmark | P1 centre (m) | P2 centre (m) | Size / notes |
 |---|---|---|---|---|
 | H | Main hall (start location) | (30, 166) for F = 8 m; (28.5, 166) for F = 5 m | mirrored: (166, 30) / (166, 28.5) | 8 × 8 m pad reserved, level 2; centre derived from `hall_footprint_m` (§1.2). Camera starts here. 5 idle workers on a 1 m spacing between hall and seam |
-| M | Main Gold Seam, 12,000 | (18, 166) | (166, 18) | 4 × 4 m. **Gap 6.0 m** from the hall's real footprint, edge to edge (rules §3.3), for either F |
+| M | Main Gold Seam, 12,000 | (17, 166) | (166, 17) | 6 × 6 m (12 × 12 cells, art bible §1.3); its hall-facing edge stays at x = 20, so the centre moved 1 m from (18, 166) when the seam grew from 4 m. **Gap 6.0 m** from the hall's real footprint, edge to edge (rules §3.3), for either F |
 | R | Main ramp | (56, 154) | (154, 56) | 8 m wide; from level 1 up to 2. P1 ascends west; P2 ascends north |
 | N | Natural hall site | (80, 164) for F = 8 m; (80, 165.5) for F = 5 m | mirrored | 8 × 8 m pad, level 1; centre derived from F (§1.2) |
-| n | Natural Gold Seam, 8,000 | (80, 176) | (176, 80) | 6.0 m gap to the natural hall's real footprint |
+| n | Natural Gold Seam, 8,000 | (80, 177) | (177, 80) | 6 × 6 m; hall-facing edge at z = 174 (centre moved 1 m from (80, 176)); 6.0 m gap to the natural hall's real footprint |
 | D | Drystone Fold, amber 14, guard | (88, 172) | (172, 88) | 11.3 m from the natural pad centre, inside the 12 m guard radius. Never sleeps |
 | G | Charcoal Clamp, green 5 | (60, 176) | (176, 60) | Below the main cliff, about 19 m off the ramp-to-natural road. Sleeps at night |
 | T | Turnip Patch, green 8 | (32, 124) | (124, 32) | North of the P1 main's cliff, 13 m off the NW lane. Sleeps at night (`sleeps_override`, neutrals §3.3) |
@@ -234,15 +239,15 @@ P2 coordinates are P1's with x and z swapped. Axis features appear once.
 | P | Pond, deep, r 5 m | (40, 100) | (100, 40) | Geese; fireflies at night |
 | C1 | Copse, r 4 m | (66, 112) | (112, 66) | Blocks sight between the centre lane and the NW lane; the Collier's Hut stands at its east edge |
 | C2 | Copse, r 4 m | (126, 148) | (148, 126) | Breaks the SE lowland |
-| S | Weighstall + Smugglers' Den (amber 11) | (92, 92) | axis | 4 × 4 m stall on the basin's north-west side, 5.7 m from the basin centre. One Den creep 3.5 m out from each stall corner, facing out, `acquire_override` 6.5 m (neutrals §3.3) |
+| S | Weighstall + Smugglers' Den (amber 11) | (92, 92) | axis | 6 × 6 m stall (12 × 12 cells; was 4 × 4 m) on the basin's north-west side, 5.7 m from the basin centre. One Den creep 3.5 m out from each stall corner, facing out, `acquire_override` **7.2 m** for the bigger stall (neutrals §3.3). Re-check the lane clearances below in M1 (`camp_off_road`): each corner creep now stands about 1 m farther out |
 | B | Centre basin | (96, 96) | axis | Level 0, radius 20 m, four 8 m ramps (W, N, S, E). The S and E ramps carry the shortest route |
 | K1 | NW knoll | (76, 76) | axis | Level 2, radius 6 m. Ramps face S (toward P1) and E (toward P2) |
 | K2 | SE knoll | (116, 116) | axis | Level 2, radius 6 m. Ramps face W (toward P1) and N (toward P2) |
 | Q | Cairn Gate, amber 16 | (66, 66) | axis | Between K1 and the spring dell. Never sleeps. 23 m off the NW lane; 34 m from the Crow Field's nearest creep |
-| I | Coaching Inn, *The Muddy Lantern* | (128, 128) | axis | 5 × 5 m, door facing SE (away from the stall). 6.5 m from the K2 cliff base, 51 m from the stall, 29 m off the nearest lane. **Never guarded:** the nearest camp member stands 30.7 m from its footprint |
+| I | Coaching Inn, *The Muddy Lantern* | (128, 128) | axis | 6 × 6 m (12 × 12 cells; was 5 × 5 m), door facing SE (away from the stall). ≈ 6.0 m from the K2 cliff base, 51 m from the stall, ≈ 29 m off the nearest lane. **Never guarded:** the nearest camp member stands ≈ 30.2 m from its footprint |
 | SP | Hale Spring + Crow Field (amber 12) | (40, 40) | axis | A level-0 dell of radius 14 m. Ramps face S (P1) and E (P2) |
 | RG | Standing Ring (red 20, **guard mode**, 12 m) | (158, 158) | axis | Level-1 pocket of radius 14 m inside a tree ring 14–19 m out. 12 m gaps face W and N. The camp stands between the gaps and the seam, so the third expansion always costs the red fight |
-| RS | Ring Gold Seam, 8,000 (contested third) | (154, 154) | axis | 4 × 4 m on the axis. Its hall site sits on the axis to the SE, centre at 156 + 6.0/√2 + F/2 = **(164.2, 164.2) for F = 8 m, (162.7, 162.7) for F = 5 m**, so the corner-to-corner gap is 6.0 m. The hall centre is 8.8 m from the camp centre, inside the 12 m guard radius. The ring's SE tree arc is pushed out from 14–19 m to **17–22 m** so the pad fits (the border forest starts at 182 m) |
+| RS | Ring Gold Seam, 8,000 (contested third) | (153, 153) | axis | 6 × 6 m on the axis; its hall-facing corner stays at (156, 156), so the centre moved from (154, 154). Its hall site sits on the axis to the SE, centre at 156 + 6.0/√2 + F/2 = **(164.2, 164.2) for F = 8 m, (162.7, 162.7) for F = 5 m**, so the corner-to-corner gap is 6.0 m. The hall centre is 8.8 m from the camp centre, inside the 12 m guard radius. The ring's SE tree arc is pushed out from 14–19 m to **17–22 m** so the pad fits (the border forest starts at 182 m) |
 
 ### 1.5 Cliff levels and ramps (`MapData.add_ramp(rect_tiles, dir_ascending, low)`)
 
@@ -362,7 +367,7 @@ The kingdom is a little slower: the Pavisier and the Hookgunner move at 4.1 m/s 
 
 | Route | Straight | Path | s @ 3.0 | s @ 4.2 | s @ 4.5 | s @ 5.5 |
 |---|---|---|---|---|---|---|
-| Main hall → own Gold Seam (F = 8 m; 10.5 m for F = 5 m) | 12.0 | 12.0 | 4.0 | 2.9 | 2.7 | 2.2 |
+| Main hall → own Gold Seam (F = 8 m; 11.5 m for F = 5 m; the 6 m seam) | 13.0 | 13.0 | 4.3 | 3.1 | 2.9 | 2.4 |
 | Main hall → own ramp | 28.6 | 31.0 | 10.3 | 7.4 | 6.9 | 5.6 |
 | Main hall → natural hall site | 50.0 | **57.5** | 19.2 | 13.7 | 12.8 | 10.4 |
 | Main hall → Weighstall | 96.5 | 110.2 | 36.7 | 26.2 | 24.5 | 20.0 |
@@ -546,7 +551,7 @@ credits appear to be wiped (see Expiry below).
 - **ElevenLabs:** default voices expire on 31 Dec 2026.
 
 **Sunk to date (for the record):**
-- Higgsfield: 41.25 cr since the 269.75 cr baseline (41.5 cr including the dirt texture, ledger #6). That bought the `kingdom.infantry`
+- Higgsfield: 41.25 cr since the 269.75 cr baseline (41.5 cr including the dirt texture, ledger #6). That bought the Pavisier
   concept, mesh, rig and 4 clips.
 - Krea: 237 CU since the 1,766 CU baseline (the 222.22 CU legacy Tripo probe plus the 14.81 CU TRELLIS run). The earlier
   probes (ledger #1–#5, including both Krea text-to-3D runs) were charged before that baseline.
@@ -569,7 +574,7 @@ credits appear to be wiped (see Expiry below).
 
 **Status on 17 Oct (ledger #16–#20; commit 2bb913d).**
 - The concepts and Tripo H3.1 meshes for B1, B3–B11 and **B16** are made (2.75 + 99 cr).
-- All 12 characters, `kingdom.infantry` included, are rigged and animated with the **free CPU auto-rigger** (`tools/autorig.py`). It fits
+- All 12 characters, the Pavisier included, are rigged and animated with the **free CPU auto-rigger** (`tools/autorig.py`). It fits
   the library 24-bone skeleton, and `tools/build_slice_units.sh` rebuilds every unit from `assets_src/`.
 - Per-unit Higgsfield rigs are no longer bought. Each library clip is bought once on the library rig (8 cr, ledger #16–#18) and
   transferred to every unit.
@@ -577,31 +582,31 @@ credits appear to be wiped (see Expiry below).
 
 | # | Asset | Height | Tris / texture | Rig | Status / Higgsfield cr | Pri |
 |---|---|---|---|---|---|---|
-| B1 | `kingdom.worker` (Hodman). The levy form (`kingdom.levy`, the Flail Levy) is a prop swap (flail plus kettle hat as bpy props), not a new model. "Levy" is the role word in every id, clip and icon name (`kingdom.levy`, `arm_levy`, `kingdom_flail_levy_{128,64}.png`); the reference unit's name for this form is never used as an id | 1.25 m | 2.5k / 512² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
-| B2 | `kingdom.infantry` (Pavisier; `assets/models/units/kingdom_infantry.glb`, the library rig) | 1.75 m | 3.5k / 512² | Higgsfield (the library rig) | Done (sunk 41.25) | P0 ✓ |
-| B3 | `kingdom.ranged` (Hookgunner) | 1.75 m | 3.5k / 512² | Auto-rig | Done (0.25 + 9). Plays the throw clip until `attack_shoot` 104 is bought (§2.4) | P0 ✓ |
-| B4 | `kingdom.hero1` (Wheel Marshal; STR tank/support). **Weapon rules** (kingdom §2.6, squint risk Medium): the war-pick is a **one-handed** bpy prop (B21). Its **head is at most 0.35 × the haft length and has a visible curved beak**, so the 64 px black thumbnail never reads as a hammer. The wheel-shield is always held forward on the off arm. No two-handed swing, no ground slam (§2.4). **VFX rules:** no golden dome, halo, bubble or light pillar on Linden Balm or The Wagon Ring; Linden Balm shows drifting linden blossoms, The Wagon Ring physical painted wagon boards and wheels (art bible `K_WAGON`), never a ghostly or glowing ring | 2.3 m | 6k / 1024² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
-| B5 | `kingdom.hero2` (Firewright; INT fire caster) | 2.1 m + hat | 6k / 1024² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
-| B6 | `clans.worker` (Yurtwright) | 1.4 m | 2.5k / 512² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
-| B7 | `clans.infantry` (Grappler; huge wrestler) | 2.0 m | 4k / 512² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
-| B8 | `clans.ranged` (Javelineer) | 1.85 m | 3.5k / 512² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
-| B9 | `clans.caster` (Gustcaller) | 1.8 m | 3.5k / 512² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
-| B10 | `clans.hero1` (the Uncut; AGI duelist; trailing braid and split coat) | 2.2 m | 6k / 1024² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
-| B11 | `clans.hero2` (Skymirror; INT seer) | 2.2 m | 6k / 1024² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
+| B1 | Hodman. The levy form (the Flail Levy, role `kingdom.levy`) is a prop swap (flail plus kettle hat as bpy props), not a new model. "Levy" is the role word in every id, clip and icon name (`kingdom.levy`, `arm_levy`, `kingdom_flail_levy_{128,64}.png`); the reference unit's name for this form is never used as an id | 1.25 m | 2.5k / 512² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
+| B2 | Pavisier (`assets/models/units/kingdom_infantry.glb`, the library rig) | 1.75 m | 3.5k / 512² | Higgsfield (the library rig) | Done (sunk 41.25) | P0 ✓ |
+| B3 | Hookgunner | 1.75 m | 3.5k / 512² | Auto-rig | Done (0.25 + 9). Plays the throw clip until `attack_shoot` 104 is bought (§2.4) | P0 ✓ |
+| B4 | Wheel Marshal (STR tank/support). **Weapon rules** (kingdom §2.6, squint risk Medium): the war-pick is a **one-handed** bpy prop (B21). Its **head is at most 0.35 × the haft length and has a visible curved beak**, so the 64 px black thumbnail never reads as a hammer. The wheel-shield is always held forward on the off arm. No two-handed swing, no ground slam (§2.4). **VFX rules:** no golden dome, halo, bubble or light pillar on Linden Balm or The Wagon Ring; Linden Balm shows drifting linden blossoms, The Wagon Ring physical painted wagon boards and wheels (art bible `K_WAGON`), never a ghostly or glowing ring | 2.3 m | 6k / 1024² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
+| B5 | Firewright (INT fire caster) | 2.1 m + hat | 6k / 1024² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
+| B6 | Yurtwright | 1.4 m | 2.5k / 512² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
+| B7 | Grappler (huge wrestler) | 1.9 m | 4k / 512² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
+| B8 | Javelineer | 1.7 m | 3.5k / 512² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
+| B9 | Gustcaller | 1.7 m | 3.5k / 512² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
+| B10 | The Uncut (AGI duelist; trailing braid and split coat) | 2.35–2.4 m | 6k / 1024² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
+| B11 | Skymirror (INT seer) | 2.35–2.4 m | 6k / 1024² | Auto-rig | Done (0.25 + 9) | P0 ✓ |
 | B12 | Creep: Sootcoat base. Cutpurse, **Coal-Lobber** (it throws the G1 coal lump; formerly "Smoker") and Collier come from prop and tint swaps; the Kiln-Master is the same mesh at 1.12× with a bpy apron and hood | 1.7 m | 3k / 512² | Auto-rig | **To do:** 2 concept tries 0.5 + H3.1 9 = **9.5** | P0 |
 | B13 | Creep: **Tattiebogles** (Strawling, Fieldkeeper, **Crowherd**, formerly "Crowcaller"). bpy poles, sack head, cloth cards and a turnip lantern; stiff-knee procedural walk. **Art rules** (neutrals §8.2, §10.2): the turnip lantern's holes are drilled at random and **never form a face**; no carved or painted face; **no detachable or swappable heads**; **no feather-cloaked crow-man** (the Crowherd wears a patched sacking cape, with crows perched on outstretched pole-arms); **no wicker effigy body** or cage; no pumpkins | 1.2–2.0 m | 1.5k | Rigid bones | 0.5 (2 textures) | P0 |
 | B14 | Creep: Cairnwakes (Cairnling, Drystone Walker, Menhir Elder). bpy slab stacks, rigid bones, retinted per tileset | 1.4–3.0 m | 1–2.5k | Rigid bones | 0.25 (1 more stone texture; drystone done, ledger #21) | P0 |
-| B15 | Summons and birds: Crow (the Crowherd's summon: a **flyer** per rules §12, 3.5 m up, so idle creeps ignore it and only G+A attacks such as the Hookgunner's and the Javelineer's hit it; M1 adds the flying layer. If the layer is cut from M1, the slice Crow becomes a ground skimmer like the Hail-Swift and neutrals says so), Hail-Swift (`clans.hero2` summon: a ground summon skimming 0.6 m, opaque packed-hail material, no spirit shader). bpy low-poly bird, wing-flap in the vertex shader | 0.4 m | 300 | None | 0 | P0 |
-| B16 | `kingdom.caster` (Linden Sister; healer: Herb Poultice, plus Smoke of Rue with Journeyman Papers; kingdom §11 `[SLICE]`). The T2 healer at the core of the kingdom mid-game | 1.7 m | 3.5k / 512² | Auto-rig | Done (0.25 + 9; ledger #19–#20) | **P0 ✓** |
+| B15 | Summons and birds: Crow (the Crowherd's summon: a **flyer** per rules §12, 3.5 m up, so idle creeps ignore it and only G+A attacks such as the Hookgunner's and the Javelineer's hit it; M1 adds the flying layer. If the layer is cut from M1, the slice Crow becomes a ground skimmer like the Hail-Swift and neutrals says so), Hail-Swift (the Skymirror's summon: a ground summon skimming 0.6 m, opaque packed-hail material, no spirit shader). bpy low-poly bird, wing-flap in the vertex shader | 0.4 m | 300 | None | 0 | P0 |
+| B16 | Linden Sister (healer: Herb Poultice, plus Smoke of Rue with Journeyman Papers; kingdom §11 `[SLICE]`). The T2 healer at the core of the kingdom mid-game | 1.7 m | 3.5k / 512² | Auto-rig | Done (0.25 + 9; ledger #19–#20) | **P0 ✓** |
 | B17 | Critters: hare, goose. bpy primitives; procedural hop and waddle | 0.3–0.6 m | 200 | None | 0.25 | P1 |
 | B18 | Fieldkeeper as an AI mesh, only if the procedural scarecrow fails review | 1.9 m | 2.5k | Auto-rig | 9.25 | P2 |
 | B19 | Neutral hero (the Rat-Piper; AGI ranged trapper, crossbow), plus procedural rats. Hired at the Coaching Inn (§1.9). **Concept-review rules** (distance from another game's rat-summoning piper hero): the pipe is carried, never a melee weapon; no rat-swarm ultimate (its rats stay the Sack of Rats summon, neutrals §5.6.3) | 2.1 m | 6k / 1024² | Auto-rig | 9.25 + 1 icon sheet 0.25 + ≈ 20 VO lines | **P1** (next grant, with E17) |
 | B20 | Rundling shopkeeper (P0 uses a curled-ball bpy prop instead) | 1.1 m | 2.5k | Auto-rig | 9.25 | P2 |
 | B21 | Hand-prop kit: falchion, pavise, hand-cannon, hod, flail, kettle hat, javelin bundle, sabre, staff, mirror disc, rake, **war-pick** (B4 rules) and **wheel-shield**. Used whenever H3.1 thins or fuses a held item: the item is cut from the mesh and replaced by a bpy prop on the hand bone | 0.3–1.5 m | 100–400 each | Parented to `RightHand` / `LeftHand` | 0 (reuses faction swatches) | P0 |
-| B22 | `kingdom.caster2` (**Lacewright**; Collegium; autocast slow Tangle Thread, ally invisibility Muslin Veil with Lacewright Journeyman Papers; kingdom §5.2: 150 g / 25 l / 2 food, 32 s). The second T2 caster, so the kingdom player chooses which casters to make | 1.7 m | 3.5k / 512² | Auto-rig; cast clip 129 | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + 14 VO lines | **P1** (next grant) |
-| B23 | `clans.caster2` (**Pole-Carver**; Mirror Yurt; Mirror Pole, an invisible sentry pole; clans §5.1: 150 g / 30 l / 2 food, 32 s). Poles are bpy props | 1.7 m | 3.5k / 512² | Auto-rig; cast clip 129 | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + 14 VO lines | **P1** (next grant) |
-| B24 | `kingdom.hero3` (**Flail Hetman**; STR melee stunner; kingdom §6.3; a tall human with a three-club flail, never a dwarf or a hammer, kingdom §2.6) | 2.3 m | 6k / 1024² | Auto-rig | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + ≈ 20 VO lines | **P1** (next grant) |
-| B25 | `clans.hero3` (**Omen-Mother**; INT support, hex and heal; clans §6.1) | 2.2 m | 6k / 1024² | Auto-rig | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + ≈ 20 VO lines | **P1** (next grant) |
+| B22 | **Lacewright** (Collegium; autocast slow Tangle Thread, ally invisibility Muslin Veil with Lacewright Journeyman Papers; kingdom §5.2: 150 g / 25 l / 2 food, 32 s). The second T2 caster, so the kingdom player chooses which casters to make | 1.7 m | 3.5k / 512² | Auto-rig; cast clip 129 | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + 14 VO lines | **P1** (next grant) |
+| B23 | **Pole-Carver** (Mirror Yurt; Mirror Pole, an invisible sentry pole; clans §5.1: 150 g / 30 l / 2 food, 32 s). Poles are bpy props | 1.7 m | 3.5k / 512² | Auto-rig; cast clip 129 | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + 14 VO lines | **P1** (next grant) |
+| B24 | **Flail Hetman** (STR melee stunner; kingdom §6.3; a tall human with a three-club flail, never a dwarf or a hammer, kingdom §2.6) | 2.3 m | 6k / 1024² | Auto-rig | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + ≈ 20 VO lines | **P1** (next grant) |
+| B25 | **Omen-Mother** (INT support, hex and heal; clans §6.1) | 2.2 m | 6k / 1024² | Auto-rig | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + ≈ 20 VO lines | **P1** (next grant) |
 
 **P1 roster rows (B19, B22–B25), funded from the next Higgsfield grant** (≈ 48.5 cr: 4 × 9.5 + 9.25 + 5 icon sheets 1.25). They
 restore two classic structures: the **caster choice** at T2 (every caster building in the classic game trains two casters) and the
@@ -621,7 +626,7 @@ with "mouth closed, no teeth showing". Reject any tooth protrusion at the squint
 
 ### 2.4 Animation library and per-unit clips
 
-**Library skeleton:** the `kingdom.infantry` Higgsfield rig. It has 24 joints (`Hips`, 3 spine joints, `neck`, `Head` plus 2 head helpers,
+**Library skeleton:** the Pavisier's Higgsfield rig. It has 24 joints (`Hips`, 3 spine joints, `neck`, `Head` plus 2 head helpers,
 and per side `Shoulder/Arm/ForeArm/Hand` and `UpLeg/Leg/Foot/ToeBase`; no fingers), an A-pose rest and 100 % weighting.
 The auto-rigger fits that skeleton, with the same bone names, to every character. So any clip bought on the library rig transfers to
 all of them, and each 8 cr clip call serves every humanoid.
@@ -635,15 +640,15 @@ all of them, and each 8 cr clip call serves every humanoid.
 | walk | 30 (owned). Workers at 3.0–3.1 m/s, stride-matched | sunk | P0 |
 | attack_1h | 219 (owned). Also the **Wheel Marshal's attack**: a one-handed overhand pick chop at **0.85×** with the `shield_fwd` layer, the wheel-shield leading by 0.08 m at contact (combat juice) | sunk | P0 |
 | death | 8 (owned). Retarget with `--hips-mode full` | sunk | P0 |
-| attack_heavy | 128 (owned, ledger #17). Played **only** by `clans.infantry` (the Grappler's flanged mace) and as the workers' chop until 237 is bought. **Never on `kingdom.hero1`**: a two-handed swing cannot hold her shield and reads as the classic armoured hammer hero | sunk | P0 |
+| attack_heavy | 128 (owned, ledger #17). Played **only** by the Grappler (its flanged mace) and as the workers' chop until 237 is bought. **Never on the Wheel Marshal**: a two-handed swing cannot hold her shield and reads as the classic armoured hammer hero | sunk | P0 |
 | cast | 129 (owned, ledger #16; alternates 125, 130–137) | sunk | P0 |
 | attack_throw | 421 (owned, ledger #18; alternates 239, 398) | sunk | P0 |
 | run | 14 (alternates 16, 510): all units' locomotion at 4–5.5 m/s. To buy on the library rig | 8 | P0 |
 | attack_shoot | 104 (alternate 232): Hookgunner and gun-tower crew. To buy on the library rig | 8 | P0 |
 | work_chop | 237: bought only if 128 reads wrong as a chop on the workers | 8 | P1 |
-| Procedural keyframes in bpy on the library skeleton, **needed by the loop**: build (chop arc at chest height), carry (arm hold layered over walk), push (arms forward over walk, for siege crews), **haul** (both arms overhead pulling a rope down, 0.6 s: the Sling-Cart crew's release and the clans rope-holder, §4.1), doze (sit plus breathing; sleeping creeps must read as asleep at night), **shield_fwd** (additive: the off arm holds the wheel-shield forward; layered over idle, run and attack_1h on `kingdom.hero1`) | `tools/` bpy script, 0 cr | 0 | P0 |
-| Procedural keyframes, **polish**: cheer (ready / level-up / victory); **shield_plant** (Brace the Wheel: a 0.6 s crouch with the wheel-shield's rim driven down in front of her and the pick held up; fallback idle plus an additive crouch hold, never attack_heavy or a ground-slam clip); **arm_levy** (1.5 s; fallback a 1.5 s idle with the prop swap); lash (a straight forward braid snap over attack_1h, for `clans.hero1`'s Braid Lash; fallback attack_1h; never a spin, clans §2.5); stagger (additive) | `tools/` bpy script, 0 cr | 0 | P1 |
-| Higgsfield top-ups, only where a procedural clip fails review: push 261, doze 268, cheer 59, heavy walk 119 (`clans.infantry`), and a brace or reload clip if the catalogue preview has one. **Cut:** the ground-slam clip 127 (`kingdom.hero1` never slams) and the spin attack 238 (nothing spins on any hero, clans §2.5) | Library rig, 8 cr each (next grant) | ≤ 40 | P2 |
+| Procedural keyframes in bpy on the library skeleton, **needed by the loop**: build (chop arc at chest height), carry (arm hold layered over walk), push (arms forward over walk, for siege crews), **haul** (both arms overhead pulling a rope down, 0.6 s: the Sling-Cart crew's release), doze (sit plus breathing; sleeping creeps must read as asleep at night), **shield_fwd** (additive: the off arm holds the wheel-shield forward; layered over idle, run and attack_1h on the Wheel Marshal) | `tools/` bpy script, 0 cr | 0 | P0 |
+| Procedural keyframes, **polish**: cheer (ready / level-up / victory); **shield_plant** (Brace the Wheel: a 0.6 s crouch with the wheel-shield's rim driven down in front of her and the pick held up; fallback idle plus an additive crouch hold, never attack_heavy or a ground-slam clip); **arm_levy** (1.5 s; fallback a 1.5 s idle with the prop swap); lash (a straight forward braid snap over attack_1h, for the Uncut's Braid Lash; fallback attack_1h; never a spin, clans §2.5); stagger (additive) | `tools/` bpy script, 0 cr | 0 | P1 |
+| Higgsfield top-ups, only where a procedural clip fails review: push 261, doze 268, cheer 59, heavy walk 119 (the Grappler), and a brace or reload clip if the catalogue preview has one. **Cut:** the ground-slam clip 127 (the Wheel Marshal never slams) and the spin attack 238 (nothing spins on any hero, clans §2.5) | Library rig, 8 cr each (next grant) | ≤ 40 | P2 |
 
 **Runtime layers on top of every clip** (juice docs): bob, lean, squash on hit, lunge, topple and sink, flinch.
 Siege wheels spin by distance travelled. Buildings and doodads use vertex-shader motion.
@@ -652,18 +657,18 @@ Siege wheels spin by distance travelled. Buildings and doodads use vertex-shader
 
 | Role | idle | locomotion | attack | death | work / cast | Extras |
 |---|---|---|---|---|---|---|
-| `kingdom.worker` | 0 | walk 30 | 219 | 8 | chop 128 (237 if bought), build (procedural) | carry; the levy form (`kingdom.levy`) uses run + 219 + arm_levy |
-| `kingdom.infantry` | 0 | run | 219 | 8 | — | Brace pose (procedural, for the stance research) |
-| `kingdom.ranged` | 0 | run | shoot 104 (throw 421 until bought) | 8 | — | Reload hiss timed on the backswing |
-| `kingdom.hero1` | 0 + shield_fwd | run + shield_fwd | **219 at 0.85× + shield_fwd** (one-handed pick chop, shield forward) | 8 | shield_plant (procedural) for Brace the Wheel; cast 129 for Linden Balm | cheer |
-| `kingdom.hero2` | 0 | run | cast 129 (staff missile) | 8 | throw 421 (flask) | — |
-| `kingdom.caster` | 0 | walk / run | cast 129 | 8 | cast 129 | — |
-| `clans.worker` | 0 | walk 30 | 219 | 8 | chop 128 (237 if bought) | push and haul (crew), haul (rope-holder), carry |
-| `clans.infantry` | 0 | run (0.9×) | heavy 128 (the flanged mace) | 8 | — | Heavy walk (P2 clip 119, else procedural) |
-| `clans.ranged` | 0 | run | throw 421 | 8 | — | — |
-| `clans.caster` | 0 | walk / run | cast 129 | 8 | cast 129 | — |
-| `clans.hero1` | 0 | run | 219 (sabre) | 8 | lash (procedural, a straight snap; nothing spins, clans §2.5) | Braid swing is secondary motion: 3 extra bpy bones parented to `Head` and driven at runtime by a spring (the 24-bone library rig has no braid chain, so clips ignore them) |
-| `clans.hero2` | 0 | run | cast 129 | 8 | cast 129 | Mirror-polish idle (procedural) |
+| Hodman | 0 | walk 30 | 219 | 8 | chop 128 (237 if bought), build (procedural) | carry; the Flail Levy uses run + 219 + arm_levy |
+| Pavisier | 0 | run | 219 | 8 | — | Brace pose (procedural, for the stance research) |
+| Hookgunner | 0 | run | shoot 104 (throw 421 until bought) | 8 | — | Reload hiss timed on the backswing |
+| Wheel Marshal | 0 + shield_fwd | run + shield_fwd | **219 at 0.85× + shield_fwd** (one-handed pick chop, shield forward) | 8 | shield_plant (procedural) for Brace the Wheel; cast 129 for Linden Balm | cheer |
+| Firewright | 0 | run | cast 129 (staff missile) | 8 | throw 421 (flask) | — |
+| Linden Sister | 0 | walk / run | cast 129 | 8 | cast 129 | — |
+| Yurtwright | 0 | walk 30 | 219 | 8 | chop 128 (237 if bought) | push and haul (Sling-Cart crew), carry |
+| Grappler | 0 | run (0.9×) | heavy 128 (the flanged mace) | 8 | — | Heavy walk (P2 clip 119, else procedural) |
+| Javelineer | 0 | run | throw 421 | 8 | — | — |
+| Gustcaller | 0 | walk / run | cast 129 | 8 | cast 129 | — |
+| The Uncut | 0 | run | 219 (sabre) | 8 | lash (procedural, a straight snap; nothing spins, clans §2.5) | Braid swing is secondary motion: 3 extra bpy bones parented to `Head` and driven at runtime by a spring (the 24-bone library rig has no braid chain, so clips ignore them) |
+| Skymirror | 0 | run | cast 129 | 8 | cast 129 | Mirror-polish idle (procedural) |
 | Sootcoats | 0 | run | 219; the Coal-Lobber uses throw 421 | 8 | — | Doze (procedural) for night sleep |
 
 **Build-script follow-up:** `tools/build_slice_units.sh` still gives `kingdom_wheel_marshal` `attack=$HEAVY` (the 128 swing). Change
@@ -673,9 +678,9 @@ it to `attack=$SWORD` (219) with the `shield_fwd` layer before the M2 gate (§2.
 
 | # | Asset | Method | Higgsfield cr | Pri |
 |---|---|---|---|---|
-| D1 | `kingdom.siege` (crew-pushed bronze bombard cart) | bpy: lathe barrel, box frame, spoked wheels. Crew = 2 × `kingdom.worker` meshes with the push clip. Recoil and wheel spin are procedural. Textures: bronze, oak planks, iron bands | 0.75 | P0 |
-| D2 | `clans.siege` (sling-cart) | bpy: frame, throwing arm, wheels, sling. Crew = 2 × `clans.worker`. The arm swing is keyframed. Textures: lattice wood and felt (done, ledger #21), rope. **Art rules** (squint risk against the classic orc siege engine, a two-wheeled wooden cart with a long throwing arm): it is a **traction sling engine**: the two crew haul ropes (the `haul` pose) to swing the arm, with **no counterweight box**. At rest the **felt sling hangs from an upright arm**; there is no cup or bucket. A **low lattice cart** with a **felt hood over the pot rack**. **No spiked wheels, no skull or bone dressing**, no hide or leather panels. M2 #2 squint-tests it | 0.25 | P0 |
-| D3 | `kingdom.hero2` ultimate turret | D1 barrel at 1.3× on a static carriage | 0 | P0 |
+| D1 | Bombard Wagon (crew-pushed bronze bombard cart) | bpy: lathe barrel, box frame, spoked wheels. Crew = 2 × Hodman meshes with the push clip. Recoil and wheel spin are procedural. Textures: bronze, oak planks, iron bands | 0.75 | P0 |
+| D2 | Sling-Cart | bpy: frame, throwing arm, wheels, sling. Crew = 2 × Yurtwright meshes. The arm swing is keyframed. Textures: lattice wood and felt (done, ledger #21), rope. **Art rules** (squint risk against the classic orc siege engine, a two-wheeled wooden cart with a long throwing arm): it is a **traction sling engine**: the two crew haul ropes (the `haul` pose) to swing the arm, with **no counterweight box**. At rest the **felt sling hangs from an upright arm**; there is no cup or bucket. A **low lattice cart** with a **felt hood over the pot rack**. **No spiked wheels, no skull or bone dressing**, no hide or leather panels. M2 #2 squint-tests it | 0.25 | P0 |
+| D3 | Grand Bombard (the Firewright's ultimate turret) | D1 barrel at 1.3× on a static carriage | 0 | P0 |
 | D4 | Rally flag (team colour) and waypoint marker | bpy + shader | 0 | P0 |
 
 ### 2.6 Buildings and neutral structures
@@ -806,12 +811,9 @@ Before generation the final scripts are exported to `tools/prompts/vo/`, a defau
 also machine-checked.
 
 **Worker completion id: `built`, label "Built".** Category names become VO ids and file names (audio §4.6), so no category is named
-after a banned line. The **art bible currently says the opposite**: its review #23 renamed `built` to `job_done`, and that id and the
-label "Job done" appear in its §8.1, the §8.2 table, §13 #16 and the review log; clans §3.3, juice AUD-03, the economy juice and a
-debug print in `tests/output/probe_relabel.gd` follow it. VO files would then be named like `hodman_job_done_01.ogg`, an echo of the
-banned catch-phrase in the very file names this rule protects, and the checker cannot see it (it maps `_` to a space only in file
-names, and bans only the possessive and plural spellings). **This plan wins for slice VO:** the id is `built` and the label "Built"
-(kingdom §3.2 already uses it). §7 lists the renames, then the ban of `job done`, `job_done` and `job-done`, before names lock on 3 Nov.
+after a banned line. The art bible's interim rename to a "job" + "done" id was reversed at synthesis (2026-10-19): the bible §8.1–§8.2,
+clans §3.3 and the `tests/output/probe_relabel.gd` debug print now say `built` / "Built" / "finished", and the three spellings of the
+old id are banned terms. Juice AUD-03 and the economy juice still carry the old id (§7).
 
 **VO lint** (part of the IP line check; applies to every P0 and P1 line):
 - No line uses **poke, poked, poking, tap, tapped, tapping, prod or jab**: the clicking-as-physical-touch premise is the reference
@@ -821,26 +823,26 @@ names, and bans only the possessive and plural spellings). **This plan wins for 
   speaker or in unison.
 - No completion line or label built on "done" for workers (§8.1 of the art bible keeps its own ban on "…'s done" and a bare "Done.").
 
-| Speaker | Full set (faction doc) | **P0 lines** | P1 to full | Pri |
+| Speaker | Full set (art bible §8.2, the source of record) | **P0 lines** | P1 to full | Pri |
 |---|---|---|---|---|
-| `kingdom.worker` (incl. the `built` line) | 19 | 15 | +4 | P0 |
-| `kingdom.infantry` | 18 | 14 | +4 | P0 |
-| `kingdom.ranged` | 18 | 14 | +4 | P0 |
-| `kingdom.caster` (Linden Sister) | 18 | 14 | +4 | **P0** |
-| `kingdom.siege` (Bombard Wagon: **one speaker**, below) | ≈ 14 | 8 | +6 | P0 |
-| `kingdom.hero1` | 26 | 20 | +6 | P0 |
-| `kingdom.hero2` | 26 | 20 | +6 | P0 |
-| `kingdom` advisor (the Reeve) | 21 | 18 | +3 | P0 |
-| `clans.worker` (incl. the `built` line) | 19 | 15 | +4 | P0 |
-| `clans.infantry` | 18 | 14 | +4 | P0 |
-| `clans.ranged` | 18 | 14 | +4 | P0 |
-| `clans.caster` | 18 | 14 | +4 | P0 |
-| `clans.siege` crew (two brothers **speaking in unison**, below) | ≈ 14 | 8 | +6 | P0 |
-| `clans.hero1` | 26 | 20 | +6 | P0 |
-| `clans.hero2` | 26 | 20 | +6 | P0 |
-| `clans` advisor (the gong-keeper) | 19 | 18 | +1 | P0 |
+| Hodman (incl. the `built` line) | 21 | 15 | +6 | P0 |
+| Pavisier | 20 | 14 | +6 | P0 |
+| Hookgunner (standout) | 21 | 14 | +7 | P0 |
+| Linden Sister | 21 | 14 | +7 | **P0** |
+| Bombard Wagon (**one speaker**, below) | 17 | 8 | +9 | P0 |
+| Wheel Marshal | 31 | 20 | +11 | P0 |
+| Firewright | 31 | 20 | +11 | P0 |
+| The Reeve (kingdom advisor) | 19 | 18 | +1 | P0 |
+| Yurtwright (incl. the `built` line) | 21 | 15 | +6 | P0 |
+| Grappler | 19 | 14 | +5 | P0 |
+| Javelineer (standout) | 21 | 14 | +7 | P0 |
+| Gustcaller | 21 | 14 | +7 | P0 |
+| Sling-Cart crew (two brothers **speaking in unison**, below) | 17 | 8 | +9 | P0 |
+| The Uncut | 31 | 20 | +11 | P0 |
+| Skymirror | 31 | 20 | +11 | P0 |
+| The gong-keeper (clans advisor) | 19 | 18 | +1 | P0 |
 | Weighstall shopkeeper (neutrals §5.3) | 10 | 5 | +5 | P0 |
-| **Total** | **≈ 328** | **251** | **+77** | |
+| **Total** | **371** | **251** | **+120** | |
 
 **P0 line mix:**
 - Regular unit: Ready 1, What 3, Yes 3, Attack 2, **Annoyed 5**: 14. The annoyed click-spam run is the signature, a 4–6-line
@@ -857,7 +859,7 @@ names, and bans only the possessive and plural spellings). **This plan wins for 
 - **P1, first item: Warcry**, 1 line per combat unit and hero (the 4 infantry, ranged, caster and siege speakers per faction and the
   4 heroes: 12 lines ≈ 18 CU).
 
-**Bombard Wagon (`kingdom.siege`): one speaker.** The Elder gunner speaks, deadpan; the Younger is heard only as non-verbal coughs and
+**Bombard Wagon: one speaker.** The Elder gunner speaks, deadpan; the Younger is heard only as non-verbal coughs and
 effort sounds. The two-gunner double act in kingdom §3.2 is retired for this slot: a bickering two-voice crew on the human-kingdom
 faction's two-man gunpowder artillery copies the classic game's character choice for that slot, even with new words. Proposed P0 lines
 (original; acks within the art bible's 4-word limit; they still go through the IP line check):
@@ -873,7 +875,7 @@ faction's two-man gunpowder artillery copies the classic game's character choice
 | Annoyed 3 | "Now he's laughing. Powder doesn't like laughing. Neither do I." |
 | Annoyed 4 | "Right. I'm chalking 'the boss' on the next ball. Neat letters, mind." |
 
-**Sling-Cart (`clans.siege`): two brothers in unison.** The finish-each-other's-sentences act is retired: a two-man artillery crew
+**Sling-Cart: two brothers in unison.** The finish-each-other's-sentences act is retired: a two-man artillery crew
 splitting lines and punchlines is the reference human artillery crew's defining device, and moving it to the warrior-people faction keeps
 the same character choice (the reference warrior race's catapult does not speak). The brothers speak **together**, as a hauling count
 or a single shared sentence: their joke is that they always agree, even when wrong (clans §3.2 tic). The younger brother's effort
@@ -895,17 +897,23 @@ grunts on the rope (non-verbal) are mixed under the release. Proposed P0 lines:
 **Generation and cost:**
 - Batch per speaker and category, about 3 requests per speaker for P0 (about 55 requests).
 - P0 envelope **379 CU** (251 lines, planned at about 1.5 CU per line); P1 **106 CU**, which funds the Warcry lines first and then
-  about 58 more of the 77 P1 lines; the last ≈ 7 (Whats) wait for probe savings.
+  about 58 more of the 120 P1 lines (the full set follows the art bible §8.2 counts since synthesis, 2026-10-19: 371 lines in all); the
+  other ≈ 50 wait for probe savings or the Higgsfield `elevenlabs_v4` route, Whats and extra Yes lines last.
 - Probe both the Krea `elevenlabs/tts` and the Higgsfield `elevenlabs_v4` dialogue model (up to 10 voices, 4 takes) with the same 5-line script, then pick the cheaper per accepted line.
 - **Deadline:** all lines are generated, processed and archived **by 15 Dec 2026**.
 
 ### 2.13 SFX (Seed Audio jobs of 3–6 variants each; planned at about 7 CU per job, to be probed)
 
+**How this list relates to the art bible (reconciled at synthesis, 2026-10-19).** The art bible §9 is the **content list** (217 sound ids, 143
+of them P0 by its own priority); this section is the **paid envelope** (54 grouped Seed Audio jobs ≈ 378 CU, each job yielding 3–6 variants
+and often several bible ids). Bible P0 ids that do not fit the envelope are merged into kit-set jobs (bible wrapper K) and then taken from
+CC0 packs in the bible §11 order; the signature cues never go to stock packs. The M1 Seed Audio probe recomputes both.
+
 **P0 (50 ids, 54 jobs ≈ 378 CU)**
 
 | Group | Jobs |
 |---|---|
-| Combat | S01 light swing (blade and sabre) · S02 heavy swing (mace, war-pick) · S03 hit metal · S04 hit wood (pavise, lattice) · S05 hit flesh/leather (no gore) · S06 hit stone · S07 hit straw/felt · S08 hand-cannon "whump-crack" + smoke hiss (`kingdom.ranged`, gun tower) · S09 javelin throw (`clans.ranged`) and horn-bow loose (bow-mast) · S10 missile impacts (bullet, javelin into wood, body, dirt) · S11 bombard boom (`kingdom.siege`, `kingdom.hero2` ultimate) · S12 sling-arm thwack + rope creak (`clans.siege`) · S13 siege impact · S14 building hit + crumble |
+| Combat | S01 light swing (blade and sabre) · S02 heavy swing (mace, war-pick) · S03 hit metal · S04 hit wood (pavise, lattice) · S05 hit flesh/leather (no gore) · S06 hit stone · S07 hit straw/felt · S08 hand-cannon "whump-crack" + smoke hiss (Hookgunner, Gun Tower) · S09 javelin throw (Javelineer) and horn-bow loose (bow-mast) · S10 missile impacts (bullet, javelin into wood, body, dirt) · S11 bombard boom (Bombard Wagon, the Firewright's Grand Bombard) · S12 sling-arm thwack + rope creak (Sling-Cart) · S13 siege impact · S14 building hit + crumble |
 | Deaths | S15 kingdom non-verbal deaths · S16 clans non-verbal deaths · S17 hero-death stings (one per faction) |
 | Creeps (non-verbal sets) | S18 Sootcoats (cough, "Hup!", effort huff, pain, death; the Coal-Lobber's coal toss) · S19 **Tattiebogles** (creak, straw rustle, dry hiss, collapse, the Crowherd's crow caw) · S20 Cairnwakes (grind, slab clack, hum, crumble) |
 | Spell schools (riser → release → tail; school ids per heroes juice §5) | S21 **Blossom** (`blossom`) · S22 Ember · S23 Gale · S24 Gloam · S25 Orrery · S26 Stone · S27 hero level-up signature (×3) · S28 caster bolt + haste whoosh |
@@ -983,7 +991,7 @@ kit-built); one icon per research line kept the icon growth to 7 sheets (1.75 cr
 references and the new camp props add 1.0 cr; the 2-try concept rule for B12 saves 0.25.
 
 What the round-2 fixes cost: **0 cr this month** (the Gun Tower icon fits the 45 sheets; the `haul` pose, the D2 rules, Burgher's Oath,
-the rope-holder, the flying layer, the third Gold Seam and the lobby colours are code, data or bpy). The **next grant** carries the P1
+the flying layer, the third Gold Seam and the lobby colours are code, data or bpy). The **next grant** carries the P1
 roster (48.5 cr, §2.3) and 0.25 cr more of P1 icons. **Krea P0 +31 CU** (VO +24 for the 5-line annoyed runs, S57a +7), so the P1 cap
 falls from 325 to 294 CU.
 
@@ -1067,7 +1075,7 @@ up as a reference input (ip-safety §2.7). The ledger records the verdict and th
 
 ### 3.1 Round 1 (done, 2026-10-16; ledger #7–#14)
 
-Input: the `kingdom.infantry` A-pose concept, made with `gpt_image_2_5` (0.25 cr). This was the brief's "first real unit concept through
+Input: the Pavisier A-pose concept, made with `gpt_image_2_5` (0.25 cr). This was the brief's "first real unit concept through
 3–4 generators": three image-to-3D generators ran on the same concept and seed, after two Krea text-to-3D probes.
 
 | Generator | Cost | Result | Verdict |
@@ -1082,11 +1090,11 @@ Input: the `kingdom.infantry` A-pose concept, made with `gpt_image_2_5` (0.25 cr
 ### 3.2 Round 2 (M1, days 1–5): three open questions, three tracks
 
 **Status (17 Oct): overtaken by production; kept as the record of the plan.** H3.1 made all 11 remaining characters (ledger #20),
-`clans.hero1`'s braid and sabre included (track A). TRELLIS failed on both halls (black sides, ledger #23), so H3.1 made them too
+the Uncut's braid and sabre included (track A). TRELLIS failed on both halls (black sides, ledger #23), so H3.1 made them too
 (ledger #24, track B). The free auto-rigger (commit 2bb913d) closed track C in favour of the CPU transfer. Only the SAM 3 props probe
 is left, as margin rung 5 (§2.15).
 
-**Track A — hero shapes.** Concept: `clans.hero1` (split riding coat, ground-length trailing braid with a weight, normal-length straight sabre carried low). It has the thinnest parts and the most cloth in the slice.
+**Track A — hero shapes.** Concept: the Uncut (split riding coat, ground-length trailing braid with a weight, normal-length straight sabre carried low). It has the thinnest parts and the most cloth in the slice.
 
 | Generator | Settings | Cost | Notes |
 |---|---|---|---|
@@ -1104,7 +1112,7 @@ is left, as margin rung 5 (§2.15).
 | Krea TRELLIS v1 | Texture 1024 | 14.81 CU | Buildings always face the camera and the yaw is locked, so the back is never seen. The sides are seen near screen edges, so score them at ±30° yaw. If it passes, TRELLIS becomes the default for AI buildings and props, paid in CU, which frees Higgsfield credits for characters |
 | *If all three fail* | — | 0 | No further paid generator: the hall falls back to the yurt kit with a bpy shell-plate dome (E6), like every other building |
 
-**Track C — rigging method.** Input: the `kingdom.worker` H3.1 mesh (production, B1). Run it first, because its result decides rung 1 of the
+**Track C — rigging method.** Input: the Hodman H3.1 mesh (production, B1). Run it first, because its result decides rung 1 of the
 margin ladder (§2.15).
 
 | Method | Cost | Notes |
@@ -1115,7 +1123,7 @@ margin ladder (§2.15).
 Compare both with the same retargeted clips: idle, walk, chop, death.
 
 **Sequence** (M1, days 1–5):
-- Day 1: concepts for `kingdom.worker`, `clans.hero1` and the `clans` hall (3 tries each), squint test, approve one each.
+- Day 1: concepts for the Hodman, the Uncut and the Shell Hall (3 tries each), squint test, approve one each.
 - Day 2: track C (H3.1 worker mesh, then the bpy transfer and the rig-only call in parallel). Submit the track A and B jobs the same day.
 - Days 3–4: process, preview and score every candidate (two reviewers).
 - Day 5: decisions logged; the conditional fourth generator runs only if rung 5 allows it, with a decision by 22 Oct at the latest.
@@ -1145,7 +1153,7 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
    the two spendable pools, **1 cr ≈ 7 CU** (1,379.6 CU / 208.5 cr). So TRELLIS (14.81 CU ≈ 2.1 cr) is cheaper than H3.1 (9 cr)
    but dearer than SAM 3 (1 cr).
 3. If SAM 3 wins track A, re-plan B1–B19 at 1 cr per mesh. The freed credits go first to B12 (the Sootcoat), then to the P1 list
-   (B16 `kingdom.caster` is already made, ledger #20).
+   (B16, the Linden Sister, is already made, ledger #20).
 4. If SAM 3 or TRELLIS wins track B, it becomes the default for every AI building and prop (E5, E6, E16, B18 props).
 5. *(Closed by the auto-rigger, §3.2 status.)* If bpy wins track C (or loses by ≤ 10 %), B6, B7, B9 and B12 stay on bpy. Otherwise they move to Higgsfield rigs, paid by the margin
    ladder (§2.15 rung 1), never by the 20 cr reserve.
@@ -1153,7 +1161,7 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
 
 ### 3.4 Round 3 (M2, week 1): retarget QA
 
-- Retarget the 9 P0 library clips onto three body types: `kingdom.worker` (1.25 m), `kingdom.infantry` (1.75 m) and `clans.infantry` (2.0 m, broad).
+- Retarget the 9 P0 library clips onto three body types: the Hodman (1.25 m), the Pavisier (1.75 m) and the Grappler (1.9 m, broad).
 - Measure foot slide, hand-prop drift, and wrist and hip artefacts.
 - Any clip that fails on a body type gets either a procedural fix (IK foot lock in bpy, an arm-offset layer) or a P2 Higgsfield native clip on that character.
 
@@ -1182,12 +1190,11 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
   saved alongside.
 - **Economy:** gold, lumber, food, upkeep (labels per rules §4.5), construction with both faction verbs as graybox, production queues,
   repair and mend, T1→T2.
-- **Multi-builder sites as a cross-faction rule in the slice** (rules §4.3 `max_builders`, `extra_builder_rate`,
-  `extra_builder_lumber_per_s`): the kingdom's **Hod Chain** (1 Hodman + up to 2 carriers at +40 % each) and a clans **rope-holder**
-  (1 Yurtwright + 1 more holding the guy-ropes at **+30 %**, also 5 lumber per 10 s; it plays the `haul` pose and the felt rises
-  faster). With both factions able to speed a site, multi-building is a game rule, not a second inherited kingdom signature, and the
-  Levy Horn stays the kingdom's one signature. Clans §4 and rules §4.3 follow-ups (§7); if the clans doc rejects it, the Hod Chain
-  leaves the slice instead (one builder for both factions) until the later factions ship.
+- **Multi-builder sites** (rules §4.3 `max_builders`, `extra_builder_rate`, `extra_builder_lumber_per_s`): the kingdom's **Hod Chain**
+  (1 Hodman + up to 2 carriers at +40 % each, 5 lumber per 10 s per carrier); the clans keep **one builder per site**, as the reference
+  warrior race's workers did. **Decided at synthesis (2026-10-19, `gdd.md` §5):** the proposed clans rope-holder is declined (fidelity:
+  the reference human/warrior asymmetry), and multi-building stays a cross-faction rule, not a second kingdom signature, because the
+  later sylvan and deathless factions also build with 2 (rules §4.3). The Levy Horn stays the kingdom's one inherited signature.
 - **Team colours:** `src/systems/player_state.gd` `COLORS` replaced by the art bible §2.4 set, with the slice lobby rule (§2.6).
 - **Research and upgrades:** the slice research and upgrade lines (levels 1–2) with their tier gates (kingdom §8, clans §8).
 - **Shops:** the faction shops (Curio Cabinet, Tea Tent) and the Weighstall: buy and sell, per-player stock and restock, the Fair Exchange.
@@ -1231,8 +1238,8 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
    in §2.15).
 9. **Worker defence** (unit tests): the Levy Horn arms every Hodman within 22 m of the hall's edge in 1.5 s; a Levy more than 30 m
    from every hall's edge lays down its flail after 5 s; a Home Yurt holding 3 Yurtwrights fires 3 sling attacks; Lay Down Flails and
-   All Clear return every worker to its previous job with its cargo kept. Multi-builder sites: 1 / 1.4 / 1.8 × for the Hod Chain and
-   1 / 1.3 × for the rope-holder, each helper paying 5 lumber per 10 s.
+   All Clear return every worker to its previous job with its cargo kept. Multi-builder sites: 1 / 1.4 / 1.8 × for the Hod Chain, each
+   carrier paying 5 lumber per 10 s; a second Yurtwright adds nothing to a clans site.
 10. **`map_lookalike`:** a reviewer compares the §1.3 sketch and an overhead render (view-only, §2.16 comparison rule) with the overview
     images of **every 2-player melee map on Liquipedia's map pages for the classic game**: the classic and expansion ladder pools, the remastered
     pools and the W3Champions 1v1 pools (the ip-safety §2.1 Maps row is not exhaustive and lacks current-era maps). The ledger records the
@@ -1251,10 +1258,10 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
     3. **Policy: a functional equivalent differs by at least 20 % at every rank** from the classic value it mirrors (|ours − ref| ≥
        0.20 × ref) in mana, cooldown, duration, fade time and every per-rank value; exact inequality is not enough, because a tuning
        pass can drift back onto a classic value. `check_value_echo.py` gains a `min_rel_diff` of 0.20 for entries marked as functional
-       equivalents. Known failures to fix at data entry: the Uncut's Dust Veil (bonus +45 / 80 / 115 against 40 / 70 / 100; mana 70
-       against 75; fade 0.5 s against 0.6 s; e.g. bonus **60 / 100 / 140**, mana **55**, fade **0.35 s**), Keen Edge's rank-1 multiplier
-       (1.8× against 2×; e.g. 20 % chance, 1.6× / 2.3× / 3.0×), the Hail-Swifts cooldown (35 s against 30 s), and whatever the new
-       kingdom rows flag (the Wheel Marshal's Linden Balm heal per rank is the first suspect).
+       equivalents. Known failures, **fixed in the design docs at synthesis (2026-10-19)**: the Uncut's Dust Veil (now bonus **60 / 100 / 140**, mana
+       **55**, fade **0.35 s**, move speed +20 / 30 / 45 %), Clean Cut, formerly Keen Edge (now 20 %, 1.6× / 2.3× / 3.0×), the Hail-Swifts
+       cooldown (now 38 s), and the Wheel Marshal's Linden Balm (now 150 / 290 / 430, 80 mana) and The Wagon Ring (150 mana). Still to
+       check when the kingdom rows exist: the Firewright's Naphtha Flask and Grand Bombard against the classic fire mage's kit.
     4. The ≤ 2-of-4 hero audit and slot-pattern check pass for all four slice kits after any kit change (scope above).
 12. **`controls_parity`** (UI tests driven by `Input.parse_input_event`): Tab / Shift+Tab cycle subgroups; double-click and Ctrl+click
     select all of a type on screen; Ctrl+N sets, Shift+N adds, N selects and a double-tap of N centres a control group; F1–F3 select
@@ -1405,9 +1412,9 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
 | Retargeted clips slide or misalign props on very different bodies | Medium / medium | §3.4 QA; IK foot lock; P2 native clips |
 | Krea purchased packs expire after 90 days | Unknown / high | Check the purchase date in M1. Front-load Krea audio if the expiry falls before Jan |
 | Map chirality under the fixed camera favours one seat | Low / medium | M4 seat-fairness test. If it fails, swap the ramp facings (both players), not the layout |
-| Hall footprint (5 m vs 8 m) undecided | Certain / low | 8 m pads reserved; the map script derives each hall centre from `hall_footprint_m` so the seam gap is 6.0 m for either (§1.2); `map_economy_rules` runs both |
+| ~~Hall footprint (5 m vs 8 m) undecided~~ **Closed 2026-10-19: 8 m (art bible §1.3)** | — | 8 m pads reserved; the map script derives each hall centre from `hall_footprint_m` so the seam gap is 6.0 m for either (§1.2); `map_economy_rules` runs both |
 | Contested shared camps leave heroes under-levelled at the push | Medium / medium | Planned for (§1.11 contested rows); `creep_route_mirror` and per-faction M4 #7 measure it; fallback: the §1.14 #8 amber pair (0 new assets) |
-| The clans doc rejects the rope-holder | Low / low | Drop the Hod Chain from the slice instead, so neither faction multi-builds (§4.1) |
+| Multi-building reads as a second kingdom signature | Low / low | **Closed at synthesis:** the rope-holder is declined; the Hod Chain stays a cross-faction rule shared with sylvan and deathless (rules §4.3) and carries a lumber cost; the M5 look-alike review checks it |
 | Look-alike risk from the AI outputs | Medium / high | Squint test per asset; rubric re-run at M2; release gate at M5 |
 | "Game pipeline only" Higgsfield audio models have unclear terms | Unknown / medium | Do not ship their output until the terms are read and logged |
 
@@ -1418,7 +1425,7 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
 1. Higgsfield: confirm the renewal date, whether unused credits are wiped, the commercial-use terms of the `starter` tier, and current prices for rig-only (5?), SAM 3 (1?), Tripo P2 and Meshy 7.
 2. Krea: purchase date and expiry of the 1,529.6 CU; the per-request price of TTS and Music.
 3. Which ElevenLabs terms govern output generated through Krea or Higgsfield (ip-safety §6).
-4. The final hall footprint (kingdom §13 Q1). Does `CLIFF_H` change to 2.0 m (README §8)?
+4. ~~The final hall footprint~~ (closed 2026-10-19: 16×16 cells, art bible §1.3). Does `CLIFF_H` change to 2.0 m (README §8)? The art bible authors cliffs for 2.0 m (its §13 #8).
 5. Whether `gpt_image_2_5` on Higgsfield honours image references well enough for icon-sheet consistency. If not, icons move to Krea 2 Medium at 9 CU per sheet (about 340 CU), which displaces P1 audio.
 6. Map name "Wether Downs" and the tileset's player-facing name "Downland" (§1.12) are working titles. Run the usual name check on both
    before names lock on 3 Nov; "Downland" is also the title of a 1983 home-computer game.
@@ -1434,35 +1441,35 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
 
 | Doc | Edit |
 |---|---|
-| `neutrals.md` §3.3, §3.6, §5.5 | Cite this map's spots (§1.4): Woodward's Rest (95, 143), Collier's Hut (73, 111), Charcoal Yard (117, 175), Dewstone site (124, 178), Cairn Gate (66, 66), Weighstall and Den (92, 92), Coaching Inn (128, 128). The own-side path bands become "this map: 73.9 / 78.1 / 103.5 m" (§1.14 #6–#7) |
-| `juice/ui-camera-audio.md` HUD-07 | Replace the round top-centre clocks with the Horizon Ribbon (art bible §7.5). Move the lit frame, the golden-hour rim and the day tally onto the Ribbon and its end caps (§2.9 I5) |
-| `juice/heroes-abilities-vfx.md` and `factions/kingdom.md` §6.3 (Brace the Wheel) | The wheel-rim ring rolls out from the planted shield rim. No dust-burst shockwave and no camera shake at a strike, so it never reads as a ground slam (§2.4). **Rename "wheel-rim shockwave" to "wheel-rim ring"** in kingdom §6.3 and the heroes juice; the fx id is `fx_wheel_rim_ring` (the old wording would ship a banned classic ability name as an id) |
-| `factions/kingdom.md` §3.2, §3.3 | The Bombard Wagon has one speaker (the Elder; the Younger is non-verbal), about 14 lines; use the §2.12 P0 lines, 4 Annoyed (the old "barrel you're tapping" line is retired) |
-| `factions/kingdom.md` §4, §5 | Take Up the Flail (22 m) and the Levy leash (30 m) are measured **edge to edge from the hall footprint** (§1.6). The role word in every id is "levy" (`kingdom_flail_levy`, clip `arm_levy`, icon `kingdom_flail_levy_{128,64}.png`); prose like "town-militia" in prompts may stay |
-| `factions/kingdom.md` §6.3, §6.4, §13 Q10 | Linden Balm may target the Marshal herself at 50 % effect (Q10's fallback becomes the default). The Wagon Ring becomes her **second** functional equivalent (§6.4 count 2). Its VFX is the art bible's physical painted wagon boards (`K_WAGON`), not "a ghostly ring"; no golden dome, halo, bubble or light pillar on either ability |
-| `factions/kingdom.md` §8, §9, §11 | T3 parity: **Burgher's Oath** at the Drill Yard (Sworn Pavisier, §2.6 E17; numbers proposed, kingdom owns them). Bow Saws stays T2 (110 g). The Lacewright and the Flail Hetman move from *later* to the P1 slice roster (§2.3) |
-| `factions/clans.md` §3.3 | (1) Rename the "Job done" row to **"Built"** (id `built`). (2) **Sling-Cart:** the two brothers speak **in unison** (§2.12 lines); no split lines or punchlines, and "Ready to throw—" goes. (3) Lines that "tap" (Yurtwright Annoyed) say "click" instead (VO lint, §2.12) |
-| `factions/clans.md` §4, `rules.md` §4.3 | Clans **rope-holder**: `max_builders` 2, `extra_builder_rate` 0.3, `extra_builder_lumber_per_s` 0.5, presented as a second Yurtwright hauling the guy-ropes (`haul`). If rejected, the Hod Chain leaves the slice (§4.1) |
-| `factions/clans.md` §5–§6 | Numbers per the 20 % policy (M1 #11): Dust Veil (e.g. bonus 60 / 100 / 140, mana 55, fade 0.35 s), Keen Edge (e.g. 20 %, 1.6× / 2.3× / 3.0×), Hail-Swifts cooldown (≥ 36 s or ≤ 24 s). The Pole-Carver and the Omen-Mother move to the P1 slice roster (§2.3) |
-| `art-and-audio-bible.md` §8.1, §8.2 table, §13 #16, review #23; `juice/ui-camera-audio.md` AUD-03; `juice/economy-and-buildings.md` (BLD-09, the audio table, the IP note); `factions/clans.md` §3.3; `tests/output/probe_relabel.gd` | **The art bible currently says the opposite of this plan:** its review #23 renamed `built` to `job_done`, and the others follow it. **This plan wins for slice VO** (§2.12): rename the id back to `built` and the label to "Built" everywhere listed, and reword the debug print ("[relabel] finished after %d ticks"). **Then** add `job done`, `job_done` and `job-done` to `tools/ip/banned_terms.txt` and re-run the default check, **before names lock on 3 Nov**. Adding them first fails the check on the art bible |
-| `art-and-audio-bible.md` §8 (Hodman, Yurtwright) and §8.1 lint | The Hodman's Annoyed 1–2 and voice note ("bills the player by the tap") and the Yurtwright's Annoyed 1–4 ("One tap is a greeting" …) use the clicking-as-touch premise: say "click" ("That's a click. I'm writing it down."; "One click is a greeting."). Extend the §8.1 lint from poke / poked / poking to **tap, tapped, tapping, prod and jab**, and add "no Ready line starts with 'Ready to'" and the no-split-crew rule (§2.12) |
-| `tools/ip/banned_terms.txt` | **Add now** (none hits the default scan paths, checked 2026-10-19): `m'lord`, `right-o`, `ready for action`, `more work`, `not that kind of orc`, `your hero has fallen`, `free company`, `shockwave`, `banish`, `metamorphosis`, `tranquility`, `paladin`, `khaz modan`, `mortar combat`, `hammerfall`, `shallow grave`, `gloom stalker`. **Add after the renames:** `milord` (first reword the art bible §8.1 lint sentence that lists it as an address word), `crowcaller` and `smoker` (art bible §9 SFX rows; retired-names block), `job done` / `job_done` / `job-done` (row above) |
-| `art-and-audio-bible.md` §2.4 | Checked 2026-10-19: the lobby rule and the marketing rule already give the kingdom Emerald and the clans Royal Blue, never the kingdom blue or gold and never the clans Crimson or Violet. Remaining: move **Coral Rose** from the clans' preferred list to their trade-dress skip set, and name Cornflower as the clans' fallback in the marketing rule (§2.6) |
-| `art-and-audio-bible.md` §7.2 (clans inlay row and its T11 `UI_CLAUSE`) | Red-brown lattice-wood (`#5C3826`) → **ochre-washed lattice** (`#B7772A`, highlight `#C9A46A`); add "red-brown never appears on UI art" (§2.9 I3) |
-| `src/systems/player_state.gd` | Replace `COLORS` (the reference game's colours in near-reference order) with the art bible §2.4 set and implement the lobby rule (M1; §2.6) |
-| `tools/ip/value_echo_reference.json`, `tools/ip/check_value_echo.py` | Kingdom rows before kit data entry; a `min_rel_diff` of 0.20 for entries marked as functional equivalents (M1 #11) |
-| `neutrals.md` §3, §8, §10, camp rows; art bible creep and SFX rows | **Crowcaller → Crowherd** (`creep_harvest_crowherd`), **Smoker → Coal-Lobber** (`creep_sootcoat_coal_lobber`; Smoke Pot stays its ability); S18 / S19 ids and the `cr_ember_rake`, `cr_heal_tar` and `atk_herb_mote` notes. Then the old names join the retired block of `banned_terms.txt`. The Crow is a flyer (rules §12) unless M1 cuts the layer (B15) |
-| `neutrals.md` §1.4 | The "Status" line is stale: rules §15.2 already has the invulnerable return with a full heal (checked 2026-10-19). Mark the blocking follow-up resolved; `test_creep_leash` is in M1 #5 |
-| `neutrals.md` §3.6, §5.5, §5.6.3 | The map's third Gold Seam inside the Standing Ring, with the Ring in guard mode (§1.4 RS); Rat-Piper hiring is P1 with E17 and its concept-review rules (B19) |
-| `rules.md` §19 | Hard's red-camp trigger: hero 1 at level 4+, hero 2 at level 3+, ≥ 30 army food (§4.4 #6; neutrals §11 lists the same edit). The contested-camp branch and the late-game expansion step (§4.4) |
-| `tools/build_slice_units.sh` | `kingdom_wheel_marshal`: `attack=$SWORD` plus the `shield_fwd` layer, not `$HEAVY` (§2.4) |
-| `art-and-audio-bible.md` §7.8 (minimap glyphs) | Free Company Camp → Hiring Fair (the neutrals rename). The Gold Seam prompt row (§4.4) was updated in this change |
-| `docs/asset-ledger.md` | #25: live balance readings on both services, to replace the derived balances in §2.15 |
-| Every doc that shows the tileset to players | Player-facing name "Downland"; the internal id is `gv`, and "greenvale" never appears in a shipped filename, data string or asset id (§1.12) |
+| `neutrals.md` §3.3, §3.6, §5.5 | **Done** (checked at synthesis, 2026-10-19). Cite this map's spots (§1.4): Woodward's Rest (95, 143), Collier's Hut (73, 111), Charcoal Yard (117, 175), Dewstone site (124, 178), Cairn Gate (66, 66), Weighstall and Den (92, 92), Coaching Inn (128, 128). The own-side path bands become "this map: 73.9 / 78.1 / 103.5 m" (§1.14 #6–#7) |
+| `juice/ui-camera-audio.md` HUD-07 | **Open** (juice owner). Replace the round top-centre clocks with the Horizon Ribbon (art bible §7.5). Move the lit frame, the golden-hour rim and the day tally onto the Ribbon and its end caps (§2.9 I5) |
+| `juice/heroes-abilities-vfx.md` and `factions/kingdom.md` §6.3 (Brace the Wheel) | **Done in kingdom §6.3** (synthesis 2026-10-19); **open** in the heroes juice. The wheel-rim ring rolls out from the planted shield rim. No dust-burst shockwave and no camera shake at a strike, so it never reads as a ground slam (§2.4). **Rename "wheel-rim shockwave" to "wheel-rim ring"** in kingdom §6.3 and the heroes juice; the fx id is `fx_wheel_rim_ring` (the old wording would ship a banned classic ability name as an id) |
+| `factions/kingdom.md` §3.2, §3.3 | **Done** (synthesis 2026-10-19). The Bombard Wagon has one speaker (the Elder; the Younger is non-verbal), about 14 lines; use the §2.12 P0 lines, 4 Annoyed (the old "barrel you're tapping" line is retired) |
+| `factions/kingdom.md` §4, §5 | **Done** (synthesis 2026-10-19). Take Up the Flail (22 m) and the Levy leash (30 m) are measured **edge to edge from the hall footprint** (§1.6). The role word in every id is "levy" (`kingdom_flail_levy`, clip `arm_levy`, icon `kingdom_flail_levy_{128,64}.png`); prose like "town-militia" in prompts may stay |
+| `factions/kingdom.md` §6.3, §6.4, §13 Q10 | **Done** (synthesis 2026-10-19; Linden Balm also moved to 150 / 290 / 430 and 80 mana, The Wagon Ring to 150 mana, for the 20 % policy). Linden Balm may target the Marshal herself at 50 % effect (Q10's fallback becomes the default). The Wagon Ring becomes her **second** functional equivalent (§6.4 count 2). Its VFX is the art bible's physical painted wagon boards (`K_WAGON`), not "a ghostly ring"; no golden dome, halo, bubble or light pillar on either ability |
+| `factions/kingdom.md` §8, §9, §11 | **Done** (synthesis 2026-10-19). T3 parity: **Burgher's Oath** at the Drill Yard (Sworn Pavisier, §2.6 E17; numbers proposed, kingdom owns them). Bow Saws stays T2 (110 g). The Lacewright and the Flail Hetman move from *later* to the P1 slice roster (§2.3) |
+| `factions/clans.md` §3.3 | **Done** (synthesis 2026-10-19). (1) Rename the "Job done" row to **"Built"** (id `built`). (2) **Sling-Cart:** the two brothers speak **in unison** (§2.12 lines); no split lines or punchlines, and "Ready to throw—" goes. (3) Lines that "tap" (Yurtwright Annoyed) say "click" instead (VO lint, §2.12) |
+| `factions/clans.md` §4, `rules.md` §4.3 | **Declined at synthesis (2026-10-19, `gdd.md` §5):** the clans keep one builder; the Hod Chain stays. Clans **rope-holder**: `max_builders` 2, `extra_builder_rate` 0.3, `extra_builder_lumber_per_s` 0.5, presented as a second Yurtwright hauling the guy-ropes (`haul`). If rejected, the Hod Chain leaves the slice (§4.1) |
+| `factions/clans.md` §5–§6 | **Done** (synthesis 2026-10-19: Dust Veil 60 / 100 / 140, 55 mana, 0.35 s fade, +20 / 30 / 45 % speed; Clean Cut 20 %, 1.6× / 2.3× / 3.0×; Hail-Swifts 38 s). Numbers per the 20 % policy (M1 #11): Dust Veil (e.g. bonus 60 / 100 / 140, mana 55, fade 0.35 s), Keen Edge (e.g. 20 %, 1.6× / 2.3× / 3.0×), Hail-Swifts cooldown (≥ 36 s or ≤ 24 s). The Pole-Carver and the Omen-Mother move to the P1 slice roster (§2.3) |
+| `art-and-audio-bible.md` §8.1, §8.2 table, §13 #16, review #23; `juice/ui-camera-audio.md` AUD-03; `juice/economy-and-buildings.md` (BLD-09, the audio table, the IP note); `factions/clans.md` §3.3; `tests/output/probe_relabel.gd` | **Done** in the bible, clans §3.3, `tests/output/probe_relabel.gd` and `banned_terms.txt` (synthesis 2026-10-19); **open** in juice AUD-03 and the economy juice. **The art bible currently says the opposite of this plan:** its review #23 renamed `built` to `job_done`, and the others follow it. **This plan wins for slice VO** (§2.12): rename the id back to `built` and the label to "Built" everywhere listed, and reword the debug print ("[relabel] finished after %d ticks"). **Then** add `job done`, `job_done` and `job-done` to `tools/ip/banned_terms.txt` and re-run the default check, **before names lock on 3 Nov**. Adding them first fails the check on the art bible |
+| `art-and-audio-bible.md` §8 (Hodman, Yurtwright) and §8.1 lint | **Done** (synthesis 2026-10-19). The Hodman's Annoyed 1–2 and voice note ("bills the player by the tap") and the Yurtwright's Annoyed 1–4 ("One tap is a greeting" …) use the clicking-as-touch premise: say "click" ("That's a click. I'm writing it down."; "One click is a greeting."). Extend the §8.1 lint from poke / poked / poking to **tap, tapped, tapping, prod and jab**, and add "no Ready line starts with 'Ready to'" and the no-split-crew rule (§2.12) |
+| `tools/ip/banned_terms.txt` | **Done**: all 23 terms added (synthesis 2026-10-19). **Add now** (none hits the default scan paths, checked 2026-10-19): `m'lord`, `right-o`, `ready for action`, `more work`, `not that kind of orc`, `your hero has fallen`, `free company`, `shockwave`, `banish`, `metamorphosis`, `tranquility`, `paladin`, `khaz modan`, `mortar combat`, `hammerfall`, `shallow grave`, `gloom stalker`. **Add after the renames:** `milord` (first reword the art bible §8.1 lint sentence that lists it as an address word), `crowcaller` and `smoker` (art bible §9 SFX rows; retired-names block), `job done` / `job_done` / `job-done` (row above) |
+| `art-and-audio-bible.md` §2.4 | **Done** (synthesis 2026-10-19). Checked 2026-10-19: the lobby rule and the marketing rule already give the kingdom Emerald and the clans Royal Blue, never the kingdom blue or gold and never the clans Crimson or Violet. Remaining: move **Coral Rose** from the clans' preferred list to their trade-dress skip set, and name Cornflower as the clans' fallback in the marketing rule (§2.6) |
+| `art-and-audio-bible.md` §7.2 (clans inlay row and its T11 `UI_CLAUSE`) | **Done** (synthesis 2026-10-19). Red-brown lattice-wood (`#5C3826`) → **ochre-washed lattice** (`#B7772A`, highlight `#C9A46A`); add "red-brown never appears on UI art" (§2.9 I3) |
+| `src/systems/player_state.gd` | **Open** (code, M1). Replace `COLORS` (the reference game's colours in near-reference order) with the art bible §2.4 set and implement the lobby rule (M1; §2.6) |
+| `tools/ip/value_echo_reference.json`, `tools/ip/check_value_echo.py` | **Partly done:** the clans rows carry the new numbers (synthesis 2026-10-19); kingdom rows and `min_rel_diff` stay open (M1). Kingdom rows before kit data entry; a `min_rel_diff` of 0.20 for entries marked as functional equivalents (M1 #11) |
+| `neutrals.md` §3, §8, §10, camp rows; art bible creep and SFX rows | **Done** (synthesis 2026-10-19; the old names are banned terms). **Crowcaller → Crowherd** (`creep_harvest_crowherd`), **Smoker → Coal-Lobber** (`creep_sootcoat_coal_lobber`; Smoke Pot stays its ability); S18 / S19 ids and the `cr_ember_rake`, `cr_heal_tar` and `atk_herb_mote` notes. Then the old names join the retired block of `banned_terms.txt`. The Crow is a flyer (rules §12) unless M1 cuts the layer (B15) |
+| `neutrals.md` §1.4 | **Done** (synthesis 2026-10-19). The "Status" line is stale: rules §15.2 already has the invulnerable return with a full heal (checked 2026-10-19). Mark the blocking follow-up resolved; `test_creep_leash` is in M1 #5 |
+| `neutrals.md` §3.6, §5.5, §5.6.3 | **Done** (synthesis 2026-10-19). The map's third Gold Seam inside the Standing Ring, with the Ring in guard mode (§1.4 RS); Rat-Piper hiring is P1 with E17 and its concept-review rules (B19) |
+| `rules.md` §19 | **Done** (rules §19, checked and extended at synthesis 2026-10-19). Hard's red-camp trigger: hero 1 at level 4+, hero 2 at level 3+, ≥ 30 army food (§4.4 #6; neutrals §11 lists the same edit). The contested-camp branch and the late-game expansion step (§4.4) |
+| `tools/build_slice_units.sh` | **Open** (code). `kingdom_wheel_marshal`: `attack=$SWORD` plus the `shield_fwd` layer, not `$HEAVY` (§2.4) |
+| `art-and-audio-bible.md` §7.8 (minimap glyphs) | **Done** (checked 2026-10-19). Free Company Camp → Hiring Fair (the neutrals rename). The Gold Seam prompt row (§4.4) was updated in this change |
+| `docs/asset-ledger.md` | **Open.** #25: live balance readings on both services, to replace the derived balances in §2.15 |
+| Every doc that shows the tileset to players | **Done** in the design docs (rules §3.1 and the neutrals data sketch now use `gv` and `wether_downs`); code and juice open. Player-facing name "Downland"; the internal id is `gv`, and "greenvale" never appears in a shipped filename, data string or asset id (§1.12) |
 
 ---
 
-## Appendix A. Role → working names in today's faction docs (the synthesis step may change them)
+## Appendix A. Role slots → final display names (synthesis, 2026-10-19; ids in `slice-content.json`)
 
 | Role | `kingdom` (kingdom.md) | `clans` (clans.md) |
 |---|---|---|
@@ -1488,7 +1495,7 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
 | faction shop | Curio Cabinet | Tea Tent |
 | tower | Lookout → Gun Tower | Bow-Mast |
 | worker defence (the one inherited signature mechanic) | Take Up the Flail / Levy Horn / Lay Down Flails (role id `levy`) | Roll the Felt / Sound the Gong / Unload All / All Clear |
-| multi-builder sites (a cross-faction game rule in the slice, not a signature) | Hod Chain: 1 Hodman + up to 2 carriers, +40 % each | Rope-holder: 1 Yurtwright + 1, +30 % |
+| multi-builder sites (a cross-faction game rule: kingdom, sylvan, deathless; not a signature) | Hod Chain: 1 Hodman + up to 2 carriers, +40 % each | — (one builder per site, like the reference warrior race; the rope-holder proposal was declined at synthesis, `gdd.md` §5) |
 | advisor | the Reeve | the gong-keeper |
 
 ## Appendix B. Higgsfield animation catalogue ids referenced above
@@ -1501,7 +1508,7 @@ Preview each GIF before choosing; names are renamed on import.
 | 8 | Dead | death (owned) |
 | 30 | Casual_Walk | walk (owned) |
 | 219 | Right_Hand_Sword_Slash | attack_1h (owned); also the Wheel Marshal's one-handed pick chop at 0.85× with `shield_fwd` |
-| 128 | Heavy_Hammer_Swing | attack_heavy (owned, ledger #17): `clans.infantry` and the workers' chop only. **Never on `kingdom.hero1`** |
+| 128 | Heavy_Hammer_Swing | attack_heavy (owned, ledger #17): the Grappler and the workers' chop only. **Never on the Wheel Marshal** |
 | 129 | mage_soell_cast (catalogue spelling) | cast (owned, ledger #16) |
 | 421 | Over_Shoulder_Throw | attack_throw (owned, ledger #18; alternates 239, 398) |
 | 14 | Run_02 | run, to buy (alternates: 16 RunFast, 510 Standard_Forward_Charge) |
@@ -1511,7 +1518,7 @@ Preview each GIF before choosing; names are renamed on import.
 | 261 | Push_and_Walk_Forward | P2 top-up |
 | 268 | Sit_and_Doze_Off | P2 top-up |
 | 59 | Victory_Cheer | P2 top-up |
-| 119 | Heavy lumbering walk | P2 top-up (`clans.infantry`) |
+| 119 | Heavy lumbering walk | P2 top-up (the Grappler) |
 | 127 | Charged_Ground_Slam | **Cut. Never used:** a ground slam on the armoured support hero rebuilds the classic stomp presentation (kingdom §2.6) |
 | 238 | Axe_Spin_Attack | **Cut. Never used:** no spinning or circular motion on any hero (clans §2.5) |
 

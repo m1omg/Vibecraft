@@ -73,28 +73,42 @@ FOL = "assets/textures/foliage/"
 
 
 def M_bark():
-    return Mat("bark", L.swatch(TEX + "bark_oak.png", seamless=False, sat=0.85), repeat=2.0, size=256)
+    # bible §1.4: trees and foliage <= 60 % saturation (HSV median ~0.48, p95 <= 0.58 after the cap)
+    return Mat("bark", L.swatch(TEX + "bark_oak.png", seamless=False, sat=0.85, s_scale=0.74, s_cap=0.58),
+               repeat=2.0, size=256)
 
 
 def M_bark_hazel():
     # hazel: smooth grey-brown bark (desaturated, lighter, finer)
     return Mat("bark", L.swatch(TEX + "bark_oak.png", seamless=False, sat=0.45, tint=(1.05, 1.0, 0.95),
-                                gamma=0.85), repeat=1.2, size=256)
+                                gamma=0.85, s_cap=0.5), repeat=1.6, size=256)
 
 
 def M_leaves(kind="oak"):
+    """Leaf-clump atlases. Saturation is scaled to a median of ~0.48 and soft-capped at 0.58 (bible §1.4:
+    foliage <= 60 %); highlight values are compressed so the dark interior and lit tips stay one
+    big shape instead of high-frequency noise."""
     if kind == "oak":
-        img = L.foliage_atlas(FOL + "oak_clumps.png", hue_tint=(0.8, 0.95, 0.9), sat=0.78, val=0.84)
+        img = L.foliage_atlas(FOL + "oak_clumps.png", hue_tint=(0.8, 0.95, 0.9), sat=0.78, val=0.9, s_scale=0.7,
+                              s_cap=0.58, v_knee=0.5)
     elif kind == "linden":
-        img = L.foliage_atlas(FOL + "linden_clumps.png", hue_tint=(0.98, 1.02, 0.84), sat=0.82, val=0.98)
+        # sparse pale-yellow summer blossom #E8E2A0 in small clusters (3-4 px at the game camera)
+        img = L.foliage_atlas(FOL + "linden_clumps.png", hue_tint=(0.98, 1.02, 0.84), sat=0.82, val=0.98,
+                              s_scale=0.74, s_cap=0.58, v_knee=0.56, blossom=["#E8E2A0", "#EFEAB6", "#DED690"],
+                              seed=5, blossom_n=150, blossom_r=(2.4, 3.2), blossom_cluster=5, blossom_spread=6.5,
+                              blossom_centre=(206, 190, 104))
     elif kind == "hazel":
-        img = L.foliage_atlas(FOL + "oak_clumps.png", hue_tint=(0.9, 0.98, 0.86), sat=0.7, val=0.92)
+        img = L.foliage_atlas(FOL + "oak_clumps.png", hue_tint=(0.9, 0.98, 0.86), sat=0.7, val=0.95, s_scale=0.74,
+                              s_cap=0.58, v_knee=0.54)
     elif kind == "hawthorn":
-        img = L.foliage_atlas(FOL + "oak_clumps.png", hue_tint=(0.86, 0.95, 0.88), sat=0.72, val=0.8,
-                              blossom=["#F4EFE0", "#EDE6D2", "#F6F1E6"], seed=7)
+        # white blossom in clusters big enough to read at RTS distance (3-5 px: ~45-60 px in the 1024 atlas)
+        img = L.foliage_atlas(FOL + "oak_clumps.png", hue_tint=(0.86, 0.95, 0.88), sat=0.72, val=0.84, s_scale=0.72,
+                              s_cap=0.56, v_knee=0.5, blossom=["#F6F2E6", "#EFE9DA", "#FBF8F0"], seed=7,
+                              blossom_n=260, blossom_r=(3.4, 4.6), blossom_cluster=7, blossom_spread=10.0,
+                              blossom_centre=(236, 214, 128))
     else:
         raise ValueError(kind)
-    return Mat("leaves", img, size=512, alpha=True, cutoff=0.42, double=True, sway=True)
+    return Mat("leaves", img, size=512, alpha=True, cutoff=0.42, double=True, sway=True, uv_kind="atlas")
 
 
 def M_rings():
@@ -249,27 +263,53 @@ def leaf_hull(mat, c, r, seed, cells=(0, 1, 2, 3), subdiv=1, squash=0.88):
 
 
 def star_cluster(mat, c, R, seed, cells=(0, 1, 2, 3), squash=0.88):
-    """Low LOD / impostor-friendly cluster: a tilted top card + three crossed upright cards and a
-    tiny hull. Few, large, overlapping silhouettes: reads the same from every yaw, bakes cleanly."""
+    """Low-LOD cluster: four cards tilted ~48 deg outward-up (never edge-on from the 56 deg RTS camera,
+    so no slice lines), a near-horizontal top card and a leafy hull. Few large overlapping shapes that
+    read the same from every yaw; build_tree(lod=1) then fits the whole canopy to the LOD0 hull."""
     rng = np.random.default_rng(seed)
     c = np.asarray(c, float)
     parts = []
-    a0 = rng.uniform(0, 180)
-    for k in range(3):
-        a = math.radians(a0 + k * 60)
-        n = np.array([math.cos(a), math.sin(a), 0.35])
-        p = L.card(R * 2.05, R * 2.05 * squash, mat, cell_rect(int(cells[(k + seed) % len(cells)])), segs=(1, 1))
-        p.xf(m=orient(n, (0, 0, 1), rng.uniform(-10, 10)), t=c)
+    a0 = rng.uniform(0, 90)
+    for k in range(4):
+        a = math.radians(a0 + k * 90 + rng.uniform(-12, 12))
+        d = np.array([math.cos(a), math.sin(a), 0.0])
+        n = nrm(d + np.array([0, 0, 1.1]))
+        p = L.card(R * 1.95, R * 1.95 * squash, mat, cell_rect(int(cells[(k + seed) % len(cells)])), segs=(1, 1))
+        p.xf(m=orient(n, (0, 0, 1), rng.uniform(-15, 15)), t=c + d * R * 0.32 - np.array([0, 0, R * 0.08]))
         parts.append(p)
-    p = L.card(R * 2.1, R * 2.1, mat, cell_rect(int(cells[seed % len(cells)])), segs=(1, 1))
-    p.xf(m=orient((0.15, 0.25, 1.0), (0, 1, 0), rng.uniform(0, 360)), t=c + np.array([0, 0, R * 0.35 * squash]))
+    p = L.card(R * 2.0, R * 2.0, mat, cell_rect(int(cells[seed % len(cells)])), segs=(1, 1))
+    p.xf(m=orient((0.12, 0.2, 1.0), (0, 1, 0), rng.uniform(0, 360)), t=c + np.array([0, 0, R * 0.42 * squash]))
     parts.append(p)
-    parts.append(leaf_hull(mat, c, R * 0.55, seed, cells, 0, squash))
+    parts.append(leaf_hull(mat, c, R * 0.66, seed, cells, 1, squash))
     for q in parts:
         q.nmode = "sphere"
         q.ncenter = c - np.array([0, 0, R * 0.3])
         q.nblend = 0.92
     return parts
+
+
+def cone_hull(mat, prof, seed, cells=(0, 1, 2, 3), sides=9):
+    """Leafy tapering hull (lathe of [(r, z) ...]) mapped into the opaque centre of an atlas cell:
+    blends a linden's clusters into one cone and stops see-through."""
+    rng = np.random.default_rng(seed + 9)
+    p = L.lathe(prof, sides, mat, a0=rng.uniform(0, 1))[0]
+    p.jitter((0.12, 0.12, 0.08), seed, freq=0.9)
+    d = nrm(p.v - np.array([0, 0, np.mean([z for _, z in prof])]))
+    cell = int(cells[rng.integers(len(cells))])
+    cc = cell_centre(cell)
+    uvv = cc + np.stack([d[:, 0] * 0.1 + d[:, 1] * 0.035, -d[:, 2] * 0.1], axis=1)
+    p.uv = uvv[p.t]
+    p.nmode = "sphere"
+    p.ncenter = np.array([0, 0, prof[0][1] + (prof[-1][1] - prof[0][1]) * 0.35])
+    p.nblend = 0.95
+    p.occ = 0.5
+    p.ao = False
+    return p
+
+
+def leaf_bounds(A):
+    v = np.concatenate([p.v for p in A.parts if p.mat.sway])
+    return v.min(axis=0), v.max(axis=0)
 
 
 def foliage_ao(c, R, zlo, zhi, inner=0.42, low=0.7, gain=1.0):
@@ -303,15 +343,19 @@ class TreeSpec:
 
 
 def build_tree(aid, spec: TreeSpec, lod=0):
-    """Generic broadleaf: trunk with root flare, branches into each cluster, clusters of cards."""
-    seed = seed_of(aid.replace("_lod1", ""))
+    """Generic broadleaf: trunk with root flare, branches into each cluster, clusters of cards.
+    lod 1: tilted-card clusters (no thin branches), canopy fitted to the LOD0 leaf AABB.
+    lod 2: a 2-triangle impostor card (see build_tree_impostor)."""
+    base_id = aid.replace("_lod1", "").replace("_lod2", "")
+    if lod == 2:
+        return build_tree_impostor(aid, base_id, spec)
+    seed = seed_of(base_id)
     rng = np.random.default_rng(seed)
     A = Asset(aid, seed, ao_dist=1.4, ao_strength=0.9, base_dark=0.5, base_h=0.5, top_light=0.18)
     bark, leaves = spec.bark(), spec.leaves()
     clusters = spec.clusters
     zlo = min(c[2] - R for c, R in clusters)
     zhi = max(c[2] + R for c, R in clusters)
-    rmax = max(np.hypot(c[0], c[1]) + R for c, R in clusters)
     H = zhi
     sw_bark = rigid_sway(H)
     stems = spec.stems if hasattr(spec, "stems") else None
@@ -324,7 +368,7 @@ def build_tree(aid, spec: TreeSpec, lod=0):
         A.add(tp)
         top = np.array([spec.lean[0], spec.lean[1], spec.trunk_h])
         if lod == 0:
-            for i, (c, R) in enumerate(clusters):
+            for i, (c, R) in enumerate(clusters[:getattr(spec, "branch_n", len(clusters))]):
                 c = np.asarray(c, float)
                 dirxy = c[:2] - top[:2]
                 p0 = top - np.array([0, 0, 0.35]) + np.r_[nrm(dirxy) * spec.r_top * 0.3 if np.linalg.norm(dirxy) > 0.1 else np.zeros(2), 0]
@@ -334,7 +378,7 @@ def build_tree(aid, spec: TreeSpec, lod=0):
                     sw_bark(bp)
                     A.add(bp)
     else:
-        # coppice: several thin stems splaying out of a low stool
+        # coppice: several stems splaying out of a low stool
         stool = trunk(bark, 0.35, spec.r_base, spec.r_base * 0.8, seed, sides=8 if lod == 0 else 5, flare=0.4,
                       roots=4, rings=[0.0, 0.12, 0.35])
         sw_bark(stool)
@@ -349,17 +393,40 @@ def build_tree(aid, spec: TreeSpec, lod=0):
                 sw_bark(bp)
                 A.add(bp)
     # leaves
+    leaf_parts = []
     for i, (c, R) in enumerate(clusters):
         if lod == 0:
             parts = leaf_cluster(leaves, c, R, seed + 101 * i, n_cards=spec.cards, card_scale=spec.card_scale,
-                                 cells=spec.cells, bend=0.28, hull=True, hull_subdiv=1, squash=spec.squash)
+                                 cells=spec.cells, bend=0.28, hull=getattr(spec, "cluster_hull", True),
+                                 hull_subdiv=getattr(spec, "hull_subdiv", 1),
+                                 squash=spec.squash)
         else:
             parts = star_cluster(leaves, c, R, seed + 101 * i, cells=spec.cells, squash=spec.squash)
         ph = (i * 0.618 + rng.uniform(0, 0.2)) % 1.0
         for p in parts:
             p.ao_fn = foliage_ao(c, R, zlo, zhi) if lod == 0 else foliage_ao(c, R, zlo, zhi, inner=0.35, low=0.6, gain=0.8)
             p.phase = ph
-            A.add(p)
+            leaf_parts.append(p)
+    if getattr(spec, "cone", None):
+        cp = cone_hull(leaves, spec.cone, seed, spec.cells, sides=9 if lod == 0 else 7)
+        cz = np.array([0, 0, (spec.cone[0][1] + spec.cone[-1][1]) / 2])
+        # the hull is interior volume: keep it in shadow so its magnified texels read as depth
+        cp.ao_fn = lambda q: 0.42 + 0.22 * np.clip((q.v[:, 2] - zlo) / max(zhi - zlo, 1e-3), 0, 1)
+        cp.phase = 0.37
+        leaf_parts.append(cp)
+    if lod == 1:
+        # fit the LOD1 canopy to the LOD0 leaf AABB (no pop at the switch)
+        ref = build_tree(base_id, spec, lod=0)
+        lo0, hi0 = leaf_bounds(ref)
+        v1 = np.concatenate([p.v for p in leaf_parts])
+        lo1, hi1 = v1.min(axis=0), v1.max(axis=0)
+        s = (hi0 - lo0) / np.maximum(hi1 - lo1, 1e-6)
+        c0, c1 = (lo0 + hi0) / 2, (lo1 + hi1) / 2
+        for p in leaf_parts:
+            p.v = (p.v - c1) * s + c0
+            if p.ncenter is not None:
+                p.ncenter = (np.asarray(p.ncenter, float) - c1) * s + c0
+    A.add(leaf_parts)
     # sway weight over the whole canopy: ~0.2 where leaves meet the trunk top, 1.0 at the outermost edge
     leaf = [p for p in A.parts if p.mat.sway]
     allv = np.concatenate([p.v for p in leaf])
@@ -375,58 +442,209 @@ def build_tree(aid, spec: TreeSpec, lod=0):
     return A
 
 
+def rts_axes(pitch=56.0):
+    """Build-space screen axes of the game camera at yaw 0 (it sits on Godot +Z = build -Y):
+    right, up (in the image plane) and toward-camera."""
+    p = math.radians(pitch)
+    right = np.array([1.0, 0.0, 0.0])
+    toward = np.array([0.0, -math.cos(p), math.sin(p)])
+    up = np.array([0.0, math.sin(p), math.cos(p)])
+    return right, up, toward
+
+
+def sun_build():
+    """Direction toward the lineup / DayNight day sun (elevation 52 deg, from screen lower-left), build space."""
+    e = math.radians(52)
+    h = nrm(np.array([-0.72, 0.69]))
+    return nrm(np.array([h[0] * math.cos(e), -h[1] * math.cos(e), math.sin(e)]))
+
+
+def _mat_rgba(m: Mat):
+    im = m.image()
+    if im.size != (m.size, m.size):
+        im = im.resize((m.size, m.size), L.Image.LANCZOS)
+    return np.asarray(im.convert("RGBA"), np.float32) / 255.0
+
+
+def rasterize_view(A: Asset, size=256, ss=2, pitch=56.0, pad=0.03):
+    """Orthographic software render of a baked asset along the RTS view direction: albedo x painted
+    AO (COLOR_0) x a soft sun term, alpha-tested like the game. Returns (RGBA PIL image, x-range,
+    y-range in the image plane, mean depth of the canopy)."""
+    A.bake()
+    R_, U_, T_ = rts_axes(pitch)
+    sun = sun_build()
+    allv = np.concatenate([p.v for p in A.parts])
+    X, Y = allv @ R_, allv @ U_
+    x0, x1, y0, y1 = X.min(), X.max(), Y.min(), Y.max()
+    span = max(x1 - x0, y1 - y0) * (1 + 2 * pad)
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    x0, x1, y0, y1 = cx - span / 2, cx + span / 2, cy - span / 2, cy + span / 2
+    S = size * ss
+    col = np.zeros((S, S, 3), np.float32)
+    cov = np.zeros((S, S), np.float32)
+    zb = np.full((S, S), -1e9, np.float32)
+    texs = {}
+    for p in A.parts:
+        if id(p.mat) not in texs:
+            texs[id(p.mat)] = _mat_rgba(p.mat)
+        tex = texs[id(p.mat)]
+        th, tw = tex.shape[:2]
+        V = p.v[p.t]                                   # (M, 3, 3)
+        px = (V @ R_ - x0) / span * S
+        py = (y1 - V @ U_) / span * S
+        pd = V @ T_
+        C = p.col[p.t]                                 # (M, 3, 4)
+        if p.mat.sway:
+            shade = np.repeat(C[..., 1:2], 3, axis=2)
+        else:
+            shade = C[..., :3]
+        lit = 0.62 + 0.48 * np.clip(np.einsum("mkj,j->mk", p.cn, sun), 0, 1)
+        for f in range(len(p.t)):
+            xs, ys = px[f], py[f]
+            bx0, bx1 = int(max(0, math.floor(xs.min()))), int(min(S - 1, math.ceil(xs.max())))
+            by0, by1 = int(max(0, math.floor(ys.min()))), int(min(S - 1, math.ceil(ys.max())))
+            if bx1 < bx0 or by1 < by0:
+                continue
+            gy, gx = np.mgrid[by0:by1 + 1, bx0:bx1 + 1] + 0.5
+            (ax, ay), (bx_, by_), (cx_, cy_) = zip(xs, ys)
+            den = (by_ - cy_) * (ax - cx_) + (cx_ - bx_) * (ay - cy_)
+            if abs(den) < 1e-9:
+                continue
+            w0 = ((by_ - cy_) * (gx - cx_) + (cx_ - bx_) * (gy - cy_)) / den
+            w1 = ((cy_ - ay) * (gx - cx_) + (ax - cx_) * (gy - cy_)) / den
+            w2 = 1 - w0 - w1
+            inside = (w0 >= -1e-4) & (w1 >= -1e-4) & (w2 >= -1e-4)
+            if not inside.any():
+                continue
+            d = w0 * pd[f, 0] + w1 * pd[f, 1] + w2 * pd[f, 2]
+            sub = zb[by0:by1 + 1, bx0:bx1 + 1]
+            ok = inside & (d > sub)
+            if not ok.any():
+                continue
+            uv = p.uv[f]
+            u = w0 * uv[0, 0] + w1 * uv[1, 0] + w2 * uv[2, 0]
+            v = w0 * uv[0, 1] + w1 * uv[1, 1] + w2 * uv[2, 1]
+            ti = (np.floor((u % 1.0) * tw).astype(int)) % tw
+            tj = (np.floor((v % 1.0) * th).astype(int)) % th
+            texel = tex[tj, ti]
+            if p.mat.alpha:
+                ok = ok & (texel[..., 3] >= p.mat.cutoff)
+                if not ok.any():
+                    continue
+            sh = w0[..., None] * shade[f, 0] + w1[..., None] * shade[f, 1] + w2[..., None] * shade[f, 2]
+            li = w0 * lit[f, 0] + w1 * lit[f, 1] + w2 * lit[f, 2]
+            rgb = texel[..., :3] * sh * li[..., None]
+            sub[ok] = d[ok]
+            cs = col[by0:by1 + 1, bx0:bx1 + 1]
+            cs[ok] = rgb[ok]
+            cov[by0:by1 + 1, bx0:bx1 + 1][ok] = 1.0
+    # downsample (coverage-weighted colour), pad colour into the transparent area
+    col = col.reshape(size, ss, size, ss, 3)
+    cv = cov.reshape(size, ss, size, ss)
+    a = cv.mean(axis=(1, 3))
+    rgb = (col * cv[..., None]).sum(axis=(1, 3)) / np.maximum(cv.sum(axis=(1, 3)), 1e-6)[..., None]
+    img = L.dilate_rgb(L.to_img(np.concatenate([np.clip(rgb, 0, 1), a[..., None]], axis=2), "RGBA"), 24)
+    leaf = [p for p in A.parts if p.mat.sway] or A.parts
+    lv = np.concatenate([q.v for q in leaf])
+    depth = float(((lv.min(axis=0) + lv.max(axis=0)) / 2) @ T_)
+    return img, (x0, x1), (y0, y1), depth
+
+
+def build_tree_impostor(aid, base_id, spec):
+    """LOD2: one camera-facing card (2 tris) carrying the LOD0 tree rendered from the fixed RTS pitch.
+    The quad is authored tilted to face the default camera; material extras `billboard: fixed_y` tell
+    the game to Y-billboard it (BaseMaterial3D.BILLBOARD_FIXED_Y keeps the authored tilt), so it reads
+    right from every yaw. Static (no sway)."""
+    ref = build_tree(base_id, spec, lod=0)
+    img, (x0, x1), (y0, y1), depth = rasterize_view(ref, size=256)
+    seed = seed_of(base_id)
+    A = Asset(aid, seed, ao_dist=0.5, base_dark=1.0, base_h=0.01, top_light=0.0, ground_ao=False)
+    mat = Mat("impostor", lambda: img, size=256, alpha=True, cutoff=0.5, double=True, uv_kind="atlas",
+              extras={"billboard": "fixed_y", "impostor_pitch_deg": 56.0,
+                      "note": "LOD2 impostor of " + base_id + ": set billboard_mode = BILLBOARD_FIXED_Y"})
+    R_, U_, T_ = rts_axes()
+    corners = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    v = np.array([R_ * X + U_ * Y + T_ * depth for X, Y in corners])
+    if v[:, 2].min() < 0.02:
+        v[:, 2] += 0.02 - v[:, 2].min()
+    t = np.array([(0, 1, 2), (0, 2, 3)])
+    uvc = np.array([((X - x0) / (x1 - x0), (y1 - Y) / (y1 - y0)) for X, Y in corners])
+    p = Part(v, t, mat, uvc[t], 180.0)
+    p.nmode = "fixed"
+    p.nfixed = nrm(T_ * 0.55 + np.array([0, 0, 1.0]) * 0.85)
+    p.ao = False
+    p.ao_fn = lambda q: np.ones(len(q.v))
+    p.occ = 0.0
+    A.add(p)
+    A.extras = {"kind": "tree", "lod": 2}
+    return A
+
+
 def spec_oak(seed):
     rng = np.random.default_rng(seed)
-    cl = [((0.1, -0.05, 4.5), 1.95)]
+    lift = 0.6                     # bible §6.4: hill oak 6-7 m (crown top ~6.4 m)
+    cl = [((0.1, -0.05, 4.5 + lift), 1.95)]
     n = 5
     a0 = rng.uniform(0, 6.28)
     for k in range(n):
         a = a0 + k * 2 * math.pi / n + rng.uniform(-0.2, 0.2)
         rr = rng.uniform(1.65, 1.85)
-        z = rng.uniform(3.3, 3.7)
+        z = rng.uniform(3.3, 3.7) + lift
         R = rng.uniform(1.6, 1.75)
         cl.append(((math.cos(a) * rr, math.sin(a) * rr, z), R))
     for k in (0.5, 2.5):          # fillers between ring clusters, a little higher
         a = a0 + k * 2 * math.pi / n
-        cl.append(((math.cos(a) * 1.05, math.sin(a) * 1.05, 4.25), 1.3))
-    return TreeSpec(bark=M_bark, leaves=lambda: M_leaves("oak"), clusters=cl, trunk_h=2.05, r_base=0.42,
+        cl.append(((math.cos(a) * 1.05, math.sin(a) * 1.05, 4.25 + lift), 1.3))
+    return TreeSpec(bark=M_bark, leaves=lambda: M_leaves("oak"), clusters=cl, trunk_h=2.05 + 0.45, r_base=0.42,
                     r_top=0.3, flare=0.55, roots=5, lean=(0.08, -0.05), cards=12, card_scale=1.15,
                     cells=(0, 1, 2, 3), squash=0.86)
 
 
 def spec_linden(seed):
+    """Linden: a taller rounded cone (bible §6.4), clusters overlapping heavily on a tapering cone
+    hull so it reads as one crown, not stacked pom-poms."""
     rng = np.random.default_rng(seed)
     cl = []
     a0 = rng.uniform(0, 6.28)
+    for k in range(5):
+        a = a0 + k * 2 * math.pi / 5 + rng.uniform(-0.15, 0.15)
+        cl.append(((math.cos(a) * 1.2, math.sin(a) * 1.2, 3.15 + rng.uniform(-0.12, 0.12)), 1.42))
     for k in range(4):
-        a = a0 + k * math.pi / 2 + rng.uniform(-0.2, 0.2)
-        cl.append(((math.cos(a) * 1.35, math.sin(a) * 1.35, 2.85 + rng.uniform(-0.15, 0.15)), 1.4))
+        a = a0 + 0.6 + k * math.pi / 2 + rng.uniform(-0.15, 0.15)
+        cl.append(((math.cos(a) * 0.82, math.sin(a) * 0.82, 4.3 + rng.uniform(-0.1, 0.1)), 1.22))
     for k in range(3):
-        a = a0 + 0.8 + k * 2 * math.pi / 3
-        cl.append(((math.cos(a) * 0.8, math.sin(a) * 0.8, 4.2 + rng.uniform(-0.1, 0.1)), 1.2))
-    cl.append(((0.05, 0.0, 5.45), 1.0))
-    return TreeSpec(bark=M_bark, leaves=lambda: M_leaves("linden"), clusters=cl, trunk_h=2.35, r_base=0.34,
-                    r_top=0.24, flare=0.5, roots=5, lean=(-0.05, 0.04), cards=11, card_scale=1.2,
-                    cells=(0, 1, 2, 3), squash=0.95)
+        a = a0 + 1.1 + k * 2 * math.pi / 3
+        cl.append(((math.cos(a) * 0.42, math.sin(a) * 0.42, 5.25 + rng.uniform(-0.08, 0.08)), 0.98))
+    cl.append(((0.04, 0.0, 6.0), 0.72))
+    cone = [(1.3, 2.4), (1.5, 3.0), (1.22, 4.0), (0.85, 5.0), (0.42, 5.8), (0.0, 6.25)]
+    return TreeSpec(bark=M_bark, leaves=lambda: M_leaves("linden"), clusters=cl, trunk_h=2.5, r_base=0.34,
+                    r_top=0.24, flare=0.5, roots=5, lean=(-0.05, 0.04), cards=9, card_scale=1.22,
+                    cells=(0, 1, 2, 3), squash=0.95, cone=cone, cluster_hull=False, branch_n=9)
 
 
 def spec_hazel(seed):
+    """Hazel: a 'tall coppice' (bible §1.3 / §6.4): many stems 3.4-3.9 m out of a stool, a crown
+    of clusters at 3.6-4.2 m (radius ~1.05) whose top reaches 4.6-4.9 m and whose width overlaps
+    its neighbours in a tree line (tree-wall rule: crown top >= 4.5 m)."""
     rng = np.random.default_rng(seed)
     stems = []
-    n = 7
+    n = 8
     a0 = rng.uniform(0, 6.28)
     for k in range(n):
         a = a0 + k * 2 * math.pi / n + rng.uniform(-0.2, 0.2)
-        rb = 0.12
-        rt = rng.uniform(0.75, 1.05)
-        h = rng.uniform(1.9, 2.4)
+        rb = 0.13
+        rt = rng.uniform(0.8, 1.2)
+        h = rng.uniform(3.4, 3.9)
         stems.append(((math.cos(a) * rb, math.sin(a) * rb, 0.2), (math.cos(a) * rt, math.sin(a) * rt, h),
-                      rng.uniform(0.05, 0.07)))
-    cl = [((0.0, 0.0, 2.35), 0.95)]
+                      rng.uniform(0.065, 0.085)))
+    cl = [((0.0, 0.0, 4.0), 1.08)]
     for k in range(5):
         a = a0 + 0.3 + k * 2 * math.pi / 5 + rng.uniform(-0.2, 0.2)
-        cl.append(((math.cos(a) * 0.95, math.sin(a) * 0.95, rng.uniform(1.75, 2.15)), rng.uniform(0.72, 0.85)))
-    return TreeSpec(bark=M_bark_hazel, leaves=lambda: M_leaves("hazel"), clusters=cl, stems=stems, r_base=0.3,
+        cl.append(((math.cos(a) * 1.15, math.sin(a) * 1.15, rng.uniform(3.6, 3.9)), rng.uniform(1.0, 1.1)))
+    for k in range(3):             # lower leafy shoots along the stems (coppice reads leafy to mid height)
+        a = a0 + 1.0 + k * 2 * math.pi / 3
+        cl.append(((math.cos(a) * 0.95, math.sin(a) * 0.95, 2.65), 0.82))
+    return TreeSpec(bark=M_bark_hazel, leaves=lambda: M_leaves("hazel"), clusters=cl, stems=stems, r_base=0.32,
                     cards=10, card_scale=1.25, cells=(0, 1, 2, 3), squash=0.9)
 
 
@@ -561,12 +779,42 @@ def tex_strata(seed=17, n=512, base="#857A66", dark="#574E43", light="#A89C84", 
     return lambda: L.cached_image(("strata", seed, n, base, dark, light), fn)
 
 
+def tex_drystone(seed=23):
+    """neutral_drystone swatch with its saturated yellow lichen speckle (HSV p95 0.86) painted out
+    (in-filled from the surrounding stone) and replaced by a few large soft lichen patches;
+    saturation capped at 0.5 (bible §1.4 rocks; 'bigger shapes, fewer dots')."""
+    def fn():
+        im = L.swatch(SW + "neutral_drystone.png", seamless=True)()
+        a = np.asarray(im, np.float32) / 255.0
+        mx, mn = a.max(axis=2), a.min(axis=2)
+        s = (mx - mn) / np.maximum(mx, 1e-4)
+        r, g, b = a[..., 0], a[..., 1], a[..., 2]
+        # yellow lichen: red and green both well above blue, red close to green
+        yellow = (s > 0.42) & (r > b + 0.18) & (g > b + 0.15) & (np.abs(r - g) < 0.2) & (mx > 0.38)
+        lich = np.asarray(L.Image.fromarray((yellow * 255).astype(np.uint8)).filter(L.ImageFilter.MaxFilter(5)),
+                          np.float32) / 255.0 > 0.5
+        rgba = np.concatenate([a, (~lich)[..., None].astype(np.float32)], axis=2)
+        filled = np.asarray(L.dilate_rgb(L.to_img(rgba, "RGBA"), 40), np.float32)[..., :3] / 255.0
+        soft = np.asarray(L.to_img(filled).filter(L.ImageFilter.GaussianBlur(2.0)), np.float32) / 255.0
+        a = np.where(lich[..., None], soft, a)
+        n = a.shape[0]
+        # few, large, soft lichen patches on the stone faces (not in the dark joints)
+        pn = L.periodic_noise(n, seed, 3.2)
+        patch = smoothstep(0.72, 0.84, pn) * smoothstep(0.32, 0.45, a.max(axis=2))
+        speck = L.periodic_noise(n, seed + 1, 1.6)
+        lc = hexcol("#ADA878") * (0.9 + 0.2 * speck)[..., None]
+        a = a * (1 - 0.6 * patch[..., None]) + lc * 0.6 * patch[..., None]
+        a = L.hsv_limit(np.clip(a, 0, 1), 1.0, 0.5)
+        return L.to_img(a)
+    return lambda: L.cached_image(("drystone_v2", seed), fn)
+
+
 def M_rock(key="rock", seed=3, **kw):
     return Mat(key, tex_rock(seed, 512, **kw), repeat=2.4, size=256)
 
 
 def M_drystone():
-    return Mat("drystone", L.swatch(SW + "neutral_drystone.png", seamless=True, sat=0.85), repeat=2.0, size=256)
+    return Mat("drystone", tex_drystone(), repeat=2.0, size=256)
 
 
 # =============================================================================================
@@ -625,26 +873,35 @@ def wall_profile(h=WALL_H, w0=WALL_W0, w1=WALL_W1):
                      (-(a * 0.97 + b * 0.03), h * 0.35), (-a, 0.0)])
 
 
-def wall_core(mat, p0, p1, seed, heights=None, nx=7):
-    """Battered drystone core swept from p0 to p1 (ground points); heights: per-station scale."""
+def wall_core(mat, p0, p1, seed, heights=None, nx=10, sag=0.045, top_jit=0.03, bulge=0.05):
+    """Battered drystone core swept from p0 to p1 (ground points); heights: per-station scale.
+    The top line sags a little and wanders by a few cm (ends kept at full height so modules join),
+    the faces bulge in and out along the run: never a CAD box."""
     p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
     path = np.stack([np.linspace(p0[i], p1[i], nx + 1) for i in range(3)], axis=1)
     prof = wall_profile()
+    t = np.linspace(0, 1, nx + 1)
+    ends = np.sin(np.pi * t)
+    rng = np.random.default_rng(seed + 17)
     sc = np.ones((nx + 1, 2))
+    sc[:, 1] = 1.0 - (sag * ends + np.clip(rng.normal(0, top_jit, nx + 1), -0.05, 0.05) * ends) / WALL_H
+    sc[:, 0] = 1.0 + bulge * ends * np.clip(rng.normal(0, 1.0, nx + 1), -1.2, 1.2) * 0.8
     if heights is not None:
-        sc[:, 1] = heights
+        sc[:, 1] *= heights
     parts = L.sweep(prof, path, mat, scales=sc, up=(0, 0, 1), cap0=True, cap1=True)
     p = parts[0]
-    p.jitter((0.035, 0.035, 0.03), seed, freq=2.2)
+    p.jitter((0.035, 0.035, 0.025), seed, freq=2.2)
     p.jitter((0.012, 0.012, 0.012), seed + 1)
     p.v[:, 2] = np.maximum(p.v[:, 2], 0.0)
-    p.uv = L.uv_box(p.v, p.t, mat.repeat, (seed % 7 * 0.13, 0.0))
+    p.uv = L.uv_box(p.v, p.t, mat.repeat, (seed % 7 * 0.13, (seed % 11) * 0.09))
     p.smooth = 30.0
+    p.top_line = (np.linalg.norm(path - p0, axis=1) / max(np.linalg.norm(p1 - p0), 1e-6), sc[:, 1] * WALL_H)
     return p
 
 
-def coping(mat, p0, p1, seed, h=WALL_H, w=WALL_W1, keep=None):
-    """Vertical 'cock and hen' coping stones along the wall top."""
+def coping(mat, p0, p1, seed, h=WALL_H, w=WALL_W1, keep=None, top=None):
+    """Vertical 'cock and hen' coping stones along the wall top; `top` = (fractions, heights) of the
+    core's top line so the coping follows its sag."""
     rng = np.random.default_rng(seed)
     p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
     L_ = np.linalg.norm(p1 - p0)
@@ -661,7 +918,8 @@ def coping(mat, p0, p1, seed, h=WALL_H, w=WALL_W1, keep=None):
         tall = rng.uniform(0.2, 0.26) if i % 2 == 0 else rng.uniform(0.27, 0.36)
         b = L.box((t, w + rng.uniform(0.0, 0.08), tall), mat, center=(0, 0, tall / 2))
         b.rot(ry=rng.uniform(-9, 9), rx=rng.uniform(-5, 5))
-        hloc = h - 0.04 if keep is None else h
+        hh = h if top is None else float(np.interp((s + t / 2) / L_, top[0], top[1]))
+        hloc = hh - 0.04 if keep is None else hh
         b.move(z=hloc)
         b.rot(rz=ang)
         b.move(*(p0 + d * (s + t / 2)))
@@ -701,8 +959,9 @@ def build_wall_straight(aid):
     A, seed = wall_asset(aid)
     m = M_drystone()
     p0, p1 = (-1.0, 0, 0), (1.0, 0, 0)
-    A.add(moss_tint(wall_core(m, p0, p1, seed), 0.7, seed, up=0.55))
-    for c in coping(m, p0, p1, seed + 1):
+    core = wall_core(m, p0, p1, seed)
+    A.add(moss_tint(core, 0.7, seed, up=0.55))
+    for c in coping(m, p0, p1, seed + 1, top=core.top_line):
         A.add(moss_tint(c, 0.5, seed, up=0.6))
     A.add(through_stones(m, p0, p1, seed + 2))
     return A
@@ -712,27 +971,48 @@ def build_wall_corner(aid):
     """Joins a straight on the west (-X) and one on the north (Godot -Z)."""
     A, seed = wall_asset(aid)
     m = M_drystone()
-    A.add(moss_tint(wall_core(m, (-1.0, 0, 0), (WALL_W0 / 2, 0, 0), seed, nx=5), 0.7, seed, up=0.55))
-    A.add(moss_tint(wall_core(m, (0, WALL_W0 / 2 - 0.02, 0), (0, 1.0, 0), seed + 5, nx=3), 0.7, seed + 5, up=0.55))
-    for c in coping(m, (-1.0, 0, 0), (WALL_W1 / 2, 0, 0), seed + 1):
+    c1 = wall_core(m, (-1.0, 0, 0), (WALL_W0 / 2, 0, 0), seed, nx=7)
+    c2 = wall_core(m, (0, WALL_W0 / 2 - 0.02, 0), (0, 1.0, 0), seed + 5, nx=4)
+    A.add(moss_tint(c1, 0.7, seed, up=0.55))
+    A.add(moss_tint(c2, 0.7, seed + 5, up=0.55))
+    for c in coping(m, (-1.0, 0, 0), (WALL_W1 / 2, 0, 0), seed + 1, top=c1.top_line):
         A.add(moss_tint(c, 0.5, seed, up=0.6))
-    for c in coping(m, (0, WALL_W1 / 2 + 0.02, 0), (0, 1.0, 0), seed + 3):
+    for c in coping(m, (0, WALL_W1 / 2 + 0.02, 0), (0, 1.0, 0), seed + 3, top=c2.top_line):
         A.add(moss_tint(c, 0.5, seed, up=0.6))
     A.add(through_stones(m, (-1.0, 0, 0), (0, 0, 0), seed + 2, n=2))
     return A
 
 
 def build_wall_broken(aid):
-    """Broken end: full height at -X, crumbling to knee height toward +X, tumbled stones."""
+    """Broken end: full height at -X, crumbling to knee height toward +X, loose slabs lying on the
+    broken top and tumbled stones at the foot."""
     A, seed = wall_asset(aid)
     rng = np.random.default_rng(seed)
     m = M_drystone()
-    nx = 8
+    nx = 14
     xs = np.linspace(-1, 1, nx + 1)
-    hs = np.where(xs < -0.1, 1.0, np.clip(1.0 - (xs + 0.1) * 0.62 + rng.uniform(-0.08, 0.08, nx + 1), 0.28, 1.0))
-    A.add(moss_tint(wall_core(m, (-1.0, 0, 0), (1.0, 0, 0), seed, heights=hs, nx=nx), 0.8, seed, up=0.5))
-    for c in coping(m, (-1.0, 0, 0), (1.0, 0, 0), seed + 1, keep=lambda t: t < 0.42):
+    hs = np.where(xs < -0.1, 1.0, np.clip(1.0 - (xs + 0.1) * 0.62 + rng.uniform(-0.06, 0.06, nx + 1), 0.28, 1.0))
+    core = wall_core(m, (-1.0, 0, 0), (1.0, 0, 0), seed, heights=hs, nx=nx)
+    # the broken slope: project its upward faces from the top (Z) and the rest from the side (Y), so the
+    # stones are never smeared along the slope
+    fnz = nrm(L.face_normals(core.v, core.t))
+    uvz = L.uv_box(core.v, core.t, m.repeat, (0.31, 0.17))
+    up = (fnz[:, 2] > 0.45) & (core.v[core.t][..., 0].mean(axis=1) > -0.15)
+    pz = core.v[core.t[up]]
+    uvz[up] = np.stack([pz[..., 0], -pz[..., 1]], axis=-1) / m.repeat + np.array([0.31, 0.17])
+    core.uv = uvz
+    A.add(moss_tint(core, 0.55, seed, up=0.55, patch=0.15))
+    for c in coping(m, (-1.0, 0, 0), (1.0, 0, 0), seed + 1, keep=lambda t: t < 0.42, top=core.top_line):
         A.add(moss_tint(c, 0.5, seed, up=0.6))
+    # loose slabs resting on the broken top (follow the slope)
+    for k, x in enumerate((0.02, 0.32, 0.6)):
+        h = float(np.interp(x, xs, hs)) * WALL_H
+        b = L.box((rng.uniform(0.24, 0.34), rng.uniform(0.3, 0.42), rng.uniform(0.07, 0.1)), m)
+        b.rot(ry=math.degrees(math.atan(0.62)) * rng.uniform(0.6, 1.0), rz=rng.uniform(-20, 20), rx=rng.uniform(-6, 6))
+        b.move(x, rng.uniform(-0.08, 0.08), h - 0.02)
+        b.jitter(0.012, seed + 30 + k)
+        b.uv = L.uv_box(b.v, b.t, m.repeat, (rng.uniform(0, 1), rng.uniform(0, 1)))
+        A.add(moss_tint(b, 0.5, seed + k, up=0.6))
     for k in range(7):
         b = L.box((rng.uniform(0.18, 0.34), rng.uniform(0.14, 0.26), rng.uniform(0.07, 0.12)), m)
         b.rot(rx=rng.uniform(-25, 25), ry=rng.uniform(-25, 25), rz=rng.uniform(0, 180))
@@ -748,36 +1028,68 @@ def build_wall_broken(aid):
 # =============================================================================================
 
 def build_hedge(aid):
-    """Hawthorn hedgerow, 2 m module along X, ~1.35 m tall. Blocks pathing, not sight."""
+    """Hawthorn hedgerow, 2 m module along X: one continuous dense leafy ridge from ~0.1 m to ~1.35 m,
+    wider than tall at the base (no stilts, no flat core plate), white blossom clusters that read at
+    RTS distance. Blocks pathing, not sight. Ends are identical so modules join without a gap."""
     seed = seed_of(aid)
     rng = np.random.default_rng(seed)
-    A = Asset(aid, seed, ao_dist=0.8, base_dark=0.5, base_h=0.4, top_light=0.2)
+    A = Asset(aid, seed, ao_dist=0.8, base_dark=0.55, base_h=0.4, top_light=0.2)
     leaves = M_leaves("hawthorn")
-    bark = M_bark()
-    H = 1.4
-    clusters = []
-    for k, x in enumerate(np.linspace(-0.8, 0.8, 4)):
-        clusters.append(((x + rng.uniform(-0.08, 0.08), rng.uniform(-0.08, 0.08), rng.uniform(0.62, 0.72)),
-                         rng.uniform(0.55, 0.62)))
-    for x in (-0.45, 0.4):
-        clusters.append(((x + rng.uniform(-0.1, 0.1), rng.uniform(-0.1, 0.1), rng.uniform(0.95, 1.05)),
-                         rng.uniform(0.42, 0.5)))
-    for i, (c, R) in enumerate(clusters):
-        for p in leaf_cluster(leaves, c, R, seed + 31 * i, n_cards=9, card_scale=1.25, hull=True, hull_subdiv=0,
-                              hull_scale=0.6, squash=0.92, down_keep=0.0):
-            p.ao_fn = foliage_ao(c, R, 0.0, H, inner=0.45, low=0.6)
-            p.phase = (i * 0.37) % 1.0
+    H = 1.35
+    # leafy ridge hull (interior volume, kept in shade; the cards carry the detail)
+    prof = np.array([(0.6, 0.03), (0.66, 0.3), (0.6, 0.68), (0.45, 1.02), (0.22, 1.22), (-0.22, 1.22),
+                     (-0.45, 1.02), (-0.6, 0.68), (-0.66, 0.3), (-0.6, 0.03)])
+    nx = 8
+    xs = np.linspace(-1.06, 1.06, nx + 1)
+    ends = np.sin(np.pi * (xs - xs[0]) / (xs[-1] - xs[0]))
+    path = np.stack([xs, 0.04 * ends * np.sin(xs * 2.7 + seed % 5), np.zeros(nx + 1)], axis=1)
+    sc = np.stack([1 + 0.06 * ends * np.sin(xs * 3.1 + 1.0), 1 + 0.07 * ends * np.sin(xs * 2.3 + 2.0)], axis=1)
+    ridge = L.sweep(prof * np.array([0.9, 0.92]), path, leaves, scales=sc, up=(0, 0, 1), cap0=True, cap1=True)[0]
+    d = nrm(ridge.v - np.c_[ridge.v[:, 0], np.zeros(len(ridge.v)), np.full(len(ridge.v), 0.45)])
+    cc = cell_centre(1)
+    ridge.uv = (cc + np.stack([d[:, 1] * 0.03 + ridge.v[:, 0] * 0.01, -d[:, 2] * 0.03], axis=1))[ridge.t]
+    ridge.nmode = "sphere"
+    ridge.ncenter = np.array([0.0, 0.0, 0.2])
+    ridge.nblend = 0.8
+    ridge.occ = 0.5
+    ridge.ao = False
+    ridge.ao_fn = lambda q: 0.32 + 0.16 * np.clip(q.v[:, 2] / H, 0, 1)
+    A.add(ridge)
+    # leaf cards on the ridge surface (an ellipse in y-z round the ridge axis), facing outward; the
+    # lowest rows reach ~0.1 m above the ground
+    Ry, Rz, zc = 0.62, 0.86, 0.36
+    k = 0
+    for ang in (-100, -70, -38, -8, 22, 52, 82):
+        n_along = 5
+        for j in range(n_along):
+            x = -1.0 + (j + 0.5 + rng.uniform(-0.25, 0.25)) * 2.0 / n_along
+            a = math.radians(ang + rng.uniform(-8, 8))
+            y, zz = math.sin(a) * Ry, zc + math.cos(a) * Rz
+            n = nrm(np.array([rng.uniform(-0.2, 0.2), math.sin(a) / Ry, math.cos(a) / Rz + 0.2]))
+            pos = np.array([x, y, max(zz, 0.36)]) + n * 0.06
+            s = rng.uniform(0.6, 0.72)
+            p = L.card(s, s * 0.92, leaves, cell_rect(int(rng.integers(4))), segs=(2, 2), bend=0.26)
+            p.xf(m=orient(n, (0, 0, 1), rng.uniform(-30, 30)), t=pos)
+            p.nmode = "sphere"
+            p.ncenter = np.array([x, 0.0, 0.2])
+            p.nblend = 0.9
+            p.ao_fn = lambda q: 0.55 + 0.45 * smoothstep(0.05, 1.2, q.v[:, 2])
+            p.phase = (k * 0.37) % 1.0
             A.add(p)
-    core = leaf_hull(leaves, np.array([0.0, 0.0, 0.5]), 1.0, seed, subdiv=1, squash=1.0)
-    core.v = (core.v - np.array([0, 0, 0.5])) * np.array([0.98, 0.36, 0.42]) + np.array([0, 0, 0.5])
-    core.ao_fn = lambda p: np.full(len(p.v), 0.45)
-    A.add(core)
-    # a few woody stems at the foot
-    for k in range(5):
-        x = -0.85 + k * 0.42 + rng.uniform(-0.05, 0.05)
-        for bp in branch(bark, (x, 0.0, 0.0), (x + rng.uniform(-0.1, 0.1), rng.uniform(-0.1, 0.1), 0.25),
-                         (x + rng.uniform(-0.2, 0.2), rng.uniform(-0.15, 0.15), 0.55), 0.045, 0.02, seed + k, sides=4, n=3):
-            A.add(bp)
+            k += 1
+    # end tufts: cover the ridge caps so a hedge end (or a gap) never shows the hull
+    for sx in (-1, 1):
+        for zz, yy in ((0.38, -0.3), (0.38, 0.3), (0.9, 0.0)):
+            n = nrm(np.array([sx, yy * 0.8, 0.25]))
+            p = L.card(0.66, 0.62, leaves, cell_rect(int(rng.integers(4))), segs=(2, 2), bend=0.26)
+            p.xf(m=orient(n, (0, 0, 1), rng.uniform(-30, 30)), t=(sx * 1.13, yy * 0.9, zz))
+            p.nmode = "sphere"
+            p.ncenter = np.array([sx * 0.7, 0.0, 0.2])
+            p.nblend = 0.9
+            p.ao_fn = lambda q: 0.55 + 0.45 * smoothstep(0.05, 1.2, q.v[:, 2])
+            p.phase = (k * 0.37) % 1.0
+            A.add(p)
+            k += 1
     A.sway_fn = lambda v, p: np.clip(v[:, 2] / H, 0, 1) ** 1.5 * 0.7
     return A
 
@@ -1404,24 +1716,27 @@ def build_campfire(aid):
 
 def build_lean_to(aid):
     """Sootcoat lean-to: two forked posts, a ridge pole, rafters to the ground, a patched oilcloth
-    roof; open side faces the front (-Z). A bedroll and a stump seat."""
+    roof at ~37 deg (it never lines up with the 56 deg camera, so the canvas reads at every yaw);
+    open side faces the front (-Z). A bedroll and a stump seat."""
     seed = seed_of(aid)
     rng = np.random.default_rng(seed)
     A = Asset(aid, seed, ao_dist=0.9, base_dark=0.55, base_h=0.3, top_light=0.12)
     bark, cloth, can = M_bark(), M_oilcloth(), M_canvas()
-    hx, ry, rz = 1.25, 0.5, 1.9
+    hx, ry, rz = 1.25, 0.95, 1.6
+    yb = ry - rz / math.tan(math.radians(37.0))          # where the roof meets the ground (back)
     for x in (-hx, hx):
         A.add(pole(bark, (x, ry, 0.0), (x + 0.02, ry, rz + 0.12), 0.06, 0.05, seed=int(x * 10)))
         A.add(pole(bark, (x, ry, rz - 0.05), (x + 0.18 * np.sign(x), ry + 0.05, rz + 0.25), 0.035, 0.03, sides=4))
     A.add(pole(bark, (-hx - 0.25, ry, rz + 0.02), (hx + 0.25, ry, rz + 0.04), 0.05, 0.045))
     for k, x in enumerate(np.linspace(-hx + 0.1, hx - 0.1, 5)):
-        A.add(pole(bark, (x, ry + 0.12, rz + 0.08), (x + rng.uniform(-0.05, 0.05), -0.95, 0.0), 0.035, 0.03, sides=4, seed=k))
+        A.add(pole(bark, (x, ry + 0.12, rz + 0.08), (x + rng.uniform(-0.05, 0.05), yb + 0.05, 0.0), 0.035, 0.03,
+                   sides=4, seed=k))
     for p in sheet(cloth, [(-hx - 0.1, ry + 0.15, rz + 0.12), (hx + 0.1, ry + 0.15, rz + 0.14),
-                           (hx + 0.05, -1.0, 0.02), (-hx - 0.05, -1.0, 0.02)], 6, 4, sag=0.07, seed=seed):
+                           (hx + 0.05, yb, 0.02), (-hx - 0.05, yb, 0.02)], 6, 5, sag=0.07, seed=seed):
         A.add(p)
     # closed ends: brushwood-and-oilcloth triangles
     for x in (-hx - 0.05, hx + 0.05):
-        tri = np.array([(x, ry + 0.1, rz + 0.05), (x, -0.95, 0.0), (x, ry + 0.05, 0.0)])
+        tri = np.array([(x, ry + 0.1, rz + 0.05), (x, yb + 0.05, 0.0), (x, ry + 0.05, 0.0)])
         t = np.array([(0, 1, 2)])
         for tt in (t, t[:, ::-1]):
             q = Part(tri.copy(), tt, cloth, L.uv_box(tri, tt, cloth.repeat), 30.0)
@@ -1429,10 +1744,10 @@ def build_lean_to(aid):
             A.add(q)
     # bedroll and a stump seat in front
     br = L.lathe([(0.0, -0.45), (0.14, -0.44), (0.15, 0.0), (0.14, 0.44), (0.0, 0.45)], 7, can)[0]
-    br.rot(ry=90).rot(rz=8).move(0.1, -0.45, 0.14)
+    br.rot(ry=90).rot(rz=8).move(0.1, 0.0, 0.14)
     A.add(br)
     st = L.lathe([(0.2, 0.0), (0.17, 0.08), (0.16, 0.38), (0.0, 0.4)], 7, bark)[0]
-    st.move(0.9, 1.1, 0)
+    st.move(0.95, ry + 0.3, 0)
     A.add(st)
     return A
 
@@ -1579,19 +1894,56 @@ def build_crates(aid):
 
 
 def build_scarecrow_pole(aid):
-    """Tattiebogle field pole: an empty crossed-pole frame with a tattered sacking rag (the creeps
-    slump on these by day)."""
+    """Tattiebogle field pole: a crossed-pole frame dressed like a scarecrow - a tied sack-and-straw
+    bundle on the cross, a tattered patched coat hanging from the arms, straw tufts at the cuffs and
+    the hem. No head and no face (neutrals §10.2); the creeps slump on these by day."""
     seed = seed_of(aid)
+    rng = np.random.default_rng(seed)
     A = Asset(aid, seed, ao_dist=0.5, base_dark=0.55, base_h=0.3, top_light=0.12)
-    bark, sack = M_bark_hazel(), M_sacking()
-    A.add(pole(bark, (0, 0, -0.05), (0.03, 0.02, 2.3), 0.055, 0.045))
-    A.add(pole(bark, (-0.85, 0.02, 1.62), (0.85, 0.0, 1.7), 0.04, 0.035))
-    for p in sheet(sack, [(-0.45, -0.05, 1.66), (0.2, -0.05, 1.7), (0.15, -0.12, 0.95), (-0.5, -0.1, 1.05)], 3, 3,
-                   sag=-0.04, seed=seed, flutter=0.03):
-        A.add(p)
-    rope = L.lathe([(0.075, 1.6), (0.075, 1.72)], 6, bark)[0]
-    rope.tint = np.ones((len(rope.v), 3)) * np.array([1.2, 1.1, 0.8])
-    A.add(rope)
+    bark, sack, straw, coat = M_bark_hazel(), M_sacking(), tex_straw_m(), M_canvas()
+    A.add(pole(bark, (0, 0, -0.05), (0.03, 0.02, 2.25), 0.06, 0.05))
+    A.add(pole(bark, (-0.95, 0.02, 1.62), (0.95, 0.0, 1.7), 0.045, 0.04))
+    # body bundle: a stuffed sack tied at the cross with a rope band
+    body = L.blob(sack, 0.36, scale=(1.0, 0.72, 1.0), seed=seed, sphere="uv", segs=(9, 7), noise_amp=0.12,
+                  smooth=60)
+    body.move(0.0, -0.02, 0.97)
+    A.add(body)
+    band = L.lathe([(0.27, 1.52), (0.29, 1.58), (0.27, 1.64)], 7, bark)[0]
+    band.v[:, 1] *= 0.75
+    band.tint = np.ones((len(band.v), 3)) * np.array([1.2, 1.1, 0.8])
+    A.add(band)
+    # coat: a ragged sheet over the shoulders, hanging in front and behind, with torn hem
+    for side in (1, -1):
+        y = 0.2 * side
+        for p in sheet(coat, [(-0.62, y, 1.68), (0.62, y, 1.7), (0.5, y * 1.2, 0.72), (-0.55, y * 1.2, 0.78)], 4, 4,
+                       sag=-0.03 * side, seed=seed + side, flutter=0.03):
+            # ragged hem: pull alternate bottom vertices up
+            low = p.v[:, 2] < 0.8
+            p.v[low, 2] += np.where(np.arange(low.sum()) % 2 == 0, 0.0, 0.16)
+            A.add(p)
+    # sleeves along the arms, open cuffs
+    for sx in (-1, 1):
+        sl = L.lathe([(0.11, 0.0), (0.13, 0.3), (0.12, 0.62)], 7, coat)[0]
+        sl.rot(ry=90 * sx).move(0.28 * sx, 0.01, 1.62)
+        sl.v[:, 2] -= 0.06 * np.abs(sl.v[:, 0]) * 0.3
+        A.add(sl)
+        # straw spilling from the cuffs
+        for k in range(3):
+            tuft = L.lathe([(0.07, 0.0), (0.05, 0.1), (0.0, 0.24)], 5, straw)[0]
+            tuft.rot(ry=90 * sx + rng.uniform(-35, 35), rx=rng.uniform(-25, 25)).move(0.88 * sx, 0.01, 1.64)
+            A.add(tuft)
+    # straw tufts at the hem and the neck
+    for k in range(6):
+        tuft = L.lathe([(0.06, 0.0), (0.04, 0.1), (0.0, 0.22)], 5, straw)[0]
+        a = k * 1.05
+        tuft.rot(rx=180 + rng.uniform(-20, 20), ry=rng.uniform(-20, 20)).move(math.cos(a) * 0.3, math.sin(a) * 0.18,
+                                                                           0.86 + rng.uniform(-0.04, 0.04))
+        A.add(tuft)
+    for k in range(4):
+        tuft = L.lathe([(0.05, 0.0), (0.035, 0.08), (0.0, 0.2)], 5, straw)[0]
+        tuft.rot(rx=rng.uniform(-35, 35), ry=rng.uniform(-35, 35)).move(rng.uniform(-0.08, 0.08), rng.uniform(-0.05, 0.05),
+                                                                     1.72)
+        A.add(tuft)
     return A
 
 
@@ -2488,41 +2840,69 @@ TREE_NOTE = ("Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; har
              "leaves a tree_stump when felled. Place with ±20 % scale, random yaw, ±3° hue jitter (bible §6.4).")
 
 
-@asset("tree_hill_oak", category="tree", footprint=(2, 2), blocks_sight=True, sway=True, lods=["tree_hill_oak_lod1"],
-       notes=TREE_NOTE + " Default tree-wall species.")
+LOD1_NOTE = ("Low LOD of {base}: same atlas, four tilted cards + a top card + a leafy hull per cluster, no thin "
+             "branches; the canopy is scaled to the LOD0 leaf AABB (size within 5 %, checked by the build). "
+             "Suggested switch: beyond ~40 m from the camera.")
+LOD2_NOTE = ("Impostor of {base}: 2 triangles carrying the LOD0 tree rendered from the RTS pitch (56 deg). Material "
+             "extras billboard=fixed_y: set BaseMaterial3D.billboard_mode = BILLBOARD_FIXED_Y (keeps the authored "
+             "tilt toward the camera). No sway. Suggested switch: beyond ~70 m (far map edge, minimap renders).")
+
+
+@asset("tree_hill_oak", category="tree", footprint=(2, 2), blocks_sight=True, sway=True,
+       lods=["tree_hill_oak_lod1", "tree_hill_oak_lod2"], notes=TREE_NOTE + " Default tree-wall species.")
 def a_oak():
     return build_tree("tree_hill_oak", spec_oak(seed_of("tree_hill_oak")))
 
 
 @asset("tree_hill_oak_lod1", category="tree_lod", footprint=(2, 2), blocks_sight=True, sway=True,
-       notes="Low LOD / impostor source of tree_hill_oak: same materials and atlas, closed leafy hulls "
-             "+ 4 cards per cluster, no thin branches (clean silhouette for octahedral impostor baking).")
+       notes=LOD1_NOTE.format(base="tree_hill_oak"))
 def a_oak_lod():
     return build_tree("tree_hill_oak_lod1", spec_oak(seed_of("tree_hill_oak")), lod=1)
 
 
-@asset("tree_linden", category="tree", footprint=(2, 2), blocks_sight=True, sway=True, lods=["tree_linden_lod1"],
+@asset("tree_hill_oak_lod2", category="tree_impostor", footprint=(2, 2), blocks_sight=True,
+       notes=LOD2_NOTE.format(base="tree_hill_oak"))
+def a_oak_lod2():
+    return build_tree("tree_hill_oak_lod2", spec_oak(seed_of("tree_hill_oak")), lod=2)
+
+
+@asset("tree_linden", category="tree", footprint=(2, 2), blocks_sight=True, sway=True,
+       lods=["tree_linden_lod1", "tree_linden_lod2"],
        notes=TREE_NOTE + " Taller rounded cone with summer blossom; mix into tree lines near kingdom starts.")
 def a_linden():
     return build_tree("tree_linden", spec_linden(seed_of("tree_linden")))
 
 
 @asset("tree_linden_lod1", category="tree_lod", footprint=(2, 2), blocks_sight=True, sway=True,
-       notes="Low LOD / impostor source of tree_linden.")
+       notes=LOD1_NOTE.format(base="tree_linden"))
 def a_linden_lod():
     return build_tree("tree_linden_lod1", spec_linden(seed_of("tree_linden")), lod=1)
 
 
-@asset("tree_hazel", category="tree", footprint=(2, 2), blocks_sight=True, sway=True, lods=["tree_hazel_lod1"],
-       notes=TREE_NOTE + " Many-stemmed coppice that fills gaps inside tree lines (harvestable like the others).")
+@asset("tree_linden_lod2", category="tree_impostor", footprint=(2, 2), blocks_sight=True,
+       notes=LOD2_NOTE.format(base="tree_linden"))
+def a_linden_lod2():
+    return build_tree("tree_linden_lod2", spec_linden(seed_of("tree_linden")), lod=2)
+
+
+@asset("tree_hazel", category="tree", footprint=(2, 2), blocks_sight=True, sway=True,
+       lods=["tree_hazel_lod1", "tree_hazel_lod2"],
+       notes=TREE_NOTE + " Tall coppice (crown top >= 4.5 m, tree-wall rule) that fills gaps inside tree lines "
+                         "(harvestable like the others).")
 def a_hazel():
     return build_tree("tree_hazel", spec_hazel(seed_of("tree_hazel")))
 
 
 @asset("tree_hazel_lod1", category="tree_lod", footprint=(2, 2), blocks_sight=True, sway=True,
-       notes="Low LOD / impostor source of tree_hazel.")
+       notes=LOD1_NOTE.format(base="tree_hazel"))
 def a_hazel_lod():
     return build_tree("tree_hazel_lod1", spec_hazel(seed_of("tree_hazel")), lod=1)
+
+
+@asset("tree_hazel_lod2", category="tree_impostor", footprint=(2, 2), blocks_sight=True,
+       notes=LOD2_NOTE.format(base="tree_hazel"))
+def a_hazel_lod2():
+    return build_tree("tree_hazel_lod2", spec_hazel(seed_of("tree_hazel")), lod=2)
 
 
 @asset("rock_boulder_small", category="rock", footprint=(2, 2), notes="Mossy flat-topped boulder ~0.9 m; cluster 3-7 objects at transitions (bible §6.4).")
@@ -2541,9 +2921,23 @@ def a_rock_l():
 
 
 @asset("wall_drystone_straight", category="wall", footprint=(4, 2),
-       notes="2 m module on the tile centre line (X -1..1), 1.3 m with coping; blocks pathing, not sight.")
+       notes="2 m module on the tile centre line (X -1..1), 1.3 m with coping, sagging top line and bulging "
+             "faces (ends at full height so modules join); _b / _c are other seeds: alternate them so long walls do "
+             "not repeat. Blocks pathing, not sight.")
 def a_wall_s():
     return build_wall_straight("wall_drystone_straight")
+
+
+@asset("wall_drystone_straight_b", category="wall", footprint=(4, 2),
+       notes="Second seed of wall_drystone_straight (same size and joins): alternate seeds along a long wall.")
+def a_wall_s_b():
+    return build_wall_straight("wall_drystone_straight_b")
+
+
+@asset("wall_drystone_straight_c", category="wall", footprint=(4, 2),
+       notes="Third seed of wall_drystone_straight (same size and joins).")
+def a_wall_s_c():
+    return build_wall_straight("wall_drystone_straight_c")
 
 
 @asset("wall_drystone_corner", category="wall", footprint=(4, 4),
@@ -2784,7 +3178,7 @@ def build_one(aid):
         "nodes": nodes,
         "notes": meta["notes"],
     }
-    if aid.endswith("_lod1"):
+    if aid.endswith(("_lod1", "_lod2")):
         entry["lod_of"] = aid[:-5]
     if A.extras:
         ex = {k: v for k, v in A.extras.items() if k not in ("kind", "lod")}

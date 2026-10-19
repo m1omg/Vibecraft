@@ -260,6 +260,9 @@ func _fix_materials(n: Node) -> void:
 				if vc == "multiply":
 					var m3 := sm.duplicate() as StandardMaterial3D
 					m3.vertex_color_use_as_albedo = true
+					if (sm.get_meta("extras", {}) as Dictionary).get("billboard", "") == "fixed_y":
+						m3.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y   # LOD2 tree impostors
+						m3.billboard_keep_scale = true
 					mi.set_surface_override_material(s, m3)
 				elif sm.resource_name.contains("SWAY"):
 					var fm := ShaderMaterial.new()

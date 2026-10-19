@@ -18,7 +18,7 @@
    "category": "tree",
    "size": [
     6.453,
-    5.716,
+    6.316,
     6.478
    ],
    "aabb_min": [
@@ -26,7 +26,7 @@
     0.0,
     -3.18
    ],
-   "tris": 1293,
+   "tris": 1311,
    "footprint_cells": [
     2,
     2
@@ -42,7 +42,8 @@
     "tree_hill_oak_bark": 128
    },
    "lods": [
-    "tree_hill_oak_lod1"
+    "tree_hill_oak_lod1",
+    "tree_hill_oak_lod2"
    ],
    "nodes": [],
    "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Place with \u00b120 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Default tree-wall species."
@@ -52,16 +53,16 @@
    "path": "assets/models/doodads/tree_hill_oak_lod1.glb",
    "category": "tree_lod",
    "size": [
-    7.604,
-    6.414,
-    8.049
+    6.453,
+    6.316,
+    6.478
    ],
    "aabb_min": [
-    -3.866,
+    -3.442,
     0.0,
-    -4.104
+    -3.18
    ],
-   "tris": 259,
+   "tris": 275,
    "footprint_cells": [
     2,
     2
@@ -78,7 +79,40 @@
    },
    "lods": [],
    "nodes": [],
-   "notes": "Low LOD / impostor source of tree_hill_oak: same materials and atlas, closed leafy hulls + 4 cards per cluster, no thin branches (clean silhouette for octahedral impostor baking).",
+   "notes": "Low LOD of tree_hill_oak: same atlas, four tilted cards + a top card + a leafy hull per cluster, no thin branches; the canopy is scaled to the LOD0 leaf AABB (size within 5 %, checked by the build). Suggested switch: beyond ~40 m from the camera.",
+   "lod_of": "tree_hill_oak"
+  },
+  {
+   "id": "tree_hill_oak_lod2",
+   "path": "assets/models/doodads/tree_hill_oak_lod2.glb",
+   "category": "tree_impostor",
+   "size": [
+    6.84,
+    3.825,
+    5.67
+   ],
+   "aabb_min": [
+    -3.635,
+    2.29,
+    -2.667
+   ],
+   "tris": 2,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": false,
+   "materials": [
+    "tree_hill_oak_lod2_impostor"
+   ],
+   "texel_density_px_per_m": {
+    "tree_hill_oak_lod2_impostor": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Impostor of tree_hill_oak: 2 triangles carrying the LOD0 tree rendered from the RTS pitch (56 deg). Material extras billboard=fixed_y: set BaseMaterial3D.billboard_mode = BILLBOARD_FIXED_Y (keeps the authored tilt toward the camera). No sway. Suggested switch: beyond ~70 m (far map edge, minimap renders).",
    "lod_of": "tree_hill_oak"
   },
   {
@@ -86,16 +120,16 @@
    "path": "assets/models/doodads/tree_linden.glb",
    "category": "tree",
    "size": [
-    4.441,
-    6.238,
-    4.757
+    4.596,
+    6.468,
+    5.027
    ],
    "aabb_min": [
-    -2.386,
+    -2.366,
     0.0,
-    -2.423
+    -2.54
    ],
-   "tris": 1207,
+   "tris": 1413,
    "footprint_cells": [
     2,
     2
@@ -111,7 +145,8 @@
     "tree_linden_bark": 128
    },
    "lods": [
-    "tree_linden_lod1"
+    "tree_linden_lod1",
+    "tree_linden_lod2"
    ],
    "nodes": [],
    "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Place with \u00b120 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Taller rounded cone with summer blossom; mix into tree lines near kingdom starts."
@@ -121,16 +156,16 @@
    "path": "assets/models/doodads/tree_linden_lod1.glb",
    "category": "tree_lod",
    "size": [
-    5.864,
-    6.496,
-    5.83
+    4.596,
+    6.467,
+    5.027
    ],
    "aabb_min": [
-    -2.971,
+    -2.366,
     0.001,
-    -2.79
+    -2.54
    ],
-   "tris": 259,
+   "tris": 488,
    "footprint_cells": [
     2,
     2
@@ -147,7 +182,40 @@
    },
    "lods": [],
    "nodes": [],
-   "notes": "Low LOD / impostor source of tree_linden.",
+   "notes": "Low LOD of tree_linden: same atlas, four tilted cards + a top card + a leafy hull per cluster, no thin branches; the canopy is scaled to the LOD0 leaf AABB (size within 5 %, checked by the build). Suggested switch: beyond ~40 m from the camera.",
+   "lod_of": "tree_linden"
+  },
+  {
+   "id": "tree_linden_lod2",
+   "path": "assets/models/doodads/tree_linden_lod2.glb",
+   "category": "tree_impostor",
+   "size": [
+    5.051,
+    2.825,
+    4.188
+   ],
+   "aabb_min": [
+    -2.593,
+    2.384,
+    -1.756
+   ],
+   "tris": 2,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": false,
+   "materials": [
+    "tree_linden_lod2_impostor"
+   ],
+   "texel_density_px_per_m": {
+    "tree_linden_lod2_impostor": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Impostor of tree_linden: 2 triangles carrying the LOD0 tree rendered from the RTS pitch (56 deg). Material extras billboard=fixed_y: set BaseMaterial3D.billboard_mode = BILLBOARD_FIXED_Y (keeps the authored tilt toward the camera). No sway. Suggested switch: beyond ~70 m (far map edge, minimap renders).",
    "lod_of": "tree_linden"
   },
   {
@@ -155,16 +223,16 @@
    "path": "assets/models/doodads/tree_hazel.glb",
    "category": "tree",
    "size": [
-    3.377,
-    3.11,
-    3.347
+    4.338,
+    4.865,
+    4.103
    ],
    "aabb_min": [
-    -1.792,
+    -2.221,
     0.0,
-    -1.56
+    -1.95
    ],
-   "tris": 875,
+   "tris": 1172,
    "footprint_cells": [
     2,
     2
@@ -177,29 +245,30 @@
     "tree_hazel_leaves_SWAY"
    ],
    "texel_density_px_per_m": {
-    "tree_hazel_bark": 213
+    "tree_hazel_bark": 160
    },
    "lods": [
-    "tree_hazel_lod1"
+    "tree_hazel_lod1",
+    "tree_hazel_lod2"
    ],
    "nodes": [],
-   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Place with \u00b120 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Many-stemmed coppice that fills gaps inside tree lines (harvestable like the others)."
+   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Place with \u00b120 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Tall coppice (crown top >= 4.5 m, tree-wall rule) that fills gaps inside tree lines (harvestable like the others)."
   },
   {
    "id": "tree_hazel_lod1",
    "path": "assets/models/doodads/tree_hazel_lod1.glb",
    "category": "tree_lod",
    "size": [
-    3.95,
-    3.223,
-    3.663
+    4.338,
+    4.865,
+    4.103
    ],
    "aabb_min": [
-    -2.046,
+    -2.221,
     0.0,
-    -1.756
+    -1.95
    ],
-   "tris": 273,
+   "tris": 375,
    "footprint_cells": [
     2,
     2
@@ -212,11 +281,44 @@
     "tree_hazel_lod1_leaves_SWAY"
    ],
    "texel_density_px_per_m": {
-    "tree_hazel_lod1_bark": 213
+    "tree_hazel_lod1_bark": 160
    },
    "lods": [],
    "nodes": [],
-   "notes": "Low LOD / impostor source of tree_hazel.",
+   "notes": "Low LOD of tree_hazel: same atlas, four tilted cards + a top card + a leafy hull per cluster, no thin branches; the canopy is scaled to the LOD0 leaf AABB (size within 5 %, checked by the build). Suggested switch: beyond ~40 m from the camera.",
+   "lod_of": "tree_hazel"
+  },
+  {
+   "id": "tree_hazel_lod2",
+   "path": "assets/models/doodads/tree_hazel_lod2.glb",
+   "category": "tree_impostor",
+   "size": [
+    4.606,
+    2.576,
+    3.819
+   ],
+   "aabb_min": [
+    -2.355,
+    2.038,
+    -1.763
+   ],
+   "tris": 2,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": false,
+   "materials": [
+    "tree_hazel_lod2_impostor"
+   ],
+   "texel_density_px_per_m": {
+    "tree_hazel_lod2_impostor": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Impostor of tree_hazel: 2 triangles carrying the LOD0 tree rendered from the RTS pitch (56 deg). Material extras billboard=fixed_y: set BaseMaterial3D.billboard_mode = BILLBOARD_FIXED_Y (keeps the authored tilt toward the camera). No sway. Suggested switch: beyond ~70 m (far map edge, minimap renders).",
    "lod_of": "tree_hazel"
   },
   {
@@ -320,8 +422,8 @@
    "path": "assets/models/doodads/wall_drystone_straight.glb",
    "category": "wall",
    "size": [
-    2.052,
-    1.314,
+    2.047,
+    1.296,
     0.932
    ],
    "aabb_min": [
@@ -329,7 +431,7 @@
     0.0,
     -0.459
    ],
-   "tris": 352,
+   "tris": 412,
    "footprint_cells": [
     4,
     2
@@ -345,23 +447,87 @@
    },
    "lods": [],
    "nodes": [],
-   "notes": "2 m module on the tile centre line (X -1..1), 1.3 m with coping; blocks pathing, not sight."
+   "notes": "2 m module on the tile centre line (X -1..1), 1.3 m with coping, sagging top line and bulging faces (ends at full height so modules join); _b / _c are other seeds: alternate them so long walls do not repeat. Blocks pathing, not sight."
+  },
+  {
+   "id": "wall_drystone_straight_b",
+   "path": "assets/models/doodads/wall_drystone_straight_b.glb",
+   "category": "wall",
+   "size": [
+    2.085,
+    1.315,
+    0.939
+   ],
+   "aabb_min": [
+    -1.011,
+    0.0,
+    -0.469
+   ],
+   "tris": 412,
+   "footprint_cells": [
+    4,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "wall_drystone_straight_b_drystone"
+   ],
+   "texel_density_px_per_m": {
+    "wall_drystone_straight_b_drystone": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Second seed of wall_drystone_straight (same size and joins): alternate seeds along a long wall."
+  },
+  {
+   "id": "wall_drystone_straight_c",
+   "path": "assets/models/doodads/wall_drystone_straight_c.glb",
+   "category": "wall",
+   "size": [
+    2.068,
+    1.318,
+    0.94
+   ],
+   "aabb_min": [
+    -1.028,
+    0.0,
+    -0.471
+   ],
+   "tris": 412,
+   "footprint_cells": [
+    4,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "wall_drystone_straight_c_drystone"
+   ],
+   "texel_density_px_per_m": {
+    "wall_drystone_straight_c_drystone": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Third seed of wall_drystone_straight (same size and joins)."
   },
   {
    "id": "wall_drystone_corner",
    "path": "assets/models/doodads/wall_drystone_corner.glb",
    "category": "wall",
    "size": [
-    1.414,
-    1.334,
+    1.412,
+    1.289,
     1.562
    ],
    "aabb_min": [
-    -1.022,
+    -1.02,
     0.0,
     -1.102
    ],
-   "tris": 380,
+   "tris": 440,
    "footprint_cells": [
     4,
     4
@@ -384,16 +550,16 @@
    "path": "assets/models/doodads/wall_drystone_end_broken.glb",
    "category": "wall",
    "size": [
-    2.617,
-    1.391,
-    1.593
+    2.542,
+    1.373,
+    0.949
    ],
    "aabb_min": [
-    -1.027,
-    -0.07,
-    -0.709
+    -1.016,
+    -0.075,
+    -0.471
    ],
-   "tris": 324,
+   "tris": 480,
    "footprint_cells": [
     4,
     2
@@ -416,16 +582,16 @@
    "path": "assets/models/doodads/hedge_hawthorn.glb",
    "category": "hedge",
    "size": [
-    2.816,
-    1.452,
-    1.432
+    2.61,
+    1.331,
+    1.355
    ],
    "aabb_min": [
-    -1.476,
-    -0.012,
-    -0.663
+    -1.287,
+    -0.052,
+    -0.676
    ],
-   "tris": 552,
+   "tris": 508,
    "footprint_cells": [
     4,
     2
@@ -434,12 +600,9 @@
    "blocks_sight": false,
    "sway": true,
    "materials": [
-    "hedge_hawthorn_leaves_SWAY",
-    "hedge_hawthorn_bark"
+    "hedge_hawthorn_leaves_SWAY"
    ],
-   "texel_density_px_per_m": {
-    "hedge_hawthorn_bark": 128
-   },
+   "texel_density_px_per_m": {},
    "lods": [],
    "nodes": [],
    "notes": "Hawthorn hedgerow 2 m module along X: blocks pathing but not sight; non-harvestable; never inside a tree line."
@@ -902,15 +1065,15 @@
    "category": "camp",
    "size": [
     3.001,
-    2.185,
-    2.295
+    1.89,
+    2.618
    ],
    "aabb_min": [
     -1.5,
-    -0.019,
-    -1.295
+    -0.024,
+    -1.445
    ],
-   "tris": 392,
+   "tris": 416,
    "footprint_cells": [
     6,
     6
@@ -1098,16 +1261,16 @@
    "path": "assets/models/doodads/camp_scarecrow_pole.glb",
    "category": "camp",
    "size": [
-    1.703,
-    2.351,
-    0.185
+    2.228,
+    2.302,
+    0.509
    ],
    "aabb_min": [
-    -0.852,
+    -1.112,
     -0.051,
-    -0.065
+    -0.247
    ],
-   "tris": 98,
+   "tris": 610,
    "footprint_cells": [
     1,
     1
@@ -1117,11 +1280,15 @@
    "sway": false,
    "materials": [
     "camp_scarecrow_pole_bark",
-    "camp_scarecrow_pole_sacking"
+    "camp_scarecrow_pole_sacking",
+    "camp_scarecrow_pole_canvas",
+    "camp_scarecrow_pole_straw"
    ],
    "texel_density_px_per_m": {
-    "camp_scarecrow_pole_bark": 213,
-    "camp_scarecrow_pole_sacking": 160
+    "camp_scarecrow_pole_bark": 160,
+    "camp_scarecrow_pole_sacking": 160,
+    "camp_scarecrow_pole_canvas": 160,
+    "camp_scarecrow_pole_straw": 160
    },
    "lods": [],
    "nodes": [],

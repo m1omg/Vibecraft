@@ -140,7 +140,7 @@ Before any public release the WC3 columns and §21 move to `docs/research/` and 
 
 | Item | Rule |
 |---|---|
-| Slice | 1v1: one human player vs one AI, on one map, **Wether Downs** (tileset id `greenvale`, shown to players as **Downland**; slice-plan §1). `kingdom` vs `clans`, either side |
+| Slice | 1v1: one human player vs one AI, on one map, **Wether Downs** (map id `wether_downs`; tileset id `gv`, called Greenvale in the docs and shown to players as **Downland**; the word "greenvale" never appears in a shipped filename, data string or asset id; slice-plan §1.12). `kingdom` vs `clans`, either side |
 | Later | Up to 12 players in teams; allied shared vision on by default (team melee) |
 | Neutrals | `PlayerState.NEUTRAL_HOSTILE = 12` (creeps, enemy of all), `NEUTRAL_PASSIVE = 13` (mines, shops, critters, enemy of none) |
 | Colours | Team colour per lobby slot from art-and-audio bible §2.4, **in that table's order**: Crimson `#D8232A`, Royal Blue `#285DE6`, Gold `#E6BB17`, Emerald `#2EAE3A`, Tangerine `#E35F18`, Violet `#7A2FD0`, Cornflower `#5A92E6`, Lime `#A8D41E`, Turquoise `#14B8A6`, Coral Rose `#E0507A`, Pewter `#B0A6D6`, Forest `#2A8C4A`. Ramps, automatic assignment per faction and the conflict fixes are the bible's. Shown on unit team-colour masks, flags and the minimap. Today's `PlayerState.COLORS` (`src/systems/player_state.gd`) is the reference RTS's 12 colours in the reference order and fails `tools/ip/check_value_echo.py` on 7 slots; it is replaced (§20.4 step 10, test `test_team_colours`) |
@@ -154,7 +154,7 @@ Before any public release the WC3 columns and §21 move to `docs/research/` and 
 | Starting units | **5 workers**, placed on a 1 m (64 gu) spacing between the hall and the mine, **idle** | WC3 workers start idle; the first clicks are part of the feel. `rules.match.start_units_idle` |
 | Clock | **08:00**, so the first dusk is at 200 s | `rules.match.start_hour` |
 | Hero token | **1**: the first hero (altar or inn) costs no gold or lumber, only 5 food | WC3 melee start (gameplay-mechanics §1). `rules.match.hero_tokens` |
-| First-hero item | The first hero trained gets the faction's **recall item** once (Homeward Horn, Homeward Felt, Lake Whistle, Coin for the Ferry) | WC3 gave the first hero a free return item (gameplay-mechanics §1). `rules.match.first_hero_recall_grants` = 1 (how many heroes get it) |
+| First-hero item | The first hero trained gets the faction's **recall item** once (Way-Home Horn, Way-Home Felt, Lake Whistle, Coin for the Ferry) | WC3 gave the first hero a free return item (gameplay-mechanics §1). `rules.match.first_hero_recall_grants` = 1 (how many heroes get it) |
 | Vision | Everything is black mask except what the starting units see | |
 | Camera | Centred on the hall | |
 | Main mine | The mine nearest the start within 31.25 m (2000 gu) | WC3 search radius |
@@ -221,7 +221,8 @@ arrival vs 8 s) for fewer, longer trips.
 **Extra builders** (per faction: `max_builders`, `extra_builder_rate`, `extra_builder_lumber_per_s`; §20.2). With *n* builders on one site
 the build rate is `1 + extra_builder_rate × (n − 1)`. Each builder after the first pays `extra_builder_lumber_per_s` while it works (kingdom hod
 carriers: 0.5 lumber/s, i.e. 5 lumber per 10 s, giving 1 / 1.4 / 1.8 ×) and stops, staying on site, when the player cannot pay the next whole
-lumber. Clans allow 1 builder; sylvan and deathless allow 2 at +50 % with no extra cost.
+lumber. Clans allow 1 builder (as the reference warrior race's workers; the slice-plan's proposed clans "rope-holder" was declined at
+synthesis on 2026-10-19, `gdd.md` §5); sylvan and deathless allow 2 at +50 % with no extra cost.
 
 **Worker cargo rules**
 
@@ -467,7 +468,7 @@ Check against kingdom §6.2: Wheel Marshal at level 10 has STR floor(23 + 2.6 ×
 | Stacking | Different items stack additively; identical permanent effects stack unless the item says "unique" (auras never stack, §10.3) |
 | Charges | Identical purchasable consumables merge into one slot, up to `charge_merge_factor` (**2**) × their base charges (neutrals §4.1) |
 | Cooldown groups | Items of one `cooldown_group` share a cooldown per hero (default group: the item id). `rules.items.group_cooldown`: **`heal` 8 s, `mana` 8 s** (neutral draughts and cordials, faction salves, tinctures and teas) |
-| **Recall items** | **Target a point or an own finished hall** (minimap clicks allowed). The hero goes to the own finished hall nearest that point; pressing the hotkey twice picks the highest-tier hall. After `rules.items.recall_channel` (**5.0 s**, one value for every recall item), the hero and up to **23** own non-structure units within **9.4 m** (600 gu; 24 bodies with the hero; nearest first, counted on the completion tick) appear beside that hall. The cap takes a whole 40–60 food army home (**flag:** confirm radius and cap from WC3 footage, neutrals §11 Q25; §23 #28). **Cancelling:** any order the owner issues to the hero (move, stop, hold, attack, cast, item use) cancels the channel and keeps the charge, and auto-acquire never fires during it. The recall is the **one exception to §10.2**: enemy stuns, silences and damage do not end it; only the hero's death or its owner's order does. The charge is spent on completion. If the chosen hall dies during the channel, the own finished hall nearest the point is used; with none left the channel fails and the charge is kept (`recall_target = "point_nearest_own_hall"`, `recall_enemy_interruptible = false`). Applies to every recall item: Homeward Horn, Homeward Felt, Lake Whistle, Coin for the Ferry and the neutral Homing Pigeon (neutrals §4.2). Price and stock per shop (300–350 g) |
+| **Recall items** | **Target a point or an own finished hall** (minimap clicks allowed). The hero goes to the own finished hall nearest that point; pressing the hotkey twice picks the highest-tier hall. After `rules.items.recall_channel` (**5.0 s**, one value for every recall item), the hero and up to **23** own non-structure units within **9.4 m** (600 gu; 24 bodies with the hero; nearest first, counted on the completion tick) appear beside that hall. The cap takes a whole 40–60 food army home (**flag:** confirm radius and cap from WC3 footage, neutrals §11 Q25; §23 #28). **Cancelling:** any order the owner issues to the hero (move, stop, hold, attack, cast, item use) cancels the channel and keeps the charge, and auto-acquire never fires during it. The recall is the **one exception to §10.2**: enemy stuns, silences and damage do not end it; only the hero's death or its owner's order does. The charge is spent on completion. If the chosen hall dies during the channel, the own finished hall nearest the point is used; with none left the channel fails and the charge is kept (`recall_target = "point_nearest_own_hall"`, `recall_enemy_interruptible = false`). Applies to every recall item: Way-Home Horn, Way-Home Felt, Lake Whistle, Coin for the Ferry and the neutral Homing Pigeon (neutrals §4.2). Price and stock per shop (300–350 g) |
 
 ---
 
@@ -673,6 +674,7 @@ Surrounds and body-blocks are WC3 micro staples (mechanics §11 pillar 4): catch
 |---|---|
 | Armour | **Fortified**, value **5** (scout towers 2; a faction T3 hall may set 6); masonry-type research per faction |
 | HP | Halls 1550 / 2050 / 2600 (≈ +3 % on WC3's 1500 / 2000 / 2500); production buildings **760–1350**; supply 500–620; towers 320–520 (faction docs). Most production buildings are at or within 10 % of the WC3 value for their role (kingdom Oath Hall 900, Foundry 1200, Collegium 1050 and Wainwright Yard 1200 equal it); the kingdom Drill Yard is −10 % (1350 vs barracks 1500); the clans Mirror Yurt (760, against 800) and Home Yurt (620) are faction values inside the band (clans §5.4 audit). Kept within ± 10 % (§21; WC3 figures per §23 #21) |
+| Footprint (0.5 m cells; art bible §1.3, decided 2026-10-19) | Hall **16×16** (8 m); production, altar, shop and research **12×12** (6 m); supply **8×8** (4 m); tower **4×4** (2 m). Neutral: Gold Seam, Weighstall, Coaching Inn, Hiring Fair and Contraption Barn 12×12; Hale Spring 8×8; Dewstone, Lucky Barrow, Beacon Cairn 4×4. **The sim footprint equals the mesh width** (no clipping through walls). Upgrades keep the footprint |
 | Sight | Default **14.0 / 9.4 m**; halls and towers set their own (clans hall 18.0 / 12.5; kingdom Lookout 25 / 18); capped at 28.1 m |
 | Regeneration | **None** by default (WC3 human/orc buildings). Faction exceptions only: deathless Pall (+1 HP/s); sylvan noonlight (+1 HP/s) and, by day, the sunlit yard (**structures only**, +1 HP/s; the two do not stack). Details in §9 |
 | Under construction | §4.7 (starts at 10 % HP) |
@@ -1111,7 +1113,7 @@ and cancels a wind-up; **Patrol** = attack-move ping-pong; **Attack Ground** §7
 | Waypoints | Shown while Shift is held (juice CMB-11) |
 | Shift + Attack on several units | Builds a focus-fire list |
 | Building queues | 7 items (§4.6); Shift + train = 5 |
-| Autocast | **Right-click** an ability button to toggle. Applies to every unit of that type in the selection. Defaults per ability def (`autocast_default`); repair defaults off. **Autocast on:** four corner dots blink clockwise in the faction accent (kingdom ember `#F08A2A`, clans saffron `#E0A030`) plus a looped-arrow badge (art bible HUD table; juice HUD-04, whose comet runs one lap only when the autocast fires). Never a gold border and never a continuously rotating sparkle around the edge |
+| Autocast | **Right-click** an ability button to toggle. Applies to every unit of that type in the selection. Defaults per ability def (`autocast_default`); repair defaults off. **Autocast on:** a steady bar in the faction accent (kingdom ember `#F08A2A`, clans saffron `#E0A030`) along the button's bottom edge plus a looped-arrow badge (art bible §7.4; when the autocast fires, one sweep runs along the bottom bar). Never corner marks, a gold border or any light that circles the edge (art bible §13 #13) |
 
 ### 18.6 Rally points
 
@@ -1162,6 +1164,8 @@ its own fog, gets no resource bonus and obeys every rule in this doc.
 | Items and shops | Uses drops only | Buys potions and the recall item | Shops each return home; buys detection when it sees invisibility |
 | Upkeep discipline | Ignores | Stays ≤ 50 food until the push, then up to 80 | Stays ≤ 50 until the push, then up to 80 |
 | Expansion | Never | ≈ 10:00, or when the main mine is below 4,000 | ≈ 7:00, behind a tower |
+| Contested shared camps (`contested_camp_rule`; slice-plan §4.4) | Skips shared camps | At a shared camp seen cleared, or with an enemy hero seen within 40 m of it in the last 20 s, fights only when its army food and hero level are at least the enemy's; otherwise takes the map's fallback leg (`creep_route`) | Same |
+| Late expansion (`late_expansion`) | Never | After the red camp falls: at ≈ 14:00, or when the main mine is below 3,000 (Wether Downs: the Ring Gold Seam) | Same, from ≈ 12:00 |
 | Scouting | None | Hero creep route only | Worker scout at 0:45, then every 2 min |
 | Faction signature | Never | **Levy Horn / Lay Down Flails** (kingdom) and **Sound the Gong / All Clear** (clans): call when 3+ enemy combat units (6+ food) are within 15–20 m of its workers; release 10 s after none remain | Same, but releases as soon as none remain, and rebuilds lost supply |
 | Determinism | Uses `rng_ai` (§2.3) | | |
@@ -1507,7 +1511,7 @@ Localisers translate the percentage string, never a "low / high" wording (§4.5)
 | `lumber_drop` | [hall tiers, `kingdom_timber_yard`] | [hall tiers, `clans_casting_pit`] | [hall tiers, `sylvan_resinworks`] | [hall tiers, `deathless_ossuary`] |
 | `start_units` | {`kingdom_hodman`: 5} | {`clans_yurtwright`: 5} | {`sylvan_tapster`: 5} | {`deathless_sexton`: 5} |
 | `start_gold` / `start_lumber` | 500 / 150 | 500 / 150 | 500 / 150 | 500 / 150 |
-| `recall_item` | `item_homeward_horn` | `item_homeward_felt` | `item_lake_whistle` | `item_coin_for_the_ferry` |
+| `recall_item` | `item_way_home_horn` | `item_way_home_felt` | `item_lake_whistle` | `item_coin_for_the_ferry` |
 | `lumber_per_trip` | 10 | 15 | 10 (Deep Spigots 12, Bored Spigots 14) | 10 |
 | `chop_interval` | 0.8 | 0.9 | 0.9 | 0.8 |
 | `fells_trees` | true | true | false | true |
@@ -1652,14 +1656,14 @@ Hall-tier ids are written with the faction prefix in data (`kingdom_walled_burg`
                 "altar": "kingdom_oath_hall", "supply": "kingdom_croft",
                 "lumber_drop": ["kingdom_moot_hall", "kingdom_walled_burg", "kingdom_crown_burg", "kingdom_timber_yard"],
                 "start_units": {"kingdom_hodman": 5}, "start_gold": 500, "start_lumber": 150,
-                "recall_item": "item_homeward_horn", "lumber_per_trip": 10, "chop_interval": 0.8, "fells_trees": true,
+                "recall_item": "item_way_home_horn", "lumber_per_trip": 10, "chop_interval": 0.8, "fells_trees": true,
                 "workers_per_tree": 0, "max_builders": 3, "extra_builder_rate": 0.4, "extra_builder_lumber_per_s": 0.5},
     "clans":   {"name": "faction_name_clans", "worker": "clans_yurtwright", "hall": "clans_shell_hall",
                 "hall_tiers": ["clans_shell_hall", "clans_banner_shell", "clans_sun_gong_shell"],
                 "altar": "clans_naming_stones", "supply": "clans_home_yurt",
                 "lumber_drop": ["clans_shell_hall", "clans_banner_shell", "clans_sun_gong_shell", "clans_casting_pit"],
                 "start_units": {"clans_yurtwright": 5}, "start_gold": 500, "start_lumber": 150,
-                "recall_item": "item_homeward_felt", "lumber_per_trip": 15, "chop_interval": 0.9, "fells_trees": true,
+                "recall_item": "item_way_home_felt", "lumber_per_trip": 15, "chop_interval": 0.9, "fells_trees": true,
                 "workers_per_tree": 0, "max_builders": 1, "extra_builder_rate": 0.0, "extra_builder_lumber_per_s": 0.0}
   }
 }
@@ -1812,9 +1816,9 @@ neutrals §9. `python3 tools/ip/check_banned_terms.py` (with its UI-string pass)
 
 **Inconsistencies found in sibling docs (to fix there)**
 
-10. **Footprint units:** `clans.md` §7 lists footprints in metres ("8×8 m", "4×4 m", "2×2 m"), while `kingdom.md` and `architecture.md` use
-    0.5 m cells (hall 10×10 cells = 5 m). One convention (cells) must be chosen before data entry; the hall size itself (5 m vs the visual
-    doc's 8 m) is an open art question.
+10. ~~Footprint units~~ **Closed (2026-10-19):** every doc uses 0.5 m cells, and the sizes are the art bible §1.3 classes (hall 16×16 = 8 m;
+    production, altar, shop and research 12×12; supply 8×8; tower 4×4), recorded in §8. `architecture.md`'s example ("hall 10×10, barracks
+    8×8, farm 4×4") becomes "hall 16×16, barracks 12×12, farm 8×8, tower 4×4", and the slice map is re-validated with them (slice-plan §1.4).
 11. **Hall–mine gap:** `gameplay-mechanics.md` §13.1 says 4 m; `kingdom.md` §10 says 6–8 m; this spec sets **6.0 m** (§3.3).
 12. **Selection cap:** `gameplay-mechanics.md` §13.1 says 24; the code and this spec say 12.
 13. **Data ids:** the faction and neutral docs list attack ids `hero` and `chaos`; this spec renames them `heroic` and `raw` (§20.4). The
@@ -1842,11 +1846,11 @@ neutrals §9. `python3 tools/ip/check_banned_terms.py` (with its UI-string pass)
 **Follow-ups in other docs (not edited here)**
 
 22. `juice/heroes-abilities-vfx.md` ITM-04: every recall item now has a **5 s**, point-targeted, enemy-proof channel (§6.8). Retime the
-    Homeward Horn blasts (0 / 2 / 4 s) and the Homeward Felt stripes (one per 1.67 s), and give both the pigeon's hall marker, double-tap and
+    Way-Home Horn blasts (0 / 2 / 4 s) and the Way-Home Felt stripes (one per 1.67 s), and give both the pigeon's hall marker, double-tap and
     "keeps filling under the stun" read.
 23. `architecture.md` §5: separation steering must obey §7.11 (enemy bodies are solid; never push another player's unit) and projectiles gain
     `weapon.kind` (§7.7); §10: attack id `raw`.
-24. `slice-plan.md` B13 and S19 and `juice/combat-and-units.md` §4.9 still say "Hollow Harvest" (now **Tattiebogles**, neutrals §10.1).
+24. `juice/combat-and-units.md` §4.9 still says "Hollow Harvest" (now **Tattiebogles**, neutrals §10.1); `slice-plan.md` B13 and S19 are done.
 25. ~~`art-and-audio-bible.md` music cue rename~~ **Done (2026-10-19):** the cue is "Linden Curfew" (`mus_kingdom_linden_curfew`), and
     `night watch` / `night_watch` are in `tools/ip/banned_terms.txt`, so the check keeps the old name out of prompts and file names.
 26. `sylvan-and-deathless.md` "rules follow-ups": the lumber values (§4.3, §20.2), the regeneration rows (§8, §9, structures included) and

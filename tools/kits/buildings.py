@@ -50,73 +50,112 @@ CPAL = ["#1E5A60", "#2F7E7E", "#E0A030", "#B7772A", "#A8743A", "#D9A55E", "#5FA0
         "#E9DDBF", "#1C2230", "#6F7C88", "#4E2E20", "#3D4046", "#2A2220", "#C9A46A", "#8A6A44"]
 
 
+def graded(img_fn, mean=None, sat_cap=0.65, v_floor=None):
+    """Grade a procedural texture callable (faction-LUT stand-in)."""
+    return lambda: L.cached(("graded", id(img_fn), mean, sat_cap, v_floor),
+                            lambda: L.grade(img_fn(), mean, sat_cap, v_floor))
+
+
 def kingdom_swatches():
+    """Kingdom swatches, graded towards the kingdom palette (art bible 2.1) with saturation <= 65 %
+    (bible 1.4, buildings) as the faction-LUT stand-in. repeat = metres per cell (every cell is
+    repeat x DENSITY px, so texel density is the same everywhere); tiles = pattern copies per cell."""
     return {
         "plaster": Swatch("plaster", L.swatch_img(MAT + "kingdom_lime_plaster.png", "crossfade"), 3.0),
-        "oak": Swatch("oak", L.swatch_img(MAT + "kingdom_dark_oak_beam.png", "crossfade"), 2.2),
-        "roof": Swatch("roof", L.swatch_img(MAT + "kingdom_burgundy_roof_tiles.png", "period"), 2.6),
+        "oak": Swatch("oak", L.swatch_img(MAT + "kingdom_dark_oak_beam.png", "crossfade", grade_to="#5A3A22",
+                                          sat_cap=0.62), 2.2),
+        "roof": Swatch("roof", L.swatch_img(MAT + "kingdom_burgundy_roof_tiles.png", "period", grade_to="#7B2C36",
+                                            sat_cap=0.65), 2.4, tiles=2),
         "rubble": Swatch("rubble", L.swatch_img(MAT + "kingdom_rubble_stone.png", "crossfade"), 2.4),
-        "scales": Swatch("scales", L.swatch_img(MAT + "kingdom_bronze_scale_roof.png", "period", sat=0.75,
-                                                tint=(0.95, 1.0, 1.02), gamma=0.9), 1.4),
-        "planks": Swatch("planks", L.swatch_img(MAT + "kingdom_painted_planks.png", "periodx"), 1.5),
+        "scales": Swatch("scales", L.swatch_img(MAT + "kingdom_bronze_scale_roof.png", "period", grade_to="#7C5631",
+                                                sat_cap=0.62, v_floor=0.5, sat=0.3), 2.8),
+        "planks": Swatch("planks", L.swatch_img(MAT + "kingdom_painted_planks.png", "periodx", sat_cap=0.6), 1.5),
         "iron": Swatch("iron", L.tex_iron(), 1.0),
-        "brick": Swatch("brick", L.tex_brick(), 1.3),
-        "straw": Swatch("straw", L.tex_straw(), 1.0),
-        "bark": Swatch("bark", L.swatch_img(TER + "bark_oak.png", "none"), 1.2),
-        "rings": Swatch("rings", L.tex_rings(), kind="decal"),
-        "wattle": Swatch("wattle", L.tex_wattle(), 0.75),
-        "leaves": Swatch("leaves", L.tex_leaves(), 1.6),
-        "dirt": Swatch("dirt", L.swatch_img(TER + "gv_dirt.png", "none"), 3.0),
-        "pal": Swatch("pal", L.tex_palette(KPAL), kind="decal"),
-        "team": Swatch("team", L.tex_team_cloth(emblem="wheel"), kind="decal", group="team"),
-        "team_plain": Swatch("team_plain", L.tex_team_cloth(seed=33), kind="decal", group="team"),
+        "brick": Swatch("brick", L.tex_brick(), 1.6),
+        "straw": Swatch("straw", L.tex_straw(), 1.2),
+        "bark": Swatch("bark", L.swatch_img(TER + "bark_oak.png", "none", sat_cap=0.55), 1.2),
+        "rings": Swatch("rings", L.tex_rings(), kind="decal", px=160),
+        "wattle": Swatch("wattle", L.tex_wattle(), 0.9),
+        "leaves": Swatch("leaves", graded(L.tex_leaves(), sat_cap=0.6), 1.6),
+        "dirt": Swatch("dirt", L.swatch_img(TER + "gv_dirt.png", "none", sat_cap=0.45), 3.0),
+        "pal": Swatch("pal", L.tex_palette(KPAL), kind="decal", px=64, sheet_key="pal"),
+        "team": Swatch("team", L.tex_team_cloth(emblem="wheel"), kind="decal", group="team", sheet_key="team_wheel",
+                       px=224),
+        "team_plain": Swatch("team_plain", L.tex_team_cloth(seed=33), kind="decal", group="team", px=224),
         "team_band": Swatch("team_band", L.tex_team_band(), 0.8, group="team"),
-        "window": Swatch("window", L.tex_window(), kind="decal", group="glow"),
-        "ember": Swatch("ember", L.tex_ember(), kind="decal", group="glow"),
+        "window": Swatch("window", L.tex_window(), kind="decal", group="glow", px=128),
+        "ember": Swatch("ember", L.tex_ember(), kind="decal", group="glow", px=128),
     }
 
 
 def clans_swatches():
-    teal = L.swatch_img(MAT + "clans_teal_felt.png", "period")
-    saffron = L.swatch_img(MAT + "clans_saffron_felt.png", "period", tint=(0.92, 0.84, 0.74), sat=0.85)
+    """Clans swatches graded towards the clans palette (bible 2.2): ink-teal felt #1E5A60..#2F7E7E at
+    V >= 38 %, lattice-wood #7A4A32 (never red-brown), warm bronze #A8743A; saturation <= 65 %."""
+    teal = L.swatch_img(MAT + "clans_teal_felt.png", "period", grade_to="#24605F", sat_cap=0.65, v_floor=0.40)
+    saffron = L.swatch_img(MAT + "clans_saffron_felt.png", "period", grade_to="#D29A3E", sat_cap=0.65)
     return {
         "teal": Swatch("teal", teal, 2.4),
-        "saffron": Swatch("saffron", saffron, 1.0),
+        "saffron": Swatch("saffron", saffron, 1.2),
         "stripes": Swatch("stripes", L.tex_stripes(teal, saffron, stripes=4), 2.4),
-        "lattice": Swatch("lattice", L.swatch_img(MAT + "clans_lattice_wood.png", "period"), 1.4),
+        "lattice": Swatch("lattice", L.swatch_img(MAT + "clans_lattice_wood.png", "period", grade_to="#7A4A32",
+                                                  sat_cap=0.6), 1.4),
         "shell": Swatch("shell", L.swatch_img(MAT + "clans_tortoise_shell.png", "crossfade"), 2.6),
-        "bronze": Swatch("bronze", L.swatch_img(MAT + "clans_polished_bronze.png", "period"), 1.4),
-        "wood": Swatch("wood", L.swatch_img(MAT + "kingdom_dark_oak_beam.png", "crossfade",
-                                            tint=(1.32, 0.98, 0.86)), 2.0),
+        "bronze": Swatch("bronze", L.swatch_img(MAT + "clans_polished_bronze.png", "period", grade_to="#A8743A",
+                                                sat_cap=0.65), 1.4),
+        "wood": Swatch("wood", L.swatch_img(MAT + "kingdom_dark_oak_beam.png", "crossfade", grade_to="#6E4632",
+                                            sat_cap=0.58), 2.0),
         "stone": Swatch("stone", L.tex_stone(), 1.6),
-        "glyph": Swatch("glyph", L.tex_glyph_stone(), kind="decal"),
-        "drystone": Swatch("drystone", L.swatch_img(MAT + "neutral_drystone.png", "crossfade"), 2.0),
-        "clay": Swatch("clay", L.swatch_img(TER + "gv_cracked.png", "none"), 2.0),
-        "dirt": Swatch("dirt", L.swatch_img(TER + "gv_dirt.png", "none"), 3.0),
-        "bark": Swatch("bark", L.swatch_img(TER + "bark_oak.png", "none"), 1.2),
-        "rings": Swatch("rings", L.tex_rings(), kind="decal"),
+        "glyph": Swatch("glyph", L.tex_glyph_stone(), kind="decal", px=224),
+        "drystone": Swatch("drystone", L.swatch_img(MAT + "neutral_drystone.png", "crossfade", sat_cap=0.3), 2.0),
+        "clay": Swatch("clay", L.swatch_img(TER + "gv_cracked.png", "none", sat_cap=0.45), 2.0),
+        "dirt": Swatch("dirt", L.swatch_img(TER + "gv_dirt.png", "none", sat_cap=0.45), 3.0),
+        "bark": Swatch("bark", L.swatch_img(TER + "bark_oak.png", "none", sat_cap=0.55), 1.2),
+        "rings": Swatch("rings", L.tex_rings(), kind="decal", px=160),
         "iron": Swatch("iron", L.tex_iron(), 1.0),
-        "pal": Swatch("pal", L.tex_palette(CPAL), kind="decal"),
-        "team": Swatch("team", L.tex_team_cloth(emblem="gong"), kind="decal", group="team"),
-        "team_plain": Swatch("team_plain", L.tex_team_cloth(seed=33), kind="decal", group="team"),
+        "pal": Swatch("pal", L.tex_palette(CPAL), kind="decal", px=64, sheet_key="pal"),
+        "team": Swatch("team", L.tex_team_cloth(emblem="gong"), kind="decal", group="team", sheet_key="team_gong",
+                       px=224),
+        "team_plain": Swatch("team_plain", L.tex_team_cloth(seed=33), kind="decal", group="team", px=224),
         "team_band": Swatch("team_band", L.tex_team_band(), 0.8, group="team"),
-        "ember": Swatch("ember", L.tex_ember(), kind="decal", group="glow"),
+        "ember": Swatch("ember", L.tex_ember(), kind="decal", group="glow", px=128),
     }
+
+
+PIPING = {"kingdom": "#EDE2C8", "clans": "#A8743A"}      # neutral piping round TEAM areas (bible 3.1 rule 4)
+_SHEETS = {}
+
+
+def sheets_for(faction):
+    """Shared texture sheets: one atlas per faction + one TEAM and one GLOW sheet for both factions."""
+    if faction not in _SHEETS:
+        if "team" not in _SHEETS:
+            k, c = kingdom_swatches(), clans_swatches()
+            _SHEETS["team"] = L.Sheet("buildings_team", [s for s in list(k.values()) + list(c.values())
+                                                         if s.group == "team"], width=512, fmt="png")
+            _SHEETS["glow"] = L.Sheet("buildings_glow", [s for s in list(k.values()) + list(c.values())
+                                                         if s.group == "glow"], width=512, fmt="png")
+        sw = kingdom_swatches() if faction == "kingdom" else clans_swatches()
+        _SHEETS[faction] = L.Sheet(f"{faction}_buildings_atlas", [s for s in sw.values() if s.group == "atlas"],
+                                   width=2048, fmt="jpeg", quality=90)
+    return {"atlas": _SHEETS[faction], "team": _SHEETS["team"], "glow": _SHEETS["glow"]}
 
 
 # per-swatch defaults: (dice max edge m, jitter amplitude m, smoothing angle deg)
 DEFAULTS = {
-    "plaster": (None, 0.012, 30), "rubble": (None, 0.03, 40), "roof": (0.4, 0.02, 40),
+    "plaster": (None, 0.012, 30), "rubble": (None, 0.03, 40), "roof": (0.75, 0.02, 40),
     "oak": (None, 0.006, 25), "planks": (None, 0.006, 25), "scales": (None, 0.0, 60), "brick": (None, 0.012, 30),
-    "iron": (None, 0.0, 35), "straw": (0.3, 0.03, 50), "bark": (0.5, 0.0, 50), "rings": (None, 0.0, 10),
-    "wattle": (0.4, 0.008, 30), "leaves": (0.3, 0.0, 60), "dirt": (0.4, 0.0, 40), "pal": (None, 0.0, 35),
-    "team": (0.3, 0.0, 40), "team_plain": (0.3, 0.0, 40), "team_band": (0.3, 0.0, 40),
+    "iron": (None, 0.0, 35), "straw": (0.6, 0.03, 50), "bark": (None, 0.0, 50), "rings": (None, 0.0, 10),
+    "wattle": (None, 0.008, 30), "leaves": (None, 0.0, 60), "dirt": (0.9, 0.0, 40), "pal": (None, 0.0, 35),
+    "team": (None, 0.0, 40), "team_plain": (None, 0.0, 40), "team_band": (None, 0.0, 40),
     "window": (None, 0.0, 0), "ember": (None, 0.0, 30),
-    "teal": (0.3, 0.012, 60), "saffron": (0.3, 0.012, 60), "stripes": (0.3, 0.012, 60),
-    "lattice": (0.35, 0.004, 40), "shell": (0.35, 0.0, 60), "bronze": (0.35, 0.0, 50),
-    "wood": (0.6, 0.006, 25), "stone": (0.3, 0.0, 40), "glyph": (0.3, 0.0, 40), "drystone": (0.3, 0.025, 40),
-    "clay": (0.3, 0.02, 50),
+    "teal": (0.6, 0.012, 60), "saffron": (0.6, 0.012, 60), "stripes": (0.6, 0.012, 60),
+    "lattice": (None, 0.004, 40), "shell": (0.6, 0.0, 60), "bronze": (None, 0.0, 50),
+    "wood": (None, 0.006, 25), "stone": (None, 0.0, 40), "glyph": (None, 0.0, 40), "drystone": (0.7, 0.025, 40),
+    "clay": (0.7, 0.02, 50),
 }
+
+
+TEAM_MIN_SHADE = 0.8
 
 
 class Ctx:
@@ -133,6 +172,7 @@ class Ctx:
         self.k = scale
         self.parts: list[Part] = []
         self.notes = []
+        self.anchors = {}
         self.bake = L.Bake()
 
     def sw(self, key):
@@ -147,6 +187,9 @@ class Ctx:
         if "jit" not in kw:
             p.jit = d[1]
         p.set(**kw)
+        if p.sw.group == "team":
+            # painted AO never drags team cloth below the bible's 50 % team value floor (1.4)
+            p.min_shade = max(p.min_shade, TEAM_MIN_SHADE)
         self.parts.append(p)
         return p
 
@@ -206,7 +249,7 @@ def rect_walls(x0, x1, y0, y1):
     }
 
 
-def wall_prism(c, wall, outline_sz, d0, d1, key, chamfer=0.02, grid=0.42, **kw):
+def wall_prism(c, wall, outline_sz, d0, d1, key, chamfer=0.02, grid=0.6, **kw):
     """Polygon in the wall's (s, z) plane extruded from offset d0 to d1 (outward); the big faces are
     gridded (AO resolution)."""
     p = L.prism(outline_sz, d0, d1, c.sw(key), chamfer=chamfer, grid=grid)
@@ -222,7 +265,7 @@ def wall_prism(c, wall, outline_sz, d0, d1, key, chamfer=0.02, grid=0.42, **kw):
 def plinth(c, x0, x1, y0, y1, h, key="rubble", batter=0.05, chamfer=0.06, z0=0.0, **kw):
     """Battered rubble-stone base."""
     ol = np.array([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], float)
-    p = L.prism(ol, z0, z0 + h, c.sw(key), chamfer=chamfer, grid=0.4, bottom=False)
+    p = L.prism(ol, z0, z0 + h, c.sw(key), chamfer=chamfer, grid=0.6, bottom=False)
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     top = p.v[:, 2] > z0 + h * 0.5
     p.v[top, 0] = cx + (p.v[top, 0] - cx) * (1 - batter)
@@ -232,7 +275,7 @@ def plinth(c, x0, x1, y0, y1, h, key="rubble", batter=0.05, chamfer=0.06, z0=0.0
 
 
 def timber_wall(c, wall, z0, z1, t, openings=(), bay=0.75, braces=True, rail=True, key="oak", depth=None,
-                corner=True):
+                corner=True, simple=False):
     """Half-timber frame on a wall: sill, plate, corner posts, studs, rail, braces, around
     openings. openings: [(s_centre, width, z_bottom, z_top, kind)] kind in window / door / blank."""
     dep = depth or t * 0.8
@@ -254,6 +297,10 @@ def timber_wall(c, wall, z0, z1, t, openings=(), bay=0.75, braces=True, rail=Tru
     if corner:
         for s in (t * 0.5, Lw - t * 0.5):
             mem(s, z0, s, z1, w=t * 1.15, d=dep * 1.1)
+    if simple:
+        # walls the fixed RTS camera never shows (the back): sill, plate and posts only
+        bay = max(bay, 1.2)
+        braces = False
     nb = max(1, int(round((Lw - t) / bay)))
     edges = np.linspace(t * 0.5, Lw - t * 0.5, nb + 1)
     zr = z0 + H * 0.42
@@ -311,12 +358,6 @@ def window(c, wall, s, zb, zt, w, shutters=True, open_deg=158.0, recess=0.0):
             p.move(0, 0, 0.03)
             wall.place(p, hinge, zb, 0.0)
             c.add(p)
-            # painted plank lines: two thin dark battens
-            for zz in (0.25, 0.75):
-                bt = L.box(sw_ * 0.9, 0.035, 0.012, c.sw("pal"))
-                bt.move(side * sw_ / 2, h * zz, 0.0).rot(0, side * -(180 - open_deg), 0).move(0, 0, 0.05)
-                wall.place(bt, hinge, zb, 0.0)
-                c.P(bt, "#26221F")
 
 
 def _uv_rect(p, w, h):
@@ -335,13 +376,13 @@ def _face_out(q, wall):
     return q
 
 
-def door(c, wall, s, zb, w, h, key="planks", arch=False):
+def door_(c, wall, s, zb, w, h, key="planks", arch=False):
     """Plank door set into the wall, iron straps, a step."""
     th = 0.06
     p = L.box(w, h, th, c.sw(key), chamfer=0.01)
     p.move(0, h / 2, 0)
     wall.place(p, s, zb, 0.0)
-    c.add(p, dice=0.25, uvrot=True)
+    c.add(p, dice=None, uvrot=True)
     for zz in (0.22, 0.75):
         strap = L.box(w * 0.85, 0.045, 0.02, c.sw("iron"))
         strap.move(w * 0.04, h * zz, th / 2 + 0.01)
@@ -357,35 +398,47 @@ def door(c, wall, s, zb, w, h, key="planks", arch=False):
     c.add(step, jit=0.01)
 
 
-def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.12, sag=0.04, flare=0.12, kick=0.05, nu=10, nv=6,
-               key="roof", ridge_team=True, soffit=True, barge=True, t=0.1, ridge_key="team_band",
-               axis="x", cx=0.0):
+def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.14, sag=None, flare=0.12, kick=0.05, nu=10, nv=6,
+               key="roof", ridge_team=True, soffit=False, barge=True, t=0.14, ridge_key="team_band",
+               axis="x", cx=0.0, eave_jit=0.035, trim=0.11, ridge_w=None):
     """Thick gable roof, ridge along x from x0..x1 (incl. overhang) at y = yc; eaves at yc +- half.
-    axis='y' builds it rotated (ridge along y, about the vertical axis through (cx, yc))."""
+    axis='y' builds it rotated (ridge along y, about the vertical axis through (cx, yc)), so the gables
+    face +-y (the front). Hand-made read: the ridge sags `sag` m (default 4.5 cm per metre of ridge),
+    the eave line wanders by +-eave_jit, chunky eave trim boards (trim m) and bargeboards (t m) stand
+    proud of the tiles so they show from the high camera."""
     sw = c.sw(key)
     rep = sw.repeat
     Lx = x1 - x0
     xm = (x0 + x1) / 2
-    top_v, top_t, top_uv = [], [], []
-    grids = []
+    if sag is None:
+        sag = min(0.26, 0.045 * Lx)
+    ph = c.r(0, 6.28)
+    ph2 = c.r(0, 6.28)
+
+    def eave_off(x, side):
+        return eave_jit * (0.6 * math.sin(2.1 * x + ph + side) + 0.4 * math.sin(5.3 * x + ph2 - side))
+
+    def surf(x, f, side):
+        xr = 2 * (x - xm) / Lx
+        zf = f + flare * f * (1 - f)
+        z = z_ridge - (z_ridge - z_eave) * zf
+        z += -sag * (1 - xr * xr) * (1 - f * 0.6)
+        z += kick * (xr ** 4) * f * f
+        z += eave_off(x, side) * f ** 3
+        y = yc + side * (half * f + 0.5 * eave_off(x * 1.3, -side) * f ** 3)
+        return (x, y, z)
+
+    top_v, grids = [], []
     for side in (1, -1):
         base = len(top_v)
         for j in range(nv + 1):
             f = j / nv
             for i in range(nu + 1):
-                x = x0 + Lx * i / nu
-                xr = 2 * (x - xm) / Lx
-                zf = f + flare * f * (1 - f)
-                z = z_ridge - (z_ridge - z_eave) * zf
-                z += -sag * (1 - xr * xr) * (1 - f * 0.6)
-                z += kick * (xr ** 4) * f * f
-                y = yc + side * half * f
-                top_v.append((x, y, z))
+                top_v.append(surf(x0 + Lx * i / nu, f, side))
         grids.append(base)
     top_v = np.array(top_v, float)
     slope_len = math.hypot(half, z_ridge - z_eave)
     parts = []
-    # top surfaces
     for gi, side in enumerate((1, -1)):
         base = grids[gi]
         tris, uvs = [], []
@@ -402,7 +455,6 @@ def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.12, sag=0.04, flare=0.
                                 for k in tri])
         parts.append(Part(top_v, np.array(tris), sw, np.array(uvs), 40.0))
     roof_top = L.merge(parts)
-    # thickness: bottom = top - th (vertical), border strips on eaves and gable edges
     bot = top_v - np.array([0, 0, th])
     rimparts = []
     for gi, side in enumerate((1, -1)):
@@ -413,8 +465,7 @@ def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.12, sag=0.04, flare=0.
         for chain in (eave, g0, g1):
             for k in range(len(chain) - 1):
                 a, b = chain[k], chain[k + 1]
-                q = L.quad(bot[a], bot[b], top_v[b], top_v[a], sw, uv=((0, 0.1), (0.3, 0.1), (0.3, 0), (0, 0)))
-                # orient outward: away from the roof centre
+                q = L.quad(bot[a], bot[b], top_v[b], top_v[a], sw, uv=((0, 0), (0.3, 0), (0.3, 0.1), (0, 0.1)))
                 mid = (top_v[a] + top_v[b]) / 2
                 out = mid - np.array([xm, yc, mid[2]])
                 out[2] = 0
@@ -426,9 +477,9 @@ def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.12, sag=0.04, flare=0.
     rim = L.merge(rimparts)
     rim.box_uv(0.6)
     rim.tint = hexcol("#8A6A60")
-    out = [c.add(roof_top, layer=1.0), c.add(rim, dice=None, layer=1.0)]
+    out = [c.add(roof_top, layer=1.0, dice=None), c.add(rim, dice=None, layer=1.0)]
     if soffit:
-        st, su = [], []
+        st = []
         for gi, side in enumerate((1, -1)):
             base = grids[gi]
             for j in range(nv):
@@ -441,40 +492,176 @@ def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.12, sag=0.04, flare=0.
                     st += [tri1, tri2]
         sp = Part(bot, np.array(st), c.sw("oak"), None, 30.0)
         sp.box_uv(1.2)
-        out.append(c.add(sp, dice=0.5, layer=1.0, ao_mul=1.0, form=0.0))
+        out.append(c.add(sp, dice=0.6, layer=1.0, ao_mul=1.0, form=0.0))
+    if trim:
+        # chunky eave trim board along each eave (sits on the tile edge, shows from above)
+        for gi, side in enumerate((1, -1)):
+            base = grids[gi]
+            pts = np.array([top_v[base + nv * (nu + 1) + i] for i in range(nu + 1)])
+            pts = pts + np.array([0, side * 0.02, -th * 0.35])
+            tb = L.sweep(L.rect_profile(trim * 0.9, trim + th * 0.6), pts, c.sw("oak"), up=(0, 0, 1))
+            out.append(c.add(tb, dice=None, layer=1.0, jit=0.0))
     if ridge_team:
         xs = np.linspace(x0 - 0.02, x1 + 0.02, nu + 1)
         path = []
         for x in xs:
             xr = 2 * (x - xm) / Lx
             path.append((x, yc, z_ridge - sag * (1 - xr * xr) + 0.015))
-        w = max(0.12, t * 1.4)
+        w = ridge_w or max(0.14, t * 1.25)
         prof = np.array([(w * 0.3, w * 0.62), (0.0, w * 0.55), (-w * 0.5, 0.0), (0.0, -w * 0.55),
                          (w * 0.3, -w * 0.62)])
         rp = L.sweep(prof, path, c.sw(ridge_key), up=(0, 1, 0))
         normalize_v(rp)
-        # band texture: u along ridge (tile), v across (0..1)
         out.append(c.add(rp, layer=1.0))
     if barge:
         for xe in (x0 + t * 0.4, x1 - t * 0.4):
-            xr = 2 * (xe - xm) / Lx
-            zr = z_ridge - sag * (1 - xr * xr) + kick * 0
             for side in (1, -1):
-                pts = []
-                for j in range(nv + 1):
-                    f = j / nv
-                    zf = f + flare * f * (1 - f)
-                    z = z_ridge - (z_ridge - z_eave) * zf - sag * (1 - xr * xr) * (1 - f * 0.6) + kick * xr ** 4 * f * f
-                    pts.append((xe, yc + side * half * f, z + t * 0.25))
+                pts = [np.array(surf(xe, j / nv, side)) + np.array([0, 0, t * 0.3]) for j in range(nv + 1)]
                 for k in range(0, nv, 2):
                     a, b = pts[k], pts[min(k + 2, nv)]
-                    out.append(c.add(L.member(a, b, t * 0.9, t * 1.2, c.sw("oak"), rng=c.rng, roll_up=(1, 0, 0))))
+                    out.append(c.add(L.member(a, b, t * 0.9, t * 1.25, c.sw("oak"), rng=c.rng, roll_up=(1, 0, 0))))
     if axis == "y":
         for p in out:
             p.v = p.v - np.array([cx, yc, 0])
             p.rot(0, 0, 90)
             p.v = p.v + np.array([cx, yc, 0])
     return out
+
+
+def roof_z(x_or_off, half, z_eave, z_ridge, flare=0.12):
+    """Height of a gable_roof slope (no sag) at distance x_or_off from the ridge line."""
+    f = min(1.0, abs(x_or_off) / max(half, 1e-6))
+    zf = f + flare * f * (1 - f)
+    return z_ridge - (z_ridge - z_eave) * zf
+
+
+def pbox(c, sx, sy, sz, key, center=(0, 0, 0), base=True, chamfer=0.03, taper=0.05, jit=None, rz=0.0, grid=None,
+         **kw):
+    """Chunky prop block: chamfered on every edge, a little narrower at the top, jittered (never a
+    clean CAD box)."""
+    x, y, z = center
+    z0 = z if base else z - sz / 2
+    ol = L.rect_profile(sx, sy, min(chamfer, sx * 0.3, sy * 0.3))
+    p = L.prism(ol, z0, z0 + sz, c.sw(key), chamfer=chamfer, grid=grid)
+    if taper:
+        k = 1.0 - taper * np.clip((p.v[:, 2] - z0) / max(sz, 1e-6), 0, 1)
+        p.v[:, 0] *= k
+        p.v[:, 1] *= k
+    if rz:
+        p.rot(0, 0, rz)
+    p.move(x, y, 0)
+    p.box_uv()
+    if jit is None:
+        jit = min(0.03, 0.025 * min(sx, sy, sz) + 0.004)
+    return c.add(p, jit=jit, **kw)
+
+
+def gable_wall(c, wall, z0, z_eave, z_apex, t, door=None, windows=(), key="plaster", timbers=True, team_shutters=True,
+               apex_window=None):
+    """Kingdom gable-front wall: plaster pentagon (eave walls + gable triangle up to the roof) in a
+    timber frame, a door that may rise above the eave line (doors stay ~2 m for 1.75 m units), shuttered
+    windows. door = (s, w, h); windows = [(s, zb, zt, w)]; apex_window = (zb, zt, w) in the gable."""
+    Lw = wall.L
+    ol = [(0.0, z0), (Lw, z0), (Lw, z_eave), (Lw / 2, z_apex), (0.0, z_eave)]
+    wall_prism(c, wall, ol, -0.06, 0.0, key, chamfer=0.0, grid=0.5)
+    if not timbers:
+        return
+    dep = t * 0.8
+    o = dep / 2 - 0.015
+    sw = c.sw("oak")
+
+    def mem(s0, a, s1, b, w=t, d=dep, oo=o):
+        p = L.member(wall.p(s0, a, oo), wall.p(s1, b, oo), w, d, sw, rng=c.rng, roll_up=(wall.n[0], wall.n[1], 0))
+        p.rot_axis((wall.n[0], wall.n[1], 0.0), c.r(-1.2, 1.2), pivot=p.v.mean(0))
+        return c.add(p)
+
+    mem(0, z0 + t / 2, Lw, z0 + t / 2, w=t * 1.15, d=dep * 1.05)
+    for s_ in (t * 0.55, Lw - t * 0.55):
+        mem(s_, z0, s_, z_eave + t * 0.3, w=t * 1.2, d=dep * 1.1)
+    # rafters along the gable edges
+    for s_a, s_b in ((0.0, Lw / 2), (Lw, Lw / 2)):
+        mem(s_a, z_eave - t * 0.2, s_b, z_apex - t * 0.6, w=t * 1.05)
+    ds, dw, dh = door if door else (None, 0.0, 0.0)
+    gaps = []
+    if door:
+        gaps.append((ds - dw / 2 - t, ds + dw / 2 + t))
+    # girt at the eave line, broken by the door
+    segs = [(0.0, Lw)]
+    for g0, g1 in gaps:
+        nsegs = []
+        for a, b in segs:
+            if g1 <= a or g0 >= b:
+                nsegs.append((a, b))
+            else:
+                if g0 > a:
+                    nsegs.append((a, g0))
+                if g1 < b:
+                    nsegs.append((g1, b))
+        segs = nsegs
+    for a, b in segs:
+        if b - a > t:
+            mem(a, z_eave - t / 2, b, z_eave - t / 2, w=t * 1.05)
+    if door and dh + z0 > z_eave - t:
+        zl = z0 + dh + t / 2
+        # how high the gable is at the door edges
+        for sgn in (-1, 1):
+            se = ds + sgn * (dw / 2 + t / 2)
+            mem(se, z0 + t, se, zl, w=t)
+        mem(ds - dw / 2 - t, zl, ds + dw / 2 + t, zl, w=t * 1.1)
+        kp0 = zl + t / 2
+    else:
+        kp0 = z_eave
+    if door:
+        door_(c, wall, ds, z0, dw, dh)
+        if dh + z0 <= z_eave - t:
+            for sgn in (-1, 1):
+                se = ds + sgn * (dw / 2 + t / 2)
+                mem(se, z0 + t, se, z_eave - t, w=t)
+            mem(ds - dw / 2 - t, z0 + dh + t / 2, ds + dw / 2 + t, z0 + dh + t / 2, w=t * 1.05)
+    # king post + collar braces in the gable
+    if apex_window is None:
+        mem(Lw / 2, kp0, Lw / 2, z_apex - t * 0.8, w=t)
+    hz = z_eave + (z_apex - z_eave) * 0.45
+    hw = (Lw / 2) * (1 - 0.45)
+    if not door or kp0 < hz - t:
+        mem(Lw / 2 - hw + t * 0.4, hz, Lw / 2 + hw - t * 0.4, hz, w=t * 0.9)
+    for sgn in (-1, 1):
+        mem(Lw / 2 + sgn * Lw * 0.14, kp0 + t * 0.4 if kp0 < hz else hz, Lw / 2 + sgn * Lw * 0.36,
+            z_eave + t * 0.4, w=t * 0.85)
+    for (s_, zb, zt, w_) in windows:
+        window(c, wall, s_, zb, zt, w_, shutters=team_shutters)
+        for sgn in (-1, 1):
+            mem(s_ + sgn * (w_ / 2 + t / 2), zb - t * 0.5, s_ + sgn * (w_ / 2 + t / 2), zt + t * 0.5, w=t * 0.9)
+        mem(s_ - w_ / 2 - t, zb - t / 2, s_ + w_ / 2 + t, zb - t / 2, w=t * 0.95, d=dep * 1.25, oo=o + 0.02)
+        mem(s_ - w_ / 2 - t, zt + t / 2, s_ + w_ / 2 + t, zt + t / 2, w=t)
+    if apex_window:
+        zb, zt, w_ = apex_window
+        window(c, wall, Lw / 2, zb, zt, w_, shutters=False)
+        for sgn in (-1, 1):
+            mem(Lw / 2 + sgn * (w_ / 2 + t / 2), zb - t * 0.5, Lw / 2 + sgn * (w_ / 2 + t / 2), zt + t * 0.5, w=t * 0.9)
+        mem(Lw / 2 - w_ / 2 - t, zb - t / 2, Lw / 2 + w_ / 2 + t, zb - t / 2, w=t * 0.95)
+        mem(Lw / 2 - w_ / 2 - t, zt + t / 2, Lw / 2 + w_ / 2 + t, zt + t / 2, w=t)
+
+
+def dormer(c, base, facing, w=0.8, h=0.75, depth=1.3, rise=0.45, team_shutters=False):
+    """Small gabled dormer: front-bottom centre `base` (on the roof slope), facing the 2D direction
+    `facing`; its body runs `depth` m back into the roof."""
+    f2 = nrm(np.array(facing, float))
+    ang = math.degrees(math.atan2(f2[1], f2[0])) - 90.0
+    x, y, z = base
+    body = L.prism(L.rect_profile(w, depth), 0.0, h, c.sw("plaster"), chamfer=0.0, grid=0.5)
+    body.move(0, -depth / 2, 0).rot(0, 0, ang).move(x, y, z - 0.25)
+    body.box_uv()
+    c.add(body)
+    wl = Wall((x, y), (-f2[1], f2[0]), (f2[0], f2[1]), 1.0)
+    wl.O = np.array([x, y]) - wl.e * (w / 2)
+    wl.L = w
+    for s_ in (0.05, w - 0.05):
+        c.add(L.member(wl.p(s_, z - 0.25, 0.03), wl.p(s_, z + h, 0.03), 0.09, 0.08, c.sw("oak"), rng=c.rng))
+    window(c, wl, w / 2, z + 0.08, z + h - 0.12, w * 0.55, shutters=team_shutters)
+    rf = gable_roof_small(c, (0, 0, 0), depth + 0.25, w + 0.3, rise, 0.0, th=0.07)
+    for p in rf:
+        p.rot(0, 0, 90).move(0, -depth / 2 + 0.12, 0).rot(0, 0, ang).move(x, y, z + h - 0.02)
 
 
 def gable_infill(c, wall, z0, z_apex, t, key="plaster", infill=True, timbers=True, window_w=0.0):
@@ -685,12 +872,12 @@ def onion_dome(c, center, r, h, key="scales", team_ring=True, finial_h=None, sid
 def stork_nest(c, pos, r=0.32, stork=True, facing=0.0):
     x, y, z = pos
     nest = L.lathe([(r * 0.55, 0), (r * 0.95, r * 0.12), (r * 1.05, r * 0.35), (r * 0.8, r * 0.45),
-                    (r * 0.5, r * 0.3), (0, r * 0.28)], 12, c.sw("straw"))
+                    (r * 0.5, r * 0.3), (0, r * 0.28)], 9, c.sw("straw"))
     nest.move(x, y, z)
-    c.add(nest, jit=0.03, dice=0.12)
+    c.add(nest, jit=0.03, dice=None)
     # twigs sticking out
-    for k in range(9):
-        a = k * 2 * math.pi / 9 + c.r(0, 0.5)
+    for k in range(6):
+        a = k * 2 * math.pi / 6 + c.r(0, 0.5)
         d = np.array([math.cos(a), math.sin(a), 0.0])
         p0 = np.array(pos) + d * r * 0.7 + np.array([0, 0, r * 0.3])
         p1 = p0 + d * r * 0.55 + np.array([0, 0, c.r(-0.05, 0.12)])
@@ -706,7 +893,7 @@ def stork_nest(c, pos, r=0.32, stork=True, facing=0.0):
         c.P(wing, "#26221F")
         neck = L.member((x + s * 0.35, y, bz + s * 0.3), (x + s * 0.5, y, bz + s * 0.85), s * 0.1, s * 0.1, c.sw("pal"))
         c.P(neck, "#F4F1EA")
-        head = L.blob(c.sw("pal"), radius=s * 0.11, subdiv=1, seed=5, noise_amp=0.0)
+        head = L.lathe([(0, -s * 0.1), (s * 0.1, -s * 0.05), (s * 0.11, s * 0.03), (0, s * 0.1)], 6, c.sw("pal"))
         head.move(x + s * 0.52, y, bz + s * 0.8)
         c.P(head, "#F4F1EA")
         bill = L.member((x + s * 0.58, y, bz + s * 0.88), (x + s * 0.98, y, bz + s * 0.76), s * 0.06, s * 0.05,
@@ -718,12 +905,12 @@ def stork_nest(c, pos, r=0.32, stork=True, facing=0.0):
 
 def barrel(c, pos, r=0.2, h=0.45, key="oak"):
     x, y, z = pos
-    prof = [(r * 0.85, 0), (r, h * 0.3), (r * 1.04, h * 0.5), (r, h * 0.7), (r * 0.85, h)]
-    b = L.lathe(prof, 10, c.sw(key), cap_top=True)
+    prof = [(r * 0.85, 0), (r * 1.02, h * 0.35), (r * 1.02, h * 0.65), (r * 0.85, h)]
+    b = L.lathe(prof, 9, c.sw(key), cap_top=True)
     b.move(x, y, z)
     c.add(b, dice=None, uvrot=True)
     for zz in (0.12, 0.88):
-        hoop = L.torus(r * (0.9 + 0.08 * (1 - abs(zz - 0.5) * 2)) + 0.005, 0.014, c.sw("iron"), segs=12, sides=4)
+        hoop = L.torus(r * (0.9 + 0.08 * (1 - abs(zz - 0.5) * 2)) + 0.005, 0.016, c.sw("iron"), segs=10, sides=3)
         hoop.move(x, y, z + h * zz)
         c.add(hoop, dice=None)
 
@@ -777,7 +964,7 @@ def fence_wattle(c, p0, p1, h=0.5, key="wattle"):
     panel = L.plate(p0 + n * 0.02, p1 + n * 0.02, p1 + n * 0.02 + np.array([0, 0, h]), p0 + n * 0.02 + np.array([0, 0, h]),
                     0.04, c.sw(key))
     panel.box_uv()
-    c.add(panel, dice=0.3)
+    c.add(panel)
     ns = max(2, int(round(Lf / 0.6)) + 1)
     for i in range(ns):
         q = p0 + d * i / (ns - 1)
@@ -797,7 +984,7 @@ def sapling(c, pos, h=1.6, r=0.45, key="leaves"):
         c.add(b, dice=None, smooth=70.0)
 
 
-def roof_solid(c, verts, faces, th, key="roof", deform=None, dice=0.4, soffit=True, rim_tint="#8A6A60",
+def roof_solid(c, verts, faces, th, key="roof", deform=None, dice=0.4, soffit=False, rim_tint="#8A6A60",
                layer=1.0):
     """Thick roof from top-surface polygons (CCW seen from above). Each face gets its own UV frame
     (u along its eave, v down the slope). deform(v) -> v is applied after tessellation."""
@@ -1221,7 +1408,7 @@ def wagon(c, center, rz=0.0, length=1.6, width=0.8, h=0.55, wheel_r=0.38, cover=
 # =============================================================================================
 
 def house(c, x0, x1, y0, y1, zp, stories, t, ops=None, stone=(), jetty=0.0, plinth_pad=0.06, bay=0.62,
-          shutters=True):
+          shutters=True, skip=()):
     """Half-timber house body. stories: storey top heights (absolute z). ops: {(wall, k): [(s_frac,
     width, zb_rel, zt_rel, kind)]} with kind window / door / blank. stone: storey indices built as
     rubble walls (no frame). jetty: upper storeys overhang front and back by this much each.
@@ -1235,6 +1422,8 @@ def house(c, x0, x1, y0, y1, zp, stories, t, ops=None, stone=(), jetty=0.0, plin
         bx0, bx1, by0, by1 = x0, x1, y0 - ext, y1 + ext
         walls = rect_walls(bx0, bx1, by0, by1)
         for name, w in walls.items():
+            if name in skip:
+                continue
             ol = [(0, zb), (w.L, zb), (w.L, zt), (0, zt)]
             if k in stone:
                 wall_prism(c, w, ol, -0.08, 0.04, "rubble", chamfer=0.03)
@@ -1242,7 +1431,7 @@ def house(c, x0, x1, y0, y1, zp, stories, t, ops=None, stone=(), jetty=0.0, plin
                 wall_prism(c, w, ol, -0.06, 0.0, "plaster", chamfer=0.0)
             o = [(f * w.L, ww, zb + a, zb + b_, kind) for (f, ww, a, b_, kind) in ops.get((name, k), [])]
             if k not in stone:
-                timber_wall(c, w, zb, zt, t, o, bay=bay)
+                timber_wall(c, w, zb, zt, t, o, bay=bay, simple=(name == "back"))
             for (s_, ww, za, zz, kind) in o:
                 if kind == "window":
                     window(c, w, s_, za, zz, ww, shutters=shutters)
@@ -1252,7 +1441,7 @@ def house(c, x0, x1, y0, y1, zp, stories, t, ops=None, stone=(), jetty=0.0, plin
                         c.add(L.member(w.p(s_ - ww / 2 - 0.04, za - 0.04, 0.07), w.p(s_ + ww / 2 + 0.04, za - 0.04, 0.07),
                                        0.07, 0.12, c.sw("rubble"), rng=c.rng), jit=0.0)
                 elif kind == "door":
-                    door(c, w, s_, za, ww, zz - za)
+                    door_(c, w, s_, za, ww, zz - za)
                     if k in stone:
                         c.add(L.member(w.p(s_ - ww / 2 - 0.1, zz + 0.06, 0.07), w.p(s_ + ww / 2 + 0.1, zz + 0.06, 0.07),
                                        0.14, 0.12, c.sw("oak"), rng=c.rng))
@@ -1271,31 +1460,90 @@ def house(c, x0, x1, y0, y1, zp, stories, t, ops=None, stone=(), jetty=0.0, plin
 
 
 def k_croft(c):
-    """Croft (supply, 4x4 cells = 2 m): small steep-roofed half-timber cottage, chimney, stork nest."""
-    W, D = c.fp
-    hw, hd = W / 2, D / 2
-    t = 0.09
-    x0, x1, y0, y1 = -hw * 0.72, hw * 0.72, -hd * 0.62, hd * 0.55
-    zp, zw = 0.32, 1.22
-    walls, _ = house(c, x0, x1, y0, y1, zp, [zw], t, ops={
-        ("front", 0): [(0.68, 0.36, 0.0, 0.66, "door"), (0.27, 0.3, 0.3, 0.62, "window")],
-        ("back", 0): [(0.5, 0.3, 0.3, 0.62, "window")],
-        ("right", 0): [(0.5, 0.26, 0.32, 0.6, "window")]}, bay=0.55)
-    ov = 0.2
-    half = (y1 - y0) / 2 + ov
-    yc = (y0 + y1) / 2
-    pitch = math.radians(60)
-    z_eave = zw - ov * math.tan(pitch) * 0.55
-    z_ridge = zw + ((y1 - y0) / 2) * math.tan(pitch)
-    gable_roof(c, x0 - 0.16, x1 + 0.16, yc, half, z_eave, z_ridge, th=0.1, sag=0.035, t=0.08, nu=8, nv=5)
-    for k in ("left", "right"):
-        gable_infill(c, walls[k], zw, z_ridge - 0.05, t)
-    chimney(c, x0 + 0.3, yc - 0.18, z_ridge - 0.7, z_ridge + 0.32, 0.26)
-    stork_nest(c, (x1 - 0.28, yc, z_ridge - 0.02), r=0.24, facing=200)
-    pennant(c, (x0 - 0.05, yc + 0.0, z_ridge - 0.08), 0.62, 0.62, 0.24, dirn=(-0.5, 1), phase=0.4)
-    barrel(c, (x1 + 0.08, y1 + 0.22, 0), r=0.13, h=0.3)
-    log_stack(c, (x0 + 0.25, y0 - 0.2, 0), 0.6, 2, r=0.07, axis="x")
-    return {"height_target": (2.5, 3.5)}
+    """Croft (supply, 8x8 cells = 4 m): a half-timber cottage with its steep gable to the front
+    (door rising into the gable, shuttered gable window), a chunky chimney on the slope, a stork nest
+    on the back of the ridge, a lean-to woodshed and a wattle-fenced cabbage patch on the pad."""
+    t = 0.1
+    x0, x1, y0, y1 = -1.15, 1.15, -1.55, 0.95
+    zp, zw = 0.22, 1.6
+    pitch = math.radians(52)
+    walls, _ = house(c, x0, x1, y0, y1, zp, [zw], t, skip=("front",), ops={
+        ("back", 0): [(0.5, 0.42, 0.45, 0.95, "window")],
+        ("right", 0): [(0.35, 0.4, 0.45, 0.95, "window"), (0.75, 0.4, 0.45, 0.95, "window")],
+        ("left", 0): [(0.5, 0.4, 0.45, 0.95, "window")]}, bay=0.6)
+    ov = 0.32
+    half = (x1 - x0) / 2
+    z_ridge = zw + half * math.tan(pitch)
+    z_eave = zw - ov * math.tan(pitch) * 0.85
+    gable_roof(c, y0 - 0.3, y1 + 0.34, 0.0, half + ov, z_eave, z_ridge, th=0.13, t=0.13, nu=8, nv=5, axis="y",
+               cx=0.0, trim=0.1, ridge_w=0.15)
+    fw = Wall((x1, y1), (-1, 0), (0, 1), x1 - x0)
+    gable_wall(c, fw, zp, zw, z_ridge - 0.17, t, door=(fw.L / 2, 0.86, 1.9), apex_window=None,
+               windows=[])
+    window(c, fw, fw.L / 2, 2.32, 2.62, 0.3, shutters=True)
+    gable_infill(c, Wall((x0, y0), (1, 0), (0, -1), x1 - x0), zw, z_ridge - 0.17, t)
+    # chimney through the right slope near the back, stork nest on the back of the ridge
+    chimney(c, 0.55, -0.85, zw, z_ridge + 0.36, 0.44)
+    stork_nest(c, (0.0, y0 + 0.02, z_ridge - 0.07), r=0.27, facing=150)
+    # small pennant on the front gable apex
+    pennant(c, (0.0, y1 + 0.3, z_ridge - 0.05), 0.3, 0.5, 0.2, dirn=(-1, 0.45), phase=0.4, pole_r=0.03)
+    # lean-to woodshed on the left: logs with ring ends to the front
+    lx0, lx1, ly0, ly1 = -1.95, -1.22, -1.35, 0.55
+    for yy in (ly0, ly1):
+        c.add(L.member((lx0, yy, 0), (lx0, yy, 1.05), 0.09, 0.09, c.sw("oak"), rng=c.rng))
+    roof_solid(c, [(lx0 - 0.15, ly0 - 0.15, 0.98), (lx1 + 0.05, ly0 - 0.15, 1.42), (lx1 + 0.05, ly1 + 0.15, 1.42),
+                   (lx0 - 0.15, ly1 + 0.15, 0.98)], [[0, 1, 2, 3]], 0.07, "roof", None, dice=0.5)
+    for row in range(3):
+        for k in range(3 - row):
+            rr = 0.12 + 0.02 * c.r()
+            xx = lx0 + 0.18 + k * 0.25 + 0.12 * row
+            log1(c, (xx, (ly0 + ly1) / 2, row * 0.21), 1.75, rr, axis="y", sides=7)
+    # wattle-fenced cabbage patch at the front right
+    fence_wattle(c, (0.35, 1.3), (1.9, 1.3), 0.45)
+    fence_wattle(c, (1.9, 1.3), (1.9, -0.2), 0.45)
+    for k in range(6):
+        cb = L.blob(c.sw("leaves"), radius=0.16, subdiv=1, scale=(1, 1, 0.75), seed=40 + k, noise_amp=0.25)
+        cb.move(0.6 + (k % 3) * 0.42 + c.r(-0.05, 0.05), 0.95 - (k // 3) * 0.42, 0.0)
+        c.add(cb, dice=None, tint=(0.95, 1.05, 0.85) if k % 2 else (0.8, 0.95, 0.75))
+    barrel(c, (-0.75, y1 + 0.42, 0), r=0.2, h=0.46)
+    stook(c, (1.55, -1.45, 0.0), 0.5, 1.1)
+    return {"height_target": (3.0, 3.5)}
+
+
+def log1(c, center, length, r, axis="y", ends=True, key="bark", sides=8):
+    """One log with end-grain ring caps (axis 'x' or 'y')."""
+    x, y, z = center
+    b = L.lathe([(r, -length / 2), (r * 1.03, 0), (r, length / 2)], sides, c.sw(key), a0=c.r(0, 1))
+    parts = [b]
+    if ends:
+        for sgn in (-1, 1):
+            ang = np.arange(sides) * 2 * math.pi / sides
+            ring = np.stack([np.cos(ang) * r * 0.98, np.sin(ang) * r * 0.98, np.zeros(sides)], 1)
+            vv = np.vstack([ring, [[0, 0, 0]]])
+            tt = np.array([(sides, j, (j + 1) % sides) if sgn > 0 else (sides, (j + 1) % sides, j) for j in range(sides)])
+            uv = np.stack([0.5 + vv[..., 0] / (2 * r), 0.5 - vv[..., 1] / (2 * r)], -1)[tt]
+            e = Part(vv, tt, c.sw("rings"), uv, 0.0)
+            e.move(0, 0, sgn * length / 2)
+            parts.append(e)
+    for p in parts:
+        if axis == "y":
+            p.rot(-90, 0, 0)
+        elif axis == "x":
+            p.rot(0, 90, 0)
+        p.move(x, y, z + r)
+        c.add(p, dice=None, jit=0.0)
+    return parts
+
+
+def stook(c, pos, r, h):
+    """Leaning straw sheaf (hay stook)."""
+    x, y, z = pos
+    st = L.lathe([(r, 0.0), (r * 0.9, h * 0.35), (r * 0.45, h * 0.8), (r * 0.12, h), (0.0, h * 1.02)], 10, c.sw("straw"))
+    st.move(x, y, z)
+    c.add(st, dice=None, jit=0.04)
+    band = L.lathe([(r * 0.62, h * 0.55), (r * 0.66, h * 0.6), (r * 0.6, h * 0.65)], 10, c.sw("pal"))
+    band.move(x, y, z)
+    c.P(band, "#5A3A22", dice=None)
 
 
 def braziers(c, pts, r=0.16, h=0.55):
@@ -2692,28 +2940,28 @@ def c_banner_shell(c):
 
 
 KINGDOM = {
-    "kingdom_croft": dict(fn=k_croft, cells=(4, 4), role="supply (Croft)"),
-    "kingdom_oath_hall": dict(fn=k_oath_hall, cells=(6, 6), role="hero altar (Oath Hall)"),
-    "kingdom_drill_yard": dict(fn=k_drill_yard, cells=(8, 8), role="barracks (Drill Yard)"),
-    "kingdom_timber_yard": dict(fn=k_timber_yard, cells=(8, 8), role="lumber drop-off (Timber Yard)"),
-    "kingdom_foundry": dict(fn=k_foundry, cells=(6, 6), role="smithy (Foundry)"),
-    "kingdom_collegium": dict(fn=k_collegium, cells=(8, 8), role="caster hall (Collegium)"),
-    "kingdom_wainwright_yard": dict(fn=k_wainwright_yard, cells=(8, 8), role="siege workshop (Wainwright Yard)"),
-    "kingdom_curio_cabinet": dict(fn=k_curio_cabinet, cells=(6, 6), role="faction shop (Curio Cabinet)"),
+    "kingdom_croft": dict(fn=k_croft, cells=(8, 8), role="supply (Croft)"),
+    "kingdom_oath_hall": dict(fn=k_oath_hall, cells=(12, 12), role="hero altar (Oath Hall)"),
+    "kingdom_drill_yard": dict(fn=k_drill_yard, cells=(12, 12), role="barracks (Drill Yard)"),
+    "kingdom_timber_yard": dict(fn=k_timber_yard, cells=(12, 12), role="lumber drop-off (Timber Yard)"),
+    "kingdom_foundry": dict(fn=k_foundry, cells=(12, 12), role="smithy (Foundry)"),
+    "kingdom_collegium": dict(fn=k_collegium, cells=(12, 12), role="caster hall (Collegium)"),
+    "kingdom_wainwright_yard": dict(fn=k_wainwright_yard, cells=(12, 12), role="siege workshop (Wainwright Yard)"),
+    "kingdom_curio_cabinet": dict(fn=k_curio_cabinet, cells=(12, 12), role="faction shop (Curio Cabinet)"),
     "kingdom_lookout": dict(fn=k_lookout, cells=(4, 4), role="scout tower (Lookout)"),
     "kingdom_gun_tower": dict(fn=k_gun_tower, cells=(4, 4), role="gun tower (Lookout upgrade)"),
-    "kingdom_walled_burg": dict(fn=k_walled_burg, cells=(10, 10), role="T2 hall upgrade: add-on to kingdom_moot_hall",
+    "kingdom_walled_burg": dict(fn=k_walled_burg, cells=(16, 16), role="T2 hall upgrade: add-on to kingdom_moot_hall",
                                 addon_of="kingdom_moot_hall"),
 }
 CLANS = {
-    "clans_home_yurt": dict(fn=c_home_yurt, cells=(4, 4), role="supply + worker garrison (Home Yurt)"),
-    "clans_grapple_yard": dict(fn=c_grapple_yard, cells=(8, 8), role="barracks (Grapple Yard)"),
-    "clans_naming_stones": dict(fn=c_naming_stones, cells=(6, 6), role="hero altar (Naming Stones)"),
-    "clans_casting_pit": dict(fn=c_casting_pit, cells=(6, 6), role="war mill + lumber drop-off (Casting Pit)"),
-    "clans_mirror_yurt": dict(fn=c_mirror_yurt, cells=(8, 8), role="caster lodge (Mirror Yurt)"),
+    "clans_home_yurt": dict(fn=c_home_yurt, cells=(8, 8), role="supply + worker garrison (Home Yurt)"),
+    "clans_grapple_yard": dict(fn=c_grapple_yard, cells=(12, 12), role="barracks (Grapple Yard)"),
+    "clans_naming_stones": dict(fn=c_naming_stones, cells=(12, 12), role="hero altar (Naming Stones)"),
+    "clans_casting_pit": dict(fn=c_casting_pit, cells=(12, 12), role="war mill + lumber drop-off (Casting Pit)"),
+    "clans_mirror_yurt": dict(fn=c_mirror_yurt, cells=(12, 12), role="caster lodge (Mirror Yurt)"),
     "clans_bow_mast": dict(fn=c_bow_mast, cells=(4, 4), role="tower (Bow-Mast)"),
-    "clans_tea_tent": dict(fn=c_tea_tent, cells=(6, 6), role="faction shop (Tea Tent)"),
-    "clans_banner_shell": dict(fn=c_banner_shell, cells=(10, 10), role="T2 hall upgrade: add-on to clans_shell_hall",
+    "clans_tea_tent": dict(fn=c_tea_tent, cells=(12, 12), role="faction shop (Tea Tent)"),
+    "clans_banner_shell": dict(fn=c_banner_shell, cells=(16, 16), role="T2 hall upgrade: add-on to clans_shell_hall",
                                addon_of="clans_shell_hall"),
 }
 ALL = {**KINGDOM, **CLANS}
@@ -2739,15 +2987,21 @@ def build(aid, out_dir, scale=1.0):
     for p in parts:   # nothing below ground
         p.v[:, 2] = np.maximum(p.v[:, 2], 0.0) if lo[2] < 0 else p.v[:, 2]
     H = float(hi[2])
+    anchors = {k: [round(float(v[0]), 3), round(float(v[2]), 3), round(float(-v[1]), 3)] for k, v in c.anchors.items()}
     extras = {
         "vibecraft": {
             "id": aid, "kit": "tools/kits/buildings.py", "footprint_cells": list(spec["cells"]),
+            "facing": "front faces -Z; spawn with yaw = PI so the door faces the default +Z RTS camera",
             "build_progress": "reveal bottom-up: discard fragments whose UV2.y > progress (+ noise band); "
-                              "clans two-pass: UV2.x = 0 lattice/frame first, 1 felt/cover second",
+                              "clans two-pass: UV2.x = 0 lattice/frame first, 1 felt/cover second "
+                              "(tools/kits/build_reveal.gdshader)",
         }
     }
+    if anchors:
+        extras["vibecraft"]["anchors"] = anchors
     path = os.path.join(out_dir, aid + ".glb")
-    st = L.export_glb(path, aid, parts, H, c.bake, extras=extras)
+    st = L.export_glb(path, aid, parts, H, c.bake, sheets_for(faction), extras=extras,
+                      piping=(c.S["pal"], L.palette_uv(c.pal, PIPING[faction])))
     v = np.concatenate([p.v for p in parts])
     lo, hi = v.min(0), v.max(0)
     rec = {
@@ -2755,16 +3009,23 @@ def build(aid, out_dir, scale=1.0):
         "footprint_cells": list(spec["cells"]), "footprint_m": [round(c.fp[0], 3), round(c.fp[1], 3)],
         "height_m": round(H, 3), "bounds_m": {"x": [round(lo[0], 3), round(hi[0], 3)], "z_godot": [round(-hi[1], 3), round(-lo[1], 3)]},
         "tris": st["tris"], "materials": st["materials"], "file_bytes": os.path.getsize(path),
+        "team_piping_tris": st["team_piping_tris"],
         "notes": " ".join((spec["fn"].__doc__ or "").split()), "seconds": round(time.time() - t0, 1),
     }
     if "height_target" in info:
         rec["height_target_m"] = list(info["height_target"])
+    if anchors:
+        rec["anchors_godot"] = anchors
+    if info.get("budget_note"):
+        rec["budget_note"] = info["budget_note"]
     if spec.get("addon_of"):
         rec["addon_of"] = spec["addon_of"]
         rec["footprint_m"] = [8.0, 8.0]
         rec["placement"] = (f"add-on in the {spec['addon_of']}.glb model space (8 m model): same parent and transform as "
                             f"the T1 hall, show both after the upgrade")
     L.log(f"{aid}: {st['tris']} tris, H {H:.2f} m, {rec['file_bytes'] / 1e6:.2f} MB, {rec['seconds']} s")
+    if os.environ.get("VC_TRIS_DEBUG"):
+        L.log("  cuts:", sorted(st.get("cut_by_swatch", {}).items(), key=lambda kv: -kv[1][1]))
     return rec
 
 
@@ -2944,6 +3205,10 @@ def main():
     if not args.no_build:
         for aid in ids:
             recs.append(build(aid, args.out_dir))
+        for f in ("kingdom", "clans"):
+            sheets_for(f)
+        for sh in (_SHEETS["kingdom"], _SHEETS["clans"], _SHEETS["team"], _SHEETS["glow"]):
+            L.log("sheet:", sh.write(args.out_dir), sh.size, f"fill {sh.fill}")
         write_manifest(man_path, recs, partial=bool(args.only))
     if args.coverage:
         cov = team_coverage(ids, args.out_dir)

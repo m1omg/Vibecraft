@@ -264,6 +264,9 @@ func _sway_preview(n: Node, sh: Shader) -> int:
 				if vc == "multiply" and mat is StandardMaterial3D:
 					var m2 := (mat as StandardMaterial3D).duplicate() as StandardMaterial3D
 					m2.vertex_color_use_as_albedo = true
+					if (mat.get_meta("extras", {}) as Dictionary).get("billboard", "") == "fixed_y":
+						m2.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y   # kit LOD2 tree impostors
+						m2.billboard_keep_scale = true
 					mi.set_surface_override_material(s, m2)
 					count += 1
 				elif mat != null and mat.resource_name.contains("SWAY") and mat is StandardMaterial3D:

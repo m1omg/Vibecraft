@@ -54,7 +54,7 @@ click on. Nothing they see, read or hear is Blizzard's: not a creep design, a sh
 | **Neutral buildings** | **Gold Seam** (gold mine), **Weighstall** (merchant, with a gold-for-lumber **Fair Exchange**), **Lucky Barrow** (rotating rare stock), **Coaching Inn** (neutral heroes and instant revive; each map names its own inn, Greenvale's is *The Muddy Lantern*), **Hiring Fair** (mercenaries), **Hale Spring** / **Dewstone** (health / mana landmarks), **Contraption Barn** (lab-equivalent, run by hill-country millwrights), **Twin Milestones** (paired teleport), **Beacon Cairn** (capturable vision cairn; per-map flag, off on the default 1v1 map) |
 | **Neutral heroes** | **Rat-Piper** (AGI ranged trapper and rat summoner), **Old Menhir** (STR stone tank who walls and shoves), **Toll-Reeve** (INT support: a human Greenvale toll official who pays gold for hired pikes) |
 | **Critters** | Hares, geese, hedgehogs, fireflies and a flushing sparrow roost in Greenvale; snow hares, ptarmigan and lemmings in Rimeholt; meerkats and guinea fowl in Sunscar. Each has its own click-spam gag; a single hit kills one (no XP, no bounty), but **nothing explodes** |
-| **Slice subset** | 10 creep types in 3 families, **16 camps** (8 green, 7 amber, 1 red), 33 items, Gold Seam ×4, Weighstall (with the Fair Exchange), Hale Spring, **Coaching Inn (instant revive only)**, 2 killable critters + fireflies. First in line if credits allow: the Dewstone pair and hiring the Rat-Piper. [SLICE+]: Withy Brute, the Curl-Up Scale, Hiring Fair, Beacon Cairn ×2 (flag off on the default map), sparrow roosts (§7) |
+| **Slice subset** | 10 creep types in 3 families, **16 camps** (8 green, 7 amber, 1 red), 33 items, Gold Seam ×5 (main and natural per player, plus the contested third inside the Standing Ring), Weighstall (with the Fair Exchange), Hale Spring, **Coaching Inn (instant revive)**, 2 killable critters + fireflies. **P1** (next Higgsfield grant, slice-plan §2.3 B19): hiring the Rat-Piper at the inn. First in line if credits allow: the Dewstone pair. [SLICE+]: Withy Brute, the Curl-Up Scale, Hiring Fair, Beacon Cairn ×2 (flag off on the default map), sparrow roosts (§7) |
 
 ### 0.2 Fidelity map (WC3 neutral element → Vibecraft)
 
@@ -172,9 +172,8 @@ rise monotonically with level. Ranged creeps and casters get about 60–75 % of 
   it engages its camp as usual. *Why:* the WC3 behaviour (rules §21 records WC3's return as invulnerable). A vulnerable walk home at
   2 %/s let a player pull a camp to the leash and shoot it on the way back for free (about 280 damage from 4 Hookgunners against about
   90 regenerated on a 960 HP creep), then pull it again.
-- **Status:** rules §15.2 still says "not invulnerable, 2 % HP/s" (`rules.creeps.return_invulnerable = false`). This is a blocking rules
-  follow-up (§11): the switches are `return_invulnerable: true` and `return_full_heal: true` (§9), and `test_creep_leash` asserts the new
-  behaviour once rules.md adopts it.
+- **Status:** resolved. Rules §15.2 has the invulnerable return with a full heal (`return_invulnerable: true`, `return_full_heal: true`,
+  §9; checked 2026-10-19), and `test_creep_leash` asserts it (slice-plan M1 #5).
 - Because the camp acts as one, a single creep cannot be pulled away from its camp-mates. The whole camp can still be dragged toward
   your army or towers, up to the leash, and slow members turn back first (the classic "pull and fight at home" play).
 - **Tuning flag:** WC3's real leash and give-up values are unverified (mechanics §14). 18.75 m, 10 s and the 2 s / 3 s unreachable
@@ -324,7 +323,7 @@ the hill country between Brennmark's market towns and the Tormai Herd Road. Both
 | id | Name | Lvl | HP | Mana | Armour | Attack | Damage | CD | Range | Speed | Abilities | Slice |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `creep_sootcoat_cutpurse` | Sootcoat Cutpurse | 1 | 230 | – | 0 Medium | Blade | 8–10 | 1.5 | melee 0.6 | 4.4 | Light Fingers | **[SLICE]** |
-| `creep_sootcoat_smoker` | Sootcoat Smoker | 2 | 260 | 150 | 0 Unarmored | Pierce (hot coal) | 10–13 | 2.0 | 6.0 | 4.2 | Smoke Pot | **[SLICE]** |
+| `creep_sootcoat_coal_lobber` | Sootcoat Coal-Lobber | 2 | 260 | 150 | 0 Unarmored | Pierce (hot coal) | 10–13 | 2.0 | 6.0 | 4.2 | Smoke Pot | **[SLICE]** |
 | `creep_sootcoat_collier` | Sootcoat Collier | 3 | 520 | – | 2 Heavy | Blade | 15–19 | 1.7 | melee 1.0 (rake) | 4.0 | Ember Rake | **[SLICE]** |
 | `creep_sootcoat_kiln_master` | Kiln-Master | 5 | 760 | 250 | 2 Medium | Blade | 24–30 | 1.8 | melee 1.0 | 4.2 | Stoke the Coals, Choking Fumes, Pine-Tar Dressing | **[SLICE]** |
 | `creep_sootcoat_clamp_father` | Clamp-Father | 7 | 1250 | – | 3 Heavy | Raw | 34–42 | 1.7 | melee 1.1 | 4.2 | Hardy, Rake the Clamp, Call the Gang | *later* |
@@ -332,7 +331,7 @@ the hill country between Brennmark's market towns and the Tormai Herd Road. Both
 | Ability | Creep | Kind | Numbers |
 |---|---|---|---|
 | **Light Fingers** | Cutpurse | Passive | Its first hit on an enemy hero steals **6 gold** from that hero's owner (once per Cutpurse). The stolen gold is added to its bounty |
-| **Smoke Pot** | Smoker | Point, 7 m | 3 m cloud for 8 s: enemy units inside have a **30 % miss chance**. 60 mana, cooldown 18 s |
+| **Smoke Pot** | Coal-Lobber | Point, 7 m | 3 m cloud for 8 s: enemy units inside have a **30 % miss chance**. 60 mana, cooldown 18 s |
 | **Ember Rake** | Collier | Passive | Every 3rd attack sets the target alight: **6 Spell damage/s for 3 s** (refreshes, does not stack) |
 | **Stoke the Coals** | Kiln-Master | No target, 8 m | Works the bellows over a smoke-pot: allied creeps within 8 m attack **10 %** faster and regenerate **+1.5 HP/s** for **8 s**. 50 mana, cooldown 20 s. AI: the Summon row of §1.7 (on first aggro, then off cooldown) |
 | **Choking Fumes** | Kiln-Master | Unit target, 7 m | A 3 m cloud on the target for 3 s: enemies inside are **silenced 3 s** and slowed 25 %. 75 mana, cooldown 16 s |
@@ -355,7 +354,7 @@ the hill country between Brennmark's market towns and the Tormai Herd Road. Both
   - They walk **stiff-kneed** (the "toy" motion the art doc wants).
 - **Never:** swappable or detachable heads; a carved or painted face on a turnip; a feather-cloaked "crow-man" figure; a woven wicker
   effigy body or cage; pumpkins; a horseman. Crows perch on them; nobody is dressed as one (§10.2).
-- **Type notes:** the **Crowcaller** is a taller scarecrow with a patched sacking cape (no feathers) and long outstretched pole-arms on
+- **Type notes:** the **Crowherd** is a taller scarecrow with a patched sacking cape (no feathers) and long outstretched pole-arms on
   which its crows perch. The **Withy Brute** is a hulking frame of tightly **bound willow-rod bundles** (like hedge-layers' fascines)
   lashed round a hay-rake spine and a harrow, stuffed with straw: solid bundles, never woven basketwork. **Old Mangold** is the oldest
   scarecrow of the shire, a giant mangold (fodder beet) lantern on a hay-wain pole, with a sickle.
@@ -370,7 +369,7 @@ the hill country between Brennmark's market towns and the Tormai Herd Road. Both
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `creep_harvest_strawling` | Strawling | 1 | 210 | – | 0 Light | Blade | 7–9 | 1.3 | melee 0.6 | 4.8 | Loose Straw | **[SLICE]** |
 | `creep_harvest_fieldkeeper` | Fieldkeeper | 3 | 480 | – | 1 Medium | Blade (pitchfork) | 15–18 | 1.7 | melee 1.2 | 3.8 | Stuffed, Stand Still | **[SLICE]** |
-| `creep_harvest_crowcaller` | Crowcaller | 4 | 420 | 200 | 0 Unarmored | Arcane | 13–16 | 1.9 | 6.5 | 3.8 | Stuffed, Scatter-Crows, Re-Stuff | **[SLICE]** |
+| `creep_harvest_crowherd` | Crowherd | 4 | 420 | 200 | 0 Unarmored | Arcane | 13–16 | 1.9 | 6.5 | 3.8 | Stuffed, Scatter-Crows, Re-Stuff | **[SLICE]** |
 | `creep_harvest_withy_brute` | Withy Brute | 5 | 980 | – | 2 Heavy | Blade | 26–32 | 2.1 | melee 1.2 | 3.6 | Stuffed, Harrow Slam | [SLICE+] |
 | `creep_harvest_old_mangold` | Old Mangold | 8 | 1800 | 300 | 4 Heavy | Raw | 44–54 | 2.0 | melee 1.3 | 4.0 | Hardy, Stuffed, Lantern Glare, Last Sheaf | *later* |
 | `creep_harvest_crow` (summon) | Crow | 1 | 110 | – | 0 Light | Pierce (peck) | 6–8 | 1.3 | melee 0.8 | 5.5 flying | — | **[SLICE]** |
@@ -380,8 +379,8 @@ the hill country between Brennmark's market towns and the Tormai Herd Road. Both
 | **Loose Straw** | Strawling | On death | Leaves a 2 m straw patch for 4 s: enemies inside move 20 % slower |
 | **Stuffed** | All but Strawling and Crow | Passive | −25 % damage taken from Pierce |
 | **Stand Still** | Fieldkeeper | Passive | After 3 s with **neither moving nor attacking**: +3 armour. Lost on its first step or swing (ambush armour, not fight armour) |
-| **Scatter-Crows** | Crowcaller | No target | 3 Crows (flying summons, 20 s; 50 % XP). 80 mana, cooldown 25 s. Used on aggro |
-| **Re-Stuff** | Crowcaller | Unit target, 6 m (allied Tattiebogle, not a Crow) | Stuffs fresh straw into a torn camp-mate: heals **120 HP**. 60 mana, cooldown 10 s. AI: the heal row of §1.7 |
+| **Scatter-Crows** | Crowherd | No target | 3 Crows (flying summons, 20 s; 50 % XP). 80 mana, cooldown 25 s. Used on aggro |
+| **Re-Stuff** | Crowherd | Unit target, 6 m (allied Tattiebogle, not a Crow) | Stuffs fresh straw into a torn camp-mate: heals **120 HP**. 60 mana, cooldown 10 s. AI: the heal row of §1.7 |
 | **Harrow Slam** | Withy Brute | No target, 3 m | 50 Spell damage and **stun 1.0 s** (heroes 0.5 s). Cooldown 12 s |
 | **Lantern Glare** | Old Mangold | Cone 6 m, 60° | 80 Spell damage; struck enemies **flee** from him for 2 s (heroes 1 s). 100 mana, cooldown 15 s |
 | **Last Sheaf** | Old Mangold | Once, at 25 % HP | Roots himself and re-stuffs for 3 s, healing **40 % of max HP** over that time. Kill him through it or lose the fight |
@@ -659,23 +658,23 @@ the camp protects; used by the minimap tooltip and `shop_guard_coverage`).
 
 | id | Colour | Composition | Total | XP | Gold | Drops | Sleeps | Mode | Props and placement | Slice |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `camp_gv_charcoal_clamp` | Green | Cutpurse ×3, Smoker | 5 | 115 | 36 | B: L1 power-up or charged | Night | camp | Smoking clamp, lean-to, cordwood. Near each start, beside the natural path | **[SLICE]** ×2 |
+| `camp_gv_charcoal_clamp` | Green | Cutpurse ×3, Coal-Lobber | 5 | 115 | 36 | B: L1 power-up or charged | Night | camp | Smoking clamp, lean-to, cordwood. Near each start, beside the natural path | **[SLICE]** ×2 |
 | `camp_gv_turnip_patch` | Green | Fieldkeeper ×2, Strawling ×2 | 8 | 170 | 48 | B: L2 any | **Night** (*override*: tame scarecrows that guard by day) | camp | Turnip rows, poles, a crow-picked haystack. The other side of each start | **[SLICE]** ×2 |
-| `camp_gv_colliers_hut` | Green | Collier, Smoker ×2, Cutpurse | 8 | 165 | 48 | B: L2 any | Night | camp | A sooty cottage with a small clamp. On the own side, **farther by path from the main hall than the Clamp and Woodward's Rest** (slice map: 78.1 m, against 50.6 and 73.9 m), at least 25 m from the Clamp and the Patch (exact spot: slice-plan §1.4 CH). Hero 2's first camp (§3.6) | **[SLICE]** ×2 |
-| `camp_gv_woodwards_rest` | Green | Collier, Smoker, Cutpurse ×4 | 9 | 200 | 60 | B: L2 any | Night | camp | A woodward's (forest keeper's) lodge taken over by a pickpocket gang: a half-timber lodge, a woodpile, a felled-oak bench. Near the natural, on the way to the Fold, on the other side from the Clamp; nearer by path than the Hut (slice map: 73.9 m path, in the natural's north-east corner, 32.5 m of path to the Fold); at least 25 m from the Clamp and the Fold (exact spot: slice-plan §1.4 W). Hero 1's third camp | **[SLICE]** ×2 |
+| `camp_gv_colliers_hut` | Green | Collier, Coal-Lobber ×2, Cutpurse | 8 | 165 | 48 | B: L2 any | Night | camp | A sooty cottage with a small clamp. On the own side, **farther by path from the main hall than the Clamp and Woodward's Rest** (slice map: 78.1 m, against 50.6 and 73.9 m), at least 25 m from the Clamp and the Patch (exact spot: slice-plan §1.4 CH). Hero 2's first camp (§3.6) | **[SLICE]** ×2 |
+| `camp_gv_woodwards_rest` | Green | Collier, Coal-Lobber, Cutpurse ×4 | 9 | 200 | 60 | B: L2 any | Night | camp | A woodward's (forest keeper's) lodge taken over by a pickpocket gang: a half-timber lodge, a woodpile, a felled-oak bench. Near the natural, on the way to the Fold, on the other side from the Clamp; nearer by path than the Hut (slice map: 73.9 m path, in the natural's north-east corner, 32.5 m of path to the Fold); at least 25 m from the Clamp and the Fold (exact spot: slice-plan §1.4 W). Hero 1's third camp | **[SLICE]** ×2 |
 | `camp_gv_toad_pond` | Green | Mudgulper, Peeper ×4 | 7 | 160 | 48 | B: L1 power-up or charged | Night | camp | Reed pond | *later* |
-| `camp_gv_smugglers_den` | **Amber** | Kiln-Master, Collier, Smoker, Cutpurse | 11 | 240 | 60 | A: L1 power-up; B: L2 permanent | Night | camp | Guards the central **Weighstall** (`guards: neutral_weighstall`). Explicit `layout`: one creep 3.5 m out from each of the stall's four corners, facing out. `acquire_override: 6.5`, so every spot within the 7.0 m use range is inside an awake Den creep's acquire range (computed need with four creeps: 6.4 m; test `shop_guard_coverage`, §9) | **[SLICE]** ×1 |
-| `camp_gv_crow_field` | **Amber** | Crowcaller, Fieldkeeper ×2, Strawling ×2 | 12 | 255 | 68 | A: L1 power-up; B: L2 permanent | **Day** (the map's one day camp) | camp | Scarecrow field around the **Hale Spring**: free to use by day, guarded by night | **[SLICE]** ×1 |
-| `camp_gv_charcoal_yard` | **Amber** | Kiln-Master, Collier ×2, Smoker, Cutpurse | 14 | 300 | 76 | A: L1 power-up; B: L3 permanent or charged | Night | camp | A charcoal-burners' yard (the small cousin of the Clamp-Father's Yard): two smoking clamps, cordwood stacks, a lean-to. On each player's own flank toward the ring pocket, **85–105 m path** from the main (slice map: 103.5 m, behind the TW1 tree wall); at least 25 m from every other camp and 14 m off any lane centreline (exact spot: slice-plan §1.4 Y). Hero 2's second camp | **[SLICE]** ×2 |
+| `camp_gv_smugglers_den` | **Amber** | Kiln-Master, Collier, Coal-Lobber, Cutpurse | 11 | 240 | 60 | A: L1 power-up; B: L2 permanent | Night | camp | Guards the central **Weighstall** (`guards: neutral_weighstall`). Explicit `layout`: one creep 3.5 m out from each of the stall's four corners, facing out. `acquire_override: 7.2`, so every spot within the 7.0 m use range is inside an awake Den creep's acquire range (computed need with four creeps around the 6 × 6 m stall of the art bible §1.3 footprints: 7.1 m, centre to centre; it was 6.4 m for the old 4 × 4 m stall; test `shop_guard_coverage`, §9) | **[SLICE]** ×1 |
+| `camp_gv_crow_field` | **Amber** | Crowherd, Fieldkeeper ×2, Strawling ×2 | 12 | 255 | 68 | A: L1 power-up; B: L2 permanent | **Day** (the map's one day camp) | camp | Scarecrow field around the **Hale Spring**: free to use by day, guarded by night | **[SLICE]** ×1 |
+| `camp_gv_charcoal_yard` | **Amber** | Kiln-Master, Collier ×2, Coal-Lobber, Cutpurse | 14 | 300 | 76 | A: L1 power-up; B: L3 permanent or charged | Night | camp | A charcoal-burners' yard (the small cousin of the Clamp-Father's Yard): two smoking clamps, cordwood stacks, a lean-to. On each player's own flank toward the ring pocket, **85–105 m path** from the main (slice map: 103.5 m, behind the TW1 tree wall); at least 25 m from every other camp and 14 m off any lane centreline (exact spot: slice-plan §1.4 Y). Hero 2's second camp | **[SLICE]** ×2 |
 | `camp_gv_drystone_fold` | **Amber** | Drystone Walker, Cairnling ×3 | 14 | 295 | 72 | A: L1 power-up; B: L3 permanent or charged | Never | **guard** | Broken sheep-fold walls around each **expansion** Gold Seam | **[SLICE]** ×2 |
 | `camp_gv_cairn_gate` | **Amber** | Drystone Walker ×2, Cairnling ×2 | 16 | 350 | 80 | A: L1 power-up; B: L3 permanent or charged | Never | camp | A drystone gateway in a ruined field wall whose gateposts got up to fight. **Shared:** on the symmetry axis between the NW knoll and the spring dell (proposed (66, 66)), at least 25 m from the Crow Field's creeps and 14 m off any lane centreline | **[SLICE]** ×1 |
-| `camp_gv_withy_field` | Amber | Withy Brute, Crowcaller, Fieldkeeper ×2, Strawling ×2 | 17 | 370 | 92 | A: L1 power-up; B: L3 permanent or charged | Day (it replaces the Crow Field as the map's one day camp) | camp | Upgrade of Crow Field when the Withy Brute exists | [SLICE+] |
+| `camp_gv_withy_field` | Amber | Withy Brute, Crowherd, Fieldkeeper ×2, Strawling ×2 | 17 | 370 | 92 | A: L1 power-up; B: L3 permanent or charged | Day (it replaces the Crow Field as the map's one day camp) | camp | Upgrade of Crow Field when the Withy Brute exists | [SLICE+] |
 | `camp_gv_bellow_marsh` | Amber | Bellower ×2, Mudgulper, Peeper ×2 | 15 | 340 | 80 | A: L1 power-up; B: L3 permanent or charged | Night | camp | Marsh | *later* |
-| `camp_gv_standing_ring` | **Red** | Menhir Elder, Drystone Walker ×2, Cairnling | 20 | 480 | 96 | A: L2 any; B: L4 permanent | Never | camp | A ring of standing stones in a contested centre-flank pocket | **[SLICE]** ×1 |
+| `camp_gv_standing_ring` | **Red** | Menhir Elder, Drystone Walker ×2, Cairnling | 20 | 480 | 96 | A: L2 any; B: L4 permanent | Never | camp | A ring of standing stones in a contested centre-flank pocket. **Guard mode** where it stands over a Gold Seam (Wether Downs: the contested third seam, slice-plan §1.4 RS), so building that expansion always costs the red fight | **[SLICE]** ×1 |
 | `camp_gv_grandmothers_bog` | Red | Grandmother Toad, Bellower ×2, Peeper ×4 | 21 | 520 | 112 | A: L2 any; B: L4 permanent | Night | camp | Deep bog | *later* |
-| `camp_gv_clamp_fathers_yard` | Red | Clamp-Father, Kiln-Master, Collier ×2, Smoker ×2 | 22 | 505 | 112 | A: L2 any; B: L5 permanent or charged | Night | camp | Big clamp and a charcoal-burners' hall | *later* |
+| `camp_gv_clamp_fathers_yard` | Red | Clamp-Father, Kiln-Master, Collier ×2, Coal-Lobber ×2 | 22 | 505 | 112 | A: L2 any; B: L5 permanent or charged | Night | camp | Big clamp and a charcoal-burners' hall | *later* |
 | `camp_gv_dolmen_hill` | Red | Dolmen Colossus, Menhir Elder, Drystone Walker ×2 | 26 | 705 | 120 | A: L2 power-up; B: L6 permanent or charged | Never | camp | A dolmen on a hilltop | *later* |
-| `camp_gv_harvest_court` | Red (boss) | Old Mangold, Withy Brute ×3, Crowcaller ×2 | 31 | 750 | 148 | A: L3 any; B: **fixed** Mangold Lantern or Old Mangold's Sickle (seeded) | Day (a map that uses it sets its other Tattiebogles camps to `night`) | camp | A harvest-home barn with a giant mangold lantern | *later* |
+| `camp_gv_harvest_court` | Red (boss) | Old Mangold, Withy Brute ×3, Crowherd ×2 | 31 | 750 | 148 | A: L3 any; B: **fixed** Mangold Lantern or Old Mangold's Sickle (seeded) | Day (a map that uses it sets its other Tattiebogles camps to `night`) | camp | A harvest-home barn with a giant mangold lantern | *later* |
 
 ### 3.4 Rimeholt templates *(later)*
 
@@ -705,12 +704,13 @@ The Dung Trail and the Boulder Run are both `day` by family default. A Sunscar m
 
 ### 3.6 Slice map: the neutral layout (Greenvale, 96 × 96 tiles = 192 m)
 
-Two starts in opposite corners, rotationally symmetric. Written from rules (ip-safety §2.6), not from any existing map.
+Two starts in opposite corners (SW and NE), mirror-symmetric across the NW–SE diagonal (slice-plan §1.2). Written from rules (ip-safety §2.6), not from any existing map.
 Distances are hall-centre to camp-centre.
 
 | Neutral | Count | Where | Why |
 |---|---|---|---|
 | Gold Seam (main, 12,000) | 2 | At each start, **6.0 m** hall edge to seam edge (rules §3.3) | Global economy rule; the 5-worker saturation maths needs the 6.0 m gap |
+| Gold Seam (contested third, 8,000) inside the **Standing Ring** pocket, which guards it in **guard mode** | 1 | On the symmetry axis inside the SE ring pocket (slice-plan §1.4 RS) | A late, contested expansion: building there always costs the red fight |
 | Gold Seam (expansion, 8,000) + **Drystone Fold** (amber 14, guard mode) | 2 | One natural expansion per player, **40–60 m path distance** from the main, on lower ground; exact positions in slice-plan §1.4 | Never-sleep guards: the expansion costs a real fight at any hour |
 | **Charcoal Clamp** (green 5) | 2 | 28–35 m from each main, beside the natural path | First creep at about 2:00 (both faction build orders) |
 | **Turnip Patch** (green 8) | 2 | 35–45 m from each main, the other side | Second creep. It sleeps at night like most camps (tame scarecrows, §1.5) |
@@ -722,7 +722,7 @@ Distances are hall-centre to camp-centre.
 | **Hale Spring** + **Crow Field** (amber 12, the one day camp) | 1 | On the side lane that is *not* the shortest attack path | Free healing by day, a guarded spring by night |
 | **Standing Ring** (red 20) | 1 | Opposite flank to the spring, equidistant from both starts | The big prize (L2 + L4); never sleeps, so it is never a free kill |
 | Critters | 10–14 | Hand-placed (slice-plan §1.9: 6 hares in the meadows, 4 geese at the ponds), fireflies by water at night | Ambience |
-| **Coaching Inn** [SLICE: revive only] | 1 | On the axis beyond the SE knoll at **(128, 128)** (slice-plan §1.4 I), 51 m from the Weighstall (moved from (106, 106), where a Den creep stood 4.2 m from its corner). Door facing SE, away from the stall. **Constraint:** no camp member's acquire radius (with `acquire_override`) and no 10 m wake radius (§1.5) may touch the inn footprint or its 7.0 m use band (test `inn_unguarded`, §9) | Never guarded (*Why:* the WC3 convention). Instant revive is the comeback tool, so a revived hero must never step out beside an awake camp. Hiring the Rat-Piper is [SLICE+] |
+| **Coaching Inn** [SLICE: revive only] | 1 | On the axis beyond the SE knoll at **(128, 128)** (slice-plan §1.4 I), 51 m from the Weighstall (moved from (106, 106), where a Den creep stood 4.2 m from its corner). Door facing SE, away from the stall. **Constraint:** no camp member's acquire radius (with `acquire_override`) and no 10 m wake radius (§1.5) may touch the inn footprint or its 7.0 m use band (test `inn_unguarded`, §9) | Never guarded (*Why:* the WC3 convention). Instant revive is the comeback tool, so a revived hero must never step out beside an awake camp. Hiring the Rat-Piper is P1 (slice-plan B19) |
 | [SLICE+] **Beacon Cairn** | 2 | On the two knolls overlooking the centre; behind the per-map flag `neutral.beacon_cairns`, **off** on the default Greenvale 1v1 map | Vision fights on maps that turn it on. Off by default because capture-by-standing vision is a StarCraft II mechanic that changes WC3-style vision play (§5.11) |
 | [SLICE+, first in line] **Dewstone** | 2 | A mirror pair, one beside each Charcoal Yard, which guards it | The mana landmark; promoted to [SLICE] if credits allow (§7) |
 
@@ -757,11 +757,11 @@ The factor changes mid-camp when a hero levels; values are continuous approximat
 
 - **Margins are thin** (about 20 XP for hero 1 and 18 for hero 2): a hero that misses kills, or creeps with the other hero in range, ends
   a level short. `test_xp_route_slice` guards the route (§9).
-- **Faction push rows:** both faction docs push with "2 heroes (levels 4–5)". The route gives **hero 1 level 4 and hero 2 level 3**, so
-  those rows should say so (follow-up, §11). Hero 1 reaches level 5 after the push, from the Ring and from fighting; that is where the 0 %
+- **Faction push rows:** the route gives **hero 1 level 4 and hero 2 level 3** (3–4 and 2–3 when both players contest the shared camps,
+  slice-plan §1.11), and both faction docs' push rows now say so (synthesis 2026-10-19). Hero 1 reaches level 5 after the push, from the Ring and from fighting; that is where the 0 %
   creep factor at level 5 starts to bite, as in WC3.
-- **Red-camp triggers:** rules §19's Hard trigger ("2 heroes at level 4+") cannot fire before the Ring on this route. It should read
-  "hero 1 at level 4+ and hero 2 at level 3+, with ≥ 30 army food" (follow-up, §11); slice-plan §4.4 already says so.
+- **Red-camp triggers:** rules §19's Hard trigger now reads "hero 1 at level 4+ and hero 2 at level 3+, with ≥ 30 army food" (the old
+  "2 heroes at level 4+" could not fire before the Ring on this route); slice-plan §4.4 and clans §10 agree.
 - **The inn stays unguarded:** no camp member's acquire radius (with `acquire_override`) and no 10 m wake radius (§1.5) may touch the inn's
   footprint or its 7.0 m use band (test `inn_unguarded`, §9). At the old spot (106, 106) the Den's north-east creep stood 4.2 m from the
   inn's corner; at (128, 128) the nearest camp member stands 30.7 m from the footprint (slice-plan §1.4).
@@ -801,7 +801,7 @@ Honeycomb Wedge). The Fair Exchange is a building service (`service_trade`), not
 |---|---|---|---|---|---|---|---|---|---|
 | `item_rosehip_draught` | Rosehip Draught | 1 | 1 | Restores **260 HP** at once | 8 s (`heal`) | 160 g | 3 / 45 s | 0:00 | **[SLICE]** |
 | `item_bluebell_cordial` | Bluebell Cordial | 1 | 1 | Restores **160 mana** at once | 8 s (`mana`) | 170 g | 3 / 45 s | 0:00 | **[SLICE]** |
-| `item_homing_pigeon` | Homing Pigeon | 1 | 1 | The shared recall (rules §6.8). **Target a point** (minimap clicks work; press the hotkey twice for your highest-tier hall): the pigeon flies to your finished hall nearest that point, and after a **5 s** channel the hero and up to **11** of your non-structure units within **6 m** (nearest first) vanish in a puff of feathers and reappear beside that hall. Enemy stuns, silences and damage do not cancel it; the hero's death or your own Stop or move order does. The charge is spent when it completes | — | 335 g | 2 / 120 s | 0:00 | **[SLICE]** |
+| `item_homing_pigeon` | Homing Pigeon | 1 | 1 | The shared recall (rules §6.8). **Target a point** (minimap clicks work; press the hotkey twice for your highest-tier hall): the pigeon flies to your finished hall nearest that point, and after a **5 s** channel the hero and up to **23** of your non-structure units within **9.4 m** (nearest first) vanish in a puff of feathers and reappear beside that hall. Enemy stuns, silences and damage do not cancel it; the hero's death or any order you give the hero does. The charge is spent when it completes | — | 335 g | 2 / 120 s | 0:00 | **[SLICE]** |
 | `item_snoop_peg` | Snoop Peg | 1 | 2 | Hammers in an invisible peg within 5 m: **13 m vision for 240 s** (25 HP). It sees no invisible units | — | 80 g | 2 / 60 s | 0:00 | **[SLICE]** |
 | `item_tattle_burrs` | Tattle-Burrs | 1 | 2 | Throw a handful of bell-strung burdock burrs at a point within 8 m: they cling to invisible units within **9 m**, which stay revealed for **12 s** and jingle as they move (`reveal_invisible_area`) | — | 60 g | 2 / 60 s | 0:00 | **[SLICE]** (counters the Uncut's Dust Veil) |
 | `item_picnic_hamper` | Picnic Hamper | 2 | 1 | Your and allied **organic** non-structure units within **7 m** restore **180 HP over 6 s**; damage does not interrupt it (`heal_area_over_time`) | — | 200 g | 2 / 90 s | 3:00 | **[SLICE]** |
@@ -812,12 +812,11 @@ Honeycomb Wedge). The Fair Exchange is a building service (`service_trade`), not
 | `item_pocket_signpost` | Pocket Signpost | 3 | 2 | Unfold a tiny signpost and point it at one of your structures anywhere on the map: after a **3 s** channel the hero alone appears beside it (`teleport_to_own_structure`). Stuns, silences, the hero's death or your own orders cancel it. **Lucky Barrow only** (fixed slot) | 30 s | 250 g | 1 / 120 s | 10:00 | *later* |
 | `item_oilcloth_capes` | Oilcloth Capes | 3 | 1 | Throw out a bundle of oilcloth capes: your non-structure units within **9 m** gain **+3 armour for 20 s** (`armor_area_buff`). **Lucky Barrow only** (fixed slot) | — | 175 g | 1 / 90 s | 8:00 | *later* |
 
-- **Recall:** the Homing Pigeon has no recall rules of its own. Like the Homeward Horn, Homeward Felt, Lake Whistle and Coin for the
+- **Recall:** the Homing Pigeon has no recall rules of its own. Like the Way-Home Horn, Way-Home Felt, Lake Whistle and Coin for the
   Ferry, it reads the one shared spec (`rules.items.recall_*`, rules §6.8); recall items differ only in price and stock. At 335 g it costs
   more than the Horn (300 g) and the Felt (325 g), so it never makes a faction's recall item obsolete: its draw is being stocked at the
-  centre. Two points of the shared spec are still open (§11 #25): whether attack, cast and item orders cancel the channel as Stop and move
-  do, and the radius and unit cap, which should be set from WC3 footage (start at about 9.4 m and 23 units if the footage shows the scroll
-  pulling a whole army).
+  centre. Rules §6.8 now settles the spec: any order to the hero cancels the channel, and the radius and cap are **9.4 m and 23 units**
+  (still flagged for a check against WC3 footage, rules §23 #28).
 - **Fair Exchange** (Weighstall service, `service_trade`, **[SLICE]**): any own unit in use range trades **100 gold for 60 lumber** or
   **100 lumber for 60 gold**, once per **120 s** per player (one cooldown for both directions), from **3:00**. The gold received is taxed
   by upkeep like a sale (rules §16). The Rundlings weigh both pans twice and keep the difference as their fee. It took the shop slot that
@@ -939,14 +938,14 @@ edge (§1.5).
 
 | id | Name | Function | Footprint (cells) | Guarded by | Slice |
 |---|---|---|---|---|---|
-| `gold_mine` (display **Gold Seam**) | Gold Seam | Gold source | 8×8 | Expansions: a guard-mode amber camp | **[SLICE]** ×4 |
-| `neutral_weighstall` | Weighstall | Merchant: consumables, recall, wards, reveal, boots, a permanent HP item, skill reset, an area heal, the Fair Exchange; buys items | 8×8 | Amber 10–15 | **[SLICE]** ×1 |
+| `gold_mine` (display **Gold Seam**) | Gold Seam | Gold source | 12×12 | Expansions: a guard-mode amber camp; the contested third: the red Standing Ring in guard mode | **[SLICE]** ×5 |
+| `neutral_weighstall` | Weighstall | Merchant: consumables, recall, wards, reveal, boots, a permanent HP item, skill reset, an area heal, the Fair Exchange; buys items | 12×12 | Amber 10–15 | **[SLICE]** ×1 |
 | `neutral_lucky_barrow` | Lucky Barrow | Rotating stronger items; two fixed late items | 4×4 | Amber 10–15 | *later* |
-| `neutral_coaching_inn` | Coaching Inn (per-map sign name; Greenvale: *The Muddy Lantern*) | Instant revive; neutral heroes | 10×10 | **Never guarded** | **[SLICE]** (revive only); hiring the Rat-Piper [SLICE+] |
-| `neutral_hiring_fair` | Hiring Fair | Hire local creep types | 10×10 | Amber 10–15 | [SLICE+] |
-| `neutral_hale_spring` | Hale Spring | Area health regeneration | 6×6 | Amber 10–14 | **[SLICE]** ×1 |
+| `neutral_coaching_inn` | Coaching Inn (per-map sign name; Greenvale: *The Muddy Lantern*) | Instant revive; neutral heroes | 12×12 | **Never guarded** | **[SLICE]** (revive, P0); hiring the Rat-Piper **P1** (slice-plan B19) |
+| `neutral_hiring_fair` | Hiring Fair | Hire local creep types | 12×12 | Amber 10–15 | [SLICE+] |
+| `neutral_hale_spring` | Hale Spring | Area health regeneration | 8×8 | Amber 10–14 | **[SLICE]** ×1 |
 | `neutral_dewstone` | Dewstone | Area mana regeneration | 4×4 | Amber 10–14 | [SLICE+], first in line (§7) |
-| `neutral_contraption_barn` | Contraption Barn | Lumber machine, balloon transport, ram, tree-clearing crew | 10×10 | Amber 12–15 | *later* |
+| `neutral_contraption_barn` | Contraption Barn | Lumber machine, balloon transport, ram, tree-clearing crew | 12×12 | Amber 12–15 | *later* |
 | `neutral_twin_milestones` | Twin Milestones | Paired teleport | 2×2 each | Unguarded | *later* |
 | `neutral_beacon_cairn` | Beacon Cairn | Capturable vision cairn | 4×4 | Unguarded | [SLICE+] ×2; per-map flag `neutral.beacon_cairns`, off on the default 1v1 map |
 
@@ -957,7 +956,7 @@ edge (§1.5).
 | **Weighstall** | Rosehip Draught **R**, Bluebell Cordial **B**, Homing Pigeon **H**, Snoop Peg **P**, Tattle-Burrs **U**, Picnic Hamper **K**, Wanderer's Hobnails **W**, Stoutheart Weight **T**, Wiped Slate **L**, Fair Exchange: gold for lumber **X**, Fair Exchange: lumber for gold **Z**, **Select Patron Tab** | 9 items, the two exchange buttons and Select Patron fill the 12 slots (the Coilspring Heels moved to the Lucky Barrow). Each item button shows a **stock-count badge** (bottom right) and a **restock sweep** when the count is below max. Items not yet on sale are greyed with the tooltip "On the counter from 4:00" (their own time). Greyed too when no own hero is in range ("Bring a hero to the counter"). The exchange buttons show the shared 120 s cooldown sweep and work with any own unit in range. **Select Patron** cycles which of **your heroes** in range receives the item. **Sell:** drag an item from a hero's inventory onto the shop, or right-click the item and click the shop |
 | **Lucky Barrow** *(later)* | Four rotating slots **Q W E R**, Pocket Signpost **G**, Oilcloth Capes **O**, Coilspring Heels **J**, Select Patron **Tab** | The rotating slots show the reroll countdown as a sweep across all four |
 | **Coaching Inn** | One hire button per neutral hero: Rat-Piper **R**, Old Menhir **M** *(later)*, Toll-Reeve **T** *(later)*; one **Revive** button per own dead hero, letters **V / B / N** in hero-slot order; **Select Patron Tab** | Hire buttons show the hero portrait and "425 / 135, 5 food" (or "Free" while the first-hero token is unused); they grey out for everyone once the hero is taken ("Hired by another commander") or when no hero slot is free. Revive buttons show that hero's rules §6.7 cost for its level and grey out without 5 free food. In the slice the card holds only the Revive buttons and Select Patron |
-| **Hiring Fair** [SLICE+] | Sootcoat Smoker **S**, Sootcoat Collier **C**, Fieldkeeper **F**, Withy Brute **B** *(later)*, Select Patron **Tab** | Stock badge and restock sweep per button, as at the Weighstall |
+| **Hiring Fair** [SLICE+] | Sootcoat Coal-Lobber **L**, Sootcoat Collier **C**, Fieldkeeper **F**, Withy Brute **B** *(later)*, Select Patron **Tab** | Stock badge and restock sweep per button, as at the Weighstall |
 | **Contraption Barn** *(later)* | Sawcart **S**, Lift Balloon **L**, Ram-Barrow **R**, Hedge-Cutters **H**, Select Patron **Tab** | Hedge-Cutters then asks for a target line (§5.9) |
 
 ### 5.2 Gold Seam (gold mine) [SLICE]
@@ -967,7 +966,7 @@ edge (§1.5).
 | Data id | `gold_mine` (kept for the code in `architecture.md`); display name **Gold Seam** |
 | Gold | **12,000** (main), **8,000** (expansion). Low-gold warning at **1,500**: minimap ping plus the faction advisor line |
 | Mining | 10 gold per trip; one worker inside at a time for **1.0 s**; about 5 workers saturate it at the **6.0 m** hall gap (rules §3.3) |
-| Footprint | 8×8 cells (4×4 m), blocks pathing |
+| Footprint | 12×12 cells (6 × 6 m; art bible §1.3: the mine reads at least barracks-sized beside an 8 m hall), blocks pathing |
 | Look | The differentiator is the **cliff seam**: the mine is an **adit** (a low, square timber-framed tunnel mouth) cut into the face of a short, **layered cliff** with a thin bright quartz-and-gold line running through the strata, never a free-standing rock mound with gold nuggets heaped at the door. On the cliff lip above stands a **windlass headframe** (two timber A-frames and a crank drum lowering a bucket). Beside the adit: a **spoil heap** of grey tailings and a **wooden sluice** trough carrying a trickle of water down from the cliff. Two lanterns on hooks are lit at night. No mine cart, no rails. A worker vanishes into the dark mouth for its 1 s |
 | Empty | Collapses when empty (the familiar rule): the headframe tips, the adit mouth falls in with a puff of dust, the sluice runs dry, and the footprint becomes walkable rubble (a ground decal with small non-blocking rocks) |
 | Minimap | Our faceted-nugget glyph in pale gold (§1.2) |
@@ -1009,7 +1008,7 @@ edge (§1.5).
 | Sell | "Hm. Light. Half it is." |
 | Exchange | "Both pans weighed. The difference is my fee." |
 | Can't afford | "The scales say no." |
-| Annoyed (4 clicks in 3 s) | "Tap the counter once more and I'm adding a tapping fee." · "I'm curling up. I am curling up!" |
+| Annoyed (4 clicks in 3 s) | "Click the counter once more and I'm adding a clicking fee." · "I'm curling up. I am curling up!" |
 
 ### 5.4 Lucky Barrow (rotating stock) *(later)*
 
@@ -1019,7 +1018,7 @@ edge (§1.5).
 - **Fixed slots:** the Pocket Signpost, the Oilcloth Capes and the Coilspring Heels (§4.2), which do not fit on the Weighstall's 12-slot card.
 - It buys items at 50 % like the Weighstall.
 
-### 5.5 Coaching Inn (instant revive and neutral heroes) [SLICE: revive only; hiring SLICE+]
+### 5.5 Coaching Inn (instant revive and neutral heroes) [SLICE: revive at P0; hiring the Rat-Piper at P1]
 
 - **Building type and name:** the building type is the generic **Coaching Inn** (`neutral_coaching_inn`). Each map gives its inn a
   proper name on the sign; Greenvale's is ***The Muddy Lantern***. The tooltip reads "*The Muddy Lantern* (coaching inn)".
@@ -1028,7 +1027,7 @@ edge (§1.5).
   - A great **hanging lantern sign** with the map's inn name.
   - It is never guarded, so it is a calm place in a hostile map.
 - **In the slice** (P0 in slice-plan §1.9; on the axis beyond the SE knoll at (128, 128), 51 m from the Weighstall, with the door facing
-  away from it; §3.6 and test `inn_unguarded`): the inn offers **instant revive only**. Hiring the Rat-Piper is [SLICE+].
+  away from it; §3.6 and test `inn_unguarded`): the inn offers **instant revive** at P0. Hiring the Rat-Piper is **P1** (slice-plan §2.3 B19, funded from the next Higgsfield grant).
   Production: the bpy half-timber kit retinted to neutral browns (≈ 0.5–1 cr, §8.1).
 - **Instant revive** (any of your dead heroes, faction or neutral): cost and result are **rules §6.7** (`rules.heroes.inn_revive`):
   gold 425 × (0.8 + 0.2 × (L − 1)) up to **1,105**, lumber 100 × (0.8 + 0.2 × (L − 1)) up to **260**, i.e. **340 g / 80 l at level 1 …
@@ -1057,7 +1056,7 @@ edge (§1.5).
 
 | Hero | id | Primary | STR (+/lvl) | AGI (+/lvl) | INT (+/lvl) | Base damage (+primary) | Base armour | Base CD | Range | Speed | Height | Slice |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **Rat-Piper** | `nhero_rat_piper` | AGI | 17 (+1.8) | 21 (+2.3) | 16 (+1.6) | 2–10 | −2 | 2.1 | 7.0 m (crossbow) | 4.8 | 2.1 m (hat) | [SLICE+] |
+| **Rat-Piper** | `nhero_rat_piper` | AGI | 17 (+1.8) | 21 (+2.3) | 16 (+1.6) | 2–10 | −2 | 2.1 | 7.0 m (crossbow) | 4.8 | 2.1 m (hat) | P1 (slice-plan B19) |
 | **Old Menhir** | `nhero_old_menhir` | STR | 25 (+2.8) | 10 (+1.0) | 14 (+1.4) | 6–14 | 1 | 2.5 | 1.2 m melee | 4.2 | 3.0 m | *later* |
 | **Toll-Reeve** | `nhero_toll_reeve` | INT | 17 (+1.9) | 13 (+1.1) | 21 (+2.8) | 4–10 | −1 | 2.2 | 6.5 m (flung weight) | 4.5 | 1.75 m body, 2.2 m with the balance staff | *later* |
 
@@ -1069,7 +1068,7 @@ Derived values (HP / mana / armour / damage / cooldown):
 | Old Menhir | 725 / 210 / 4.0 / 31–39 / 2.08 s | 1000 / 285 / 5.2 / 42–50 / 1.95 s | 1350 / 390 / 6.7 / 56–64 / 1.81 s |
 | Toll-Reeve | 525 / 315 / 2.9 / 25–31 / 1.75 s | 700 / 480 / 4.1 / 36–42 / 1.64 s | 950 / 690 / 5.6 / 50–56 / 1.53 s |
 
-#### 5.6.3 Rat-Piper (AGI ranged trapper and summoner) [SLICE+, first in line]
+#### 5.6.3 Rat-Piper (AGI ranged trapper and summoner) [P1 in the slice-plan: hired at the inn]
 
 - **Look:**
   - A lanky man in a mustard-and-rust **coat of a hundred pockets**, with rats peering out of half of them.
@@ -1170,7 +1169,7 @@ Rat-Piper's two. Names, VFX, numbers and designs are ours.
 
 | Tileset | Unit (creep stats from §2) | Lvl | Gold | Lumber | Food | Stock | Restock | From | Slice |
 |---|---|---|---|---|---|---|---|---|---|
-| Greenvale | Sootcoat Smoker | 2 | 150 | 15 | 2 | 2 | 60 s | 2:00 | [SLICE+] |
+| Greenvale | Sootcoat Coal-Lobber | 2 | 150 | 15 | 2 | 2 | 60 s | 2:00 | [SLICE+] |
 | Greenvale | Sootcoat Collier | 3 | 200 | 20 | 3 | 2 | 60 s | 2:00 | [SLICE+] |
 | Greenvale | Fieldkeeper ("a hired scarecrow"; it never sleeps while hired) | 3 | 190 | 30 | 3 | 2 | 75 s | 4:00 | [SLICE+] |
 | Greenvale | Withy Brute | 5 | 320 | 60 | 4 | 1 | 120 s | 8:00 | *later* |
@@ -1196,7 +1195,7 @@ faction unit of the same level. The player pays instead in flexibility lost: no 
 | Look | A moss-ringed spring pool fed by a hollow-log flume with a tiny turning waterwheel. Warm sparkles rise off the water by day. No carved stone rim and no glowing water | A tall (about 3 m) **upright quartz-veined boulder** that **sweats warm white-gold droplets at dusk**, with moths circling it after dark. **No water body:** no pool, basin, trough, water-lilies or stone ring, and **no blue or teal glow** anywhere |
 | Unit VFX | A soft rising-bubble shimmer on units regenerating | **Warm white motes** drift up from units regenerating mana (never a blue shine) |
 | Guard | Crow Field (amber 12, the map's one day camp): free by day, contested at night | An amber 10–14 camp, usually never-sleep (on Greenvale, if promoted: a mirror pair, each guarded by a Charcoal Yard) |
-| Footprint | 6×6 cells; the pool itself is walkable shallow water | 4×4 cells (the boulder blocks pathing) |
+| Footprint | 8×8 cells; the pool itself is walkable shallow water | 4×4 cells (the boulder blocks pathing) |
 
 A landmark's aura never wakes creeps (passive). *Why the Dewstone:* a stone-rimmed pool of glowing blue water that restores mana is the
 WC3 night-elf moon well and the mana fountain together (ip-safety §2.3; `sylvan-and-deathless.md` avoids it too), so the neutral mana
@@ -1291,11 +1290,11 @@ flock boids (sparrows). No rigging and no 3D credits.
 
 | Category | In the slice | [SLICE+] | Later |
 |---|---|---|---|
-| Creep types | **10:** Sootcoat Cutpurse, Smoker, Collier, Kiln-Master; Strawling, Fieldkeeper, Crowcaller (+ Crow summon); Cairnling, Drystone Walker, Menhir Elder | Withy Brute | Clamp-Father, Old Mangold, Dolmen Colossus, all Mire Toads, all Rimeholt and Sunscar families |
+| Creep types | **10:** Sootcoat Cutpurse, Coal-Lobber, Collier, Kiln-Master; Strawling, Fieldkeeper, Crowherd (+ Crow summon); Cairnling, Drystone Walker, Menhir Elder | Withy Brute | Clamp-Father, Old Mangold, Dolmen Colossus, all Mire Toads, all Rimeholt and Sunscar families |
 | Camps | **16:** Charcoal Clamp ×2, Turnip Patch ×2, Woodward's Rest ×2, Collier's Hut ×2 (green); Smugglers' Den, Crow Field, Charcoal Yard ×2, Drystone Fold ×2, Cairn Gate (amber); Standing Ring (red) | Withy Field replaces Crow Field | All other templates |
 | Sleep schedules | All three (`night` ×11 camps, `never` ×4, `day` ×1) and `sleeps_override` | — | — |
 | Items | **33:** 9 purchasable, 7 power-ups, 13 permanent (L2–L4), 4 charged (L1–L2) | Curl-Up Scale (an L2 charged drop) | 20 more, including all artifacts |
-| Neutral buildings | **Gold Seam ×4, Weighstall** (curled shopkeeper prop; Fair Exchange), **Hale Spring**, **Coaching Inn** (*The Muddy Lantern*; instant revive only, P0 in slice-plan §1.9) | **First in line, promoted to [SLICE] if the credit ledger has room after both factions' P0 assets:** the Dewstone as a mirror pair (one beside each Charcoal Yard, ≈ 0.5 cr) and hiring the Rat-Piper at the inn (9.25 cr plus VO). Then: Hiring Fair (Greenvale roster), Beacon Cairn ×2 (flag off on the default map), Rundling shopkeeper model | Lucky Barrow, Contraption Barn, Twin Milestones, Old Menhir, Toll-Reeve |
+| Neutral buildings | **Gold Seam ×5, Weighstall** (curled shopkeeper prop; Fair Exchange), **Hale Spring**, **Coaching Inn** (*The Muddy Lantern*; instant revive, P0 in slice-plan §1.9; **hiring the Rat-Piper is P1**, slice-plan B19) | **First in line, promoted to [SLICE] if the credit ledger has room after both factions' P0 assets:** the Dewstone as a mirror pair (one beside each Charcoal Yard, ≈ 0.5 cr). Then: Hiring Fair (Greenvale roster), Beacon Cairn ×2 (flag off on the default map), Rundling shopkeeper model | Lucky Barrow, Contraption Barn, Twin Milestones, Old Menhir, Toll-Reeve |
 | Critters | Brown Hare, Grey Goose (killable sim units: 1 HP, no XP, no bounty, no corpse), Firefly Drift (VFX) | Sparrow Roost (flush trigger in the sim) | Hedgehog, all Rimeholt and Sunscar critters |
 | Systems | Camp/guard modes, `acquire_override`, `layout`, `guards`, leash with the invulnerable full-heal return, tower retreat, unreachable-attacker return, sleep and wake with the map rules, XP factor (lost with no hero near), bounty with upkeep tax, seeded drops with tie-break, the authored `creep_route`, shop stock and restock, buying needs a hero, the Fair Exchange, cooldown groups, selling, inn revive, neutral command cards, minimap neutral markers, killable critters, **14 item effect scripts** | Hero hire, mercenary stock, beacon capture, `self_invulnerable` | Rotating stock, transport, teleport pairs, tree-clearing service |
 
@@ -1338,7 +1337,7 @@ Lucky Barrow pedlar later) · Curl-Up Scale icon (0.25 cr) · Hiring Fair and Be
 - Describe creeps by **function and qualities**, never by analogy. Write "charcoal-burner outlaw with a wide conical leather hood, soot-black face, patched oilcloth coat",
   never "a bandit like in …" (ip-safety §5.2).
 - No pumpkin heads in Tattiebogles prompts. Say "pierced turnip lantern head with randomly scattered drilled holes, no face of any kind".
-  The Crowcaller is "a patched sacking cape, crows perched on outstretched pole-arms", never feathers; the Withy Brute is "tightly bound
+  The Crowherd is "a patched sacking cape, crows perched on outstretched pole-arms", never feathers; the Withy Brute is "tightly bound
   willow-rod bundles", never "wicker" or "woven".
 - Landmarks: the Dewstone is "a dry upright quartz-veined boulder sweating warm white-gold droplets", never "pool", "well", "fountain" or
   "glowing water"; the Gold Seam is "an adit in a layered cliff with a windlass headframe", never "mine cart"; the Beacon Cairn is "a low
@@ -1364,8 +1363,8 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
 
 ```jsonc
 // data/units.json (creep entry)
-"creep_sootcoat_smoker": {
-  "name": "Sootcoat Smoker", "kind": "unit", "flags": ["creep", "organic"],
+"creep_sootcoat_coal_lobber": {
+  "name": "Sootcoat Coal-Lobber", "kind": "unit", "flags": ["creep", "organic"],
   "level": 2, "sleeps": "night", "family": "sootcoats",
   "hp": 260, "mana": 150, "mana_regen": 0.6, "armor": 0, "armor_type": "unarmored",
   "radius": 0.4, "speed": 4.2, "height": 1.7, "leash": 18.75,
@@ -1386,28 +1385,28 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
 
 // data/camps.json
 "camp_gv_drystone_fold": {
-  "tileset": "greenvale", "mode": "guard", "guard_radius": 12.0,
+  "tileset": "gv", "mode": "guard", "guard_radius": 12.0,
   "creeps": [["creep_cairn_drystone_walker", 1], ["creep_cairn_cairnling", 3]],
   "drops": {"A": {"class": ["powerup"], "level": 1},
             "B": {"class": ["permanent", "charged"], "level": 3}},
   "props": ["sheepfold_ruin", "gold_seam_expansion"]
 }
 "camp_gv_turnip_patch": {
-  "tileset": "greenvale", "mode": "camp", "sleeps_override": "night",
+  "tileset": "gv", "mode": "camp", "sleeps_override": "night",
   "creeps": [["creep_harvest_fieldkeeper", 2], ["creep_harvest_strawling", 2]],
   "drops": {"B": {"class": ["permanent", "charged", "powerup"], "level": 2}}
 }
 "camp_gv_smugglers_den": {
-  "tileset": "greenvale", "mode": "camp", "acquire_override": 6.5,
+  "tileset": "gv", "mode": "camp", "acquire_override": 7.2,
   "creeps": [["creep_sootcoat_kiln_master", 1], ["creep_sootcoat_collier", 1],
-             ["creep_sootcoat_smoker", 1], ["creep_sootcoat_cutpurse", 1]],
-  // one [dx, dz, facing_deg] per creep, in creeps order, metres from the stall centre (stall 4 x 4 m)
-  "layout": [[4.5, 4.5, 45], [-4.5, 4.5, 135], [-4.5, -4.5, 225], [4.5, -4.5, 315]],
+             ["creep_sootcoat_coal_lobber", 1], ["creep_sootcoat_cutpurse", 1]],
+  // one [dx, dz, facing_deg] per creep, in creeps order, metres from the stall centre (stall 6 x 6 m, 12 x 12 cells)
+  "layout": [[5.5, 5.5, 45], [-5.5, 5.5, 135], [-5.5, -5.5, 225], [5.5, -5.5, 315]],
   "drops": {"A": {"class": ["powerup"], "level": 1}, "B": {"class": ["permanent"], "level": 2}},
   "guards": "neutral_weighstall"
 }
 
-// data/maps/greenvale.json (excerpt): neutral flags, and the authored creep route that the AI and test_xp_route_slice follow
+// data/maps/wether_downs.json (excerpt; tileset id "gv"): neutral flags, and the authored creep route that the AI and test_xp_route_slice follow
 // (own-side camp ids resolve to the player's own copy)
 "neutral": { "beacon_cairns": false },
 "creep_route": {
@@ -1512,6 +1511,8 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
 | "Murder of Crows" | A WoW hunter talent | **Scatter-Crows** |
 | "Threshing Slam" / "Toppling Shove" / "Toppling Strike" | Clash with `kingdom` Threshing Sweep and `clans` Grappler Shove | **Harrow Slam**, **Barge**, **Rockfall Blow** |
 | Anything with "Hearthstone" or "Hearth" (stone creeps, inn) | Blizzard mark | Not used |
+| "Crowcaller" (Tattiebogle caster; synthesis 2026-10-19) | Another game's creature name pattern; the slice-plan review asked for a plain trade name | **Crowherd** (`creep_harvest_crowherd`) |
+| "Smoker" (Sootcoat thrower; synthesis 2026-10-19) | A well-known special-infected name in a zombie co-op shooter | **Coal-Lobber** (`creep_sootcoat_coal_lobber`); its ability keeps the name Smoke Pot |
 | "Waystone Inn", "Mended Drum", "Prancing Pony" | Inns from famous novels | The generic building type **Coaching Inn**, with a per-map sign name (Greenvale: *The Muddy Lantern*) |
 | "Wayfarers' Inn" (first draft) | A coined game location: the inn in Britain in EA's *Ultima* V–VII and the player's tavern in *Tavern Talk* (2024); WoW has "Wayfarer's Rest" | **Coaching Inn** (`neutral_coaching_inn`) + per-map sign name |
 | "Farmer's Almanac" | A real publication's trade name | Not used (the item became the Hedge Almanac, itself replaced in round 2 by the **Fair-Day Rosette**) |
@@ -1630,7 +1631,7 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
     later faction may reuse these motifs, and vice versa.
 13. **An apex flyer family** (the dragon-like red-camp prize of WC3) is not designed. It needs procedural flight (flyers rig poorly) and
     must avoid colour-coded dragon families and the hatchling-to-adult ladder naming.
-14. **Item count:** 52 against the brief's ~40. If the list must shrink, cut only from pool cells that keep at least two candidates
+14. **Item count:** 54 against the brief's ~40. If the list must shrink, cut only from pool cells that keep at least two candidates
     afterwards (for example Shepherd's Crook, Dewdrop Locket and Dropped Purse), or move the two Lucky Barrow fixed items to a later patch.
 15. **"Gold Seam" display name:** if testers miss that it is the gold mine, show "Gold Seam (gold mine)" in the tooltip.
 16. **Critters in the sim (round 2):** critters are killable sim units with their own seeded stream (§6); the goose nip stays cosmetic and
@@ -1658,14 +1659,14 @@ The layer is data-driven like the rest of the game (`architecture.md` rule 3). S
 | Doc | Edit |
 |---|---|
 | `rules.md` §6.8, §10.2, §14.1, §15.1, §15.3 (map rules), §16, §20 | **Done** in rules.md: the round-1 rows (one shared recall spec, buying needs a hero, full inventory, group cooldowns, the minimap flag, Hardy, unreachable attackers, map sleep rules, mercenaries; §23 Q1 and Q4) |
-| `rules.md` §6.8 | Open points of the shared recall spec: say whether attack, cast and item orders cancel the channel as Stop and move do (proposal: any new order to the hero, as for every channel in §6.5); set `recall_radius` and `recall_max_units` from WC3 footage, starting at about **9.4 m and 23 units** if the footage shows the scroll pulling a whole army |
+| `rules.md` §6.8 | **Done** (rules §6.8: any order cancels; 9.4 m and 23 units, flagged for footage). Open points of the shared recall spec: say whether attack, cast and item orders cancel the channel as Stop and move do (proposal: any new order to the hero, as for every channel in §6.5); set `recall_radius` and `recall_max_units` from WC3 footage, starting at about **9.4 m and 23 units** if the footage shows the scroll pulling a whole army |
 | `rules.md` §6.3, §6.4 | Flat-XP power-ups ignore the creep factor **and** the single-hero bonus (`rules.items.flat_xp_ignores_single_hero_bonus`) |
 | `rules.md` §2.3 | Add the critter stream `rng_critter = seeded(match_seed ^ 0xC7)` next to `rng_ai` (§6) |
 | `rules.md` §15.1, §15.2, §21, §22 | Tower retreat below 60 % HP (§1.3); **returning creeps are invulnerable and arrive at full HP and mana** (§1.4), so the §21 "Creep return" row becomes Kept; tests `creep_leash` (extended), `creep_tower_retreat`, `inn_unguarded`, `critter_kill` (§9) |
 | `rules.md` §15.3, §16 | Wake rule: "buys, hires or uses a service at a neutral building whose footprint edge lies within 10 m of any camp member (edge to edge); passive auras never wake; inn services count" (§15.3 Waking and §16 Waking creeps); §16 Mercenaries: Free Company Camp → Hiring Fair. §11 invisibility and detection (the Reveal effects row and the slice-sources line): Flour Bomb → Tattle-Burrs |
-| `rules.md` §19 | Easy creeps in the map's authored `creep_route` order (green camps only), not by distance. Hard's red-camp trigger: "hero 1 level 4+ and hero 2 level 3+, with ≥ 30 army food" ("2 heroes at level 4+" cannot happen before the Ring on the slice map, §3.6) |
-| `kingdom.md` §10, §11 | Push row "2 heroes (levels 4–5)" → "hero 1 level 4, hero 2 level 3" (§3.6); §11 detection row: Flour Bomb → Tattle-Burrs |
-| `clans.md` §9, §10 | §10: the Turnip Patch is **green 8 and sleeps at night** (not "green 6"; it does not wake at dusk); the Clamp is finished at 2:45 (§3.6 now says so); push row "2 heroes (levels 4–5)" → "hero 1 level 4, hero 2 level 3". §9: the Homeward Felt's 325 g may equal the WC3 recall scroll's price in one patch (the wiki's item-page infobox shows 162, i.e. 325 at half price), so add it to `value_echo_reference.json` and move it if needed; the Flour Bomb note → Tattle-Burrs |
+| `rules.md` §19 | **Done** (checked 2026-10-19). Easy creeps in the map's authored `creep_route` order (green camps only), not by distance. Hard's red-camp trigger: "hero 1 level 4+ and hero 2 level 3+, with ≥ 30 army food" ("2 heroes at level 4+" cannot happen before the Ring on the slice map, §3.6) |
+| `kingdom.md` §10, §11 | **Done** (synthesis 2026-10-19). Push row "2 heroes (levels 4–5)" → "hero 1 level 4, hero 2 level 3" (§3.6); §11 detection row: Flour Bomb → Tattle-Burrs |
+| `clans.md` §9, §10 | **Done** for §10 (synthesis 2026-10-19; the Homeward Felt is now the Way-Home Felt; its 325 g echo check stays open). §10: the Turnip Patch is **green 8 and sleeps at night** (not "green 6"; it does not wake at dusk); the Clamp is finished at 2:45 (§3.6 now says so); push row "2 heroes (levels 4–5)" → "hero 1 level 4, hero 2 level 3". §9: the Way-Home Felt's 325 g may equal the WC3 recall scroll's price in one patch (the wiki's item-page infobox shows 162, i.e. 325 at half price), so add it to `value_echo_reference.json` and move it if needed; the Flour Bomb note → Tattle-Burrs |
 | `slice-plan.md` §1.4, §1.8, §1.9, §1.11, §2.6 E16, §4.4, B13, S19 | **Done** in slice-plan.md: the inn at (128, 128) with the door facing away from the stall; the Turnip Patch green 8, asleep at night; Woodward's Rest ×2, Charcoal Yard ×2 and the Cairn Gate at (66, 66); 16 camps, 175 levels, 3,815 raw XP, ≈ 984 g; the Den's corner layout; the authored `creep_route`; Hiring Fair, Dewstone and the `neutral.beacon_cairns` flag; the §1.11 clock; the §4.4 red-camp gate; B13 and S19 Tattiebogles; E16 Coaching Inn. Keep §1.4 and this doc's §3.6 in step when positions move |
 | `juice/heroes-abilities-vfx.md` | The Banked Coals row → **Stoke the Coals** (an 8 s active camp buff, not an aura); V5, #24, N2 and the other neutral notes: Flour Bomb → Tattle-Burrs, Hedge Almanac → Fair-Day Rosette, the Curl-Up Scale is a drop, Weighmaster → Toll-Reeve. ITM-04 needs no change (the Pigeon keeps the shared 5 s recall) |
 | `art-and-audio-bible.md` §7.8, §9.6 | §7.8 minimap glyphs: Free Company Camp → Hiring Fair. §9.6 item sounds: Flour Bomb → **Tattle-Burrs** with its own cue (a soft burr toss, then a thin bell jingle that follows the revealed unit), not `it_reveal_puff`: a puff of powder is the object the rename avoids |

@@ -314,3 +314,28 @@ homeward_felt
 cauldron-father
 cauldron father
 cauldron_father
+# Synthesis pass (2026-10-19, docs/design/gdd.md §5): the slice-plan §7 "add now" list (reference lines, ability and hero names, other-IP
+# coinages), then the terms that waited for renames: the worker-completion id (now `built`), the retired creep names (now Crowherd and
+# Coal-Lobber) and the reference worker's address word (the art bible §8.1 lint no longer spells it out)
+m'lord
+right-o
+ready for action
+more work
+not that kind of orc
+your hero has fallen
+shockwave
+banish
+metamorphosis
+tranquility
+paladin
+khaz modan
+mortar combat
+hammerfall
+shallow grave
+gloom stalker
+milord
+job done
+job_done
+job-done
+crowcaller
+smoker

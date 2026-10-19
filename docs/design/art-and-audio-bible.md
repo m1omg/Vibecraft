@@ -219,7 +219,7 @@ winged-beast heraldry, glowing hands or beams of light.
 | Tortoise shell | `#C9A46A` plates, `#8A6A44` seams | Shell Hall |
 | Felt cream (accent only) | `#E9DDBF` | Never a large mass |
 | Hair | `#1C2230` | |
-| UI chrome | Felt teal `#173E42`, stitch saffron `#D49A36`, stud bronze `#A8743A`, lattice `#5C3826`, gong rim `#C68E4C` | §7.2 |
+| UI chrome | Felt teal `#173E42`, stitch saffron `#D49A36`, stud bronze `#A8743A`, ochre-washed lattice `#B7772A` (highlight `#C9A46A`), gong rim `#C68E4C`. Red-brown never appears on UI art | §7.2 |
 
 **Forbidden for the clans:** green, olive, red-brown, blue, blue-grey or teal skin (blue skin plus a thrown-spear unit is the
 reference forest-troll read); tusks or fangs; pointed ears; spikes, bones, skulls, horns or fur; red-brown
@@ -239,7 +239,7 @@ Creeps never carry team colour, and their palettes stay off both slice factions 
 | Hale Spring | Water `#5AA3A0`, moss ring `#5B7A43`, flume wood `#6A5038` | Warm sparkles by day only |
 | Loot bundle (**final values**; juice ITM-01's tokens, adopted) | Oilcloth `#6E6248`, twine `#C9B48A`, red wax seal `#B8322A`. The dark oilcloth (value 43 %) sits below every main Greenvale ground tile (meadow 60 %, dirt 55 %, road 63 %; ΔE 11–34, against 7–25 for the earlier lighter oilcloth), so the parcel reads as a dark block with a light twine cross and a bright seal | Glint every 3 s |
 | Power-up ground props (neutrals §1.8, §4.3) | Horseshoe nail iron `#5E6066` with a warm highlight `#9A9A98`; juggling ball undyed `#CDBE9A` and ochre `#A07A3A` patches; riddle knot hemp `#B9A27E` on an oak toggle `#5A4630`; berries `#C2343A` on a leaf `#5F7A43`; purse leather `#7A5A3A`; **Fair-Day Rosette**: a faded prize-ribbon rosette, a pleated undyed-cream `#CDBE9A` ribbon ring round a madder-red `#8E4A3A` centre with two short madder tails; tally-stick hazel `#9A7A52` with dark notches. **No book anywhere among item props** (a book that grants attributes mirrors the reference tome family) | A soft bob and a 1 s glint, so they read apart from the loot bundle |
-| Recall items in use | Way-Home Horn (kingdom; requested rename, §13 #26): a small bright brass post-horn `#B8913A`. Way-Home Felt (clans): a rolled ink-teal felt `#1E5A60` with saffron ties `#E0A030`. Homing Pigeon: grey-white pigeon `#B8B8B0` | A rising ring of the faction's colour at the hero's feet during the 5 s channel (`K_EMBER` sparks / `C_DUST` motes; neutral white feathers), visible to the enemy |
+| Recall items in use | Way-Home Horn (kingdom; renamed 2026-10-19, §13 #26): a small bright brass post-horn `#B8913A`. Way-Home Felt (clans): a rolled ink-teal felt `#1E5A60` with saffron ties `#E0A030`. Homing Pigeon: grey-white pigeon `#B8B8B0` | A rising ring of the faction's colour at the hero's feet during the 5 s channel (`K_EMBER` sparks / `C_DUST` motes; neutral white feathers), visible to the enemy |
 | Reveal items in use (never a thrown powder, dust cloud or puff) | **Tailor's Chalk** (kingdom shop): the hero snaps a chalked tailor's line on the ground, which leaves a 9 m ring of chalk dashes `#F2EEE4`; revealed units show white **tacking-stitch outlines** (dashed `#F2EEE4`, 2 px) for the 15 s. **Tattle-Burrs** (Weighstall): dry burdock burrs `#6A5A3A` strung with tiny tin bells `#B8B8B0`; each revealed unit carries two or three burrs and a bell glint while it moves. **Signal Shell** (Bombard Wagon): a flare that hangs over the area, `K_EMBER` core, slow-falling sparks | Chalk and stitches non-emissive; the flare and the bell glint emissive |
 | Coaching Inn (*The Muddy Lantern*) | Half-timber kit retinted to neutral browns: plaster `#D9CCAE`, timber `#6A5038`, roof slate `#5E574E` (never burgundy), stable door `#5A4630` | The hanging lantern sign `#FFC46B` and two windows |
 | UI chrome (menus, shop, neutral tooltips) | Linen `#D9CCAE`, ash wood `#B8A07A`, pewter `#8E9196`, sage border `#7E9A6E` | |
@@ -264,7 +264,7 @@ reference player colour.
 | 7 | Cornflower | `#5A92E6` | `#9CBEF0` | `#32507F` | 90 % | light blue (26.5) | Kingdom trade-dress skip |
 | 8 | Lime | `#A8D41E` | `#CBE578` | `#5C7510` | 83 % | yellow (30.5) | Replaces a brown: every brown sat within ΔE 14 of the kingdom's dark bronze or oak and the clans' bronze, so it failed the swap test on both factions |
 | 9 | Turquoise | `#14B8A6` | `#72D4CA` | `#0B655B` | 72 % | teal (22.7) | Clans readability skip |
-| 10 | Coral Rose | `#E0507A` | `#EC96AF` | `#7B2C43` | 88 % | pink (25.9) | Kingdom readability skip |
+| 10 | Coral Rose | `#E0507A` | `#EC96AF` | `#7B2C43` | 88 % | pink (25.9) | Kingdom readability skip; clans trade-dress skip |
 | 11 | Pewter | `#B0A6D6` | `#D0CAE6` | `#615B76` | 84 % | light blue (22.8) | Low saturation by nature: gets a 1.3× team-rim boost; clans readability skip |
 | 12 | Forest | `#2A8C4A` | `#7FBA92` | `#174D29` | 55 % | dark green (26.4) | Clans readability skip |
 
@@ -279,7 +279,7 @@ teal with violet).
 | Faction | Preferred list (automatic) | Default-skip set (never assigned automatically) |
 |---|---|---|
 | `kingdom` | Emerald, Tangerine, Turquoise, Lime, Violet, Forest, Pewter | Trade dress: Royal Blue, Cornflower, Gold (the "gold-yellow trim" §2.1 forbids). Readability: Crimson, Coral Rose |
-| `clans` | Royal Blue, Cornflower, Coral Rose, Lime, Emerald | Trade dress: Crimson, Violet. Readability: Turquoise, Forest, Gold, Tangerine, Pewter |
+| `clans` | Royal Blue, Cornflower, Lime, Emerald | Trade dress: Crimson, Coral Rose (a red-pink streamer still reads as the reference warrior race's red), Violet. Readability: Turquoise, Forest, Gold, Tangerine, Pewter |
 
 Emerald leads the kingdom list because Tangerine sits close to the kingdom's own ember-orange VFX (`K_EMBER`). In the slice (player 1
 kingdom, player 2 clans) the default is **kingdom Emerald against clans Royal Blue**: protan and deutan viewers separate that pair
@@ -302,7 +302,7 @@ against the retired blue-grey). Re-run on rendered units at day and night grade 
 | Clans + Pewter | Readability | Low-saturation team cloth near grey skin (ΔE 36.3 against the ash-grey skin) | Bronze piping on every team panel that touches skin; the 1.3× rim boost |
 | Clans + Violet | Trade dress (default-skip) | Teal-plus-violet is a reference forest-race signature | Never assigned automatically; allowed as a manual pick; **never** used in screenshots, trailers or key art |
 | Clans + Crimson | Trade dress (default-skip) | Brute warriors in red against humans in blue is the franchise's canonical pairing | Never assigned automatically; allowed as a manual pick; never in key art |
-| Kingdom + Royal Blue / Cornflower / Gold | Trade dress (default-skip) | Blue on the pavise face over ivory linen and dark bronze is the blue/white/gold livery the user ruled out; gold is the forbidden gold-yellow trim | Never assigned automatically; allowed as a manual pick. **Marketing rule:** key art, store screenshots and trailers show the kingdom in Emerald or Tangerine and the clans in Royal Blue; never the kingdom in blue or gold, never the clans in Crimson or Violet |
+| Kingdom + Royal Blue / Cornflower / Gold | Trade dress (default-skip) | Blue on the pavise face over ivory linen and dark bronze is the blue/white/gold livery the user ruled out; gold is the forbidden gold-yellow trim | Never assigned automatically; allowed as a manual pick. **Marketing rule:** key art, store screenshots and trailers show the kingdom in Emerald or Tangerine and the clans in Royal Blue (Cornflower as the fallback); never the kingdom in blue or gold, never the clans in Crimson or Violet |
 | Any + red/green colour blindness | Accessibility | Crimson vs Emerald; Lime vs Gold | The rim light, minimap shapes and selection rings never rely on hue alone (juice economy §2.6) |
 
 ### 2.5 UI palette tokens (shared)
@@ -450,7 +450,7 @@ Render a flat-black thumbnail from the game camera at 64 px (units) or 128 px (b
 | Asset | Must read as | Must never read as |
 |---|---|---|
 | Sootcoats | A **wide conical leather hood** and a rake or billhook | Hooded rogues with daggers and masks |
-| Fieldkeeper / Crowcaller | Crossed-pole frame, sack head, pitchfork; a crow on the head while asleep | A pumpkin-headed or machine-bodied scarecrow |
+| Fieldkeeper / Crowherd | Crossed-pole frame, sack head, pitchfork; a crow on the head while asleep | A pumpkin-headed or machine-bodied scarecrow |
 | Cairnwakes | **Stacked flat slabs** with visible gaps; menhir head with cup-and-ring marks | A rounded boulder man with a glowing core |
 | Weighstall | A **giant brass balance beam** (about 7 m) over a striped stall | A goblin-style shack with rockets |
 | Gold Seam | A low, square, **timber-framed adit** cut into a short **layered cliff** with a thin bright quartz-and-gold strata line; a **windlass headframe** on the lip; a spoil heap; a wooden sluice; two night lanterns (neutrals §5.2, §10.2) | A free-standing rock mound with gold nuggets heaped at the door; a mine cart or rails; a haunted or vine-wrapped mine |
@@ -1008,7 +1008,7 @@ animate these widgets but do not resize them (POR-01 and NTF-05 values are adopt
 | Inlay | Rails | Fasteners and corners | Accent band | `UI_CLAUSE` for T11 |
 |---|---|---|---|---|
 | **Kingdom** | Carved dark oak stained burgundy (`#3A1E1A`, highlight `#6B3A2E`), 10 px, with one shallow carved groove | Domed dark-bronze rivets (`#8A5E2E`) every 48 px; blackened-iron strap brackets at the corners shaped as curved segments of a wagon-wheel rim with two spoke stubs; small six-spoke bronze wheel bosses on the top-bar end caps | A 6 px folk-painted band of small ivory flowers and stripes (`#E6D8B8` on burgundy) along the inner edge, deliberately a little uneven | carved dark oak rails stained burgundy, rounded dark bronze rivets in an even row, blackened iron strap corner brackets shaped like curved segments of a wagon-wheel rim, a thin folk-painted band of small ivory flowers and stripes along the inner edge |
-| **Clans** | Stitched ink-teal felt bands (`#173E42`) wrapped over red-brown lattice-wood (`#5C3826`), whose diamond trellis shows in the gaps between plates | Rows of small polished bronze studs (`#A8743A`) every 32 px; small round bronze gong discs (`#C68E4C`) hung from felt loops at the corners; small gongs on lattice posts as top-bar end caps | Saffron blanket-stitch (`#D49A36`) along the inner edge | stitched ink-teal felt bands wrapped over red-brown diamond lattice-wood, saffron blanket-stitch along the inner edge, rows of small polished bronze studs, small round bronze gong discs at the corners |
+| **Clans** | Stitched ink-teal felt bands (`#173E42`) wrapped over **ochre-washed lattice-wood** (`#B7772A`, highlight `#C9A46A`), whose diamond trellis shows in the gaps between plates. **Red-brown never appears on UI art** (it is the reference warrior race's console colour; slice-plan §2.9 I3) | Rows of small polished bronze studs (`#A8743A`) every 32 px; small round bronze gong discs (`#C68E4C`) hung from felt loops at the corners; small gongs on lattice posts as top-bar end caps | Saffron blanket-stitch (`#D49A36`) along the inner edge | stitched ink-teal felt bands wrapped over ochre-washed diamond lattice-wood, saffron blanket-stitch along the inner edge, rows of small polished bronze studs, small round bronze gong discs at the corners |
 | **Neutral** (main menu, shop window, neutral and creep info, loading band) | Pale ash wood (`#B8A07A`) | Small pewter corner clasps (`#8E9196`) | A fine sage-green woven border (`#7E9A6E`) on undyed linen (`#D9CCAE`) | undyed cream linen stretched over pale ash wood, small pewter corner clasps, a fine sage-green woven border |
 
 Never in any inlay: gilded metal, carved stone, gargoyles, skulls, relief faces, spikes, or a slab that spans the whole console.
@@ -1170,7 +1170,7 @@ in `assets/fonts/` and are listed in `CREDITS.md`; UI strings use no diacritics 
 1. **Lengths are budgeted in words and seconds** (§8.2), and the two budgets agree: word cap ÷ minimum rate ≤ the seconds cap for every
    category. Acks must land on the click: **What and Yes ≤ 4 words at ≥ 3.0 words/s** (≤ 1.33 s against the 1.4 s cap); **Attack ≤ 4
    words** and **Warcry ≤ 5**, both at ≥ 2.8 words/s; the short situational lines (`need_mana`, `pack_full`, `ab_q/w/e`,
-   `ultimate_shout`) ≤ 4 words; Ready, job done, mechanic, level-up and rival ≤ 8; last word ≤ 6; **Annoyed ≤ 16 per line**; all of these
+   `ultimate_shout`) ≤ 4 words; Ready, built, mechanic, level-up and rival ≤ 8; last word ≤ 6; **Annoyed ≤ 16 per line**; all of these
    at ≥ 2.5 words/s; advisor lines ≤ 11 words at ≥ 2.5 words/s. Every speaker obeys these rates. Size, age and weight come from pitch,
    formant and EQ (the post-chains in §8.3–§8.4), never from a slow read. The clans' "*Hm-hm*" is used **only in Ready, Annoyed and
    advisor lines**, never in an ack.
@@ -1183,11 +1183,11 @@ in `assets/fonts/` and are listed in `CREDITS.md`; UI strings use no diacritics 
      "my" (the register of the reference RTS's dwarf gunners);
    - **jokes about voting for, electing or doubting the king or the Crown**: a worker doubting the monarch's legitimacy is the reference
      human worker's best-known annoyed joke (itself a comedy-film gag), and the kingdom's elected Wheel Crown makes the trap easy to fall into;
-   - on **kingdom completion events** (`job_done`, the advisor's research and building lines): any "…'s done" and a bare "Done.", and
+   - on **kingdom completion events** (`built`, the advisor's research and building lines): any "…'s done" and a bare "Done.", and
      the "[build verb] more [supply building]" advisor template (kingdom §3.2 Reeve rules). Our completion lines name the craft instead
      ("Signed, sealed and plastered");
    - any line that contradicts a design rule (no "big ears" for the Tormai, whose ears are small and rounded; no curved blade for the Uncut);
-   - **any line that is a reference line with only the address word changed** (chieftain, warchief, master, lord or milord swapped for
+   - **any line that is a reference line with only the address word changed** (chieftain, warchief, master, lord or the reference human worker's contraction of "my lord" swapped for
      Ring-Elder, Reeve or any other title of ours): a one-word swap keeps the reference line's structure, and ip-safety §2.2 bans
      rewordings;
    - for **any wind speaker** (the Gustcaller, the later Sky-Kite): no flatulence or "breaking wind" double entendre, no voices- or
@@ -1201,11 +1201,10 @@ in `assets/fonts/` and are listed in `CREDITS.md`; UI strings use no diacritics 
    lines, 7 for heroes and each faction's standout), played in order, with the **punchline in the last line**.
 7. **Crews.** Two bickering voices on the gunpowder-siege slot would repeat the reference RTS's two-gunner double act, so the **Bombard
    Wagon has one speaking voice** (the older gunner) and a non-verbal loader (coughs and grunts as SFX), with no exchanges and no
-   shared annoyed story. The two-voice crew is the Sling-Cart's alone (the reference siege cart has no speech), and it must not borrow
-   the reference two-gunner team's beats either: **no self-identity confusion** (who is who, which side we are on), **no "you and me" or
-   "synergy"-style partnership lines**, and **no explosion punchlines**. The brothers' own hook is a running argument over whose turn
-   it is to haul the rope, told in counted turns (§8.4). The script reviewer checks both brothers' lines against the reference
-   two-gunner team's quote section specifically.
+   shared annoyed story. The Sling-Cart's two brothers **speak in unison** (one shared sentence or a hauling count; slice-plan §2.12,
+   decided 2026-10-19): **no line or punchline is split between two voices**, no self-identity confusion (who is who, which side we are
+   on), no "you and me" or "synergy"-style partnership lines and no explosion punchlines. Their hook is that they always agree, even
+   when wrong. The script reviewer checks their lines against the reference two-gunner team's quote section specifically.
 8. **Review gate:** a second person checks each script against the reference quote pages (audio §3.2 links), the shelved concepts in
    `docs/concepts/alternate-concepts.md`, and the other factions' scripts; the ledger records who checked and when. The check includes
    an **exact-match search** of every What, Yes and Attack line (and every short Ready and Warcry line) against all five unit quote pages
@@ -1222,7 +1221,8 @@ in `assets/fonts/` and are listed in `CREDITS.md`; UI strings use no diacritics 
 - **Ability orders play exactly one line, on the input frame:** the ability line (`ab_q`, `ab_w`, `ab_e` or `ultimate_shout`) if it passes
   its gate (proposed: 50 % chance, 8 s cooldown per hero; the numbers move to AUD-03, §13 #16), otherwise `yes`. Never both, and the
   cast plays no second line.
-- `job_done` (the AUD-03 category; formerly `built`) plays when that worker completes a building.
+- `built` (the AUD-03 category, label "Built"; the interim id that paired "job" with "done" is retired and its spellings are banned, because it echoes the reference worker's
+  catch-phrase in file names, slice-plan §2.12) plays when that worker completes a building.
 
 ### 8.2 Line categories and counts
 
@@ -1234,7 +1234,7 @@ in `assets/fonts/` and are listed in `CREDITS.md`; UI strings use no diacritics 
 | Attack (`attack`) | Attack or attack-move order | ≤ 4 @ 2.8/s | 1.6 | 3 | 3 (**4** for the Javelineer) | 3 | 3 (**4** for the Sling-Cart) | 4 | Short, aggressive |
 | Warcry (`warcry`) | AUD-03 | ≤ 5 @ 2.8/s | 2.0 | 1 | 1 | 1 | 1 | 1 | Loudest delivery |
 | Annoyed (`annoyed_1..n`) | AUD-03, in order | ≤ 16 per line @ 2.5/s | 7.0 | 5 | 5 (**7** for the faction's standout: Hookgunner, Javelineer) | 5 | 5 | **7** | The comedy beat; punchline last |
-| Job done (`job_done`) | That worker completed a building | ≤ 8 @ 2.5/s | 3.3 | 1 | — | — | — | — | Satisfied, names the craft |
+| Built (`built`) | That worker completed a building | ≤ 8 @ 2.5/s | 3.3 | 1 | — | — | — | — | Satisfied, names the craft |
 | Mechanic (`mech`) | Worker: arm (Levy Horn, Take Up the Flail; Sound the Gong, Roll the Felt) **and** release (Lay Down Flails; All Clear). Pavisier: Plant Pavise **on and off** (2). Hookgunner: the first Braced Shot plant after a move order (≤ 1 per 20 s). Grappler: Shove (≤ 1 per 10 s). Bombard Wagon: the deploy brace (≤ 1 per 20 s). The Javelineer (Throwing-Sticks is a passive) and the Sling-Cart (no deploy) have **no** trigger, so their slot is an extra Attack line | ≤ 8 @ 2.5/s | 3.3 | **2** | 1 (Pavisier **2**, Javelineer 0) | — | 1 (Sling-Cart 0) | — | Situational |
 | Need mana (`need_mana`) | Cast refused for mana (heroes HER-05, ≤ 1 per 8 s) | ≤ 4 @ 2.5/s | 1.8 | — | — | 1 | — | 1 | Mildly put out |
 | Pack full (`pack_full`) | Pickup refused, inventory full (rules §6.8) | ≤ 4 @ 2.5/s | 1.8 | — | — | — | — | 1 | Wry |
@@ -1283,7 +1283,7 @@ Attack and Warcry lines ≥ 2.8 words/s.**
 
 | Speaker | Slice | Read | Timbre and register | Tempo | `eleven_v4` tags | Post-chain (ffmpeg) | Tic | Casting candidate (audition) |
 |---|---|---|---|---|---|---|---|---|
-| Hodman / Flail Levy | Yes | Man, 55–65 | Warm, slightly rasped mid-low baritone | Unhurried in Ready, Annoyed and job-done lines (≈ 2.5 words/s); acks ≥ 3.0 words/s; breathless as the Levy | `[wry]`, `[tired]`, `[deadpan]`; Levy `[shouts]`, `[breathless]` | `rubberband=pitch=0.97:formant=preserved`, +2 dB at 250 Hz, −2 dB at 4 kHz | Bills the player by the tap; his hod is called Agnes | `N2lVS1w4EtoT3dr4eOWO` |
+| Hodman / Flail Levy | Yes | Man, 55–65 | Warm, slightly rasped mid-low baritone | Unhurried in Ready, Annoyed and built lines (≈ 2.5 words/s); acks ≥ 3.0 words/s; breathless as the Levy | `[wry]`, `[tired]`, `[deadpan]`; Levy `[shouts]`, `[breathless]` | `rubberband=pitch=0.97:formant=preserved`, +2 dB at 250 Hz, −2 dB at 4 kHz | Bills the player by the click; his hod is called Agnes | `N2lVS1w4EtoT3dr4eOWO` |
 | Pavisier | Yes | Man, 19–24 | Bright, earnest light baritone | Medium-fast | `[earnest]`, `[proud]`, `[shouts]` | Light compression only | Proud of the wheel he painted on his pavise, badly | `TX3LPaxmHKxFdv7VOQHJ` |
 | Hookgunner | Yes | Man, 30s | Loud, clipped, a little hoarse | Medium | `[loud]`, `[confused]` | Band-limit 300 Hz–5 kHz (deafened ears) | Slightly deaf from gunfire: mishears orders | `SOYHLrjzK2X1ezoPC6cr` |
 | Bombard Wagon gunner | Yes | Older woman gunner (the only speaking voice; the young loader is non-verbal: coughs and effort grunts in the `vox_*` sets) | Gravelly alto | Medium-fast | `[gruff]`, `[dry]` | Light compression; a faint ringing-ear band-limit 250 Hz–6 kHz | Rates every shot out of ten, never above six | Audition |
@@ -1309,11 +1309,11 @@ with shifted formants.
 
 | Speaker | Slice | Read | Timbre and register | Tempo | `eleven_v4` tags | Post-chain | Tic | Casting candidate |
 |---|---|---|---|---|---|---|---|---|
-| Yurtwright | Yes | Middle-aged | Deep, warm, courteous | Formal and measured in Ready, Annoyed and job-done lines (≈ 2.5 words/s); acks ≥ 3.0 words/s | `[courteous]`, `[fussy]` | `rubberband=pitch=0.9:formant=shifted`, warm EQ | Counts things ("eleven taps") | `pqHfZKP75CvOlQylNhV4` (clans §3.3) |
+| Yurtwright | Yes | Middle-aged | Deep, warm, courteous | Formal and measured in Ready, Annoyed and built lines (≈ 2.5 words/s); acks ≥ 3.0 words/s | `[courteous]`, `[fussy]` | `rubberband=pitch=0.9:formant=shifted`, warm EQ | Counts things ("eleven clicks") | `pqHfZKP75CvOlQylNhV4` (clans §3.3) |
 | Grappler | Yes | Adult, huge | Very deep, formal, amused | Weighty but crisp: acks ≥ 3.0 words/s, the size comes from pitch 0.84 and the formant shift | `[very deep]`, `[formal]`, `[amused]` | `rubberband=pitch=0.84:formant=shifted`, +4 dB at 180 Hz, compressor | Wrestling etiquette | `pNInz6obpgDQGcFmaJgB` (clans §3.3) |
 | Javelineer | Yes | Young adult woman | Bright, boastful | Quick | `[boastful]`, `[competitive]` | `rubberband=pitch=0.94:formant=shifted` | Quotes distances ("forty paces!") | `cgSgspJ2msm6clMCkdW9` |
 | Gustcaller | Yes | Older woman | Breathy, airy alto | Medium, lilting | `[breathy]`, `[gossipy]` | Light chorus + short `aecho` | Gossip about people that she says the wind brought her: "The wind says your cousin still owes me tea." Always petty family and neighbour news; never spirits, omens or voices, never wind-breaking jokes (§8.1 rule 3) | `EXAVITQu4vr4xnSDxMaL` |
-| Sling-Cart crew | Yes | Two brothers | One deep and slow, one quicker and higher | Overlapping | `[deadpan]` / `[eager]` | `rubberband=pitch=0.9:formant=shifted` on both | A running argument over whose turn it is to haul the rope, kept in counted turns ("That's your ninth." "Eighth."); never who-is-who confusion, partnership talk or explosion jokes (§8.1 rule 7) | Audition two presets |
+| Sling-Cart crew | Yes | Two brothers | One deep and slow, one quicker and higher | **In unison** (both takes mixed together, slight stereo offset) | `[deadpan]` / `[eager]` | `rubberband=pitch=0.9:formant=shifted` on both | They always agree, even when wrong, and count their hauls together ("One, two… loose!"); never a split line, who-is-who confusion, partnership talk or explosion jokes (§8.1 rule 7; lines in slice-plan §2.12 and clans §3.3) | Audition two presets |
 | Proven Javelineer | Later | Javelineer voice, older | Same, rougher | Slower | `[proud]` | pitch 0.92 | "Nine battles" | Same as Javelineer |
 | Pole-Carver | Later | Middle-aged man | Dry, deadpan mid | Slow | `[deadpan]` | pitch 0.9 | Complains about wood grain | Audition |
 | Hill-Listener | Later | Very old | Whispery, interrupted by the slow, rumbling dream-voice of the Sleeping Hills (never an ancestor) | Very slow | `[whispers]` | Octave-down double + chorus; the bronze echo-horn hums under the second voice | Two voices that interrupt each other | Audition |
@@ -1323,7 +1323,7 @@ with shifted formants.
 | Thoom | Later | Giant | Very deep, long vowels | Very slow | `[slow]`, `[anxious]` | `rubberband=pitch=0.75:formant=shifted`, large room | A long "mmmm"; an anxious host who checks that everyone is warm and has had tea (never food, hunger, dinner or cattle jokes; clans §3.1) | Audition |
 | **The Uncut** | Yes | Woman | Low, dry, confident | Clipped | `[low]`, `[dry]`, `[confident]` | `rubberband=pitch=0.9:formant=preserved`, small plate reverb | Keeps a duel tally | `FGY2WhTYpPnrIDTdsKH5` (clans §3.3) |
 | **Skymirror** | Yes | Old man | Sonorous, vain, rounded | Slow | `[grand]`, `[vain]` | `rubberband=pitch=0.88:formant=shifted`; light shimmer on mirror-sight lines | Polishes mid-sentence (cloth squeak SFX); narrates tiny far-off things the mirror shows, never fortunes or yes/no answers | `nPczCjzI2devNBz1zQrb` |
-| Kettle-Uncle (requested rename, §13 #26) | Later | Giant | Ultra-deep, gentle | Very slow | `[gentle]`, `[warm]` | pitch 0.72, huge room | Calls everyone "little one" | Audition |
+| Kettle-Uncle (renamed 2026-10-19, §13 #26) | Later | Giant | Ultra-deep, gentle | Very slow | `[gentle]`, `[warm]` | pitch 0.72, huge room | Calls everyone "little one" | Audition |
 | Omen-Mother | Later | Grandmother | Crackly, sly | Quick-witted | `[sly]`, `[amused]` | pitch 0.95, formant shifted | Swirls her tea cup (a small bronze-cup clink SFX); no bones | Audition |
 | **The gong-keeper** (advisor) | Yes | Elder | Measured, sonorous mid-low | Measured | `[measured]` | Bronze-plate reverb tail | Announces everything as if striking the gong | `onwK4e9ZLuTAKqWW03F9` (clans §3.3) |
 
@@ -1347,8 +1347,8 @@ candidate fits the §8.2 word budget. All are new; "Raised, roofed, and only sli
 | Yes | "On the ledger." · "Lifting with the knees." · "Agnes and me, then." · "Slow and square." · "Your coin, your wall." |
 | Attack (spoken as the Flail Levy) | "This is extra, mind." · "Flail's out, heads down!" · "Like threshing. Only shoutier." · "Hold Agnes. Going in." · "Right. Overtime it is." |
 | Warcry | "OFF OUR BOARDS!" · "SWING AND DUCK!" · "EVERY HAND TO THE WHEEL!" · "THRESH 'EM!" · "NOT MY SCAFFOLD, YOU DON'T!" |
-| Annoyed (in order; 5 recorded) | 1. "That's a tap. I'm writing it down." 2. "Another tap. Guild rate's a copper a tap." 3. "We're at half a silver. Agnes is impressed." 4. "Agnes says you've got the hands of a pickpocket." 5. "Right. That's a full silver. Agnes is drawing up the invoice. She has lovely handwriting." |
-| Job done (never "done", §8.1) | "Raised, roofed, and only slightly crooked." · "Signed, sealed and plastered. Somebody check the corners." · "Plumb, level, and paid for. Probably." · "Scaffold's down. Mind the dust." · "Another one for the town ledger." |
+| Annoyed (in order; 5 recorded) | 1. "That's a click. I'm writing it down." 2. "Another click. Guild rate's a copper a click." 3. "We're at half a silver. Agnes is impressed." 4. "Agnes says you've got the hands of a pickpocket." 5. "Right. That's a full silver. Agnes is drawing up the invoice. She has lovely handwriting." |
+| Built (never "done", §8.1) | "Raised, roofed, and only slightly crooked." · "Signed, sealed and plastered. Somebody check the corners." · "Plumb, level, and paid for. Probably." · "Scaffold's down. Mind the dust." · "Another one for the town ledger." |
 | Mechanic (2 recorded: arm, and Lay Down Flails) | (arm) "Horn's blowing! Straw off, iron on!" · "Swapping the hod for the flail." · "Agnes, wait here. I've a flail to swing." · "Levy's up. Who's paying?" · (Lay Down Flails) "Flail's on the hook. Agnes, where were we?" · (Lay Down Flails) "Iron off, straw on. Hello, Agnes." |
 | Death (non-verbal set; delivery scripts for the vocal-set job) | A winded "oof" cut off, the hod clattering · a tired sigh, "…off the ledger…" fading · a sharp intake of breath and a wince · a surprised "Agnes—!" cut short · a long exhale while the straw hat rolls away |
 
@@ -1374,8 +1374,8 @@ candidate fits the §8.2 word budget. All are new; "Raised, roofed, and only sli
 | Yes | "With care." · "Pole by pole." · "I bring the kettle." · "The kettle can wait." · "Sensible." |
 | Attack | "Forgive me. Firmly." · "Mallet first. Apology after." · "Please hold still, guest." · "I also unmend heads." · "A small correction." |
 | Warcry | "NOT ON MY FELT!" · "WIPE YOUR FEET, GUESTS!" · "THE DOOR IS THAT WAY!" · "NO MUD IN MY YURT!" · "THAT KETTLE IS NOT YOURS!" |
-| Annoyed (in order; 5 recorded) | 1. "Hm. One tap is a greeting." 2. "Three taps is a question. I have answered it." 3. "Seven taps. In my household, seven taps means you want stew." 4. "Eleven taps. There is no custom for eleven. You are inventing customs." 5. "Sit. I will pour. Hold the cup with both hands, where I can see them." |
-| Job done | "Twelve poles, one roof, no leaks." · "The felt is tied. Bring the cushions." · "Another dome under the Long Sky." · "Raised. Somebody owes me tea." · "Finished. I counted every knot. Twice." |
+| Annoyed (in order; 5 recorded) | 1. "Hm. One click is a greeting." 2. "Three clicks is a question. I have answered it." 3. "Seven clicks. In my household, seven clicks means you want stew." 4. "Eleven clicks. There is no custom for eleven. You are inventing customs." 5. "Sit. I will pour. Hold the cup with both hands, where I can see them." |
+| Built | "Twelve poles, one roof, no leaks." · "The felt is tied. Bring the cushions." · "Another dome under the Long Sky." · "Raised. Somebody owes me tea." · "Finished. I counted every knot. Twice." |
 | Mechanic (2 recorded: Sound the Gong / Roll the Felt, and All Clear) | "The gong! Inside, everyone, inside!" · "Rolling up the felt. Slings ready." · "In through the door, out go the stones." · (All Clear) "All clear? Good. My stew is going cold." · (All Clear) "The guests have left. Rude, but quiet." |
 | Death (non-verbal set) | A deep "hhuff" and a soft felt thump · a surprised "Hm?" cut short · a tired sigh and the mallet clattering · a fading "Who… will count…" · a low throat-hum that drops away |
 
@@ -1608,7 +1608,7 @@ extension to the juice material set; §13); Cairnwakes → `stone`; Hail-Swifts 
 | `gust_bolt` | O | a small magical bolt of whirling dust and wind: a short rising swish, then a soft gritty puff on impact | 4 × 0.6 | P0 |
 | `atk_ember_flick` | O | the Firewright's attack: a small clay pellet of embers flicked from a linstock with a hiss, then a soft fiery pop on impact | 4 × 0.4 | P0 |
 | `atk_glint` | O | the Skymirror's glint bolt: a short bright metallic zip of reflected light ending in a soft glassy tick | 4 × 0.4 | P0 |
-| `atk_herb_mote` | O | the Linden Sister's attack: a soft papery puff and a dull leafy thud (reused pitched down for the Crowcaller's attack) | 4 × 0.3 | P0 |
+| `atk_herb_mote` | O | the Linden Sister's attack: a soft papery puff and a dull leafy thud (reused pitched down for the Crowherd's attack) | 4 × 0.3 | P0 |
 | `cart_roll` | L | a heavy two-wheeled wooden cart rolling slowly on a dirt road: wheel creak, axle squeal, rattling planks | 6 s | P0 |
 | `cart_stop` | O | a cart stopping: a brake creak and planks settling | 3 × 0.6 | P1 |
 
@@ -1683,7 +1683,7 @@ extension to the juice material set; §13); Cairnwakes → `stone`; Hail-Swifts 
 | `ab_dust_veil` | O | a low rush of dust rolling outward along dry grass with a soft sand hiss, then a dry "fwump" as it settles; nothing whirling or rising | 3 × 1.4 | P0 |
 | `ab_veil_strike` | O | a sudden strike out of nowhere: a sharp sabre slice with a burst of sand | 3 × 0.6 | P1 |
 | `ab_braid_lash` | O | a heavy braided rope whipping out with a crack, a bronze weight hitting with a thunk, a body dragged a short way over grass | 3 × 1.0 | P0 |
-| `ab_clean_cut` (the Uncut's critical strike; requested rename, §13 #26) | O | a straight sabre ringing clean and bright after a decisive cut, a shimmering high metallic ring | 3 × 0.6 | P0 |
+| `ab_clean_cut` (the Uncut's critical strike; renamed 2026-10-19, §13 #26) | O | a straight sabre ringing clean and bright after a decisive cut, a shimmering high metallic ring | 3 × 0.6 | P0 |
 | `ab_tall_grass` (2 jobs) | O + O | a rushing gust through tall grass rising to a hiss; then long straight slashes through tall grass, fast airy rips | 2 × 1.2; 4 × 0.5 | P0 |
 | `ab_sunglint` | O | a blinding flash of sunlight from a polished bronze mirror: a bright shimmering chime swell and a searing high ping | 3 × 1.0 | P0 |
 | `ab_moonglint` | O | a cold pale glint of moonlight off a mirror: a glassy soft chime with an airy shiver | 3 × 1.0 | P0 |
@@ -1701,9 +1701,9 @@ extension to the juice material set; §13); Cairnwakes → `stone`; Hail-Swifts 
 | `inn_revive` | O | the instant revive at the Coaching Inn: an inn door swinging open, one bright brass door bell rung hard twice, a warm rising whoosh (distinct from both altar revives) | 2 × 1.5 | P0 |
 | `cr_smoke_pot` | O | a clay smoke-pot cracking open and thick smoke billowing out with a hiss | 3 × 1.2 | P0 |
 | `cr_fumes` | O | a thick sputtering cloud of acrid fumes erupting with a muffled puff (Choking Fumes silences: the player must hear it) | 2 × 1.2 | P0 |
-| `cr_ember_rake` | O | an iron rake scraping and flicking burning embers, a sizzle and crackle (also the Sootcoat Smoker's hot-coal attack, pitched up) | 3 × 0.6 | P0 |
+| `cr_ember_rake` | O | an iron rake scraping and flicking burning embers, a sizzle and crackle (also the Sootcoat Coal-Lobber's hot-coal attack, pitched up) | 3 × 0.6 | P0 |
 | `cr_bellows` | O | the Kiln-Master's Stoke the Coals: a big leather bellows wheezing three times over a smoke-pot, coals roaring brighter with a crackle | 2 × 1.2 | P0 |
-| `cr_heal_tar` | O | a hot sizzle of sticky pine-tar slapped onto cloth with a wet thwap (Pine-Tar Dressing; reused with a dry straw rustle layered for the Crowcaller's Re-Stuff) | 3 × 0.6 | P0 |
+| `cr_heal_tar` | O | a hot sizzle of sticky pine-tar slapped onto cloth with a wet thwap (Pine-Tar Dressing; reused with a dry straw rustle layered for the Crowherd's Re-Stuff) | 3 × 0.6 | P0 |
 | `cr_light_fingers` | O | one small coin flicked off a thumb with a bright tink and caught in a palm | 3 × 0.4 | P0 |
 | `cr_scatter_crows` | O | a burst of crows taking off from straw: frantic wing flaps and harsh caws | 2 × 1.5 | P0 |
 | `cr_ley_pulse` | O | a deep humming pulse from ancient standing stones: a low resonant thrum spreading outward with a gravel shiver | 2 × 1.5 | P0 |
@@ -1883,7 +1883,8 @@ budgeted in the faction docs; this table covers the 2D and audio work owned by t
 | Voice | 371 lines in ≈ 150 batched jobs | ElevenLabs TTS | unmeasured | probe |
 | Music | ≈ 25 min in 14 pieces | ElevenLabs Music | unmeasured | probe |
 
-**The audio budget is the risk:** after the 2D work about **670 CU** remain for SFX, voice and music, and P0 SFX alone need ≈ 660 CU
+**The audio budget is the risk** (the slice-plan §2.13–§2.15 envelopes are the spend caps: P0 SFX ≈ 378 CU in 54 grouped jobs, P0 VO 251
+lines ≈ 379 CU, P0 music 200 CU; this table is the full content plan, reconciled at synthesis on 2026-10-19): after the 2D work about **670 CU** remain for SFX, voice and music, and P0 SFX alone need ≈ 660 CU
 at the flat rate, so the CC0 fallback below is now the expected path for part of the P0 list. Decisions:
 
 1. **Probe first** (one call each, logged): a 5-line TTS batch, a 30 s music clip, and one 4-variant Seed Audio job (to learn whether
@@ -1934,9 +1935,9 @@ at the flat rate, so the CC0 fallback below is now the expected path for part of
 **Edits this bible asks of other docs** (this bible only edits itself and the `tools/ip/` lists; each owner makes the change below)
 
 1. **`kingdom.md` §3.2:** remove "poke" from the Hodman annoyed sequence and the Wheel Marshal's first annoyed line (use §8.6 and, for
-   the Marshal, an opener such as "A tapped wheel keeps turning. Mostly."). **Ban jokes about voting for, electing or doubting the
+   the Marshal, an opener such as "A jostled wheel keeps turning. Mostly."). **Done 2026-10-19** (kingdom §3.2 now uses "click"; the VO lint also bans tap and prod). **Ban jokes about voting for, electing or doubting the
    Crown** in every kingdom script (§8.1 rule 3). Fit the Linden Sister's lines to §8.2 (5 annoyed, word budgets).
-2. **Line totals:** the class standard is now worker 21, infantry or ranged 19 (standout 21; the Pavisier 20 for Plant Pavise on and
+2. **Done at synthesis (2026-10-19)** in kingdom §3.3 and §11, clans §3.1 and §12.1, and the slice-plan voice table. **Line totals:** the class standard is now worker 21, infantry or ranged 19 (standout 21; the Pavisier 20 for Plant Pavise on and
    off), caster 21, siege crew 17, hero 31, advisor 19 (+3 optional event lines). Update `kingdom.md` §3.3 and §11 (181 lines, the
    Linden Sister included; the Reeve's 19 include ECO-27's workers line and new hall, other-building and hero-in-danger lines) and
    `clans.md` §12.1 (180 lines; Sling-Cart 17 with 4 attack lines and no mechanic, Javelineer 21 with 4 attack lines and no mechanic,
@@ -1949,7 +1950,9 @@ at the flat rate, so the CC0 fallback below is now the expected path for part of
 7. **Visual §7.3 and audio §4.4–§4.5:** superseded by §5 (prompts) and §9–§10 (SFX and music prompts) for all new generation.
 8. **`architecture.md` `CLIFF_H` 1.75 m** vs the README's 2.0 m: cliff art is authored for 2.0 m (§6.2).
 9. **Command icons** are hand-drawn SVG pictograms shared by all factions (§5.5 T9, §11).
-10. **Footprints (decided 2026-10-19, §1.3; the 10×10-hall fallback is retired).** Each owner updates its table so that the sim
+10. **Footprints (decided 2026-10-19, §1.3; the 10×10-hall fallback is retired). Done at synthesis (2026-10-19)** in rules §8, kingdom §7.2,
+    clans §7, sylvan-and-deathless §A7/§B7, neutrals §5.1/§5.2/§5.8/§9 and slice-plan §1.4; still open: `architecture.md`, the procedural kit
+    `tools/kits/buildings.py` (its cells) and the slice-map re-validation. Each owner updates its table so that the sim
     footprint equals the mesh width: **rules §8** (add the class footprints: hall 16×16, production, altar, shop and research 12×12,
     supply 8×8, tower 4×4 cells) and **`architecture.md`** (the example "hall 10×10, barracks 8×8, farm 4×4" becomes "hall 16×16,
     barracks 12×12, farm 8×8, tower 4×4"); **`kingdom.md` §7.2** (Moot Hall, Walled Burg, Crown Burg 10×10 → 16×16; Drill Yard,
@@ -1961,51 +1964,51 @@ at the flat rate, so the CC0 fallback below is now the expected path for part of
     6×6 → 8×8); **`slice-plan.md` §1.4** (the inn's 5 × 5 m → 6 × 6 m, the seams to 6 m) and a **re-validation on the slice map** of
     the 6.0 m hall–mine gap, the main-ramp chokes, the wall-off widths and the inn's 6.5 m cliff clearance with the new sizes.
     Built kit pieces only change `--width`.
-11. **`kingdom.md` §6.3 The Wagon Ring:** the VFX text "a ghostly ring of wagon wheels rises" becomes physical painted wagon boards and
+11. **Done at synthesis (2026-10-19).** **`kingdom.md` §6.3 The Wagon Ring:** the VFX text "a ghostly ring of wagon wheels rises" becomes physical painted wagon boards and
     wheels slamming down into a barricade (§1.7 `K_WAGON`, §9.6), so the kit never reads as the reference holy knight's mass
     resurrection. The heroes juice's Wagon Ring visuals follow.
 12. **Juice HUD-04:** replace the corner dots and the comet lap with §7.4 (a steady bottom-edge bar and the looped-arrow badge; on fire,
     one sweep along the bottom bar); move the "capable but off" notch from bottom-left (the short-resource corner) to the bottom rail.
-13. **Rules §18.5 autocast:** "Autocast on: a steady bar in the faction accent along the button's bottom edge plus a looped-arrow badge
+13. **Done at synthesis (2026-10-19).** **Rules §18.5 autocast:** "Autocast on: a steady bar in the faction accent along the button's bottom edge plus a looped-arrow badge
     (art bible §7.4). Never corner marks, a gold border or any light that circles the edge."
 14. **Juice HUD-07:** the skins follow §7.2 (plain plates, inlays on rims only, no leather or parchment panel fills, no centre crest);
     the clock is the Horizon Ribbon (§7.5), which takes over HUD-07's golden-hour rim, dusk/dawn clunk and day tally. POR-01's
     portrait values and NTF-05's idle-worker button are adopted in §7.1 and need no change.
 15. **Juice ui-camera-audio §5.3:** the clans alarm's "dry bone-rattle shake" becomes "dry seed-pod rattle" (bones are a banned clans
     motif); the content of every cue there is now a §9.2 job.
-16. **Juice AUD-03 and the heroes `audio.gd` row:** the file id is `job_done` (formerly `built` here); `levelup_5` and `levelup_10`
+16. **Juice AUD-03 and the heroes `audio.gd` row:** the file id is **`built`** (label "Built"; reversed on 2026-10-19 at synthesis: slice-plan §2.12 wins, because the interim "job" + "done" id echoed a banned catch-phrase in file names, and its three spellings are now banned terms); `levelup_5` and `levelup_10`
     alias to `levelup_a` in the slice; `effort` is a non-verbal set; an ability order plays one line, never `yes` plus the ability
     line, and AUD-03 takes over the ability-line gate (proposed 50 %, 8 s per hero) as a trigger rule (§8.1).
-17. **`clans.md` §3.3:** the Grappler What line "Hm-hm. Big ears, listening." contradicts the small rounded ears and the no-"Hm-hm"-in-acks
+17. **Done at synthesis (2026-10-19).** **`clans.md` §3.3:** the Grappler What line "Hm-hm. Big ears, listening." contradicts the small rounded ears and the no-"Hm-hm"-in-acks
     rule (§8.1); use "Big shoulders, small patience." Check the other clans acks against the §8.2 word budgets.
 18. **`clans.md` §7 Bow-Mast:** "horn bow" may stay in lore text, but prompts and sound clauses say "laminated recurve bow of wood and
     bronze" (§4.3, §5.6, §9.4), so no prompt says "horn".
 19. **`clans.md` later Thoom, Guest Ring and Kettle-Uncle (the giant hero, renamed in #26):** keep the house-sized vessel a tea kettle (spout, lid, handle) and the
     giants flat-bellied; never a cooking cauldron with meat, a gut-plate, a meat hook or a cleaver (§4.5 steppe-ogre trap).
-20. **`slice-plan.md` B16 and the Collegium row** are P1, but `kingdom.md` §5.2 and §11 put the Linden Sister and the Collegium in the
+20. **Done** (B16 and E3 are P0). **`slice-plan.md` B16 and the Collegium row** are P1, but `kingdom.md` §5.2 and §11 put the Linden Sister and the Collegium in the
     slice and the build order trains two Sisters at 7:40: raise both to **P0** (the concept and model already exist, ledger #19–#20).
 21. **`neutrals.md` §8.1** budgets item and creep-ability icons on Higgsfield (≈ 12 cr); with 77.5 cr left, they move to the Krea icon
     sheets of §11. Its audio list (sell, bundle glint, inn revive bell) is now `ui_sell`, `loot_glint` and `inn_revive`.
 22. **`tools/build_slice_units.sh`** builds `kingdom_infantry` from the ledger #7 bake-off concept, which fails §4.2 (§5.1). It is a
     placeholder: replace it with the §5.6 Pavisier before any public build.
-23. **`kingdom.md` §3.3 Bombard Wagon crew:** one speaking voice, the loader non-verbal (§8.1 rule 7).
+23. **Done at synthesis (2026-10-19).** **`kingdom.md` §3.3 Bombard Wagon crew:** one speaking voice, the loader non-verbal (§8.1 rule 7).
 24. **`src/systems/player_state.gd` `COLORS`** is the reference lobby set in the reference order (seven colours within ΔE 15 of it,
     light blue at ΔE 0.8), and `make()` assigns `COLORS[pid % size]`. Checked again on 2026-10-19: neither §2.4's twelve bases nor the
     lobby rule is implemented. Replace the table with §2.4's twelve bases in table order and assign each new player the first free
     colour on its **faction's preferred list** (§2.4: kingdom Emerald, Tangerine, Turquoise, Lime, Violet, Forest, Pewter; clans Royal
-    Blue, Cornflower, Coral Rose, Lime, Emerald), falling back to the lowest-numbered free colour; a manual lobby pick overrides it.
+    Blue, Cornflower, Lime, Emerald; Coral Rose moved to the clans' trade-dress skip set on 2026-10-19), falling back to the lowest-numbered free colour; a manual lobby pick overrides it.
     Add a test that a default 1v1 gives kingdom Emerald and clans Royal Blue. Until then `python3 tools/ip/check_value_echo.py`
     reports 7 team-colour errors and exits 1, by design.
-25. **`clans.md` §3.3 Grappler What:** its first What line is a one-word swap of a reference flyer-rider's What line (only the address
+25. **Done at synthesis (2026-10-19).** **`clans.md` §3.3 Grappler What:** its first What line is a one-word swap of a reference flyer-rider's What line (only the address
     word changed); replace it with "Your grip, Ring-Elder?" (§8.9) and apply §8.1 rule 3's address-word rule to every clans and
     kingdom script.
-26. **Rename requests (other-IP echoes; the bible already uses the new names in ids, props and clauses, and the retired forms are on
+26. **Renames, adopted at synthesis on 2026-10-19 in every design doc (other-IP echoes; the bible already uses the new names in ids, props and clauses, and the retired forms are on
     `tools/ip/banned_terms.txt`):** the Uncut's critical-strike passive (`clans.md` §6) → **Clean Cut** (`ab_clean_cut`), since the
     old name is a tabletop RPG's spell name with the same function; the recall items (`kingdom.md` §7.4, `clans.md` §9 and every other
     mention) → **Way-Home Horn** and **Way-Home Felt** (low risk, but the old "[home] + object" pattern echoes a known action RPG's
     return-home item); the later Thoom giant hero (`clans.md` §2.1, §3.1, §6) → **Kettle-Uncle** (`clans_hero_kettle_uncle`; lore:
     the Tormai call every Thoom "uncle"), so the name no longer points at the steppe-ogre cauldron trap of §4.5 and #19.
-27. **`kingdom.md` §7.4 Tailor's Chalk:** add the VFX note of §2.3 (the hero snaps a chalked tailor's line that marks a 9 m ring;
+27. **Done at synthesis (2026-10-19).** **`kingdom.md` §7.4 Tailor's Chalk:** add the VFX note of §2.3 (the hero snaps a chalked tailor's line that marks a 9 m ring;
     revealed units show white tacking-stitch outlines; never a thrown powder, dust cloud or puff) and the sound `it_chalk_line` (§9.6).
 28. **Juice ITM-01 and ITM-02:** the loot colours (oilcloth `#6E6248`, twine `#C9B48A`, seal `#B8322A`) are now the bible's final
     values (§2.3), so ITM-01 keeps them; replace its retired book power-up prop with the **Fair-Day Rosette** (§2.3), and ITM-02's
@@ -2014,11 +2017,11 @@ at the flat rate, so the CC0 fallback below is now the expected path for part of
     workers (ECO-27's horn prompt for the kingdom, a gong prompt for the clans), and **hero in danger** (below 40 % HP). AUD-03 adds the
     `mech` triggers of §8.2 (Plant Pavise on and off; the first Braced Shot plant after a move order, ≤ 1 per 20 s; Shove, ≤ 1 per
     10 s; the Bombard Wagon's deploy brace, ≤ 1 per 20 s) and the new word and rate budgets of §8.1 rule 1.
-30. **`clans.md` §2.1 and §6.1 heights:** the Uncut and Skymirror 2.2 m → **2.35–2.4 m** (1.25 × the 1.9 m Grappler; §1.3, §4.1 area
+30. **Done at synthesis (2026-10-19)** (and slice-plan B7–B11). **`clans.md` §2.1 and §6.1 heights:** the Uncut and Skymirror 2.2 m → **2.35–2.4 m** (1.25 × the 1.9 m Grappler; §1.3, §4.1 area
     check). The scale table's "Tormai heroes 2.2–2.3 m" follows.
 31. **`neutrals.md` §8.2 prompt rules and §2.1 G2:** the turnip-lantern counter-clause is "pierced with a few small randomly drilled
     holes and no face, fixed on a short pole" (§5.3 `NEG_TATTIE`); the Gold Seam, Weighstall, inn and spring footprints follow #10.
-32. **`clans.md` Tormai skin:** every skin value and prompt becomes the §2.2 ash-grey ("ash-grey stone-coloured skin like weathered
+32. **Done in clans §0, §2.1, §2.2, §2.6 and §12.3 at synthesis (2026-10-19)**; the texture clamp on the ledger #19 models stays open. **`clans.md` Tormai skin:** every skin value and prompt becomes the §2.2 ash-grey ("ash-grey stone-coloured skin like weathered
     granite, with pale hail-speckles"; mid `#77746F`), never "slate blue-grey"; the rigged ledger #19 models get the §5.7 skin-band
     clamp on their textures.
 
@@ -2060,7 +2063,7 @@ Retired names are described, not quoted, in this log: the bible is scanned by th
 | 12 | Minor | The linden token still named the retired aura | `K_LINDEN` covers Linden Balm and the Linden Sister only; new `K_CADENCE` drum-pulse ring for Measured Cadence (§1.7); `aura_learn` became `ab_cadence` |
 | 13 | Minor | The Wagon Ring used the revive's ghost colour, reading as a mass resurrection | Physical painted boards and wheels (`K_WAGON`, non-emissive), wood and iron sounds with a chain rattle (§9.6); `K_WHEEL_GHOST` is the Oath Hall revive only; the material map no longer calls it ethereal (§9.3); kingdom §6.3 edit listed (§13 #11) |
 | 14 | Minor | Two bickering voices on the gunpowder-siege slot | One speaking gunner; the loader is non-verbal (§8.1 rule 7, §8.2, §8.3); the Sling-Cart keeps its two brothers |
-| 15 | Minor | Advisor and completion lines sat near the reference templates | Need supply: "Every croft's full. No room for more hands." (kingdom §3.2); research: "The guild has signed it off."; job done: "Signed, sealed and plastered. Somebody check the corners."; "…'s done" and a bare "Done." banned on kingdom completion events (§8.1) |
+| 15 | Minor | Advisor and completion lines sat near the reference templates | Need supply: "Every croft's full. No room for more hands." (kingdom §3.2); research: "The guild has signed it off."; built line: "Signed, sealed and plastered. Somebody check the corners."; "…'s done" and a bare "Done." banned on kingdom completion events (§8.1) |
 | 16 | Minor | "Big ears" on the Grappler; dialect "me" for "my" on the Hodman | "Big shoulders, small patience." and "Lime in my ears." (fitted to the 4-word What budget; the TTS recipe sample updated); dialect "me" banned (§8.1); clans §3.3's own line flagged (§13 #17) |
 | 17 | Minor | Guardrails covered only one publisher's look-alikes | `NEG_KINGDOM` and `NEG_CLANS` gained the tabletop wargame traits (sleeves, berets, comet, griffon, double eagle, bear, fur caps, winged lancers, gun-rest axes, ice magic; bellies, gut-plates, hooks, cleavers, cooking cauldrons) with counter-clauses; three §4.5 trap rows; the bear-kingdom livery check is an open question; later giants flagged (§13 #19) |
 | 18 | Major | Five slice buildings had no art or audio | Timber Yard, Collegium, Curio Cabinet, Tea Tent and Coaching Inn added to §1.3, §4 must/never rows, §5.6 kit swatches, §9.5 select one-shots and §7.8 minimap glyphs (lantern, droplet in a ring, balance beam); `inn_revive` added as P0 (§9.6) |
@@ -2068,7 +2071,7 @@ Retired names are described, not quoted, in this log: the bible is scanned by th
 | 20 | Major | No sound or look for recalls, wards, reveals, power-ups, selling or the loot glint | `it_recall_horn`, `it_recall_felt`, `it_recall_arrive`, `it_ward_set`, `it_reveal_puff` (replaced in round 2 by `it_chalk_line` and `it_tattle_burrs`), `it_powerup` (P0), `ui_sell`, `loot_glint` (P1); recall channels are public 3D cues with a ring at the hero's feet; the channel is 5 s per rules §6.8 (not 3 s); power-up props and recall items added to §2.3; an item sound map added (§9.6) |
 | 21 | Major | Ack length caps were unreachable at the stated speech rates | Word and second budgets per category; acks ≥ 2.8 words/s for every speaker with weight from pitch and formant; "Hm-hm" only in Ready, Annoyed and advisor lines (§8.1, §8.2); every example rewritten and checked by script against the budgets; the TTS recipe measures each take and applies `atempo` ≤ 1.15 or rejects it (§8.11) |
 | 22 | Major | Annoyed runs were cut short and trigger numbers contradicted AUD-03 | Annoyed 5 per unit, 7 for heroes and one standout per faction (Hookgunner, Javelineer); all trigger numbers deleted from the bible and pointed to AUD-03 (§8.1) |
-| 23 | Major | Engine voice categories were unbudgeted | `need_mana`, `pack_full`, `levelup_a` + `levelup_6`, `ultimate_shout` (replaces `ab_r`), `rival`, `effort`; `built` renamed `job_done`; advisor "revealed to the enemy" line (17 per advisor, +3 optional event lines); totals: worker 21, infantry 19 (standout 21), caster 21, siege 17, hero 31; slice 365 lines (§8.2) |
+| 23 | Major | Engine voice categories were unbudgeted | `need_mana`, `pack_full`, `levelup_a` + `levelup_6`, `ultimate_shout` (replaces `ab_r`), `rival`, `effort`; `built` renamed to an interim "job" + "done" id (reversed to `built` at synthesis, 2026-10-19); advisor "revealed to the enemy" line (17 per advisor, +3 optional event lines); totals: worker 21, infantry 19 (standout 21), caster 21, siege 17, hero 31; slice 365 lines (§8.2) |
 | 24 | Major | Two incompatible HUD specs | The bible is the single owner of HUD looks (ownership table). Kept the Horizon Ribbon and moved HUD-07's golden-hour rim, clunk and day tally onto it (§7.5); plain chassis with rim inlays, no panel fills or centre crest (§7.2); adopted POR-01's 150 × 150 portrait and gradients and NTF-05's 52 × 52 idle-worker button (§7.1, §7.9); a continuous 40 % console band joins the plates; HUD-04, HUD-07 and rules §18.5 edits listed (§13 #12–#14). Where the IP and fidelity fixes conflicted (the fidelity reviewer proposed adopting the comet border), IP won: no light circles the edge |
 | 25 | Major | The UI sound list missed the juice kit, and the alarms clashed with the juice spec and the Levy Horn | ~20 per-faction jobs (order, selection, disabled, cooldown P0; card, misc, clock, cripple P1; feed P2) using a new kit-set wrapper (§9.1); alarms follow the current juice §5.3 structure (kingdom clashing tower bells, clans slit drum with a seed-pod rattle, each with an urgent take), never a horn or gong; menu-only hover ticks; §9.9 and §11 recomputed |
 | 26 | Major | The hero info and inventory UI lacked attributes, bonuses, upgrade marks, rank frames and slot markers | STR anvil, AGI hare, INT candle with the primary attribute at 1.25× and underlined; "STR 23 +2" and "24–30 +4" with bonuses in `#7FD86A`; 0–3 upgrade pips (§7.8); rank frames (§7.3); numpad chip, charge count and cooldown sweep on inventory slots (§7.4) |
@@ -2112,7 +2115,7 @@ doc or in code is a §13 item.
 | 13 | Minor | "Ribbons around a boot" for haste repeated the reference speed item's icon | Ribbons behind a running hare or a bent grass-head in a gust; footwear only for move-speed items (§5.5) |
 | 14 | Major | Footprints were open while art was made at 8 m halls | Closed in favour of §1.3 (hall 16×16, production 12×12, supply 8×8, tower 4×4 cells; the sim footprint equals the mesh width; the fallback retired); a neutral row (Gold Seam ≥ 12×12, Weighstall 12×12, inn 12×12, Hale Spring 8×8); §13 #10 lists every table edit (rules §8, `architecture.md`, kingdom §7.2, clans §7, neutrals §5.1, slice-plan §1.4) and the slice-map re-validation of the 6.0 m mine gap, chokes and wall-offs |
 | 15 | Major | Out of date against neutrals round 2 | (a)–(c) as #4; (d) the sound map now covers every slice item: `it_eat` (Honeycomb Wedge, Mint Sprig), `it_fireflies`, `it_slate_wipe` (P1), Smoke Pellets → `cr_smoke_pot` pitched up, Dropped Purse → `coins_bounty`, passives → `ui_item`; (e) 33 neutral items, 17 creep abilities, ≈ 164 icons in 41 sheets; shopkeeper 10 lines |
-| 16 | Major | Slice attacks and creep casts had no sound | P0 `atk_ember_flick`, `atk_glint`, `atk_herb_mote` (Crowcaller reuse), `ab_signal_shell` (a public 3D cue), `cr_bellows`, `cr_heal_tar` (Re-Stuff reuse), `cr_ley_tether`, `cr_light_fingers`; `cr_ember_rake` P0 for the Smoker reuse; `sw_pierce` P0; found while fixing: `cr_fumes` P0 (it silences). §9.9: 217 jobs, 143 P0; §11 ≈ 660–1,430 CU |
+| 16 | Major | Slice attacks and creep casts had no sound | P0 `atk_ember_flick`, `atk_glint`, `atk_herb_mote` (Crowherd reuse), `ab_signal_shell` (a public 3D cue), `cr_bellows`, `cr_heal_tar` (Re-Stuff reuse), `cr_ley_tether`, `cr_light_fingers`; `cr_ember_rake` P0 for the Coal-Lobber reuse; `sw_pierce` P0; found while fixing: `cr_fumes` P0 (it silences). §9.9: 217 jobs, 143 P0; §11 ≈ 660–1,430 CU |
 | 17 | Minor | The minimap toggles did not match the rules | Formation, Show Camps and Colour mode (24 px), the 4th slot reserved for ally ping (§7.1); 3 pictograms, 15 → 18 (§5.5, §11) |
 | 18 | Minor | The advisor set did not match NTF-01 | 19 lines: hall attacked (main hall only), other building attacked, hero in danger added; the kingdom workers line is ECO-27's horn prompt, the clans one a gong prompt (§8.10); totals kingdom 181, clans 180, slice 371 with #20 and the shopkeeper (§0, §8.2, §11, §13 #2, #29) |
 | 19 | Minor | Word caps at the minimum rates overran the seconds caps | What and Yes ≤ 4 at ≥ 3.0 words/s; Attack ≤ 4 and Warcry ≤ 5 at ≥ 2.8; short situational ≤ 4; Annoyed ≤ 16; everything else ≥ 2.5 words/s (which also fixes the 8-word lines); advisor ≤ 11. Every §8.6–§8.10 candidate re-counted by script: 6 Attack lines and 1 annoyed line shortened, no violation left |

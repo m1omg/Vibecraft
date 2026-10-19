@@ -267,8 +267,48 @@ def recolor(im, target_hex, strength=1.0, keep_value=True):
     return to_img(lerp(a, out, strength))
 
 
-def swatch_img(rel, method="crossfade", size=INNER, **kw):
-    """Painted swatch from the repo, made tileable and adjusted. Returns a callable (cached)."""
+def _sat_val(a):
+    mx = a.max(axis=2)
+    mn = a.min(axis=2)
+    return np.where(mx > 1e-6, (mx - mn) / np.maximum(mx, 1e-6), 0.0), mx
+
+
+def grade(im, mean=None, sat_cap=0.65, v_floor=None, strength=1.0):
+    """Faction-LUT stand-in for a swatch (art bible 1.4 / 5.7): move the mean colour to `mean`
+    (per-channel gain, keeps the painted value structure), then clamp every pixel's HSV saturation to
+    `sat_cap` (chroma scaled towards the pixel's max channel: hue and value kept). v_floor lifts the
+    mean value to at least that (0..1)."""
+    a = to_arr(im).astype(np.float64)
+    for _ in range(3):
+        if mean is not None:
+            m = a.reshape(-1, 3).mean(axis=0)
+            tgt = hexcol(mean)
+            a = lerp(a, a * (tgt / np.maximum(m, 1e-3)), strength)
+        if v_floor is not None:
+            mv = a.max(axis=2).mean()
+            if mv < v_floor:
+                a = a * (v_floor / max(mv, 1e-3))
+        a = np.clip(a, 0, 1)
+        s, mx = _sat_val(a)
+        over = s > sat_cap
+        if over.any():
+            k = np.where(over, sat_cap / np.maximum(s, 1e-6), 1.0)[..., None]
+            a = mx[..., None] - (mx[..., None] - a) * k
+    return to_img(a)
+
+
+def swatch_stats(im):
+    """Mean colour (hex), mean value, mean / p95 saturation of a swatch image."""
+    a = to_arr(im).astype(np.float64)
+    s, mx = _sat_val(a)
+    m = a.reshape(-1, 3).mean(axis=0)
+    return {"mean": "#%02X%02X%02X" % tuple(int(round(x * 255)) for x in m), "V": round(float(mx.mean()), 3),
+            "S": round(float(s.mean()), 3), "S_p95": round(float(np.percentile(s, 95)), 3)}
+
+
+def swatch_img(rel, method="crossfade", size=INNER, grade_to=None, sat_cap=0.65, v_floor=None, **kw):
+    """Painted swatch from the repo, made tileable, adjusted and graded (faction LUT stand-in:
+    mean colour `grade_to`, saturation <= sat_cap). Returns a callable (cached)."""
     def fn():
         im = load_rgb(rel).convert("RGB")
         if method == "crossfade":
@@ -281,8 +321,10 @@ def swatch_img(rel, method="crossfade", size=INNER, **kw):
             im = period_seamless(im, axes=(False, True))
         if kw:
             im = adjust(im, **kw)
+        if grade_to is not None or sat_cap is not None:
+            im = grade(im, grade_to, 1.0 if sat_cap is None else sat_cap, v_floor)
         return im
-    key = ("sw", rel, method, tuple(sorted((k, str(v)) for k, v in kw.items())))
+    key = ("sw", rel, method, grade_to, sat_cap, v_floor, tuple(sorted((k, str(v)) for k, v in kw.items())))
     return lambda: cached(key, fn)
 
 
@@ -593,65 +635,52 @@ def tex_stripes(a_img, b_img, stripes=6, n=INNER, seam=(0.12, 0.10, 0.06), verti
     return lambda: cached(("stripes", id(a_img), id(b_img), stripes, n, vertical), fn)
 
 
-def tex_team_cloth(seed=31, n=256, border=True, emblem=None):
-    """TEAM material texture: light neutral grey cloth (multiplied by the player colour), a lighter
-    piping border (bible §3.1 rule 4) and an optional lighter emblem (decal)."""
+def tex_team_cloth(seed=31, n=256, border=False, emblem=None):
+    """TEAM material texture: light neutral grey cloth (multiplied by the player colour) with an
+    optional lighter emblem (decal). No piping in here: the neutral piping (bible 3.1 rule 4) is cut
+    out of the TEAM faces at export (split_team_border) and lands in the faction atlas as ivory /
+    bronze, so it is never tinted."""
     def fn():
-        rng = np.random.default_rng(seed)
         nz = periodic_noise(n, seed, 2.4)
-        g = 0.70 + 0.08 * (nz - 0.5)
+        g = 0.80 + 0.06 * (nz - 0.5)
         a = np.stack([g, g, g], axis=-1)
         # faint weave
         y, x = np.mgrid[0:n, 0:n]
-        a *= (1.0 + 0.025 * np.sin(x * 1.3) * np.sin(y * 1.3))[..., None]
+        a *= (1.0 + 0.02 * np.sin(x * 1.3) * np.sin(y * 1.3))[..., None]
         im = to_img(a).convert("RGBA")
         d = ImageDraw.Draw(im)
-        if border:
-            w = max(6, n // 18)
-            d.rectangle([0, 0, n - 1, w], fill=(238, 238, 238, 255))
-            d.rectangle([0, n - 1 - w, n - 1, n - 1], fill=(238, 238, 238, 255))
-            d.rectangle([0, 0, w, n - 1], fill=(238, 238, 238, 255))
-            d.rectangle([n - 1 - w, 0, n - 1, n - 1], fill=(238, 238, 238, 255))
-            d.line([(w + 3, w + 3), (n - w - 4, w + 3)], fill=(120, 120, 120, 255), width=2)
-            d.line([(w + 3, n - w - 4), (n - w - 4, n - w - 4)], fill=(120, 120, 120, 255), width=2)
         if emblem == "wheel":
             cx = cy = n / 2
             R = n * 0.26
-            col = (240, 240, 240, 255)
-            d.ellipse([cx - R, cy - R, cx + R, cy + R], outline=col, width=max(4, n // 26))
+            col = (246, 246, 246, 255)
+            d.ellipse([cx - R, cy - R, cx + R, cy + R], outline=col, width=max(5, n // 22))
             for k in range(6):
                 ang = k * math.pi / 3
-                d.line([(cx, cy), (cx + math.cos(ang) * R, cy + math.sin(ang) * R)], fill=col, width=max(3, n // 40))
-            d.ellipse([cx - R * 0.22, cy - R * 0.22, cx + R * 0.22, cy + R * 0.22], fill=(90, 90, 90, 255))
+                d.line([(cx, cy), (cx + math.cos(ang) * R, cy + math.sin(ang) * R)], fill=col, width=max(4, n // 36))
+            d.ellipse([cx - R * 0.24, cy - R * 0.24, cx + R * 0.24, cy + R * 0.24], fill=(150, 150, 150, 255))
         elif emblem == "gong":
             cx = cy = n / 2
             R = n * 0.24
-            d.ellipse([cx - R, cy - R, cx + R, cy + R], fill=(236, 236, 236, 255))
-            d.ellipse([cx - R * 0.55, cy - R * 0.55, cx + R * 0.55, cy + R * 0.55], outline=(120, 120, 120, 255), width=4)
+            d.ellipse([cx - R, cy - R, cx + R, cy + R], fill=(246, 246, 246, 255))
+            d.ellipse([cx - R * 0.55, cy - R * 0.55, cx + R * 0.55, cy + R * 0.55], outline=(165, 165, 165, 255), width=4)
             for k in (-1, 1):
                 pts = [(cx + k * R * (1.2 + 0.5 * t), cy - R * 0.6 + R * 1.2 * t + k * math.sin(t * 6) * 4) for t in np.linspace(0, 1, 12)]
-                d.line(pts, fill=(236, 236, 236, 255), width=max(3, n // 40), joint="curve")
+                d.line(pts, fill=(246, 246, 246, 255), width=max(3, n // 40), joint="curve")
         return im.convert("RGB")
     return lambda: cached(("teamcloth", seed, n, border, emblem), fn)
 
 
 def tex_team_band(seed=37, n=256):
-    """TEAM tile: felt band with light piping along the top and bottom edges only (tiles in u)."""
+    """TEAM tile: plain felt band (tiles in u); piping is cut out at export like on the cloth."""
     def fn():
         nz = periodic_noise(n, seed, 2.4)
-        g = 0.70 + 0.08 * (nz - 0.5)
+        g = 0.80 + 0.06 * (nz - 0.5)
         a = np.stack([g, g, g], axis=-1)
         y, x = np.mgrid[0:n, 0:n]
-        a *= (1.0 + 0.03 * np.sin(x * 0.9 + y * 0.9))[..., None]
-        w = max(8, n // 14)
-        a[:w] = 0.93
-        a[-w:] = 0.93
-        a[w:w + 3] *= 0.6
-        a[-w - 3:-w] *= 0.6
-        # stitches
+        a *= (1.0 + 0.025 * np.sin(x * 0.9 + y * 0.9))[..., None]
+        # stitches (lighter, so they tint to a lighter shade of the player colour)
         for j in range(0, n, 16):
-            a[w + 8:w + 11, j:j + 8] = 0.9
-            a[-w - 11:-w - 8, j:j + 8] = 0.9
+            a[n // 2 - 2:n // 2 + 1, j:j + 8] = 0.9
         return to_img(a)
     return lambda: cached(("teamband", seed, n), fn)
 
@@ -711,56 +740,145 @@ class Swatch:
     kind  "tile":  UVs in repeat units (u, v); triangles are cut on integer lines and each piece is
                    mapped into the cell (wrap padding hides the cell border at normal mip levels)
           "decal": UVs in [0, 1] map onto the cell's inner square (clamped)
-    group "atlas" | "team" | "glow": which glTF material the swatch belongs to
+    group "atlas" | "team" | "glow": which glTF material (and shared sheet) the swatch belongs to
+    repeat  world size (m) of one cell for tile swatches; the cell is repeat * DENSITY px wide, so
+            every swatch has the same texel density
+    tiles   the swatch image is tiled tiles x tiles inside its cell (smaller pattern, e.g. roof
+            tiles, without cutting the mesh on more UV lines)
+    px      inner cell size for decals
+    sheet_key  key in the shared sheet (defaults to key; TEAM / GLOW sheets are shared by both factions)
     """
 
-    def __init__(self, key, image, repeat=3.5, kind="tile", group="atlas", rot90=False):
+    def __init__(self, key, image, repeat=3.5, kind="tile", group="atlas", rot90=False, tiles=1, px=None,
+                 sheet_key=None):
         self.key = key
         self.image = image
         self.repeat = repeat
         self.kind = kind
         self.group = group
         self.rot90 = rot90
+        self.tiles = tiles
+        self.px = px
+        self.sheet_key = sheet_key or key
 
     def __repr__(self):
         return f"Swatch({self.key})"
 
 
+DENSITY = 144.0      # px per metre for tile swatches (art bible 1.6: buildings 128-160 px/m)
+TILE_PAD = 16        # wrap padding (px) around tile cells
+DECAL_PAD = 8        # edge padding (px) around decal cells
+
+
 def build_atlas(swatches, cell=CELL, pad=PAD):
-    """Pack swatches (ordered) into a grid of cells. Returns (image, {key: (x0, y0, inner)} in px,
-    (W, H))."""
+    """Legacy fixed-grid packer (kept for tools that still want one square grid)."""
     n = len(swatches)
-    if n <= 1:
-        cols, rows = 1, 1
-    elif n == 2:
-        cols, rows = 2, 1
-    elif n <= 4:
-        cols, rows = 2, 2
-    elif n <= 8:
-        cols, rows = 4, 2
-    else:
-        cols, rows = 4, 4
+    cols = 1 if n <= 1 else (2 if n <= 4 else 4)
+    rows = 1 if n <= 2 else (2 if n <= 8 else 4)
     W, H = cols * cell, rows * cell
     atlas = np.zeros((H, W, 3), np.uint8)
     inner = cell - 2 * pad
     rects = {}
     for i, sw in enumerate(swatches):
         r, c = divmod(i, cols)
-        im = sw.image().convert("RGB")
-        if sw.rot90:
-            im = im.transpose(Image.ROTATE_90)
-        if im.size != (inner, inner):
-            im = im.resize((inner, inner), Image.LANCZOS)
-        arr = np.asarray(im)
-        mode = "wrap" if sw.kind == "tile" else "edge"
-        arr = np.pad(arr, [(pad, pad), (pad, pad), (0, 0)], mode=mode)
+        arr = np.asarray(_cell_image(sw, inner))
+        arr = np.pad(arr, [(pad, pad), (pad, pad), (0, 0)], mode="wrap" if sw.kind == "tile" else "edge")
         atlas[r * cell:(r + 1) * cell, c * cell:(c + 1) * cell] = arr
-        rects[sw.key] = (c * cell + pad, r * cell + pad, inner)
-    # fill unused cells with the mean colour (keeps mips clean)
-    for i in range(n, cols * rows):
-        r, c = divmod(i, cols)
-        atlas[r * cell:(r + 1) * cell, c * cell:(c + 1) * cell] = atlas[:cell, :cell].reshape(-1, 3).mean(0).astype(np.uint8)
+        rects[sw.sheet_key] = (c * cell + pad, r * cell + pad, inner)
     return Image.fromarray(atlas, "RGB"), rects, (W, H)
+
+
+def _cell_image(sw, inner):
+    im = sw.image().convert("RGB")
+    if sw.rot90:
+        im = im.transpose(Image.ROTATE_90)
+    k = max(1, int(sw.tiles))
+    sub = max(8, int(round(inner / k)))
+    if im.size != (sub, sub):
+        im = im.resize((sub, sub), Image.LANCZOS)
+    if k > 1:
+        big = Image.new("RGB", (sub * k, sub * k))
+        for i in range(k):
+            for j in range(k):
+                big.paste(im, (i * sub, j * sub))
+        im = big.resize((inner, inner), Image.LANCZOS) if sub * k != inner else big
+    return im
+
+
+def cell_px(sw):
+    """Inner cell size (px) of a swatch in a shared sheet."""
+    if sw.kind == "tile":
+        return int(max(64, round(sw.repeat * DENSITY / 8.0) * 8))
+    return int(sw.px or 256)
+
+
+class Sheet:
+    """A shared texture sheet (faction atlas, TEAM sheet, GLOW sheet) referenced by every building GLB
+    as an external image (uri), so all buildings of a faction share one texture in VRAM.
+
+    Shelf packing (largest cells first, deterministic order), width `width`, height rounded up to a
+    multiple of 64. rects: {sheet_key: (x0, y0, inner)} in px."""
+
+    def __init__(self, name, swatches, width=2048, fmt="jpeg", quality=90):
+        uniq = {}
+        for sw in swatches:
+            uniq.setdefault(sw.sheet_key, sw)
+        items = sorted(uniq.values(), key=lambda s: (-cell_px(s), s.sheet_key))
+        x = y = row_h = 0
+        place = []
+        for sw in items:
+            inner = cell_px(sw)
+            pad = TILE_PAD if sw.kind == "tile" else DECAL_PAD
+            c = inner + 2 * pad
+            if x + c > width:
+                x, y, row_h = 0, y + row_h, 0
+            place.append((sw, x, y, inner, pad))
+            x += c
+            row_h = max(row_h, c)
+        H = y + row_h
+        H = int(math.ceil(H / 64.0) * 64)
+        W = width if y > 0 else int(math.ceil(x / 64.0) * 64)
+        img = np.zeros((H, W, 3), np.uint8)
+        self.rects = {}
+        for sw, x0, y0, inner, pad in place:
+            arr = np.asarray(_cell_image(sw, inner))
+            arr = np.pad(arr, [(pad, pad), (pad, pad), (0, 0)], mode="wrap" if sw.kind == "tile" else "edge")
+            img[y0:y0 + arr.shape[0], x0:x0 + arr.shape[1]] = arr
+            self.rects[sw.sheet_key] = (x0 + pad, y0 + pad, inner)
+        # unused area: mean colour (clean mips)
+        used = np.zeros((H, W), bool)
+        for sw, x0, y0, inner, pad in place:
+            used[y0:y0 + inner + 2 * pad, x0:x0 + inner + 2 * pad] = True
+        if (~used).any():
+            img[~used] = img[used].reshape(-1, 3).mean(0).astype(np.uint8)
+        self.name = name
+        self.image = Image.fromarray(img, "RGB")
+        self.size = (W, H)
+        self.fmt = fmt
+        self.quality = quality
+        ext = "jpg" if fmt == "jpeg" else "png"
+        self.uri = f"textures/{name}.{ext}"
+        self.mime = "image/jpeg" if fmt == "jpeg" else "image/png"
+        self.swatches = [s.sheet_key for s in items]
+        self.fill = round(float(used.mean()), 3)
+
+    def write(self, out_dir):
+        path = os.path.join(out_dir, self.uri)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        data, _ = encode(self.image, self.fmt, self.quality)
+        with open(path, "wb") as f:
+            f.write(data)
+        return path
+
+
+# Godot import settings for the shared sheets: VRAM-compressed with mipmaps (3D use). Godot fills in
+# uid / dest paths on the first import.
+GODOT_TEXTURE_IMPORT = (
+    "[remap]\n\nimporter=\"texture\"\ntype=\"CompressedTexture2D\"\nmetadata={\n\"imported_formats\": "
+    "[\"s3tc_bptc\", \"etc2_astc\"],\n\"vram_texture\": true\n}\n\n[params]\n\ncompress/mode=2\n"
+    "compress/high_quality=false\ncompress/lossy_quality=0.7\ncompress/hdr_compression=1\ncompress/normal_map=2\n"
+    "compress/channel_pack=0\nmipmaps/generate=true\nmipmaps/limit=-1\nroughness/mode=0\nprocess/fix_alpha_border=true\n"
+    "process/premult_alpha=false\nprocess/size_limit=0\ndetect_3d/compress_to=0\n")
 
 
 # =============================================================================================
@@ -787,6 +905,8 @@ class Part:
         self.form = 0.10              # lighter towards the top of this part (painted top light)
         self.uvrot = False            # swap u/v (grain direction) when mapping into the atlas
         self.min_shade = 0.0          # floor for the baked shade (e.g. emissive bits)
+        self.faceted = False          # flat faces at hard angles (box / member / prism): each face
+                                      # direction may get its own UV offset (no visible seam, fewer cuts)
 
     # --- transforms (return self) -------------------------------------------------------------
     def xf(self, m):
@@ -833,7 +953,7 @@ class Part:
 
     def copy(self):
         p = Part(self.v.copy(), self.t.copy(), self.sw, self.uv.copy(), self.smooth)
-        for k in ("dice", "jit", "occ", "ao", "ao_mul", "layer", "form", "uvrot", "min_shade"):
+        for k in ("dice", "jit", "occ", "ao", "ao_mul", "layer", "form", "uvrot", "min_shade", "faceted"):
             setattr(p, k, getattr(self, k))
         p.tint = np.array(self.tint, float).copy()
         return p
@@ -899,6 +1019,7 @@ def box(sx, sy, sz, sw, center=(0, 0, 0), chamfer=0.0, uv_off=(0.0, 0.0), repeat
         v, t = bm_arrays(bm)
         p = Part(v, t, sw, smooth=smooth)
     p.box_uv(repeat, uv_off)
+    p.faceted = True
     cz = center[2] + (sz / 2 if base else 0.0)
     return p.move(center[0], center[1], cz)
 
@@ -1036,6 +1157,7 @@ def prism(outline, z0, z1, sw, chamfer=0.03, bottom=True, top=True, repeat=None,
         tris.append(bt + len(V))
         V = np.vstack([V, bv])
     part = Part(V, np.concatenate(tris), sw, smooth=smooth)
+    part.faceted = True
     return part.box_uv(repeat, uv_off)
 
 
@@ -1594,48 +1716,154 @@ def encode(im, mode="jpeg", quality=88):
     return buf.getvalue(), "image/jpeg"
 
 
+def _uv_extent(A):
+    """Area-weighted metres per unit u and per unit v of a corner-attribute array (uv 0:2, pos 2:5)."""
+    U = A[..., 0:2]
+    P = A[..., 2:5]
+    E = np.stack([P[:, 1] - P[:, 0], P[:, 2] - P[:, 0]], axis=2)          # (M, 3, 2)
+    D = np.stack([U[:, 1] - U[:, 0], U[:, 2] - U[:, 0]], axis=2)          # (M, 2, 2)
+    det = D[:, 0, 0] * D[:, 1, 1] - D[:, 0, 1] * D[:, 1, 0]
+    ok = np.abs(det) > 1e-9
+    if not ok.any():
+        return 1.0, 1.0
+    Dinv = np.zeros_like(D)
+    Dinv[ok, 0, 0] = D[ok, 1, 1] / det[ok]
+    Dinv[ok, 1, 1] = D[ok, 0, 0] / det[ok]
+    Dinv[ok, 0, 1] = -D[ok, 0, 1] / det[ok]
+    Dinv[ok, 1, 0] = -D[ok, 1, 0] / det[ok]
+    J = E @ Dinv                                                          # (M, 3, 2): dP/du, dP/dv
+    area = np.linalg.norm(np.cross(E[..., 0], E[..., 1]), axis=1) * ok
+    w = area / max(area.sum(), 1e-12)
+    return float((np.linalg.norm(J[..., 0], axis=1) * w).sum()), float((np.linalg.norm(J[..., 1], axis=1) * w).sum())
+
+
+PIPING_M = 0.045     # neutral piping width round every TEAM area (bible 3.1 rule 4)
+
+
+def split_team_border(A, sw, width=PIPING_M):
+    """Cut the outer `width` metres of a TEAM part's UV field (decals: all four edges; tiled bands:
+    the two long edges, v = 0 and v = 1) out of the TEAM faces. Returns (inner, border) corner arrays;
+    the caller re-maps the border to the faction's neutral piping colour in the atlas."""
+    if len(A) == 0:
+        return A, A[:0]
+    mu, mv = _uv_extent(A)
+    bu = 0.0 if sw.kind == "tile" else min(0.16, width / max(mu, 1e-6))
+    bv = min(0.2, width / max(mv, 1e-6))
+    cuts = []
+    if bu > 1e-4:
+        cuts += [(0, bu), (0, 1.0 - bu)]
+    if bv > 1e-4:
+        cuts += [(1, bv), (1, 1.0 - bv)]
+    if not cuts:
+        return A, A[:0]
+
+    def border_zone(uv):
+        b = uv[1] < bv or uv[1] > 1.0 - bv
+        if bu > 1e-4:
+            b = b or uv[0] < bu or uv[0] > 1.0 - bu
+        return b
+
+    lo_u, hi_u = A[..., 0].min(1), A[..., 0].max(1)
+    lo_v, hi_v = A[..., 1].min(1), A[..., 1].max(1)
+    touch = (lo_v < bv) | (hi_v > 1.0 - bv)
+    if bu > 1e-4:
+        touch |= (lo_u < bu) | (hi_u > 1.0 - bu)
+    inner = [A[~touch]]
+    border = []
+    for f in np.flatnonzero(touch):
+        polys = [[A[f, 0], A[f, 1], A[f, 2]]]
+        for k, val in cuts:
+            nxt = []
+            for poly in polys:
+                for keep in (False, True):
+                    q = _clip(poly, k, val, keep)
+                    if len(q) >= 3:
+                        nxt.append(q)
+            polys = nxt
+        for poly in polys:
+            for j in range(1, len(poly) - 1):
+                t3 = np.stack([poly[0], poly[j], poly[j + 1]])
+                pa = np.linalg.norm(np.cross(t3[1, 2:5] - t3[0, 2:5], t3[2, 2:5] - t3[0, 2:5]))
+                if pa < 1e-10:
+                    continue
+                (border if border_zone(t3[:, 0:2].mean(0)) else inner).append(t3[None])
+    inner = np.concatenate([x for x in inner if len(x)]) if any(len(x) for x in inner) else A[:0]
+    border = np.concatenate(border) if border else A[:0]
+    return inner, border
+
+
 # GLOW first: Godot's glTF importer (4.7) does not set vertex_color_use_as_albedo on the FIRST primitive
 # of a mesh (it does on the following ones), and windows / embers must not be darkened anyway. When a
 # building has no GLOW part a 1 mm dummy triangle hidden at the origin takes the first slot.
 GROUP_ORDER = ("glow", "atlas", "team")
+GLOW_DAY = (0.10, 0.06, 0.02)        # emissiveFactor shipped in the GLB (day); the game raises it at night
+GLOW_NIGHT = (1.6, 0.95, 0.4)        # suggested night emissive factor (after 17:45, bible 1.5)
 
 
-def export_glb(path, aid, parts, H, cfg: Bake, extras=None, glow_factor=(0.55, 0.30, 0.10), team_cell=256,
-               glow_cell=256):
-    """Bake and write one GLB. Returns a stats dict."""
+def export_glb(path, aid, parts, H, cfg: Bake, sheets, extras=None, glow_factor=GLOW_DAY, piping=None):
+    """Bake and write one GLB whose materials reference the shared sheets (external images).
+    sheets: {"atlas": Sheet, "team": Sheet, "glow": Sheet}. piping: (pal_swatch, (u, v)) = the atlas
+    palette swatch and the UV of the neutral piping colour (TEAM borders are re-mapped there)."""
     bake(parts, H, cfg)
-    groups = {g: [p for p in parts if p.sw.group == g] for g in GROUP_ORDER}
-    mats, prims, stats = [], [], {"materials": [], "atlas_px": None}
-    images = []
-    dummy = not groups["glow"]
+    routed = {g: [] for g in GROUP_ORDER}
+    stats = {"materials": [], "team_piping_tris": 0}
+    for p in parts:
+        M = len(p.t)
+        uv = p.uv[..., ::-1].copy() if p.uvrot else p.uv.copy()
+        A = np.concatenate([uv, p.v[p.t], p.cn, p.col[p.t], np.stack([np.full((M, 3), p.layer), p.hn[p.t]], -1)],
+                           axis=2)
+        g = p.sw.group
+        if g == "team" and piping is not None:
+            inner, border = split_team_border(A, p.sw)
+            if len(inner):
+                routed["team"].append((p.sw, inner, False))
+            if len(border):
+                border = border.copy()
+                border[..., 0] = piping[1][0]
+                border[..., 1] = piping[1][1]
+                routed["atlas"].append((piping[0], border, False))
+                stats["team_piping_tris"] += len(border)
+        else:
+            routed[g].append((p.sw, A, p.faceted))
+    mats, prims = [], []
+    dummy = not routed["glow"]
     for g in GROUP_ORDER:
-        sel = groups[g]
+        sel = routed[g]
         if not sel:
             continue
+        sh = sheets[g]
+        W, Hh = sh.size
         sws = []
-        for p in sel:
-            if p.sw not in sws:
-                sws.append(p.sw)
-        cell = CELL if g == "atlas" else (team_cell if g == "team" else glow_cell)
-        pad = PAD if g == "atlas" else max(8, cell // 16)
-        img, rects, (W, Hh) = build_atlas(sws, cell=cell, pad=pad)
         pos, nor, uv0, uv1, col = [], [], [], [], []
-        for p in sel:
-            M = len(p.t)
-            uv = p.uv[..., ::-1].copy() if p.uvrot else p.uv.copy()
-            A = np.concatenate([uv, p.v[p.t], p.cn, p.col[p.t], np.stack([np.full((M, 3), p.layer), p.hn[p.t]], -1)],
-                               axis=2)
-            if p.sw.kind == "tile":
-                # parts smaller than one repeat: shift their UVs inside a single cell (no cuts)
-                for ax in (0, 1):
-                    lo_, hi_ = A[..., ax].min(), A[..., ax].max()
-                    if hi_ - lo_ < 0.999:
-                        frac = (seed_of(len(A), round(float(lo_), 4), ax) % 1000) / 1000.0
-                        A[..., ax] += np.floor(lo_) + frac * (0.999 - (hi_ - lo_)) - lo_ + 0.0005
+        for sw, A, fac in sel:
+            if sw.sheet_key not in sws:
+                sws.append(sw.sheet_key)
+            A = A.copy()
+            if sw.kind == "tile":
+                # parts (or, for faceted parts, each face direction) smaller than one repeat: shift their
+                # UVs inside a single cell, so they need no cuts
+                if fac:
+                    fn = face_normals(A[:, :, 2:5].reshape(-1, 3), np.arange(len(A) * 3).reshape(-1, 3))
+                    grp = np.argmax(np.abs(fn), axis=1) * 2 + (fn[np.arange(len(fn)), np.argmax(np.abs(fn), axis=1)] > 0)
+                    groups = [np.flatnonzero(grp == gi) for gi in range(6)]
+                else:
+                    groups = [np.arange(len(A))]
+                for idx in groups:
+                    if len(idx) == 0:
+                        continue
+                    for ax in (0, 1):
+                        lo_, hi_ = A[idx, :, ax].min(), A[idx, :, ax].max()
+                        if hi_ - lo_ < 0.999:
+                            frac = (seed_of(len(idx), round(float(lo_), 4), ax) % 1000) / 1000.0
+                            A[idx, :, ax] += np.floor(lo_) + frac * (0.999 - (hi_ - lo_)) - lo_ + 0.0005
+                n_in = len(A)
                 A = cut_tiles(A)
+                stats.setdefault("cut_by_swatch", {}).setdefault(sw.key, [0, 0])
+                stats["cut_by_swatch"][sw.key][0] += n_in
+                stats["cut_by_swatch"][sw.key][1] += len(A)
             else:
                 A[..., 0:2] = np.clip(A[..., 0:2], 0, 1)
-            x0, y0, inner = rects[p.sw.key]
+            x0, y0, inner = sh.rects[sw.sheet_key]
             uvA = np.stack([(x0 + A[..., 0] * inner) / W, (y0 + A[..., 1] * inner) / Hh], -1)
             pos.append(A[..., 2:5].reshape(-1, 3))
             nor.append(A[..., 5:8].reshape(-1, 3))
@@ -1643,10 +1871,7 @@ def export_glb(path, aid, parts, H, cfg: Bake, extras=None, glow_factor=(0.55, 0
             uv1.append(A[..., 12:14].reshape(-1, 2))
             uv0.append(uvA.reshape(-1, 2))
         name = aid if g == "atlas" else f"{aid}_{g.upper()}"
-        data, mime = encode(img, "jpeg", 88 if g == "atlas" else 90)
-        images.append((data, mime, f"{name}_basecolor"))
-        mats.append({"name": name, "image": len(images) - 1, "group": g, "size": [W, Hh],
-                     "swatches": [s.key for s in sws]})
+        mats.append({"name": name, "sheet": sh, "group": g, "swatches": sws})
         if dummy and g == "atlas":
             # hidden first primitive (see GROUP_ORDER): one 1 mm triangle inside the base
             dp = np.array([[0.0, 0.0, 0.02], [0.001, 0.0, 0.02], [0.0, 0.001, 0.02]])
@@ -1654,13 +1879,14 @@ def export_glb(path, aid, parts, H, cfg: Bake, extras=None, glow_factor=(0.55, 0
                           np.zeros((3, 2)), np.ones((3, 4))))
         prims.append((len(mats) - 1, np.concatenate(pos), np.concatenate(nor), np.concatenate(uv0),
                       np.concatenate(uv1), np.concatenate(col)))
-    tris = _write_glb(path, aid, prims, mats, images, extras or {}, glow_factor)
-    stats["materials"] = [{"name": m["name"], "texture": m["size"], "swatches": m["swatches"]} for m in mats]
+    tris = _write_glb(path, aid, prims, mats, extras or {}, glow_factor)
+    stats["materials"] = [{"name": m["name"], "texture": m["sheet"].uri, "texture_px": list(m["sheet"].size),
+                           "swatches": m["swatches"]} for m in mats]
     stats["tris"] = tris
     return stats
 
 
-def _write_glb(path, aid, prims, mats, images, extras, glow_factor):
+def _write_glb(path, aid, prims, mats, extras, glow_factor):
     bin_chunks = bytearray()
     buffer_views, accessors = [], []
 
@@ -1686,10 +1912,14 @@ def _write_glb(path, aid, prims, mats, images, extras, glow_factor):
         return len(accessors) - 1
 
     gl_images, textures, materials = [], [], []
-    for data, mime, name in images:
-        bv = add_view(data)
-        gl_images.append({"bufferView": bv, "mimeType": mime, "name": name})
-        textures.append({"sampler": 0, "source": len(gl_images) - 1})
+    tex_of = {}
+    for m in mats:
+        sh = m["sheet"]
+        if sh.uri not in tex_of:
+            gl_images.append({"uri": sh.uri, "mimeType": sh.mime, "name": sh.name})
+            textures.append({"sampler": 0, "source": len(gl_images) - 1})
+            tex_of[sh.uri] = len(textures) - 1
+        m["image"] = tex_of[sh.uri]
     for m in mats:
         md = {"name": m["name"],
               "pbrMetallicRoughness": {"baseColorTexture": {"index": m["image"]}, "metallicFactor": 0.0,
@@ -1701,9 +1931,13 @@ def _write_glb(path, aid, prims, mats, images, extras, glow_factor):
         if m["group"] == "glow":
             md["emissiveTexture"] = {"index": m["image"]}
             md["emissiveFactor"] = [float(x) for x in glow_factor]
-            ex["role"] = "GLOW: windows / embers; raise emission at night (bible 1.5)"
+            ex["role"] = ("GLOW: windows / embers. Shipped at day level; raise emissive (e.g. to "
+                          f"{list(GLOW_NIGHT)}) after 17:45 and back after 06:30 (bible 1.5)")
+            ex["emissive_day"] = [float(x) for x in glow_factor]
+            ex["emissive_night"] = list(GLOW_NIGHT)
         if m["group"] == "team":
-            ex["role"] = "TEAM: light grey cloth; UnitView multiplies albedo_color by the player colour"
+            ex["role"] = ("TEAM: light grey cloth (no piping: the neutral piping is in the atlas); UnitView "
+                          "multiplies albedo_color by the player colour")
         md["extras"] = ex
         materials.append(md)
     prims_out = []

@@ -8,8 +8,9 @@ Faction ids: **`sylvan`** and **`deathless`**; data prefixes are `sylvan_` and `
 **Read with:**
 - `docs/design/rules.md`: the authority for every global rule (it supersedes mechanics §13.1, §13.2 and §13.7). Values here follow it;
   the few places that need a rules.md change are listed under "Follow-ups in other files" in the round-3 Review log (the current list).
-  **For sylvan and deathless values in §A3, §A4, §B3 and §B4, this doc overrides rules.md §4.3, §9 and §13 until the listed follow-ups
-  are applied.** (rules.md still shows the round-1 Tapster, 8 lumber at 1 per 1.0 s, and the old noonlight hook.)
+  **For sylvan and deathless values in §A3, §A4, §B3 and §B4, this doc overrides rules.md §4.3, §9 and §13 if they ever differ.**
+  (Checked 2026-10-19: rules.md now carries the round-3 values: the Tapster's 10 lumber at 1 per 0.9 s, lumber-fuelled noonlight and the
+  structures-only sunlit yard.)
 - `docs/design/neutrals.md`: creep families, items and neutral buildings. Its §10.2 squint table and §11 Q12 cross-check request are
   answered in Part E.
 - `docs/research/ip-safety.md`: §0, the §2 banned lists and the §3.2 rubric.
@@ -136,7 +137,7 @@ balance tests their timing targets.
 2. **Bark-scale capelets.** Overlapping birch-bark shingles form a short flared cone over the shoulders. The read is a pale ring with charcoal dashes.
 3. **Amber lanterns.** Every unit carries one glowing amber point: hung from a bow tip, a staff, a yoke or a gondola.
    These are the faction's night read. Lanterns are **always caged teardrops** (withy or birch lattice), never a pierced or drilled
-   head-shaped lantern (that is the neutral Hollow Harvest's read; Part E).
+   head-shaped lantern (that is the neutral Tattiebogles' read; Part E).
 4. **Bodies.** Tall and long-limbed, with chunky hands, feet and weapons. Ears are long and **droop down and back like birch leaves**,
    never huge and upswept. Skin is warm birch-cream with charcoal freckle-dashes across the cheekbones and forearms.
    Hair runs from flax to amber, and eyes are amber. No violet or blue skin, and no blindfolds or tattoos.
@@ -483,23 +484,23 @@ Stilt Lodge (T1) ──► Lantern Lodge (T2, needs Calling Pier) ──► Ambe
 
 Every building has Fortified armour 5 and 14.0 / 9.4 m sight unless stated (rules §8). Glaer structures regenerate +1 HP/s inside
 noonlight and, by day, inside a sunlit yard (§A3.2).
-Footprints are in 0.5 m pathing cells (the kingdom's convention: halls 10×10, production buildings 8×8, altar, smithy and shop 6×6,
-supply and towers 4×4). Hall upgrades keep the footprint. Stilts do not change the footprint; units never walk under a building.
+Footprints are in 0.5 m pathing cells and follow the art bible §1.3 class sizes (decided 2026-10-19): halls 16×16, production buildings,
+altar, smithy and shop 12×12, supply 8×8, towers 4×4. Hall upgrades keep the footprint. Stilts do not change the footprint; units never walk under a building.
 
 | id | Building | Role | Needs | Gold / lumber | Time (s) | HP | Footprint | Food | Function |
 |---|---|---|---|---|---|---|---|---|---|
-| `sylvan_stilt_lodge` | **Stilt Lodge** | Hall T1 | – | 380 / 190 | 160 | 1550 | 10×10 | +10 | Tapster; gold and lumber drop-off; lantern (14 m noonlight, *Burn at Dusk*) and sunlit yard (14 m); *Open the Shutters* |
-| `sylvan_lantern_lodge` | **Lantern Lodge** | Hall T2 (upgrade) | Calling Pier | +300 / 200 | 130 | 2050 | 10×10 | +12 | Tier 2, hero 2 |
-| `sylvan_amber_lodge` | **Amber Lodge** | Hall T3 (upgrade) | Lantern Lodge, Resinworks | +340 / 220 | 145 | 2600 | 10×10 | +14 | Tier 3, hero 3 |
-| `sylvan_stilt_larder` | **Stilt Larder** | Supply | – | 140 / 45 | 45 | 500 | 4×4 | +10 | A stilted storehouse; may stand in shallow water |
-| `sylvan_calling_pier` | **Calling Pier** | Hero altar | – | 170 / 55 | 55 | 880 | 6×6 | – | Trains and revives heroes |
-| `sylvan_fletchery` | **Fletchery** | Barracks | – | 165 / 70 | 65 | 1250 | 8×8 | – | Larkbow, Stoneskipper, Springbough; *Long Draw*, *Skipping Lore*, *Sticky Resin* |
-| `sylvan_resinworks` | **Resinworks** | Smithy and lumber mill | – | 150 / 60 | 55 | 1050 | 6×6 | – | Lumber drop-off; four upgrade lines (§A7.2); *Deep Spigots*, *Bored Spigots* (T3), *Lantern Glass*; enables the Glare Post |
-| `sylvan_singers_hall` | **Singers' Hall** | Caster hall with the giant | Lantern Lodge | 165 / 120 | 65 | 1100 | 8×8 | – | Ambermail, Sapsinger, Smudger; Woodgnaw at T3. Caster trainings; *Thick Pelt* |
-| `sylvan_high_drey` | **High Drey** | Air nest | Lantern Lodge | 140 / 110 | 55 | 950 | 8×8 | – | Treeglider; *Lantern Riders* (T2), *Lantern Drop* (T3). A tall stilted nest-platform (a drey is a squirrel's nest) |
-| `sylvan_thistle_mooring` | **Thistle Mooring** | Air mooring | Lantern Lodge | 160 / 160 | 65 | 1100 | 8×8 | – | Glimmerswarm; Thistleship at T3; *Burning Resin* |
+| `sylvan_stilt_lodge` | **Stilt Lodge** | Hall T1 | – | 380 / 190 | 160 | 1550 | 16×16 | +10 | Tapster; gold and lumber drop-off; lantern (14 m noonlight, *Burn at Dusk*) and sunlit yard (14 m); *Open the Shutters* |
+| `sylvan_lantern_lodge` | **Lantern Lodge** | Hall T2 (upgrade) | Calling Pier | +300 / 200 | 130 | 2050 | 16×16 | +12 | Tier 2, hero 2 |
+| `sylvan_amber_lodge` | **Amber Lodge** | Hall T3 (upgrade) | Lantern Lodge, Resinworks | +340 / 220 | 145 | 2600 | 16×16 | +14 | Tier 3, hero 3 |
+| `sylvan_stilt_larder` | **Stilt Larder** | Supply | – | 140 / 45 | 45 | 500 | 8×8 | +10 | A stilted storehouse; may stand in shallow water |
+| `sylvan_calling_pier` | **Calling Pier** | Hero altar | – | 170 / 55 | 55 | 880 | 12×12 | – | Trains and revives heroes |
+| `sylvan_fletchery` | **Fletchery** | Barracks | – | 165 / 70 | 65 | 1250 | 12×12 | – | Larkbow, Stoneskipper, Springbough; *Long Draw*, *Skipping Lore*, *Sticky Resin* |
+| `sylvan_resinworks` | **Resinworks** | Smithy and lumber mill | – | 150 / 60 | 55 | 1050 | 12×12 | – | Lumber drop-off; four upgrade lines (§A7.2); *Deep Spigots*, *Bored Spigots* (T3), *Lantern Glass*; enables the Glare Post |
+| `sylvan_singers_hall` | **Singers' Hall** | Caster hall with the giant | Lantern Lodge | 165 / 120 | 65 | 1100 | 12×12 | – | Ambermail, Sapsinger, Smudger; Woodgnaw at T3. Caster trainings; *Thick Pelt* |
+| `sylvan_high_drey` | **High Drey** | Air nest | Lantern Lodge | 140 / 110 | 55 | 950 | 12×12 | – | Treeglider; *Lantern Riders* (T2), *Lantern Drop* (T3). A tall stilted nest-platform (a drey is a squirrel's nest) |
+| `sylvan_thistle_mooring` | **Thistle Mooring** | Air mooring | Lantern Lodge | 160 / 160 | 65 | 1100 | 12×12 | – | Glimmerswarm; Thistleship at T3; *Burning Resin* |
 | `sylvan_glare_post` | **Glare Post** | Tower (built directly; no scout-tower step) | Resinworks | 110 / 50 | 40 | 480 | 4×4 | – | Pierce 18–22, CD 1.1 s, 10.0 m, G+A, arrow 20 m/s. **Level 3** (XP). Sight 16 / 10 m (16 / 16 while its lantern is lit). Lantern (10 m noonlight, *Burn at Dusk*) and sunlit yard (10 m). Static, never walks |
-| `sylvan_trinket_stall` | **Trinket Stall** | Faction shop | – | 125 / 35 | 55 | 500 | 6×6 | – | Items (§A7.4) |
+| `sylvan_trinket_stall` | **Trinket Stall** | Faction shop | – | 125 / 35 | 55 | 500 | 12×12 | – | Items (§A7.4) |
 
 ### A7.2 Upgrades and research
 
@@ -1034,24 +1035,24 @@ Wake Barrow (T1) ──► Long Barrow (T2, needs Cenotaph) ──► Grand Barr
 ```
 
 Every building has Fortified armour 5 (the Mourning Post 2, as a scout tower) and 14.0 / 9.4 m sight unless stated (rules §8). On Pall,
-Wakeful structures regenerate +1 HP/s; off Pall they suffer the §B3.1 penalties. Footprints are in 0.5 m pathing cells (halls 10×10,
-production buildings 8×8, altar, smithy and shop 6×6, supply and towers 4×4); hall and tower upgrades keep the footprint.
+Wakeful structures regenerate +1 HP/s; off Pall they suffer the §B3.1 penalties. Footprints are in 0.5 m pathing cells (art bible §1.3: halls 16×16,
+production buildings, altar, smithy and shop 12×12, supply 8×8, towers 4×4); hall and tower upgrades keep the footprint.
 
 | id | Building | Role | Needs | Gold / lumber | Time (s) | HP | Footprint | Food | Function |
 |---|---|---|---|---|---|---|---|---|---|
-| `deathless_wake_barrow` | **Wake Barrow** | Hall T1 | – | 390 / 190 | 160 | 1550 | 10×10 | +10 | Sexton; gold and lumber drop-off; Pall 16 m; **Tomb Bell** |
-| `deathless_long_barrow` | **Long Barrow** | Hall T2 (upgrade) | Cenotaph | +300 / 200 | 130 | 2050 | 10×10 | +12 | Tier 2, hero 2; Pall 18 m; **Tomb Bell** |
-| `deathless_grand_barrow` | **Grand Barrow** | Hall T3 (upgrade) | Long Barrow, Ossuary | +350 / 220 | 150 | 2600 | 10×10 | +14 | Tier 3, hero 3; Pall 20 m; **Tomb Bell** |
-| `deathless_columbarium` | **Columbarium** | Supply | – | 145 / 45 | 45 | 520 | 4×4 | +10 | A curved wall of urn niches; Pall 8 m. **Does not** upgrade into a tower |
-| `deathless_cenotaph` | **Cenotaph** | Hero altar | – | 190 / 40 | 65 | 940 | 6×6 | – | Raises and revives heroes; Pall 6 m |
-| `deathless_household_tomb` | **Household Tomb** | Barracks | – | 185 / 55 | 65 | 1250 | 8×8 | – | Retainer, Shroudcaster; *Brisk Step*, *Burial Shroud* |
-| `deathless_ossuary` | **Ossuary** | Smithy and lumber drop-off | – | 150 / 50 | 60 | 1100 | 6×6 | – | Four upgrade lines (§B7.2); *Wide Pall*, *Tomb Lamps*, *Long-Handled Spades*; enables the Mourning Post |
-| `deathless_mask_atrium` | **Mask Atrium** | Caster hall | Long Barrow | 160 / 130 | 65 | 1000 | 8×8 | – | Eulogist, Pomp-Bearer, Veiled Mourner, Ash Urn; caster trainings |
-| `deathless_kiln_yard` | **Kiln Yard** | Workshop | Long Barrow | 150 / 140 | 65 | 1150 | 8×8 | – | Urn Hearse; Tombwalker at T3; *Grave-Damp* (T3) |
-| `deathless_ferry_steps` | **Ferry Steps** | Air pier | Long Barrow | 160 / 160 | 65 | 1100 | 8×8 | – | Drift-Shroud; the Released and the Wake Barge at T3; *Winding Sheet* (T2) |
+| `deathless_wake_barrow` | **Wake Barrow** | Hall T1 | – | 390 / 190 | 160 | 1550 | 16×16 | +10 | Sexton; gold and lumber drop-off; Pall 16 m; **Tomb Bell** |
+| `deathless_long_barrow` | **Long Barrow** | Hall T2 (upgrade) | Cenotaph | +300 / 200 | 130 | 2050 | 16×16 | +12 | Tier 2, hero 2; Pall 18 m; **Tomb Bell** |
+| `deathless_grand_barrow` | **Grand Barrow** | Hall T3 (upgrade) | Long Barrow, Ossuary | +350 / 220 | 150 | 2600 | 16×16 | +14 | Tier 3, hero 3; Pall 20 m; **Tomb Bell** |
+| `deathless_columbarium` | **Columbarium** | Supply | – | 145 / 45 | 45 | 520 | 8×8 | +10 | A curved wall of urn niches; Pall 8 m. **Does not** upgrade into a tower |
+| `deathless_cenotaph` | **Cenotaph** | Hero altar | – | 190 / 40 | 65 | 940 | 12×12 | – | Raises and revives heroes; Pall 6 m |
+| `deathless_household_tomb` | **Household Tomb** | Barracks | – | 185 / 55 | 65 | 1250 | 12×12 | – | Retainer, Shroudcaster; *Brisk Step*, *Burial Shroud* |
+| `deathless_ossuary` | **Ossuary** | Smithy and lumber drop-off | – | 150 / 50 | 60 | 1100 | 12×12 | – | Four upgrade lines (§B7.2); *Wide Pall*, *Tomb Lamps*, *Long-Handled Spades*; enables the Mourning Post |
+| `deathless_mask_atrium` | **Mask Atrium** | Caster hall | Long Barrow | 160 / 130 | 65 | 1000 | 12×12 | – | Eulogist, Pomp-Bearer, Veiled Mourner, Ash Urn; caster trainings |
+| `deathless_kiln_yard` | **Kiln Yard** | Workshop | Long Barrow | 150 / 140 | 65 | 1150 | 12×12 | – | Urn Hearse; Tombwalker at T3; *Grave-Damp* (T3) |
+| `deathless_ferry_steps` | **Ferry Steps** | Air pier | Long Barrow | 160 / 160 | 65 | 1100 | 12×12 | – | Drift-Shroud; the Released and the Wake Barge at T3; *Winding Sheet* (T2) |
 | `deathless_mourning_post` | **Mourning Post** | Scout tower (Fortified 2) | Ossuary | 40 / 20 | 25 | 320 | 4×4 | – | Sight 25 / 18 m; no attack. **One upgrade path:** Urn Tower |
 | `deathless_urn_tower` | **Urn Tower** | Tower (upgrade, Fortified 5) | Mourning Post | +85 / 45 | 32 | 500 | 4×4 | – | Pierce 20–24, CD 1.05 s, 10.5 m, G+A, shard 20 m/s. **Level 3** (XP). True sight 9 m with *Tomb Lamps* |
-| `deathless_grave_goods` | **Grave Goods** | Faction shop | – | 140 / 25 | 55 | 460 | 6×6 | – | Items (§B7.4) |
+| `deathless_grave_goods` | **Grave Goods** | Faction shop | – | 140 / 25 | 55 | 460 | 12×12 | – | Items (§B7.4) |
 
 ### B7.2 Upgrades and research
 
@@ -1261,13 +1262,12 @@ These two factions need **≈ 262–271 cr (about 265)**. Options:
 |---|---|---|
 | **Saltbound** (salt-crusted dead caravan; rose-salt `#E8C2C0`, brine-blue eye glow; *Raise the Caravan*) | Wakeful (lamp-rose `#FFC7D1`, terracotta masks, Urn Hearse, *Roll Call*) | Wakeful never show salt crystals, caravan robes or brine-blue light. Saltbound never wear masks, terracotta, roses or lacquer, and their glow stays blue. Their raise is a once-per-fight creep trigger, ours is masks |
 | **Mire Toads** | Glaer lakeland setting | Glaer use no toads or frogs in units, VFX, icons or emblems |
-| **Hollow Harvest** (night-active scarecrows with drilled turnip lanterns, glow `#FFC46B`; the Turnip King's *Lantern Glare*) | Glaer lanterns (`#FFB547`) and the Glare Post | Glaer lanterns are always caged amber teardrops, never drilled, pierced or head-shaped; Glaer never use straw figures or crows. *Lantern Glare* (a creep ability) and *Glare Post* (a building) differ in kind; keep both |
+| **Tattiebogles** (night-active scarecrows with drilled turnip lanterns, glow `#FFC46B`; Old Mangold's *Lantern Glare*) | Glaer lanterns (`#FFB547`) and the Glare Post | Glaer lanterns are always caged amber teardrops, never drilled, pierced or head-shaped; Glaer never use straw figures or crows. *Lantern Glare* (a creep ability) and *Glare Post* (a building) differ in kind; keep both |
 | **Old Menhir** (walking standing stone; *Lichen Hide*; *Drystone Wall* pathing wall) | The Woodgnaw fallback "bark giant"; *Warp and Weft* | The fallback giant is wood and bark, never stone. *Drystone Wall* blocks everyone; *Warp and Weft* is a woven one-sided fence that allies pass through |
 
 **Name and readability collisions** (requested changes to `neutrals.md`, listed in the Review log follow-ups):
 - Neutral marketplace **Lucky Barrow** vs the Wake / Long / Grand Barrow halls → rename the neutral **Lucky Cart** (it is already a pedlar's handcart).
-- Neutral **Glimmer Font**, the **Firefly Drift** critter and the **Firefly Jar** item vs the Glimmerswarm → rename the fountain
-  **Clearwater Font**; give Firefly Drift and Firefly Jar motes a **cool green-white tint, never amber**, at most 6 motes. The Glimmerswarm
+- The neutral mana fountain (now the **Dewstone**, a dry quartz boulder: neutrals §5.8, which resolved this request), the **Firefly Drift** critter and the **Firefly Jar** item vs the Glimmerswarm: give Firefly Drift and Firefly Jar motes a **cool green-white tint, never amber**, at most 6 motes. The Glimmerswarm
   stays amber with 20+ motes, a caged-lantern core, a team-colour ring, a selection ring and a health bar.
 - The **amber** camp band vs the Amber Lodge and amber accents: the band is minimap UI only; Glaer buildings never show amber minimap pips
   (team colour only).
