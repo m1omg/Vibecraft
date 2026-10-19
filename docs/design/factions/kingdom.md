@@ -114,7 +114,7 @@ or the culture behind them.
 | **Walls of wood and iron** | Pavisiers soak ranged fire, Wall Wagons deploy into forts, towers are strong and buildings armour up with masonry research |
 | **Thunder behind the boards** | Gunpowder (Hookgunners, Bombard Wagons, Gun Towers and Bombard Rondels) hits hard but is slow to reload |
 | **Every hand counts** | Workers become a fighting levy at a horn blast. Cheap Lookouts become towers. Crofts are sturdy |
-| **Guild casters** | Three caster trades (healer, debuffer, anti-mage), each with Journeyman and Master training, like a guild |
+| **Guild casters** | Three caster trades (healer, debuffer, anti-mage), each with Journeyman Papers and a Guild Seal, like a guild |
 | **Late power** | Tier 3 adds the Ironrider heavy cavalry, the Stork Rider heavy air and Wagon Fort chains |
 
 ---
@@ -514,8 +514,8 @@ Policy (mechanics §12.2): keep each **role**, never a unit's whole **kit**. Eve
 | T1 melee with defensive stance | **Pavisier** | Cheap heavy-armour line infantry; research a stance that blunts Pierce | **Cover** for allies behind it; painted pavise and falchion |
 | T1 gunpowder ranged | **Hookgunner** | Pierce ranged that needs the smithy; range research at T2 | Hook-gun on a forked rest; **Braced Shot** passive |
 | T3 heavy cavalry | **Ironrider** | Fast, heavy, expensive, T3 | **Couched Lance** charge; Bohemian barding |
-| Healer caster | **Linden Sister** | Autocast heal; dispel at Journeyman; buff at Master | Herbalist; Master buff is spell resistance plus regeneration |
-| Slow / debuff caster | **Lacewright** | Autocast slow; ally invisibility; hard disable at Master | **Lace Cocoon** can also protect an ally |
+| Healer caster | **Linden Sister** | Autocast heal; dispel at Journeyman; buff at Guild Seal | Herbalist; the Guild Seal buff is spell resistance plus regeneration |
+| Slow / debuff caster | **Lacewright** | Autocast slow; ally invisibility; hard disable at Guild Seal | **Lace Cocoon** can also protect an ally |
 | Anti-magic melee | **Assayer** | Spell-immune melee, burns mana on hit | **Silver Seal** area silence instead of stealing or controlling |
 | Long-range splash siege | **Bombard Wagon** | Long-range splash siege with a reveal shot | **Case Shot**: splash slows; crew-pushed bronze bombard cart |
 | Armoured anti-building engine | **Wall Wagon** | Slow armoured building-breaker with an anti-air mode | **Wagon Fort** deploy and chaining |
@@ -625,13 +625,13 @@ Autocast toggles with a right-click (global rule). "Research" names the upgrade 
 | Couched Lance (research) | Passive | After 3 s of continuous movement without attacking, the next attack deals **+100 %** damage and knocks a non-hero ground target back 1.5 m. A pennon flutters when the lance is ready |
 | Heavy Remounts (research) | Passive | Ironrider only: +100 max HP and +1 armour |
 
-**Linden Sister [SLICE]** (Journeyman and Master training each add +35 HP, +60 max mana and +1 damage)
+**Linden Sister [SLICE]** (Journeyman Papers and the Guild Seal each add +35 HP, +60 max mana and +1 damage)
 
 | Ability | Rank | Mana | Cooldown | Range | Effect |
 |---|---|---|---|---|---|
 | Herb Poultice (autocast **on**) | Novice | 6 | 1.0 s | 5 m | Heals a damaged allied non-mechanical unit for 30 HP |
 | Smoke of Rue **[SLICE]** | Journeyman | 70 | 2 s | 8 m | Area 3 m radius: removes every **dispellable** buff (friend and foe; rules.md §10.4) and deals 250 damage to summoned units |
-| Linden Wreath (autocast, default off) | Master | 50 | 1 s | 7 m | An ally gains 25 % Spell damage resistance and +1.5 HP/s for 60 s. Dispellable |
+| Linden Wreath (autocast, default off) | Guild Seal | 50 | 1 s | 7 m | An ally gains 25 % Spell damage resistance and +1.5 HP/s for 60 s. Dispellable |
 
 **Lacewright** *(later)* (same training bonuses as the Linden Sister)
 
@@ -639,7 +639,7 @@ Autocast toggles with a right-click (global rule). "Research" names the upgrade 
 |---|---|---|---|---|---|
 | Tangle Thread (autocast **on**) | Novice | 45 | 1 s | 7 m | Enemy: −50 % move speed, −20 % attack speed for 25 s (heroes 8 s). Dispellable |
 | Muslin Veil | Journeyman | 70 | 1 s | 7 m | An ally becomes invisible for 90 s. Attacking or casting breaks it |
-| Lace Cocoon | Master | 160 | 45 s | 8 m | **On an enemy** non-hero up to level 6: cannot move, attack or cast for 12 s, and takes −50 % damage. **On an ally:** it cannot act for 6 s but takes −75 % damage (a rescue tool) |
+| Lace Cocoon | Guild Seal | 160 | 45 s | 8 m | **On an enemy** non-hero up to level 6: cannot move, attack or cast for 12 s, and takes −50 % damage. **On an ally:** it cannot act for 6 s but takes −75 % damage (a rescue tool) |
 
 **Assayer** *(later)*
 
@@ -697,7 +697,7 @@ Autocast toggles with a right-click (global rule). "Research" names the upgrade 
 
 - **Recruitment:** 425 gold / 100 lumber (the first hero is free), 5 food, 55 s, trained at the **Oath Hall**. One of each type; at most 3.
 - **Abilities:** 3 abilities × 3 ranks (learned at levels 1/3/5) plus an ultimate at level 6.
-- **Attack and armour:** Heroic attack, Hero armour, 30 % spell resistance, 6 item slots.
+- **Attack and armour:** Heroic attack, Heroic armour (id `hero`; rules.md §7.1), 30 % spell resistance, 6 item slots.
 - **Attribute formulas:**
   - STR: HP = 100 + 25 × STR; +0.05 HP/s per point (base regeneration 0.25 HP/s).
   - AGI: armour = base + 0.3 × AGI; attack cooldown = base ÷ (1 + 0.02 × AGI).
@@ -706,8 +706,9 @@ Autocast toggles with a right-click (global rule). "Research" names the upgrade 
   - Attributes grow fractionally and are floored for display.
 - **Sight:** 28.1 / 12.5 m. Collision radius 0.55 m.
 - **Names:** each hero gets a random proper name from its list, shown as "Title: Name".
-- **Hotkeys (Classic preset, rules.md §18.4):** the four abilities are **Q / W / E / R** in the order of each kit table below (the ultimate is
-  always R); Learn is O.
+- **Hotkeys (Classic preset, rules.md §18.4):** each ability has its own **mnemonic letter** (§7.5, Heroes row), used on the hero card and
+  on the Learn card (O); the letters avoid the hero card's fixed keys M, S, H, A, P and O. The Q / W / E / R letters in the kit tables below
+  give the slot order and the optional "Hero abilities on Q / W / E / R" setting (the ultimate is always R there).
 - **Ability damage defaults:** all ability damage is **Spell** damage, which ignores the armour value (rules.md §7.3). Damage-over-time
   effects and marks are magic buffs, **dispellable: yes**, unless a row says otherwise.
 
@@ -823,7 +824,7 @@ Every name, VFX, number and visual is ours. No hero reproduces the expressive *c
 Moot Hall (T1) ──upgrade──► Walled Burg (T2, needs Oath Hall) ──upgrade──► Crown Burg (T3, needs Oath Hall + Foundry)
 │                               │                               │
 ├─ Croft (+7 food)              ├─ Collegium ── Linden Sister, Lacewright, Assayer
-├─ Oath Hall ── heroes          │                (Journeyman training at T2, Master at T3)
+├─ Oath Hall ── heroes          │                (Journeyman Papers at T2, Guild Seal at T3)
 ├─ Drill Yard ── Pavisier       ├─ Wainwright Yard [needs Foundry]
 │              ├ Hookgunner [needs Foundry]       ── Bombard Wagon, Brass Kestrel
 │              └ Ironrider  [needs Crown Burg + Foundry]  └ Wall Wagon [needs Crown Burg]
@@ -853,7 +854,7 @@ All buildings have **Fortified** armour 5 (scout towers 2; rules.md §8) and 14 
 | `kingdom_drill_yard` | Drill Yard | Barracks | — | 160 | 55 | 60 | 1350 | 5 | 8×8 | — | Pavisier, Hookgunner, Ironrider; their research | **[SLICE]** |
 | `kingdom_timber_yard` | Timber Yard | Lumber drop-off and masonry | — | 125 | 0 | 55 | 1000 | 5 | 8×8 | — | **Lumber drop-off**; masonry and lumber research; **enables towers**. Build it at the tree line | **[SLICE]** (Lime Mortar only) |
 | `kingdom_foundry` | Foundry | Weapons and armour smithy | — | 150 | 50 | 65 | 1200 | 5 | 6×6 | — | Weapon, powder and armour lines | **[SLICE]** |
-| `kingdom_collegium` | Collegium | Caster hall | Walled Burg | 160 | 120 | 65 | 1050 | 5 | 8×8 | — | Casters; Journeyman and Master training | **[SLICE]** (Linden Sister only) |
+| `kingdom_collegium` | Collegium | Caster hall | Walled Burg | 160 | 120 | 65 | 1050 | 5 | 8×8 | — | Casters; Journeyman Papers and Guild Seal | **[SLICE]** (Linden Sister only) |
 | `kingdom_wainwright_yard` | Wainwright Yard | Siege workshop | Walled Burg, Foundry | 140 | 130 | 60 | 1200 | 5 | 8×8 | — | Bombard Wagon, Brass Kestrel, Wall Wagon | **[SLICE]** |
 | `kingdom_stork_loft` | Stork Loft | Air roost | Walled Burg, Timber Yard | 150 | 140 | 60 | 1150 | 5 | 8×8 | — | Netcaster, Stork Rider. Visual: a tall timber tower crowned with a huge stork nest | *later* |
 | `kingdom_curio_cabinet` | Curio Cabinet | Faction shop | — | 130 | 30 | 60 | 480 | 5 | 6×6 | — | Sells items (§7.4) | **[SLICE]** |
@@ -881,7 +882,7 @@ Notes:
 
 | Item | Hall tier | Cost | Stock / restock | Effect | Slice |
 |---|---|---|---|---|---|
-| Homeward Horn | T1 | 300 g | 2 / 90 s | **Target a point or an own finished hall** (minimap clicks work; hotkey twice = highest-tier hall). Blow it for **5 s** (rules.md §6.8: enemy stuns, silences and damage do not stop it; your own Stop or move order does), then the hero and **up to 11 of your own non-structure units within 6 m** appear beside your finished hall nearest that point | **[SLICE]** |
+| Homeward Horn | T1 | 300 g | 2 / 90 s | **Target a point or an own finished hall** (minimap clicks work; hotkey twice = highest-tier hall). Blow it for **5 s** (rules.md §6.8: enemy stuns, silences and damage do not stop it; any order you give the hero does), then the hero and **up to 23 of your own non-structure units within 9.4 m** appear beside your finished hall nearest that point | **[SLICE]** |
 | Linden Salve | T1 | 135 g | 3 / 60 s | +240 HP at once (`heal_instant`) | **[SLICE]** |
 | Sage's Tincture | T1 | 115 g | 3 / 60 s | +140 mana at once (`mana_instant`) | **[SLICE]** |
 | Tin Watchman | T1 | 60 g | 3 / 45 s | Places a tiny clockwork ward: 10 m vision for 180 s (`place_ward`) | **[SLICE]** |
@@ -896,7 +897,7 @@ Weighstall and the clans' Tea Tent already do (neutrals §4.2, clans §9).
 ### 7.5 Command cards and hotkeys (Classic preset; rules.md §18.4)
 
 Letters are unique per card (`Defs` validates this). Unit cards always carry Move **M**, Stop **S**, Hold **H**, Attack **A**, Patrol **P**;
-heroes add Learn **O** and abilities **Q / W / E / R** (§6.1). Production buildings carry Rally **R**.
+heroes add Learn **O** and one mnemonic letter per ability (§6.1; Heroes row). Production buildings carry Rally **R**.
 
 | Card | Buttons (letter) |
 |---|---|
@@ -909,13 +910,13 @@ heroes add Learn **O** and abilities **Q / W / E / R** (§6.1). Production build
 | Drill Yard | Pavisier **P**, Hookgunner **G**, Ironrider **I**, Pavise Drill **D**, Drawn Barrels **B**, Couched Lance **L**, Heavy Remounts **E**, Rally **R** |
 | Timber Yard | Lime Mortar **M**, Bow Saws **S**, Felling Crews **F**, Ashlar Courses **A**, Iron Cramps **I**, Curfew Bells **C** |
 | Foundry | Tempered Blades **T**, Corned Powder **P**, Gothic Plate **G**, Quilted Gambesons **Q** |
-| Collegium | Linden Sister **L**, Lacewright **W**, Assayer **A**, Linden Journeyman Papers **J**, Linden Master's Seal **M**, Lacewright Journeyman Papers **U**, Lacewright Master's Seal **E**, Silver Seal **S**, Rally **R** |
+| Collegium | Linden Sister **L**, Lacewright **W**, Assayer **A**, Linden Journeyman Papers **J**, Linden Guild Seal **G**, Lacewright Journeyman Papers **U**, Lacewright Guild Seal **E**, Silver Seal **S**, Rally **R** |
 | Wainwright Yard | Bombard Wagon **B**, Brass Kestrel **K**, Wall Wagon **W**, Case Shot **C**, Signal Shells **S**, Spring Coils **P**, Hunting Stoop **H**, Wagon Chains **N**, Rally **R** |
 | Stork Loft | Netcaster **N**, Stork Rider **S**, Smoke Pall **P**, Pitch Firepots **F**, Long Flights **L**, Rally **R** |
 | Lookout | Gun Tower **G**, Bombard Rondel **B**, Assay Tower **A** |
 | Curio Cabinet | Homeward Horn **H**, Linden Salve **L**, Sage's Tincture **T**, Tin Watchman **W**, Tailor's Chalk **C**, Folding Pavise **F**, Lookout in a Crate **K** |
 | Unit abilities | Pavisier: Plant Pavise **Q**. Bombard Wagon: Attack Ground **G**, Signal Shell **Q**. Wall Wagon: Attack Ground **G**, Wagon Fort **Q**. Linden Sister: Herb Poultice **Q**, Smoke of Rue **W**, Linden Wreath **E**. Lacewright: Tangle Thread **Q**, Muslin Veil **W**, Lace Cocoon **E**. Assayer: Silver Seal **Q**. Netcaster: Weighted Net **Q**, Smoke Pall **W**. Brass Kestrel: Hunting Stoop **Q** |
-| Heroes | Wheel Marshal: Linden Balm **Q**, Brace the Wheel **W**, Measured Cadence **E**, The Wagon Ring **R**. Orrery Sage: Burning Lens **Q**, Clockwork Halberdier **W**, Lucid Hours **E**, Hour Rewound **R**. Flail Hetman: Hurled Chain **Q**, Threshing Sweep **W**, Chaff and Grain **E**, Wagon-Breaker Charge **R**. Firewright: Naphtha Flask **Q**, Fuse Mark **W**, Incendiary Wadding **E**, Grand Bombard **R** |
+| Heroes (same letters on the Learn card) | Wheel Marshal: Linden Balm **L**, Brace the Wheel **B**, Measured Cadence **C**, The Wagon Ring **R**. Orrery Sage: Burning Lens **B**, Clockwork Halberdier **C**, Lucid Hours **L**, Hour Rewound **R**. Flail Hetman: Hurled Chain **C**, Threshing Sweep **T**, Chaff and Grain **G**, Wagon-Breaker Charge **B**. Firewright: Naphtha Flask **N**, Fuse Mark **F**, Incendiary Wadding **W**, Grand Bombard **B** |
 
 ---
 
@@ -964,14 +965,14 @@ override the 10 % default):
 | Couched Lance | T3 | 150 / 150 | 60 s | Ironrider charge passive | *later* |
 | Heavy Remounts | T3 | 125 / 150 | 50 s | Ironrider only: +100 HP, +1 armour | *later* |
 
-**Collegium** (each caster trade has a Journeyman and a Master rank, like a guild)
+**Collegium** (each caster trade has Journeyman Papers at T2 and a Guild Seal at T3, like a guild; Guild Seal ids `kingdom_<caster>_guild_seal`, e.g. `kingdom_linden_guild_seal`)
 
 | Upgrade | Requires | Cost | Time | Effect | Slice |
 |---|---|---|---|---|---|
 | Linden Sister: Journeyman Papers | T2 | 120 / 60 | 60 s | Smoke of Rue; +35 HP, +60 mana, +1 damage | **[SLICE]** |
-| Linden Sister: Master's Seal | T3 | 180 / 140 | 75 s | Linden Wreath; +35 HP, +60 mana, +1 damage | *later* |
+| Linden Sister: Guild Seal | T3 | 180 / 140 | 75 s | Linden Wreath; +35 HP, +60 mana, +1 damage | *later* |
 | Lacewright: Journeyman Papers | T2 | 120 / 60 | 60 s | Muslin Veil; same stat bonus | *later* |
-| Lacewright: Master's Seal | T3 | 180 / 140 | 75 s | Lace Cocoon; same stat bonus | *later* |
+| Lacewright: Guild Seal | T3 | 180 / 140 | 75 s | Lace Cocoon; same stat bonus | *later* |
 | Silver Seal | T2 | 80 / 100 | 45 s | Assayer area silence | *later* |
 
 **Wainwright Yard**
@@ -1003,7 +1004,7 @@ override the 10 % default):
 | **0. Opening** (Moot Hall, no army) | 0:00–2:00 | Hodmen to 5 on gold; Oath Hall, Croft and Drill Yard. **Oath Hall done about 1:05; hero 1 out about 2:00** | **Levy Horn**: 5–8 Flail Levies near the hall repel any early rush | Losing mining time if the levy is overused |
 | **1. Tier 1** (Moot Hall) | 2:00–5:55 | Pavisiers, then Hookgunners after the Foundry; **Timber Yard at the tree line (about 2:30)**; Curio Cabinet for salves and the recall horn; hero creeps green camps to level 3; level-1 weapons; Lookouts at chokes | Hero level 3 with 4 Pavisiers and 2–3 Hookgunners | Slow army; vulnerable to fast raiders on the woodline (answer: Levy Horn plus a Lookout → Gun Tower) |
 | **2. Tier 2** (Walled Burg) | 5:55–12:00 | Hero 2; **Collegium Linden Sisters** (healing; Smoke of Rue strips enemy buffs and kills summons; the full game adds Lacewright slows and Assayers); Bombard Wagons with Signal Shells and Case Shot; Tailor's Chalk against invisible heroes; Brass Kestrel scouting and Netcasters *(later)*; Drawn Barrels; level-2 upgrades; expansion behind a Gun Tower | Firewright plus Hookgunners with Incendiary Wadding behind planted Pavisiers, Linden Sisters healing behind them; Bombard Wagons crack defences | Caster losses to burst; upkeep (stay ≤ 50 food or commit) |
-| **3. Tier 3** (Crown Burg) *(later)* | 12:00+ | Hero 3; Ironriders, Stork Riders, Wall Wagon forts; Master casters; level-3 upgrades; ultimates at hero level 6 | The Wagon Ring holds a collapsing line, then Hour Rewound gives back the lost HP and half the cooldowns, so the same army fights the next round; Ironrider Couched Lance flanks; chained Wagon Forts lock a map lane | Heavy gold cost; immobile fort lines can be bypassed |
+| **3. Tier 3** (Crown Burg) *(later)* | 12:00+ | Hero 3; Ironriders, Stork Riders, Wall Wagon forts; Guild Seal casters; level-3 upgrades; ultimates at hero level 6 | The Wagon Ring holds a collapsing line, then Hour Rewound gives back the lost HP and half the cooldowns, so the same army fights the next round; Ironrider Couched Lance flanks; chained Wagon Forts lock a map lane | Heavy gold cost; immobile fort lines can be bypassed |
 
 ---
 
@@ -1064,7 +1065,7 @@ on Greenvale (neutrals §3.6).
 | Buildings | Moot Hall (→ Walled Burg), Croft, Oath Hall, Drill Yard, **Timber Yard** (lumber drop-off, tower gate), Foundry, **Collegium**, Wainwright Yard, **Curio Cabinet** (faction shop: recall, salves, detection), Lookout (→ Gun Tower) | 10 |
 | Research | Foundry 4 lines × 2 levels, Pavise Drill, Drawn Barrels, Case Shot, Signal Shells, Lime Mortar, Linden Journeyman Papers | 14 |
 | Items (Curio Cabinet) | Homeward Horn, Linden Salve, Sage's Tincture, Tin Watchman (T1); Tailor's Chalk (T2) | 5 |
-| Detection | Signal Shell (Bombard Wagon), Tailor's Chalk (shop, T2), and the neutral Flour Bomb (Weighstall) | 3 sources |
+| Detection | Signal Shell (Bombard Wagon), Tailor's Chalk (shop, T2), and the neutral Tattle-Burrs (Weighstall) | 3 sources |
 | Hall tiers | T1 and T2 only (2 hero slots) | |
 
 **Asset plan and Higgsfield credit estimate (balance 269.75 cr)**
@@ -1201,3 +1202,10 @@ replaced by the stronger fix of another issue.
   VO lint script in `tools/ip/` (§3.3).
 
 **Cross-doc renames from the rules.md review (2026-10-17):** Stand Down → **Lay Down Flails** (per Levy: Lay Down the Flail; hotkey D); Silver Spire → **Assay Tower** (`kingdom_assay_tower`; a Blizzard place name); Night Watch → **Curfew Bells** (`kingdom_curfew_bells`; a WoW human militia); Chalk of Seeing → **Tailor's Chalk** (`item_tailors_chalk`); attack id `pure` → `raw`; the Homeward Horn follows the new rules.md §6.8 recall (point target, 5 s, enemy-proof). Details: rules.md review log.
+
+**Cross-doc edits from the rules.md review, round 2 (2026-10-19):** Master's Seal → **Guild Seal** (§1, §5, §7.1, §7.2, §8, §9;
+Collegium key **G**; ids `kingdom_<caster>_guild_seal`), because "Journeyman → Master" in the caster-training slots read as a word swap of
+the reference ladder. Hero abilities use **mnemonic letters** in the Classic preset (§6.1, §7.5 Heroes row; the kit tables' Q / W / E / R
+is the slot order and the optional setting). The Homeward Horn takes up to **23** units within **9.4 m**, and any order to the hero
+cancels it (§7.4). "Hero armour" is labelled **Heroic armour** (§6.1). §11: Flour Bomb → **Tattle-Burrs**. Details: rules.md review log,
+round 2.

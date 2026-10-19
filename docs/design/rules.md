@@ -1,6 +1,6 @@
 # Core rules spec (global, all factions)
 
-*Design date: 2026-10-16. Status: proposal for review. Scope: every rule that is the same for all four factions
+*Design date: 2026-10-16; revised 2026-10-17 and 2026-10-19 (review rounds 1 and 2, logged at the end). Status: proposal for review. Scope: every rule that is the same for all four factions
 (`kingdom`, `clans`, `sylvan`, `deathless`) and for neutrals. Data home: `data/factions.json` (§20).*
 
 **Read with:** `docs/research/gameplay-mechanics.md` (all numbers below come from it unless marked), `docs/research/ip-safety.md`
@@ -17,9 +17,14 @@ Every deviation is marked **Δ** with a reason and listed in the fidelity ledger
 no WC3 term appears in data or UI (attack/armour type names in §7.1, upkeep labels in §4.5, advisories in §17.3, data keys in §20).
 
 **Internal only.** This doc carries WC3 reference columns and a WC3 → Vibecraft fidelity ledger (§21) for design review. It never ships:
-`docs/.gdignore` keeps `docs/` out of Godot imports, and every export preset must set `exclude_filter` to `docs/*`. The repo stays private
-until the ip-safety §5.3 release gate; before any public release the WC3 columns and §21 move to `docs/research/` and this doc keeps
-Vibecraft values only (§23 release items).
+`docs/.gdignore` keeps `docs/` out of Godot imports, and every export preset must set `exclude_filter` to `docs/*`.
+**Repo visibility: PUBLIC** (checked 2026-10-19 with `gh api repos/m1omg/Vibecraft --jq .private`, which returned `false`). So this doc,
+the research docs and the faction docs are already published, including the brief above, the WC3 columns, the §21 ledger and the codename
+that ip-safety §4 keeps internal. **Owner action, now:** make the repo private (GitHub: Settings → General → Danger zone → Change
+visibility → Private), then replace this sentence with "repo is private (checked YYYY-MM-DD with `gh api repos/<owner>/<repo> --jq .private`)".
+If the repo must stay public, the WC3 columns (§1, §4, §5.1, §6, §13), §21 and the "Brief, restated" paragraph leave the tracked tree
+**now**, not at release, and are purged from history. Until one of the two is done, every push publishes this text (§23 #15, #15a, #17).
+Before any public release the WC3 columns and §21 move to `docs/research/` and this doc keeps Vibecraft values only.
 
 **Conventions**
 
@@ -76,7 +81,7 @@ Vibecraft values only (§23 release items).
 | Combat | 7 attack types × 7 armour types matrix (TFT values, our names); armour reduction 0.06A / (1 + 0.06A); damage point / backswing / cooldown; siege shells land where the target stood; enemy bodies are solid (surround, body-block); pseudo-random procs | Same (procs: flag) |
 | Day / night | 480 s cycle, 240 s day + 240 s night; first dusk at 200 s; sight 21.9 / 12.5 m (units), 28.1 / 12.5 (heroes), 12.5 / 9.4 (workers) | Same |
 | Fog | Black mask, fog, visible; cliffs block upward sight; trees block sight; flyers ignore both | Same |
-| Creeps | Acquire 3.9 m; camp acts as one; leash 18.75 m; give up after 10 s (3 s if every attacker is unreachable); most camps sleep at night; no respawn; bounty 4 × level + 2 + rand(0–4); minimap shows camps from 0:00 | Leash/bounty unverified in WC3 |
+| Creeps | Acquire 3.9 m; camp acts as one; leash 18.75 m; give up after 10 s (3 s if every attacker is unreachable); return home invulnerable and arrive at full HP and mana; a creep hit by a structure goes home below 60 % HP; most camps sleep at night; no respawn; bounty 4 × level + 2 + rand(0–4); minimap shows camps from 0:00 | Leash/bounty unverified in WC3 |
 | End | Defeat when a player owns no structure. Lose every hall → revealed after 120 s | Same |
 | Controls | Smart right-click; 12-unit selection; 10 control groups; shift-queue 32; autocast; rally; F1–F3 heroes; 4×3 card | Same |
 | AI | Easy / Normal / Hard, no cheats, scripted per-faction build orders (§19) | Our design |
@@ -111,6 +116,8 @@ Vibecraft values only (§23 release items).
 - All sim randomness comes from the seeded `World.rng` in a fixed call order (architecture §1 rule 2). Uses: damage rolls (integer, uniform in
   `[min, max]`), proc chances (critical, bash, evasion), creep bounty, creep item picks at match start, random hero proper names, AI choices.
 - **AI** draws from its own stream `rng_ai = seeded(match_seed ^ 0xA1)` so adding an AI decision never shifts combat rolls.
+- **Critters** wander on their own stream `rng_critter = seeded(match_seed ^ 0xC7)` (neutrals §6), so adding or killing a critter never
+  shifts combat rolls.
 - Proc chances (critical strike, bash, evasion, any ability `chance`) use **pseudo-random distribution** by default (`combat.proc_mode = "prd"`).
   Each (unit, proc source) pair keeps a failure counter *N*, starting at 1. A roll succeeds with chance `min(1, C × N)`; a failure adds 1 to *N*
   and a success resets it to 1. *C* is set from the nominal chance *p* so that the long-run rate equals *p*: 5 % → 0.00380, 10 % → 0.01475,
@@ -133,10 +140,10 @@ Vibecraft values only (§23 release items).
 
 | Item | Rule |
 |---|---|
-| Slice | 1v1: one human player vs one AI, on one map (Greenvale). `kingdom` vs `clans`, either side |
+| Slice | 1v1: one human player vs one AI, on one map, **Wether Downs** (tileset id `greenvale`, shown to players as **Downland**; slice-plan §1). `kingdom` vs `clans`, either side |
 | Later | Up to 12 players in teams; allied shared vision on by default (team melee) |
 | Neutrals | `PlayerState.NEUTRAL_HOSTILE = 12` (creeps, enemy of all), `NEUTRAL_PASSIVE = 13` (mines, shops, critters, enemy of none) |
-| Colours | Team colour per player id (`PlayerState.COLORS`); shown on unit team-colour masks, flags and minimap |
+| Colours | Team colour per lobby slot from art-and-audio bible §2.4, **in that table's order**: Crimson `#D8232A`, Royal Blue `#285DE6`, Gold `#E6BB17`, Emerald `#2EAE3A`, Tangerine `#E35F18`, Violet `#7A2FD0`, Cornflower `#5A92E6`, Lime `#A8D41E`, Turquoise `#14B8A6`, Coral Rose `#E0507A`, Pewter `#B0A6D6`, Forest `#2A8C4A`. Ramps, automatic assignment per faction and the conflict fixes are the bible's. Shown on unit team-colour masks, flags and the minimap. Today's `PlayerState.COLORS` (`src/systems/player_state.gd`) is the reference RTS's 12 colours in the reference order and fails `tools/ip/check_value_echo.py` on 7 slots; it is replaced (§20.4 step 10, test `test_team_colours`) |
 
 ### 3.2 Start conditions
 
@@ -191,7 +198,7 @@ were dropped by the faction docs (sylvan §A3.1, deathless §B3.1), so there is 
 |---|---|---|
 | Lumber per tree | **50** (`data/doodads.json` per tree type; default `rules.economy.lumber_per_tree_default`) | ≈ 50 (unverified) |
 | Chopping | The worker stands adjacent to the tree and gains 1 lumber per `chop_interval` until it carries `lumber_per_trip`, then walks to the nearest lumber drop-off | 1 per hit |
-| Felling | A tree at 0 lumber is removed: its cells are freed, `tree_felled` fires, pathing relabels (architecture §6) | Same |
+| Felling | A tree at 0 lumber is removed: its cells are freed, `tree_felled` fires, pathing relabels (architecture §6). Workers chopping a tree that is felled, or arriving at a felled tree, **retarget the nearest reachable tree within 8 m of it** (`rules.economy.tree_retarget_radius`; ties by tree id) and carry on. If none is found they go idle (and count for the idle-worker key, §18.3) | Same (workers move on by themselves) |
 | Sharing a tree | Any number of workers may chop one tree (except `sylvan`, one per tree) | Same |
 | Drop-off | Any finished friendly hall, or the faction's lumber building | Same |
 | Taxes | Lumber is **never** taxed by upkeep | Same |
@@ -202,11 +209,11 @@ were dropped by the faction docs (sylvan §A3.1, deathless §B3.1), so there is 
 |---|---|---|---|---|---|---|---|---|
 | `kingdom` | Hodman | 10, walked | **10** (15 with Bow Saws, 20 with Felling Crews; both *later*) | 1 per 0.8 s | Felled | Hall, **Timber Yard** [SLICE] (built at the tree line; also gates towers) | Up to **3** (1 builder + 2 hod carriers); each carrier **+40 %** rate and **5 lumber per 10 s** (the Hod Chain, kingdom §4) | **Levy Horn** turns workers into militia in place (kingdom §4) |
 | `clans` | Yurtwright | 10, walked | **15** | 1 per 0.9 s | Felled | Hall, Casting Pit | **1**; others may Mend (repair) | **Sound the Gong / Roll the Felt** worker garrison (clans §4.1) |
-| `sylvan` *(later)* | Tapster | 10, walked | **8** | 1 per 1.0 s | **Never felled** (tapping) | Lodge, Resinworks | Up to **2**; second +50 % | One Tapster per tree; woodline never recedes (sylvan §A3.1) |
+| `sylvan` *(later)* | Tapster | 10, walked | **10** (12 with Deep Spigots, T2; 14 with Bored Spigots, T3) | 1 per 0.9 s | **Never felled** (tapping) | Lodge, Resinworks | Up to **2**; second +50 % | One Tapster per tree; woodline never recedes (sylvan §A3.1) |
 | `deathless` *(later)* | Sexton | 10, walked | **10** | 1 per 0.8 s | Felled | Barrow, Ossuary | Up to **2**; second +50 % | Pall spreads from buildings (deathless §B3.1) |
 
 Rate check (chop time + round-trip walk). From the hall at the slice's typical 10 m tree walk: kingdom 10 ÷ (8.0 + 6.7) ≈ 0.68 lumber/s
-per worker; clans 15 ÷ (13.5 + 6.5) ≈ 0.75. From a tree-line drop-off 4 m from the trees (kingdom **Timber Yard**, clans Casting Pit; both
+per worker; clans 15 ÷ (13.5 + 6.5) ≈ 0.75; sylvan (*later*) 10 ÷ (9.0 + 6.45) ≈ 0.65 (≈ 0.70 with Deep Spigots). From a tree-line drop-off 4 m from the trees (kingdom **Timber Yard**, clans Casting Pit; both
 in the slice): kingdom 10 ÷ (8.0 + 2.7) ≈ **0.93**; clans 15 ÷ (13.5 + 2.6) ≈ **0.93**. The kingdom opening has its Timber Yard up at about
 3:25 (kingdom §10), so from then on the two factions gather lumber at the same rate. Clans trade early tempo (first delivery 13.5 s after
 arrival vs 8 s) for fewer, longer trips.
@@ -230,7 +237,7 @@ lumber. Clans allow 1 builder; sylvan and deathless allow 2 at +50 % with no ext
 | Rule | Value |
 |---|---|
 | Cap | **100** (`rules.economy.food_cap`). Food provided above 100 is ignored; the HUD shows `used / min(provided, 100)` |
-| Providers | Halls (per tier, replacing not adding) and supply buildings, **only when complete**: kingdom hall 12 / 14 / 16, Croft +7; clans hall 10 / 10 / 10, Home Yurt +10; sylvan lodge 10 / 12 / 14, Stilt Larder +10; deathless barrow 10 / 12 / 14, Columbarium +10 |
+| Providers | Halls (per tier, replacing not adding) and supply buildings, **only when complete** (a hall that is upgrading counts as complete at its current tier, §5.1): kingdom hall 12 / 14 / 16, Croft +7; clans hall 10 / 10 / 10, Home Yurt +10; sylvan lodge 10 / 12 / 14, Stilt Larder +10; deathless barrow 10 / 12 / 14, Columbarium +10 |
 | Costs | Unit `cost.food`: worker 1, line infantry 2–3, ranged 2–3, casters 2, siege 3, heavy 4–6, hero 5. Summoned units and structures cost **0** |
 | Training | Gold and lumber are paid when the item is **queued**. Food is reserved when the item **starts** training. If free food is short, the queue head **waits** ("stalled for food", juice ECO-16) and the advisory "need supply" plays at most every 8 s |
 | Counting | `food_used` includes units in training and living heroes. **Dead heroes free their 5 food**; reviving needs 5 free food |
@@ -260,7 +267,7 @@ lumber. Clans allow 1 builder; sylvan and deathless allow 2 at +50 % with no ext
 |---|---|---|---|
 | Train unit | On queue | **100 %** | Food reserved on start (§4.4) |
 | Research / upgrade | On queue | **100 %** | One research of each line at a time per player |
-| Hall tier upgrade | On start | **100 %** | The hall cannot train while upgrading (WC3) |
+| Hall tier upgrade | On queue | **100 %** | It enters the hall's queue behind any worker in training; while it runs the hall trains nothing and nothing else can be queued (WC3). The hall keeps working as a finished hall of its current tier (§5.1) |
 | Construct building | Cost **checked at order time** (`build_check_on_order = true`), **paid** when the worker arrives and starts (`build_pay = "on_start"`) | **75 %** **Δ** (unverified in WC3) | An unaffordable placement is refused at once: the placement ghost turns red and the "need gold/lumber" advisory plays. Checked again on arrival; if the player is short by then, the order fails with the same advisory |
 | Hero (altar) | On queue (or the free token) | 100 % (token returns) | |
 | Hero revive | On queue | 100 % | |
@@ -309,7 +316,8 @@ lumber. Clans allow 1 builder; sylvan and deathless allow 2 at +50 % with no ext
 | `deathless` | Wake Barrow, +10 | Long Barrow, +12 (needs Cenotaph) | Grand Barrow, +14 (needs Ossuary) |
 
 Halls have **Fortified** armour **5** (a faction T3 hall may set 6: kingdom Crown Burg) and train the faction worker at every tier. Upgrades
-keep the footprint and current HP fraction. Hall food per tier is a faction choice (kingdom 12 / 14 / 16; clans 10 / 10 / 10; sylvan and
+keep the footprint and current HP fraction. **During an upgrade** the hall stays a finished hall of its current tier: it keeps its food,
+drop-off, tier, hero-slot count and cripple status (§14.4), and gets the new tier's food and max HP on completion. Hall food per tier is a faction choice (kingdom 12 / 14 / 16; clans 10 / 10 / 10; sylvan and
 deathless 10 / 12 / 14). WC3 halls are reported to give the same food at every tier, so rising hall food is a faction **Δ** (§21).
 
 ### 5.2 What tiers unlock (global shape)
@@ -318,7 +326,7 @@ deathless 10 / 12 / 14). WC3 halls are reported to give the same food at every t
 |---|---|
 | **T1** | Workers; the barracks-type building and its two basic units; altar and **hero 1**; supply; towers; level-1 weapon/armour upgrades; faction shop stock T1 |
 | **T2** | Caster, workshop/siege and beast/air buildings; mid-tier units; **hero 2**; level-2 upgrades; caster rank-2 training (kingdom Journeyman Papers, clans Second Ribbon); shop stock T2; **single-hero XP bonus +15 %** |
-| **T3** | Top-tier units (heavy cavalry/giants, heavy air); **hero 3**; level-3 upgrades; caster rank-3 training (kingdom Master's Seal, clans Elder Ribbon); shop stock T3; **single-hero XP bonus +30 %** |
+| **T3** | Top-tier units (heavy cavalry/giants, heavy air); **hero 3**; level-3 upgrades; caster rank-3 training (kingdom **Guild Seal**, ids `kingdom_<caster>_guild_seal`; clans Elder Ribbon); shop stock T3; **single-hero XP bonus +30 %** |
 
 Exact unit and building gates are in each faction doc (§7 of kingdom and clans; A7/B7 of sylvan-and-deathless). The slice uses **T1 and T2 only**.
 
@@ -350,7 +358,7 @@ WC3 cost reference (classic.battle.net): weapons 100/50, 175/175, 250/300 (60/75
 | Slots by tier | T1: **1**, T2: **2**, T3: **3**. Dead heroes awaiting revive occupy their slot | Same |
 | Cost | **425 gold / 100 lumber, 5 food, 55 s** at the faction altar | Same |
 | First hero | Free (token), 5 food, plus the faction recall item | Same |
-| Inn heroes | **425 g / 135 l**, 5 food, **hired instantly** (no train time); a free token also covers an inn hero | Same (lumber 135 since 1.15) |
+| Inn heroes | **425 g / 135 l**, 5 food, **hired instantly** (no train time); a free token also covers an inn hero. **Each inn hero can be hired once per match**, by the first player to hire it: the button greys out for everyone else, even after that hero dies (it is revived, not re-hired). `rules.heroes.inn_hero_unique = "match"` (neutrals §5.5) | Same (lumber 135 since 1.15; once per match reported, verify) |
 | Spawn | Full HP and mana, at the altar's edge toward its rally point | |
 | Proper name | Random from the hero's name list, shown as "Title: Name" (faction docs) | Same idea |
 | Hero sigil | A faction sigil ring under every hero (juice HER-01: a ratcheting wheel for the kingdom, a struck gong for the clans); never a soft team-colour glow pool. Asset and file names use `hero_sigil` | |
@@ -378,7 +386,7 @@ The hero gains 1 skill point.
 | Tower kill (killing blow by a structure) | **None** to anyone | WC3 |
 | Own or allied unit (deny) | **None** to anyone, and no bounty | |
 | Critter | None | |
-| Flat-XP power-ups (e.g. the neutral Old Soldier's Tally-Stick, +100 XP; item class id `xp_powerup`) | Flat XP, **ignores** the creep factor, still blocked at level 10 | |
+| Flat-XP power-ups (e.g. the neutral Old Soldier's Tally-Stick, +100 XP; item class id `xp_powerup`) | Flat XP, **ignores** the creep factor **and the single-hero bonus** (`rules.items.flat_xp_ignores_single_hero_bonus`), still blocked at level 10 | neutrals §1.6 |
 
 ### 6.4 XP sharing
 
@@ -388,8 +396,10 @@ The hero gains 1 skill point.
 4. **No eligible hero in range → the XP is lost** (`rules.xp.no_hero_in_range = "lost"`; neutrals §1.6 agrees). The research quote that
    distant heroes still get it is unverified; the other behaviour stays one data switch (`"all_heroes"`). This spec chooses "lost" because WC3
    exposes a hero-XP *range* constant and players bring heroes to fights to level them. Verify against WC3 before shipping (§23 #1).
-5. **Single-hero bonus:** a player who owns exactly **one** hero (alive or dead) gets **+15 % at T2** and **+30 % at T3** on all XP.
+5. **Single-hero bonus:** a player who owns exactly **one** hero (alive or dead) gets **+15 % at T2** and **+30 % at T3** on all kill XP (not on flat-XP power-ups, §6.3).
 6. Allied heroes (team games, *later*): only the killer's owner's heroes receive XP.
+7. **Storage:** XP is a **float** per hero. Shares and factors are never rounded (25 split between 2 heroes × 0.8 = 10 each; 85 split
+   between 2 heroes × 0.7 = 29.75 each). Levels compare the float against the table; the UI shows `floor(xp)`.
 
 Worked example: a level-1 hero kills a green camp of two level-2 and two level-1 creeps: (40 + 40 + 25 + 25) × 0.80 = **104 XP**.
 Two green camps reach level 2. At level 5 the same camps give nothing, so the hero must fight the enemy to grow.
@@ -403,9 +413,9 @@ Two green camps reach level 2. At level 5 the same camps give nothing, so the he
 | Rank gates | Normal rank *r* needs hero level ≥ **2r − 1** (levels 1 / 3 / 5). Ultimate needs level **6** |
 | Learning | The **Learn** button (§18.4) opens the skill card; unspent points show a "+" badge on the hero portrait |
 | Cast timing | `cast_point` (default 0.3 s) then the effect; `cast_backswing` (default 0.5 s) can be cancelled by any order. Mana and cooldown are spent **at the cast point**. An order or stun before the cast point cancels at no cost |
-| Channels | Stop when the caster moves, is stunned, silenced or ordered elsewhere |
+| Channels | Stop when the caster moves, is stunned, silenced or ordered elsewhere. **One exception:** recall items (§6.8), which enemy stuns, silences and damage do not end |
 | Duration on heroes | Control effects (stun, sleep, root, slow, silence, disarm) last **50 %** as long on heroes unless the ability sets `hero_duration`. Polymorph-type and "remove from game" effects cannot target heroes unless the ability sets `allow_heroes` (then `hero_duration` applies; e.g. clans Marmot Curse, Bowl Over) |
-| Spell damage on heroes | ×0.7 through the matrix (Spell vs Hero), §7.2 |
+| Spell damage on heroes | ×0.7 through the matrix (Spell vs Heroic armour), §7.2 |
 
 ### 6.6 Attributes
 
@@ -422,7 +432,7 @@ Every hero has STR, AGI and INT with a base and a per-level growth (faction docs
 | Attack cooldown | `base_cooldown ÷ (1 + 0.02 × AGI + other attack-speed bonuses)`, clamped (§7.5) | AGI +2 % attack speed |
 | Damage | `base_damage [min, max]` + **1 × primary attribute** | Primary +1 damage |
 | Sight | 28.1 / 12.5 m (1800 / 800 gu) | |
-| Spell resistance | Built into the Hero armour type (×0.7 vs Spell) | |
+| Spell resistance | Built into the Heroic armour type (id `hero`; ×0.7 vs Spell) | |
 
 Check against kingdom §6.2: Wheel Marshal at level 10 has STR floor(23 + 2.6 × 9) = 46 → 1250 HP; AGI floor(12 + 1.4 × 9) = 24 → armour 1 + 7.2 = 8.2. ✓
 
@@ -442,6 +452,8 @@ Check against kingdom §6.2: Wheel Marshal at level 10 has STR floor(23 + 2.6 ×
 
 - Revive needs 5 free food and a free altar queue slot. The revived hero appears at the altar (or inn) and walks to the rally point.
 - **Hero death:** the body fades (no usable corpse); the hero **keeps its items**; its portrait shows a revive timer once queued.
+- **Cooldowns** of the hero's abilities and items keep running while it is dead and are **not reset** on revive (WC3 engine behaviour;
+  verify, §23 #30).
 
 ### 6.8 Inventory and items (hero rules)
 
@@ -455,7 +467,7 @@ Check against kingdom §6.2: Wheel Marshal at level 10 has STR floor(23 + 2.6 ×
 | Stacking | Different items stack additively; identical permanent effects stack unless the item says "unique" (auras never stack, §10.3) |
 | Charges | Identical purchasable consumables merge into one slot, up to `charge_merge_factor` (**2**) × their base charges (neutrals §4.1) |
 | Cooldown groups | Items of one `cooldown_group` share a cooldown per hero (default group: the item id). `rules.items.group_cooldown`: **`heal` 8 s, `mana` 8 s** (neutral draughts and cordials, faction salves, tinctures and teas) |
-| **Recall items** | **Target a point or an own finished hall** (minimap clicks allowed). The hero goes to the own finished hall nearest that point; pressing the hotkey twice picks the highest-tier hall. After `rules.items.recall_channel` (**5.0 s**, one value for every recall item), the hero and up to **11** own non-structure units within **6.0 m** (nearest first, counted on the completion tick) appear beside that hall. **Enemy stuns, silences and damage do not cancel it**; only the hero's death or the owner's own Stop or move order does. The charge is spent on completion. If the chosen hall dies during the channel, the own finished hall nearest the point is used; with none left the channel fails and the charge is kept (`recall_target = "point_nearest_own_hall"`, `recall_enemy_interruptible = false`). Applies to every recall item: Homeward Horn, Homeward Felt, Lake Whistle, Coin for the Ferry and the neutral Homing Pigeon (neutrals §4.2). Price and stock per shop (300–350 g) |
+| **Recall items** | **Target a point or an own finished hall** (minimap clicks allowed). The hero goes to the own finished hall nearest that point; pressing the hotkey twice picks the highest-tier hall. After `rules.items.recall_channel` (**5.0 s**, one value for every recall item), the hero and up to **23** own non-structure units within **9.4 m** (600 gu; 24 bodies with the hero; nearest first, counted on the completion tick) appear beside that hall. The cap takes a whole 40–60 food army home (**flag:** confirm radius and cap from WC3 footage, neutrals §11 Q25; §23 #28). **Cancelling:** any order the owner issues to the hero (move, stop, hold, attack, cast, item use) cancels the channel and keeps the charge, and auto-acquire never fires during it. The recall is the **one exception to §10.2**: enemy stuns, silences and damage do not end it; only the hero's death or its owner's order does. The charge is spent on completion. If the chosen hall dies during the channel, the own finished hall nearest the point is used; with none left the channel fails and the charge is kept (`recall_target = "point_nearest_own_hall"`, `recall_enemy_interruptible = false`). Applies to every recall item: Homeward Horn, Homeward Felt, Lake Whistle, Coin for the Ferry and the neutral Homing Pigeon (neutrals §4.2). Price and stock per shop (300–350 g) |
 
 ---
 
@@ -483,18 +495,19 @@ Check against kingdom §6.2: Wheel Marshal at level 10 has STR floor(23 + 2.6 ×
 | `medium` | **Medium** | Ranged units, workers, riders | Medium |
 | `heavy` | **Heavy** | Melee infantry, siege carts, giants | Heavy |
 | `fortified` | **Fortified** | Buildings, deployed forts | Fortified |
-| `hero` | **Hero** | Heroes; neutral heroes | Hero |
+| `hero` | **Heroic** (the id stays `hero`) | Heroes; neutral heroes | Hero |
 | `unarmored` | **Unarmored** | Casters, critters, some summons | Unarmored |
 | `adamant` | **Adamant** | Special objectives and boss shrines (*later*); none in the slice | Divine |
 
 The weight names (light, medium, heavy, fortified, unarmored) are plain descriptive English used across the genre; only the distinctive
-WC3 coinages are replaced (Normal → Blade, Magic → Arcane, Chaos → Raw, Divine → Adamant). **Data ids change** from today's file:
+WC3 coinages are replaced (Normal → Blade, Magic → Arcane, Chaos → Raw, Divine → Adamant, and Hero → **Heroic** for both the attack and the
+armour label, so the reference Hero / Hero pair never appears in UI; status flags get their own labels too, §10.7). **Data ids change** from today's file:
 attack `hero` → `heroic`, `chaos` → `raw`, plus the new armour `adamant` (migration in §20.4). "Raw" replaces an earlier "Pure", which is
 the damage-type coinage of a famous WC3 custom map (review log, item 6).
 
 ### 7.2 Damage matrix (percent of damage dealt)
 
-| Attack ↓ / Armour → | Light | Medium | Heavy | Fortified | Hero | Unarmored | Adamant |
+| Attack ↓ / Armour → | Light | Medium | Heavy | Fortified | Heroic | Unarmored | Adamant |
 |---|---|---|---|---|---|---|---|
 | **Blade** | 100 | **150** | 100 | 70 | 100 | 100 | 5 |
 | **Pierce** | **200** | 75 | 90 | 35 | 50 | 150 | 5 |
@@ -627,9 +640,10 @@ cannot see (fog), and it does not reveal the area.
 | T1 ranged | 370–535 | 0 Medium | 4.1–4.2 | 21.9 / 12.5 | 0.45 | 2–3 |
 | Caster | 300–330 | 0 Unarmored | 4.2 | 21.9 / 12.5 | 0.40 | 2 |
 | Siege cart | 420–450 | 1–2 Heavy | 3.3–3.4 | 21.9 / 12.5 | 0.80 | 3 |
-| Cavalry / T3 heavy | 820–1300 | 2–5 Heavy | 3.9–5.5 | 21.9 / 12.5 | 0.70–1.0 | 4–5 |
+| Cavalry / T3 heavy | 820–1300 | 2–5 Heavy | 3.9–5.5 | 21.9 / 12.5 | 0.70–1.0 | 4–6 |
+| Air scout (e.g. kingdom Brass Kestrel) | 250–350 | 0–1 Light | 6.0–6.25 | 21.9 / 12.5 or more | 0.5 | 1–2 |
 | Flyer | 480–800 | 0–1 Light | 5.0–6.25 | 21.9 / 12.5 | 0.5–0.8 | 3–4 |
-| Hero (level 1) | 475–750 | Hero | 4.4–5.0 | 28.1 / 12.5 | 0.55 | 5 |
+| Hero (level 1) | 475–750 | Heroic | 4.4–5.0 | 28.1 / 12.5 | 0.55 | 5 |
 
 Movement speed is clamped to **[2.34, 6.25] m/s** (150–400 gu/s; WC3 default min and max) after all modifiers. The hard engine cap is
 8.16 m/s (522 gu/s) for special cases. **Flag:** the 150 gu/s minimum is from memory.
@@ -658,9 +672,9 @@ Surrounds and body-blocks are WC3 micro staples (mechanics §11 pillar 4): catch
 | Rule | Value |
 |---|---|
 | Armour | **Fortified**, value **5** (scout towers 2; a faction T3 hall may set 6); masonry-type research per faction |
-| HP | Halls 1550 / 2050 / 2600; production buildings **760–1350**; supply 500–620; towers 320–520 (faction docs). About 10–20 % below WC3's (e.g. barracks 1500): **Δ** for siege tempo (§21) |
+| HP | Halls 1550 / 2050 / 2600 (≈ +3 % on WC3's 1500 / 2000 / 2500); production buildings **760–1350**; supply 500–620; towers 320–520 (faction docs). Most production buildings are at or within 10 % of the WC3 value for their role (kingdom Oath Hall 900, Foundry 1200, Collegium 1050 and Wainwright Yard 1200 equal it); the kingdom Drill Yard is −10 % (1350 vs barracks 1500); the clans Mirror Yurt (760, against 800) and Home Yurt (620) are faction values inside the band (clans §5.4 audit). Kept within ± 10 % (§21; WC3 figures per §23 #21) |
 | Sight | Default **14.0 / 9.4 m**; halls and towers set their own (clans hall 18.0 / 12.5; kingdom Lookout 25 / 18); capped at 28.1 m |
-| Regeneration | **None** by default (WC3 human/orc buildings). Faction exceptions only (deathless Pall, sylvan noonlight) |
+| Regeneration | **None** by default (WC3 human/orc buildings). Faction exceptions only: deathless Pall (+1 HP/s); sylvan noonlight (+1 HP/s) and, by day, the sunlit yard (**structures only**, +1 HP/s; the two do not stack). Details in §9 |
 | Under construction | §4.7 (starts at 10 % HP) |
 | Destroyed | Footprint freed at once; rubble decays over **4 s** (`structure_decay`); no XP unless it had an attack |
 | Fog | Enemy buildings, once seen, leave a **ghost** (last-seen state, no HP shown) until re-scouted (§14) |
@@ -683,8 +697,14 @@ Surrounds and body-blocks are WC3 micro staples (mechanics §11 pillar 4): catch
 
 - Regeneration is continuous (`rate × DT` per tick) and stops at max. Dead units do not regenerate.
 - **No out-of-combat bonus** (WC3 has none). Healing comes from abilities, items, fountains (neutrals) and faction terrain effects.
-- **Faction regen hooks:** deathless on Pall +1.5 HP/s (heroes +2.0), enemies on Pall get no natural regen; sylvan in noonlight +1 HP/s.
-  `kingdom` and `clans` have none.
+- **Faction regen hooks** (numbers owned by sylvan-and-deathless §A3.2 and §B3.1):
+  - `deathless` on Pall: units +1.5 HP/s (heroes +2.0), structures +1 HP/s; enemy organic units on Pall get no natural regeneration.
+  - `sylvan`: **noonlit** units +1.5 HP/s (heroes too), structures +1 HP/s. Noonlight comes only from lanterns the player fuels with lumber
+    (1 lumber per 4 s per lit lantern) and from a few abilities and items. By day the **sunlit yard** mends **structures only** (+1 HP/s, not
+    stacking with a lit lantern); units get nothing from it. There is **no time-of-day unit regeneration**: the round-1 version recreated
+    a reference racial and was retired for IP reasons (sylvan-and-deathless round-3 fix).
+  - Faction terrain regeneration skips `mechanical` units, applies to spell-immune units and is not natural regeneration.
+  - `kingdom` and `clans` have none.
 - **Mana** exists only on units with `max_mana > 0`. Spending mana below 0 is impossible; abilities check cost at the cast point.
 
 ---
@@ -732,7 +752,7 @@ remaining, rank, data}`.
 | Summons | A dispel deals the ability's `summon_damage` to every enemy summon hit (typical 200–400) |
 | Spell-immune units | Not affected by enemy dispels; own dispels can cleanse allies that are not spell-immune |
 
-### 10.5 Magic immunity
+### 10.5 Spell immunity (`spell_immune`, shown as "Spellproof")
 
 `spell_immune` units: §7.2 table. They cannot be healed by single-target spells, cannot be targeted by abilities (except `pierces_immunity`),
 are not hit by area spell damage, take 0 from Arcane attacks, and still receive positive auras. In the slice: sylvan Ambermail and
@@ -754,10 +774,31 @@ Glimmerswarm are *later*; kingdom Assayer is *later*. No slice unit is spell-imm
 `ground` / `air`, `organic` / `mechanical`, `structure`, `hero`, `worker`, `summoned`, `spell_immune`, `invulnerable`, `ward`.
 Abilities list allowed targets with these flags. Healing spells skip `mechanical` and `structure`. Repair targets only `mechanical` and `structure`.
 
+Tooltips and the info panel use the **display names** below, never the reference game's own labels ("Magic Immunity", "True Sight",
+"Ethereal"). `tools/ip/banned_ui_terms.txt` enforces this on the string table (`data/strings/`, §20.4 step 11).
+
+| Flag or status | Display name (UI) | Notes |
+|---|---|---|
+| `ground` / `air` | Ground / Flying | The tooltip's "Targets" line |
+| `organic` / `mechanical` | — / Mechanical | Mechanical: repairable, not healable |
+| `structure` | Building | |
+| `hero` | Hero | Genre word; the armour type is labelled Heroic (§7.1) |
+| `worker` | Worker | |
+| `summoned` | Summoned | Shown with the timed-life bar |
+| `ward` | — (not shown) | The tooltip names the object (a clans pole, a Tin Watchman) |
+| `spell_immune` | **Spellproof** | §10.5 |
+| `invulnerable` | Invulnerable | Plain English |
+| `spectral` | **Spectral** | Already ours (§7.2) |
+| Hardy creeps (level ≥ 6, §10.2) | **Hardy** | |
+| `true_sight` (a radius, §11) | **Keen Sight** | A unit's own tooltip may use faction flavour: sylvan "Lantern-sight", clans "Mirror-sight" |
+
 ### 10.8 Corpses
 
-Units leave a corpse for **8 s** (`corpse_decay`), then it sinks and is removed (architecture §4; juice CMB-31). Heroes, summons and mechanical
-units leave none. *Later* (deathless corpse abilities): a 60 s "remains" stage, usable by corpse-consuming spells.
+Units leave a **body** for **8 s** (`combat.defaults.corpse_decay`, the flesh stage). It then sinks and leaves **remains** (a bones decal and
+one or two cheap props per body type) for **60 s** (`combat.defaults.remains_decay`), which then fade. The remains stage is drawn **from the
+slice on**, not deferred, so a battlefield keeps its dead for over a minute as in WC3 (reported ≈ 90 s in all; verify, §23 #29). Both stages
+count as a corpse for corpse-consuming abilities (none in the slice; deathless *later*). Heroes, summons and mechanical units leave none
+(architecture §4; juice CMB-31).
 
 ---
 
@@ -770,11 +811,11 @@ units leave none. *Later* (deathless corpse abilities): a 60 s "remains" stage, 
 | Breaking | The attack or cast that breaks invisibility still happens; the unit is visible from that tick |
 | Losing a target | An enemy that turns invisible during an attack is dropped by attackers without detection |
 | Pathing | Invisible units still block movement (bodies collide, §7.11) |
-| **Detection (true sight)** | A unit or structure with `true_sight` radius R reveals invisible enemies within R that are also inside its owner's **visible** area. Typical R 9.0–9.4 m (detector towers, scouts, the reveal items) |
-| Reveal effects | Area reveals (thrown reveals such as the Flour Bomb, flare-type spells, Fog Bank exceptions) show terrain **and** invisible units for their duration |
+| **Detection** (`true_sight`, shown as **Keen Sight**, §10.7) | A unit or structure with `true_sight` radius R reveals invisible enemies within R that are also inside its owner's **visible** area. Typical R 9.0–9.4 m (detector towers, scouts, the reveal items) |
+| Reveal effects | Area reveals (thrown reveals such as the Tattle-Burrs, flare-type spells, Fog Bank exceptions) show terrain **and** invisible units for their duration |
 | Presentation | Detected invisible enemies get a shimmer outline for the detecting player (our shader, not WC3's) |
 
-Slice sources: the kingdom Signal Shell (Bombard Wagon research) and Tailor's Chalk (T2 shop), the neutral Flour Bomb (Weighstall), clans per
+Slice sources: the kingdom Signal Shell (Bombard Wagon research) and Tailor's Chalk (T2 shop), the neutral Tattle-Burrs (Weighstall), clans per
 their doc. *Later:* the kingdom Assay Tower (detector tower).
 Faction detection gaps are part of their identity (clans: "few cheap detectors").
 
@@ -882,6 +923,7 @@ structures are revealed to every enemy until they finish a hall again. Losing th
 | Camp acts as one | Every creep has a `camp_id`. If any member acquires a target or takes damage, every awake member engages. Other camps never join |
 | Camp mode (default) | Fights only units in acquire range or attackers; ignores buildings, **except a structure that damages the camp** (a tower counts as an attacker like any unit) |
 | Guard mode (expansion mines) | Also attacks any building **started within 12 m** of the camp centre |
+| Tower retreat | A creep that took damage from a **structure** in the last **3 s** and is below **60 %** of its max HP returns home (invulnerable, full heal on arrival, §15.2); its camp-mates fight on until each drops below 60 %. So pulling a camp under a tower only sends it home to heal, and a tower's killing blow gives no XP anyway (§6.3). `rules.creeps.tower_retreat_hp` 0.6, `tower_retreat_window` 3.0 s; reported WC3 behaviour, verify (neutrals §1.3, §23 #31) |
 | Flyers | Idle creeps do not acquire flyers |
 | Unreachable attacker | If a creep cannot path to its attacker for **2 s** (no path, a path longer than **2 ×** the straight distance, or a path past its leash), it drops that attacker. If every recent attacker (damage in the last 3 s) has been unreachable for **3 s**, the **whole camp returns** (§15.2) and ignores them until one is reachable again. A ranged creep that can already hit the attacker from where it stands counts it as reachable. This stops farming a camp from a cliff, across water or behind trees |
 | Target choice | Keep the current target while it is in range; switch to an attacker that is at least 3 m closer, or to the unit that damaged the camp most in the last 3 s if the current target leaves range |
@@ -894,7 +936,7 @@ structures are revealed to every enemy until they finish a hall again. Losing th
 |---|---|
 | Leash | A creep past **18.75 m** from its **guard position** drops its target and returns |
 | Give up | If the camp neither dealt nor took damage for **10 s**, every member returns (after **3 s**, even while taking damage, when every recent attacker is unreachable, §15.1) |
-| Returning | Walks home ignoring hits (**not invulnerable**), regenerating **2 % of max HP/s** until home |
+| Returning | Walks home **invulnerable** (cannot be targeted or damaged), ignoring hits; restored to **full HP and mana** on arrival at its guard position (`return_invulnerable`, `return_full_heal`). Once home it is an ordinary target, and attacking it engages the camp as usual. Every return uses this (leash, give-up, unreachable attackers, tower retreat); it closes the pull-to-the-leash-and-shoot loop (neutrals §1.4) |
 | Split pulls | Allowed: the slowest creeps turn back first |
 
 WC3 leash and give-up values are unverified; these are starting values (neutrals §1.4).
@@ -905,7 +947,7 @@ WC3 leash and give-up values are unverified; these are starting values (neutrals
 |---|---|
 | Schedules | `night` (default: asleep 18:00 → 06:00), `never`, `day` (night-active families, at most one per tileset). A camp template may set `sleeps_override` for all its members |
 | Falling asleep | 0–6 s after sleep time (seeded stagger), only if the camp is home and not fighting |
-| Waking | At wake time (+0–6 s), or at once when a camp member takes damage, a building starts within 12 m, or a player buys or hires at a neutral building within 10 m |
+| Waking | At wake time (+0–6 s), or at once when a camp member takes damage, a building starts within 12 m, or a player **buys, hires or uses a service** (inn revive or hire included) at a neutral building whose **footprint edge is within 10 m of any camp member**, edge to edge. Passive auras (fountain regeneration) never wake creeps (neutrals §1.5) |
 | Player units | **Never auto-acquire sleeping creeps** (night is safe scouting) |
 | Tells | Family posture, closed-eye glyph and snore puffs (never a letter "Z") |
 | Map rules | **At most one `day` camp per map** (other camps of a night-active family use `sleeps_override: "night"`) and **at least 60 %** of a map's camps asleep at night, so "night = most camps asleep" holds. `never` camps only where an always-awake guard is the point (expansion mines, the red prize). Map validation enforces both (`rules.creeps.max_day_camps`, `rules.creeps.min_night_sleep_fraction`; neutrals §1.5) |
@@ -934,12 +976,12 @@ by the highest-level (better drop) and lowest-level (second drop) creep (neutral
 | Ownership | Every neutral building is **invulnerable**, owned by `NEUTRAL_PASSIVE`, and grants no vision |
 | Use range | **7.0 m** (edge to edge) from the building (`rules.neutral.use_range`). **Flag:** the research quotes "45 gu (60 before 1.15)", which looks like warcraft.wiki.gg's ×10-scaled notation for 450 / 600 gu; 7.0 m = 450 gu |
 | Buying | **Buying an item requires an own hero within use range** (`rules.neutral.buy_needs_hero = true`). Hiring, reviving and services need any own unit in range. Smart-click the shop to select it; its card shows stock. The item goes to the selected hero if it is in range, else to the nearest own hero in range with a free slot, else it drops at that hero's feet. **These rules apply to neutral shops and faction shops alike** (kingdom Curio Cabinet, clans Tea Tent) |
-| Mercenaries | Hired **instantly** by any own unit in use range (`rules.neutral.merc_hire_instant = true`); they appear beside the camp, use food and count for upkeep, never receive faction research, and give XP by their level. Stock and restock are per player. Hiring wakes sleeping camps within 10 m (neutrals §5.7, Free Company Camp, [SLICE+]) |
-| Stock | Per item: stock count and restock timer; stock is **per player** (**flag**: WC3 behaviour unverified) |
-| Selling | To a merchant-type building for **50 %** of the item's gold cost (taxed by upkeep). Lumber is not refunded |
+| Mercenaries | Hired **instantly** by any own unit in use range (`rules.neutral.merc_hire_instant = true`); they appear beside the camp, use food and count for upkeep, never receive faction research, and give XP by their level. Stock and restock are per player. Hiring wakes sleeping camps by the §15.3 rule (neutrals §5.7, **Hiring Fair**, [SLICE+]) |
+| Stock | Per item: stock count and restock timer; stock is **per player** at shops and the Hiring Fair alike (**Δ** fairness: WC3 probably shares stock per building, unverified; §21) |
+| Selling | To a merchant-type building for **50 %** of the item's gold value; charged items × remaining / base charges (floored; taxed by upkeep). Lumber is not refunded. Power-ups cannot be sold |
 | Inn | Hires neutral heroes (§6.1) and revives any hero instantly (§6.7). Never guarded |
 | Fountains | Area regeneration (Hale Spring +2 % max HP/s within its radius; neutrals). No effect on structures |
-| Waking creeps | Buying or hiring within 10 m of a sleeping camp wakes it (§15.3) |
+| Waking creeps | Buying, hiring or using a service (inn revive or hire included) at a neutral building whose footprint edge is within 10 m of any member of a sleeping camp, edge to edge, wakes it; passive auras never do (§15.3) |
 
 ---
 
@@ -974,7 +1016,9 @@ Single-player pause is unlimited. Multiplayer (*later*): 3 pauses of 60 s per pl
 | Cripple countdown started / revealed | Each event | No |
 | Dusk / dawn | Each event | No (stinger only) |
 
-Wording is ours (ip-safety §2.2). No WC3 line or paraphrase ("…under attack" phrasing gets each faction's own voice).
+Wording is ours (ip-safety §2.2). No advisory or banner uses these templates or a rewording of them: "… is under attack", "We require
+more …", "Not enough …", "Build/construct more [supply building]", "[hero] has fallen", "No/Low/High upkeep". Each faction's VO script
+words every §17.3 trigger in its own idiom (as kingdom.md's Reeve rules already do).
 
 ---
 
@@ -993,6 +1037,7 @@ Wording is ours (ip-safety §2.2). No WC3 line or paraphrase ("…under attack" 
 | Wheel, PgUp / PgDn | Zoom (18.75–35.2 m) |
 | Middle drag | Grab-pan the ground |
 | Minimap left-click / right-click | Jump camera / smart command at that point |
+| Minimap left-click with an order armed (Attack, Move, Patrol, Attack Ground, point-target abilities and items) | Issues that order at the matching world point; Shift queues it (`test_minimap_orders`) |
 | Minimap Alt + left-click | Player ping for allies (*later*; juice NTF-02, P2) |
 
 ### 18.2 Smart right-click (resolved per unit, architecture §4)
@@ -1045,12 +1090,14 @@ The card is **4 × 3**. Positions follow WC3's structure (a genre convention, Lo
 | Build / Build Advanced | B / V | S / D |
 | Gather / Return Cargo / Repair | G / C / R | position |
 | Learn | O | F |
-| Abilities (bottom row) | Hero: **Q / W / E / R**. Units: the ability def's `hotkey` letter (validated unique per card), else Q / W / E / R | Z / X / C / V |
+| Abilities (bottom row) | Heroes and units: the ability def's **mnemonic `hotkey` letter**, one per ability (validated unique per card; a hero's Learn card reuses the same letters). Units without one fall back to Q / W / E / R. **Setting:** "Hero abilities on Q / W / E / R" (off by default) | Z / X / C / V |
 | Building cards (train, research) | The def's `hotkey` letter, else grid position | Position |
 | Cancel / back | Esc | Esc |
 
-Classic keeps WC3's letter habits ("A-click" attack-move). Grid matches `card_0..11` in architecture §11. `Defs` validates that no two buttons
-on one card share a Classic key.
+Classic keeps WC3's letter habits: "A-click" attack-move, and a mnemonic letter per hero ability, so each hero's keys are its own and the
+Learn card (O) shows the same letters. Hero ability letters avoid the hero card's fixed keys M, S, H, A, P and O; the faction docs list
+them (kingdom §7.5, clans §7.2). Grid matches `card_0..11` in architecture §11. `Defs` validates that no two buttons on one card share a
+Classic key and that a hero's Learn card uses its ability letters.
 
 **Order semantics** (architecture §5): Move ignores enemies; **Attack** on ground = attack-move (engages anything on the way, re-paths after
 each fight); Attack on a unit = chase to the death; **Hold** never moves and only attacks enemies already in range; **Stop** clears the queue
@@ -1101,7 +1148,7 @@ its own fog, gets no resource bonus and obeys every rule in this doc.
 | Gold workers per mine / lumber workers (T1 / T2) | 4 / 3 / 5 | 5 / 4 / 7 | 5 / 5 / 8 |
 | First hero ready by | ≈ 2:30 or later (script + slack) | ≈ 2:00 (per faction script) | ≈ 2:00 (script, no slack) |
 | T2 started (latest) | 6:00 | Faction script (3:45–4:15), at the latest 4:30 | 3:45 |
-| Creeping | Green camps only, by distance | Green then amber; skips camps above its army's total level × 1.2 | Green, amber, and red once 2 heroes are level 4+; times camps to finish before dusk |
+| Creeping (`creep_order`, `max_camp`, `camp_level_ratio`) | Green camps only, in the map's authored `creep_route` order; skips a camp whose total level is above **0.8 ×** its creeping group's total level (heroes and units) | Green then amber, in `creep_route` order; skips camps above **1.2 ×** its group's total level | Green, amber and red, in `creep_route` order; skips camps above **1.5 ×**; takes the red camp once **hero 1 is level 4+ and hero 2 is level 3+, with ≥ 30 army food** (`red_camp_hero_levels`, `red_camp_min_army_food`; neutrals §3.6); times camps to finish before dusk |
 | Hero retreat | Below 25 % HP | Below 35 % HP | Below 35 % HP; uses potions and recall item first |
 | Hero revival (`revive_heroes`) | At the altar as soon as gold and food allow | Same | Same; also at the inn (instant) when the hero is level ≥ 4 and its army is fighting or will push within 60 s |
 | Skill points (`skill_build`) | Spent at once from the faction skill table (faction docs §10) | Same | Same |
@@ -1178,6 +1225,7 @@ Units: m, s, m/s, per second. "—" = unitless.
 | `rules.economy.repair_autocast_range` | 8.0 | m | 4.8 |
 | `rules.economy.switch_resource_discards_load` | true | — | 4.3 |
 | `rules.economy.supply_stall_advisory` | 8.0 | s | 4.4 |
+| `rules.economy.tree_retarget_radius` | 8.0 | m | 4.2 |
 
 **`rules.heroes`**
 
@@ -1191,6 +1239,7 @@ Units: m, s, m/s, per second. "—" = unitless.
 | `rules.heroes.food` | 5 | food | 6.1 |
 | `rules.heroes.train_time` | 55.0 | s | 6.1 |
 | `rules.heroes.inn_cost_lumber` | 135 | lumber | 6.1 |
+| `rules.heroes.inn_hero_unique` | "match" | "match" or "player" | 6.1 |
 | `rules.heroes.level_cap` | 10 | level | 6.2 |
 | `rules.heroes.xp_levels` | [0, 200, 500, 900, 1400, 2000, 2700, 3500, 4400, 5400] | XP | 6.2 |
 | `rules.heroes.skill_points_start` | 1 | — | 6.5 |
@@ -1274,7 +1323,8 @@ Units: m, s, m/s, per second. "—" = unitless.
 | `combat.defaults.weapon_kind` ✱ | "missile" | "missile" or "artillery" | 7.7 |
 | `combat.defaults.cast_point` ✱ | 0.3 | s | 6.5 |
 | `combat.defaults.cast_backswing` ✱ | 0.5 | s | 6.5 |
-| `combat.defaults.corpse_decay` | 8.0 | s | 10.8 |
+| `combat.defaults.corpse_decay` | 8.0 | s (body, flesh stage) | 10.8 |
+| `combat.defaults.remains_decay` ✱ | 60.0 | s (remains stage) | 10.8 |
 | `combat.defaults.structure_decay` | 4.0 | s | 8 |
 | `combat.defaults.help_radius` | 6.0 | m | 7.6 |
 | `combat.defaults.alert_interval` ✱ | *retired* → `rules.alerts.advisor_cooldown` (code fallback until migrated, §20.4) | | 17.3 |
@@ -1310,20 +1360,21 @@ Localisers translate the percentage string, never a "low / high" wording (§4.5)
 | `rules.items.pickup_range` | 1.0 | m | 6.8 |
 | `rules.items.give_range` | 1.5 | m | 6.8 |
 | `rules.items.recall_channel` | 5.0 | s (every recall item) | 6.8 |
-| `rules.items.recall_radius` | 6.0 | m | 6.8 |
-| `rules.items.recall_max_units` | 11 | units (+ hero) | 6.8 |
+| `rules.items.recall_radius` | 9.4 | m (600 gu; verify, §23 #28) | 6.8 |
+| `rules.items.recall_max_units` | 23 | units (+ hero = 24; verify) | 6.8 |
 | `rules.items.recall_target` | "point_nearest_own_hall" | — | 6.8 |
 | `rules.items.recall_enemy_interruptible` | false | — | 6.8 |
 | `rules.items.group_cooldown` | {"heal": 8.0, "mana": 8.0} | s | 6.8 |
 | `rules.items.charge_merge_factor` | 2 | × base charges | 6.8 |
 | `rules.items.powerup_any_unit` | ["food"] | item tags | 6.8 |
 | `rules.items.full_inventory` | "refuse" | — | 6.8 |
+| `rules.items.flat_xp_ignores_single_hero_bonus` | true | — | 6.3 |
 
 **`rules.daynight`, `rules.vision`**
 
 | Field | Value | Unit | § |
 |---|---|---|---|
-| `rules.daynight.day_length` | 480.0 | s | 13 |
+| `rules.daynight.cycle_length` | 480.0 | s (the whole day + night cycle; day and night are 240 s each) | 13 |
 | `rules.daynight.dawn` | 6.0 | hour | 13 |
 | `rules.daynight.dusk` | 18.0 | hour | 13 |
 | `rules.daynight.sight_transition` | 3.2 | s | 13 |
@@ -1361,8 +1412,10 @@ Localisers translate the percentage string, never a "low / high" wording (§4.5)
 | `rules.creeps.ignore_idle_flyers` | true | — | 15.1 |
 | `rules.creeps.leash` | 18.75 | m | 15.2 |
 | `rules.creeps.give_up_time` | 10.0 | s | 15.2 |
-| `rules.creeps.return_regen` | 0.02 | max HP/s | 15.2 |
-| `rules.creeps.return_invulnerable` | false | — | 15.2 |
+| `rules.creeps.return_invulnerable` | true | — | 15.2 |
+| `rules.creeps.return_full_heal` | true | — (full HP and mana on arrival) | 15.2 |
+| `rules.creeps.tower_retreat_hp` | 0.6 | fraction of max HP | 15.1 |
+| `rules.creeps.tower_retreat_window` | 3.0 | s since structure damage | 15.1 |
 | `rules.creeps.sleep_stagger` | 6.0 | s | 15.3 |
 | `rules.creeps.wake_trade_radius` | 10.0 | m | 15.3 |
 | `rules.creeps.max_day_camps` | 1 | camps per map | 15.3 |
@@ -1417,6 +1470,9 @@ Localisers translate the percentage string, never a "low / high" wording (§4.5)
 | `tier2_at` (latest T2 start) | 360.0 | 270.0 | 225.0 | s |
 | `max_camp` | "green" | "amber" | "red" | — |
 | `camp_level_ratio` | 0.8 | 1.2 | 1.5 | × army level |
+| `creep_order` | "route" | "route" | "route" | the map's `creep_route` |
+| `red_camp_hero_levels` | null | null | [4, 3] | hero 1, hero 2 levels |
+| `red_camp_min_army_food` | null | null | 30 | food |
 | `hero_retreat_hp` | 0.25 | 0.35 | 0.35 | fraction |
 | `army_retreat_hp` | 0.0 | 0.5 | 0.5 | fraction |
 | `attack_food` | 50 | 40 | 30 | food |
@@ -1441,7 +1497,8 @@ Localisers translate the percentage string, never a "low / high" wording (§4.5)
 
 | Field | `kingdom` | `clans` | `sylvan` *(later)* | `deathless` *(later)* |
 |---|---|---|---|---|
-| `name` | "Brennmark" | "Tormai" | "Glaermere" | "Long Wake" |
+| `name` (string key) | "faction_name_kingdom" | "faction_name_clans" | "faction_name_sylvan" | "faction_name_deathless" |
+| *Name status* (display text in the string table, never in data) | **Brennmark**: cleared | **Tormai**: provisional (cultural-consultant check against the Tibetan *torma*, clans §1.1 Q7; fallback Tormun, then Torvai) | **Glaermere**: provisional (built on the Sindarin *glaer*; no clearance search yet) | **Long Wake**: internal only (an existing game title); fallback "the Unending Wake" |
 | `worker` | `kingdom_hodman` | `clans_yurtwright` | `sylvan_tapster` | `deathless_sexton` |
 | `hall` (T1, existing field) | `kingdom_moot_hall` | `clans_shell_hall` | `sylvan_stilt_lodge` | `deathless_wake_barrow` |
 | `hall_tiers` | [moot_hall, walled_burg, crown_burg] | [shell_hall, banner_shell, sun_gong_shell] | [stilt_lodge, lantern_lodge, amber_lodge] | [wake_barrow, long_barrow, grand_barrow] |
@@ -1451,15 +1508,16 @@ Localisers translate the percentage string, never a "low / high" wording (§4.5)
 | `start_units` | {`kingdom_hodman`: 5} | {`clans_yurtwright`: 5} | {`sylvan_tapster`: 5} | {`deathless_sexton`: 5} |
 | `start_gold` / `start_lumber` | 500 / 150 | 500 / 150 | 500 / 150 | 500 / 150 |
 | `recall_item` | `item_homeward_horn` | `item_homeward_felt` | `item_lake_whistle` | `item_coin_for_the_ferry` |
-| `lumber_per_trip` | 10 | 15 | 8 | 10 |
-| `chop_interval` | 0.8 | 0.9 | 1.0 | 0.8 |
+| `lumber_per_trip` | 10 | 15 | 10 (Deep Spigots 12, Bored Spigots 14) | 10 |
+| `chop_interval` | 0.8 | 0.9 | 0.9 | 0.8 |
 | `fells_trees` | true | true | false | true |
 | `workers_per_tree` | 0 (no limit) | 0 | 1 | 0 |
 | `max_builders` | 3 | 1 | 2 | 2 |
 | `extra_builder_rate` | 0.4 | 0.0 | 0.5 | 0.5 |
 | `extra_builder_lumber_per_s` | 0.5 | 0.0 | 0.0 | 0.0 |
 
-Hall, supply and building ids for `sylvan` and `deathless` follow the display names in their doc (only the T1 hall ids are written there yet).
+Display names resolve through the string table (`data/strings/en.json`, key → text), like the upkeep labels, so a name still awaiting
+clearance never sits in shipped data. Hall, supply and building ids for `sylvan` and `deathless` follow the display names in their doc (only the T1 hall ids are written there yet).
 Hall-tier ids are written with the faction prefix in data (`kingdom_walled_burg`, …).
 
 ### 20.3 Target JSON (the `rules` object plus changed parts; paste-ready)
@@ -1476,9 +1534,9 @@ Hall-tier ids are written with the faction prefix in data (`kingdom_walled_burg`
                 "build_pay": "on_start", "build_check_on_order": true, "build_start_hp": 0.1, "build_cancel_refund": 0.75,
                 "train_cancel_refund": 1.0, "research_cancel_refund": 1.0, "production_queue": 7, "shift_train_count": 5,
                 "repair_cost_factor": 0.3, "repair_time_factor": 1.5, "repair_autocast_range": 8.0,
-                "switch_resource_discards_load": true, "supply_stall_advisory": 8.0},
+                "switch_resource_discards_load": true, "supply_stall_advisory": 8.0, "tree_retarget_radius": 8.0},
     "heroes": {"max": 3, "slots_by_tier": [1, 2, 3], "unique_types": true, "cost_gold": 425, "cost_lumber": 100, "food": 5,
-               "train_time": 55.0, "inn_cost_lumber": 135, "level_cap": 10,
+               "train_time": 55.0, "inn_cost_lumber": 135, "inn_hero_unique": "match", "level_cap": 10,
                "xp_levels": [0, 200, 500, 900, 1400, 2000, 2700, 3500, 4400, 5400],
                "skill_points_start": 1, "skill_points_per_level": 1, "rank_levels": [1, 3, 5], "ultimate_level": 6,
                "base_hp": 100, "base_hp_regen": 0.25, "base_mana_regen": 0.01, "str_hp": 25, "str_hp_regen": 0.05,
@@ -1496,11 +1554,11 @@ Hall-tier ids are written with the faction prefix in data (`kingdom_walled_burg`
     "regen": {"organic_hp": 0.25, "mechanical_hp": 0.0, "structure_hp": 0.0, "caster_mana": 0.65, "start_mana": 75},
     "status": {"same_buff": "refresh", "same_aura": "highest", "dot_interval": 1.0, "aura_refresh": 0.5, "aura_linger": 2.0,
                "fade_time": 1.0, "grounded_speed_factor": 0.5, "liftoff_time": 0.5},
-    "items": {"pickup_range": 1.0, "give_range": 1.5, "recall_channel": 5.0, "recall_radius": 6.0, "recall_max_units": 11,
+    "items": {"pickup_range": 1.0, "give_range": 1.5, "recall_channel": 5.0, "recall_radius": 9.4, "recall_max_units": 23,
               "recall_target": "point_nearest_own_hall", "recall_enemy_interruptible": false,
               "group_cooldown": {"heal": 8.0, "mana": 8.0}, "charge_merge_factor": 2, "powerup_any_unit": ["food"],
-              "full_inventory": "refuse"},
-    "daynight": {"day_length": 480.0, "dawn": 6.0, "dusk": 18.0, "sight_transition": 3.2},
+              "full_inventory": "refuse", "flat_xp_ignores_single_hero_bonus": true},
+    "daynight": {"cycle_length": 480.0, "dawn": 6.0, "dusk": 18.0, "sight_transition": 3.2},
     "vision": {"unit": [21.9, 12.5], "worker": [12.5, 9.4], "structure": [14.0, 9.4], "cap": 28.1, "fog_cell": 1.0,
                "fog_update": 0.1, "cliffs_block_upward": true, "trees_block_sight": true, "tree_occluder_levels": 2,
                "flyers_ignore_occluders": true, "structure_ghosts": true, "shared_allied_vision": true,
@@ -1509,7 +1567,8 @@ Hall-tier ids are written with the faction prefix in data (`kingdom_walled_burg`
     "creeps": {"acquire": 3.9, "acquire_caster": 5.0, "acquire_guard": 6.0, "notice_factor": 1.5, "guard_build_radius": 12.0,
                "unreachable_drop_time": 2.0, "unreachable_return_time": 3.0, "unreachable_path_factor": 2.0,
                "recent_attacker_window": 3.0, "retarget_closer": 3.0, "ignore_idle_flyers": true, "leash": 18.75,
-               "give_up_time": 10.0, "return_regen": 0.02, "return_invulnerable": false, "sleep_stagger": 6.0,
+               "give_up_time": 10.0, "return_invulnerable": true, "return_full_heal": true,
+               "tower_retreat_hp": 0.6, "tower_retreat_window": 3.0, "sleep_stagger": 6.0,
                "wake_trade_radius": 10.0, "max_day_camps": 1, "min_night_sleep_fraction": 0.6,
                "hardy_level": 6, "hardy_spell_factor": 0.7, "hardy_control_factor": 0.5, "raw_level": 7,
                "camp_color_levels": [10, 20], "bounty": {"per_level": 4, "base": 2, "rand": 4}, "respawn": false,
@@ -1527,14 +1586,16 @@ Hall-tier ids are written with the faction prefix in data (`kingdom_walled_burg`
                  "punish_creep_range": 0.0, "focus_fire": "none", "pull_back_hp": 0.0, "buys_items": false,
                  "upkeep_cap_before_push": 100, "upkeep_cap_after_push": 100, "expand_at": -1, "scout_at": -1,
                  "use_signature": false, "script_overrides_attack_trigger": true, "revive_heroes": "altar",
-                 "inn_revive_min_level": 0, "skill_build": "faction", "supply_buffer_food": 6, "recall_use": "none"},
+                 "inn_revive_min_level": 0, "skill_build": "faction", "supply_buffer_food": 6, "recall_use": "none",
+                 "creep_order": "route", "red_camp_hero_levels": null, "red_camp_min_army_food": null},
       "normal": {"think_interval": 0.5, "reaction_delay": 0.8, "apm_cap": 90, "build_slack": 5.0, "gold_workers": 5,
                  "lumber_workers": [4, 7], "tier2_at": 270.0, "max_camp": "amber", "camp_level_ratio": 1.2,
                  "hero_retreat_hp": 0.35, "army_retreat_hp": 0.5, "attack_food": 40, "attack_not_before": 0.0,
                  "punish_creep_range": 31.0, "focus_fire": "lowest_hp", "pull_back_hp": 0.0, "buys_items": true,
                  "upkeep_cap_before_push": 50, "upkeep_cap_after_push": 80, "expand_at": 600.0, "scout_at": -1,
                  "use_signature": true, "script_overrides_attack_trigger": true, "revive_heroes": "altar",
-                 "inn_revive_min_level": 0, "skill_build": "faction", "supply_buffer_food": 5, "recall_use": "save_hero"},
+                 "inn_revive_min_level": 0, "skill_build": "faction", "supply_buffer_food": 5, "recall_use": "save_hero",
+                 "creep_order": "route", "red_camp_hero_levels": null, "red_camp_min_army_food": null},
       "hard":   {"think_interval": 0.5, "reaction_delay": 0.3, "apm_cap": 180, "build_slack": 0.0, "gold_workers": 5,
                  "lumber_workers": [5, 8], "tier2_at": 225.0, "max_camp": "red", "camp_level_ratio": 1.5,
                  "hero_retreat_hp": 0.35, "army_retreat_hp": 0.5, "attack_food": 30, "attack_not_before": 0.0,
@@ -1542,7 +1603,8 @@ Hall-tier ids are written with the faction prefix in data (`kingdom_walled_burg`
                  "upkeep_cap_before_push": 50, "upkeep_cap_after_push": 80, "expand_at": 420.0, "scout_at": 45.0,
                  "use_signature": true, "script_overrides_attack_trigger": true, "revive_heroes": "altar_inn",
                  "inn_revive_min_level": 4, "skill_build": "faction", "supply_buffer_food": 4,
-                 "recall_use": "save_army_or_defend"}
+                 "recall_use": "save_army_or_defend", "creep_order": "route", "red_camp_hero_levels": [4, 3],
+                 "red_camp_min_army_food": 30}
     }
   },
   "combat": {
@@ -1576,7 +1638,7 @@ Hall-tier ids are written with the faction prefix in data (`kingdom_walled_burg`
     "attack_reveal_radius": 1.5,
     "attack_reveal_time": 1.0,
     "defaults": {"acquire": 8.0, "leash": 14.0, "damage_point": 0.4, "backswing": 0.4, "turn_rate": 9.0,
-                 "cast_point": 0.3, "cast_backswing": 0.5, "corpse_decay": 8.0, "structure_decay": 4.0,
+                 "cast_point": 0.3, "cast_backswing": 0.5, "corpse_decay": 8.0, "remains_decay": 60.0, "structure_decay": 4.0,
                  "help_radius": 6.0, "weapon_kind": "missile"}
   },
   "upkeep": [
@@ -1585,14 +1647,14 @@ Hall-tier ids are written with the faction prefix in data (`kingdom_walled_burg`
     {"food": 81, "gold_factor": 0.4, "label": "upkeep_tier_2"}
   ],
   "factions": {
-    "kingdom": {"name": "Brennmark", "worker": "kingdom_hodman", "hall": "kingdom_moot_hall",
+    "kingdom": {"name": "faction_name_kingdom", "worker": "kingdom_hodman", "hall": "kingdom_moot_hall",
                 "hall_tiers": ["kingdom_moot_hall", "kingdom_walled_burg", "kingdom_crown_burg"],
                 "altar": "kingdom_oath_hall", "supply": "kingdom_croft",
                 "lumber_drop": ["kingdom_moot_hall", "kingdom_walled_burg", "kingdom_crown_burg", "kingdom_timber_yard"],
                 "start_units": {"kingdom_hodman": 5}, "start_gold": 500, "start_lumber": 150,
                 "recall_item": "item_homeward_horn", "lumber_per_trip": 10, "chop_interval": 0.8, "fells_trees": true,
                 "workers_per_tree": 0, "max_builders": 3, "extra_builder_rate": 0.4, "extra_builder_lumber_per_s": 0.5},
-    "clans":   {"name": "Tormai", "worker": "clans_yurtwright", "hall": "clans_shell_hall",
+    "clans":   {"name": "faction_name_clans", "worker": "clans_yurtwright", "hall": "clans_shell_hall",
                 "hall_tiers": ["clans_shell_hall", "clans_banner_shell", "clans_sun_gong_shell"],
                 "altar": "clans_naming_stones", "supply": "clans_home_yurt",
                 "lumber_drop": ["clans_shell_hall", "clans_banner_shell", "clans_sun_gong_shell", "clans_casting_pit"],
@@ -1614,12 +1676,20 @@ The `sylvan` and `deathless` entries follow the §20.2 table when those factions
 3. Replace `placeholder_a` / `placeholder_b` with `kingdom` / `clans` once their unit defs exist (clans §11 data mapping).
 4. Upkeep `label` becomes a string key (`upkeep_tier_0` / `upkeep_tier_1` / `upkeep_tier_2`, replacing today's "No / Low / High Upkeep" strings);
    the HUD maps it to "Upkeep 0 % / 30 % / 60 %".
-5. `src/world/day_night.gd`: read `DAY_LENGTH`, `DAWN`, `DUSK` and `START_HOUR` from `Defs.rules` (keep the constants as fallbacks).
+5. `src/world/day_night.gd`: read `DAY_LENGTH` from `rules.daynight.cycle_length`, and `DAWN`, `DUSK` and `START_HOUR` from `Defs.rules`
+   (keep the constants as fallbacks). `DAY_LENGTH` means the **whole** day-plus-night cycle (480 s), not the 240 s day: keep it as a
+   fallback alias and never add a separate night length.
 6. `src/autoload/settings.gd`: `max_selection` defaults to `rules.controls.max_selection`.
 7. `Defs`: load `rules`, validate that every unit `attack.type` and `armor_type` is in the lists, and that Classic hotkeys are unique per card.
 8. `src/systems/combat.gd`: the attack alert reads `rules.alerts.*` (keep `combat.defaults.alert_interval` as the fallback until the router
    exists, then delete it).
 9. `docs/.gdignore` exists (added with this review). When `export_presets.cfg` is created, every preset sets `exclude_filter="docs/*"`.
+10. `src/systems/player_state.gd`: replace `PlayerState.COLORS` with the art-and-audio bible §2.4 list in its order (§3.1); then
+    `python3 tools/ip/check_value_echo.py` exits 0 (`test_team_colours`).
+11. Faction display names move to the string table `data/strings/en.json` (`faction_name_<id>` keys, §20.2), next to the upkeep labels.
+    `tools/ip/check_banned_terms.py` scans `data/strings/` with the UI-only list `tools/ip/banned_ui_terms.txt` as well (§10.7).
+12. Creeps: `rules.creeps.return_regen` is **removed** (returning creeps are invulnerable and fully healed on arrival, §15.2); add
+    `return_full_heal`, `tower_retreat_hp` and `tower_retreat_window`. Corpses gain the `remains_decay` stage (§10.8).
 
 ---
 
@@ -1630,22 +1700,24 @@ The `sylvan` and `deathless` entries follow the §20.2 table when those factions
 | Start | Hall + 5 workers, 500 / 150, 08:00, 1 hero token, free return scroll | Same (our recall items) | Kept |
 | Mine | 12,500, warn 1,500 | 12,000 / 8,000, warn 1,500 | **Δ** shorter games |
 | Mining | 10 per trip, 5 workers saturate | Same (6 m gap, 1 s dwell) | Kept (values tuned to reproduce) |
-| Lumber | 10 per trip (race-dependent), ≈ 50 per tree | 8–15 per faction, 50 per tree | Kept shape |
+| Lumber | 10 per trip (race-dependent), ≈ 50 per tree | 10–15 per faction, 50 per tree; workers move on to the next tree by themselves | Kept shape |
 | Food / upkeep | 100; 50 / 80 thresholds; 100 / 70 / 40 % | Same | Kept |
 | Upkeep on bounty and sales | Yes | Yes | Kept |
 | Tiers | 3 hall tiers; hero slots 1 / 2 / 3 | Same | Kept |
 | Hall food per tier | Same food at every tier (reported) | kingdom 12 / 14 / 16; clans 10 / 10 / 10; sylvan, deathless 10 / 12 / 14 | **Δ** faction choice |
-| Structure HP | Halls 1500 / 2000 / 2500; barracks 1500 | Halls 1550 / 2050 / 2600; production 760–1350 (≈ 10–20 % lower) | **Δ** more siege tempo |
+| Structure HP | Halls 1500 / 2000 / 2500; barracks 1500; altar 900, smithy 1200, caster hall 1050, workshop 1200 (reviewers' figures, §23 #21) | Halls 1550 / 2050 / 2600 (≈ +3 %); most production buildings at or within 10 % of the WC3 value for their role (Drill Yard 1350, −10 %; clans Mirror Yurt 760, Home Yurt 620) | Kept (± 10 %) |
 | Repair cost | ≈ 35 % (unverified) | 30 % | **Δ** slightly cheaper |
 | Heroes | 3 max, unique, 425 / 100, 55 s, 5 food | Same | Kept |
-| Inn heroes | 425 / 135, instant | Same | Kept |
+| Inn heroes | 425 / 135, instant; each hero hired once per match (reported) | Same | Kept (verify uniqueness) |
 | XP | Level table, kill tables, creep 80 / 70 / 60 / 50 / 0 % | Same (wiki.gg creep values) | Kept |
 | XP range | ≈ 1200 gu (unverified) | 18.75 m; no-hero kills give nothing | Kept (flag) |
 | Single-hero bonus | +15 % / +30 % | Same | Kept |
 | Attributes | STR 25 HP / 0.05; AGI 0.3 / 2 %; INT 15 / 0.05; primary +1 | Same | Kept |
 | Revive | Altar formula, cap 550 g / 110 s; inn 50 % HP, 0 mana; costs scale from the hero's own cost | Same | Kept |
-| Recall item | Targets a hall the player picks (main or expansion, minimap allowed); enemies cannot cancel it | Same: point → own finished hall nearest it, 5 s, enemy-proof, 11 units | Kept |
-| Inventory | Heroes carry; power-ups on pickup; full inventory refuses pickups | Same; food power-ups for any unit; charges merge up to 2 × | Kept (+ merge) |
+| Recall item | Targets a hall the player picks (main or expansion, minimap allowed); enemies cannot cancel it; takes the hero's nearby army (≈ 24 bodies, reported) | Same: point → own finished hall nearest it, 5 s, enemy-proof, any owner order cancels, hero + 23 units within 9.4 m | Kept (verify cap and radius from footage) |
+| Inventory | Heroes carry; power-ups on pickup; full inventory refuses pickups | Same; food power-ups for any unit; charges merge up to 2 × | Kept; charge merge **Δ** QoL |
+| Shop and mercenary stock | Shared per building (unverified) | Per player | **Δ** fairness (verify) |
+| Hero cooldowns while dead | Keep running; not reset on revive (engine behaviour, unverified) | Same | Kept (verify) |
 | Damage matrix | TFT (Pierce vs Heavy 90 later) | Same numbers, our names | Kept, renamed |
 | Armour formula | 0.06; 2 − 0.94^(−A) | Same | Kept |
 | Attack phases | Damage point, backswing, cooldown; cancels | Same | Kept |
@@ -1654,6 +1726,7 @@ The `sylvan` and `deathless` entries follow the §20.2 table when those factions
 | Siege projectiles | Land where the target stood; dodgeable | `artillery` kind | Kept |
 | Siege vs trees | Splash and Attack Ground fell trees | Same; felled trees give no lumber | Kept |
 | Collision | Enemy bodies solid: surround, body-block | Same (§7.11) | Kept |
+| Corpses | Flesh, then bones; ≈ 90 s in all (reported) | 8 s body, then 60 s remains (decal), both usable as corpses | ≈ Kept (verify) |
 | Uphill miss | Version-dependent | None (vision only) | **Δ** clarity |
 | Splash friendly fire | Unverified | Off | **Δ** design |
 | Day / night | 480 s, 240 / 240, sight 1400 / 800, hero 1800 / 800 | Same in metres | Kept |
@@ -1661,14 +1734,16 @@ The `sylvan` and `deathless` entries follow the §20.2 table when those factions
 | LOS | Cliffs block upward, trees block, flyers ignore | Same | Kept |
 | Creeps | Sleep at night, camp acts as one, no respawn, colour bands | Same; plus day-active families (neutrals) | Kept + twist |
 | Creep leash / bounty | Unverified | 18.75 m, 10 s; 4L + 2 + rand(0–4) | Our values |
-| Creep return | Commonly invulnerable | Not invulnerable, 2 % HP/s | **Δ** (neutrals) |
+| Creep return | Invulnerable, full heal | Same | Kept (verify) |
+| Tower retreat | Below 60 % (reported) | Same (structure damage in the last 3 s) | Kept (verify) |
 | Unreachable attackers | Creeps eventually give up on attackers they cannot reach | 2 s drop, 3 s camp return, path factor 2 | Kept (our values) |
 | Minimap neutrals | Mines, neutral buildings and camp markers from the start (reported) | Same, static markers, Show Camps toggle | Kept (verify) |
 | Cripple reveal | 120 s | 120 s | Kept |
 | Defeat | All structures lost | Same | Kept |
 | Selection | 12 | 12 | Kept |
 | Shift-queue | Limited (≈ 35, unverified) | 32 | ≈ Kept |
-| Hotkeys | Letter mnemonics; grid in later versions | Classic (letters) default + Grid | Kept |
+| Hotkeys | Letter mnemonics, one per hero ability (Learn card too); grid in later versions | Classic (letters; a mnemonic per hero ability) default + Grid; optional hero Q / W / E / R | Kept |
+| Hall tier upgrade | Paid when queued; blocks the hall's queue; the hall works at its current tier meanwhile | Same | Kept |
 | Neutral use range | "45" (likely 450 gu) | 7.0 m | Kept (flag) |
 | Shop buying | A hero must be in range to buy | Same (neutral and faction shops); hire and services: any unit | Kept |
 | Mercenaries | Instant hire; food and upkeep; no research | Same | Kept |
@@ -1684,18 +1759,19 @@ The `sylvan` and `deathless` entries follow the §20.2 table when those factions
 | `test_economy_saturation` | Standard start (6 m gap): 5 workers average 9.5–10.5 gold/s over 120 s; 4 workers ≤ 9.0; 6 workers ≤ 5 workers + 3 % |
 | `test_upkeep` | Deliveries yield 10 / 7 / 4 at 50 / 51 / 81 food; bounty is taxed; lumber is not |
 | `test_food_stall` | Training waits when food is short and resumes when a supply building completes |
-| `test_xp` | Unit-kill and hero-kill tables; creep factor by hero level; split between 2 heroes; out of range gets 0; level 10 excluded; single-hero bonus |
+| `test_xp` | Unit-kill and hero-kill tables; creep factor by hero level; split between 2 heroes; out of range gets 0; level 10 excluded; single-hero bonus; a +100 flat-XP power-up gives exactly 100 to a lone T2 hero (no creep factor, no single-hero bonus); 85 split between 2 heroes at 70 % stores 29.75 each (float) and the UI shows 29 |
 | `test_hero_attributes` | Wheel Marshal levels 1 / 5 / 10 match kingdom §6.2 derived values |
-| `test_revive_costs` | Altar and inn tables for levels 1–10 (§6.7) |
+| `test_revive_costs` | Altar and inn tables for levels 1–10 (§6.7); an ability and an item on cooldown keep counting down while the hero is dead and are not reset on revive |
 | `test_damage_matrix` | All 49 multipliers; armour table (§7.3); spell ignores armour value; raw ignores type |
 | `test_attack_cancel` | An order before the damage point deals no damage and refunds the cooldown; backswing cancels instantly |
 | `test_day_night` | Dusk at 200 s, dawn at 440 s; unit sight 21.9 → 12.5 m over 3.2 s |
 | `test_fog_los` | Low-ground viewer cannot see the plateau; high ground sees low; trees block; flyers see over both |
-| `test_creep_leash` | A pulled camp returns past 18.75 m; give-up after 10 s; sleeping creeps are never auto-acquired |
+| `test_creep_leash` | A pulled camp returns past 18.75 m; give-up after 10 s; a creep pulled past 18.75 m cannot be targeted or damaged while it walks home and arrives at full HP and mana; attacking it at home engages its camp again; in a split pull the slowest creeps turn back first; sleeping creeps are never auto-acquired |
 | `test_creep_unreachable` | A ranged unit on a cliff cannot kill a camp below it: each creep drops it after 2 s and the camp returns after 3 s; a reachable tower that damages a camp-mode camp is fought |
-| `test_creep_sleep_wake` | At dusk the camp falls asleep with a 0–6 s seeded stagger, only when home; damage, a building started within 12 m, and a purchase or hire within 10 m each wake it at once; map validation rejects 2 `day` camps or < 60 % night sleepers |
-| `test_recall` | A point target picks the own finished hall nearest it; a double tap picks the highest tier; the 5 s channel completes through an enemy stun and damage; the owner's Stop cancels and keeps the charge; ≤ 11 own non-structure units within 6 m travel |
-| `test_shop_buy` | A worker alone in range cannot buy but can hire; a hero in range buys; with a full inventory the item drops at the hero's feet; a faction shop follows the same rules; picking up with a full inventory is refused and the item stays |
+| `test_creep_tower_retreat` | A camp pulled under a tower: each creep below 60 % HP that a structure hit within 3 s goes home, invulnerable, and arrives at full HP; its camp-mates above 60 % fight on; a camp fought without a tower never retreats; a tower's killing blow gives no XP |
+| `test_creep_sleep_wake` | At dusk the camp falls asleep with a 0–6 s seeded stagger, only when home; damage, a building started within 12 m, and a purchase, hire or service (inn revive included) at a neutral building whose footprint edge is within 10 m of a member each wake it at once, while a fountain's aura never does; map validation rejects 2 `day` camps or < 60 % night sleepers |
+| `test_recall` | A point target picks the own finished hall nearest it; a double tap picks the highest tier; the 5 s channel completes through an enemy stun, silence and damage; each owner order to the hero (move, stop, hold, attack, cast, item use) cancels it and keeps the charge; the hero never auto-acquires during it; ≤ 23 own non-structure units within 9.4 m travel, nearest first |
+| `test_shop_buy` | A worker alone in range cannot buy but can hire; a hero in range buys; with a full inventory the item drops at the hero's feet; a faction shop follows the same rules; picking up with a full inventory is refused and the item stays; an inn hero hired by one player is greyed out for the other, also after it dies; selling a charged item pays 50 % × remaining / base charges |
 | `test_inn_revive` | Instant, 50 % HP, 0 mana; faction hero L1 340 / 80 … L10 1105 / 260; inn hero lumber 108 … 351 |
 | `test_construction_refund` | Cancel refunds 75 % (floored); an unaffordable placement is refused at order time with the advisory; the cost is paid on arrival |
 | `test_repair_cost` | Repairing 50 % of a 160 / 55 building costs 24 / 8 (30 % pro rata; the 0.25 lumber stays in the accumulator); repair pauses when the next whole unit is unaffordable |
@@ -1708,7 +1784,15 @@ The `sylvan` and `deathless` entries follow the §20.2 table when those factions
 | `test_prd` | 100,000 seeded rolls at p = 0.10 / 0.20 / 0.25 give a rate within ± 0.3 % of p; no failure streak exceeds ceil(1 / C) − 1 |
 | `test_alert_router` | Two hits 10 s apart in one 20 m region raise one alert; a hit in another region raises another; an on-screen hit gives only the quiet ping |
 | `test_end_conditions` | Last structure destroyed → defeat; hall lost → revealed at +120 s |
+| `test_team_colours` | `python3 tools/ip/check_value_echo.py` exits 0: the bible §2.4 colours and every `PlayerState.COLORS` entry are ≥ ΔE 15 from every reference player colour (§3.1) |
+| `test_lumber_retarget` | A worker whose tree is felled (by another worker or by siege) moves to the nearest reachable tree within 8 m (ties by id) and keeps chopping; with none in range it goes idle and the idle-worker count rises |
+| `test_hall_upgrade` | The upgrade queues behind a training worker and is paid on queue; while it runs nothing else can be queued; the hall keeps its food, drop-off, tier and hero slots, and gets the new food and max HP on completion |
+| `test_corpse_stages` | A killed unit leaves a body for 8 s, then remains for 60 s, then nothing; heroes, summons and mechanical units leave none |
+| `test_minimap_orders` | With Attack, Move, Patrol, Attack Ground or a point-target ability armed, a minimap left-click issues the order at the matching world point; Shift queues it |
 | `test_determinism` | The existing state-hash test, extended with an AI-vs-AI 5-minute match |
+
+The neutral layer's own tests (`test_inn_unguarded`, `test_critter_kill`, `test_camp_sleep_ratio`, `test_xp_route_slice` and others) are in
+neutrals §9. `python3 tools/ip/check_banned_terms.py` (with its UI-string pass) and `check_value_echo.py` run with the suite.
 
 ---
 
@@ -1739,10 +1823,13 @@ The `sylvan` and `deathless` entries follow the §20.2 table when those factions
 
 **Release items (before any public build; ip-safety §1.3, §1.4, §5.3)**
 
-15. Keep the repo private until the ip-safety §5.3 release gate passes.
+15. **Owner action, now:** make the repo private. It was **public** on 2026-10-19 (`gh api repos/m1omg/Vibecraft --jq .private` →
+    `false`), so this doc, the research docs and the faction docs are already published. Keep it private until the ip-safety §5.3 release
+    gate passes. If it must stay public, do #17 **now** (not at release) and purge the moved text from history.
+15a. The release gate and **every push session** first run `gh api repos/<owner>/<repo> --jq .private` and **stop if it returns `false`**.
 16. `docs/.gdignore` keeps `docs/` out of Godot imports; every export preset must set `exclude_filter="docs/*"` (none exists yet).
-17. Before any public release, move the WC3 reference columns (§1, §4, §5.1, §6, §13, §21) and the §21 ledger into `docs/research/` and
-    leave this doc with Vibecraft values only. Never put "Warcraft" in public project metadata, tags or store text.
+17. Before any public release (or now, if the repo stays public), move the WC3 reference columns (§1, §4, §5.1, §6, §13), the §21 ledger
+    and the "Brief, restated" paragraph into `docs/research/` and leave this doc with Vibecraft values only. Never put "Warcraft" in public project metadata, tags or store text.
 
 **New flags from the 2026-10-17 review**
 
@@ -1760,12 +1847,30 @@ The `sylvan` and `deathless` entries follow the §20.2 table when those factions
 23. `architecture.md` §5: separation steering must obey §7.11 (enemy bodies are solid; never push another player's unit) and projectiles gain
     `weapon.kind` (§7.7); §10: attack id `raw`.
 24. `slice-plan.md` B13 and S19 and `juice/combat-and-units.md` §4.9 still say "Hollow Harvest" (now **Tattiebogles**, neutrals §10.1).
-25. `art-and-audio-bible.md`: the music cue "Linden Night Watch" shares the retired research name; rename it (e.g. "Linden Curfew") at the
-    next bible pass.
-26. `sylvan-and-deathless.md` "rules follow-ups" (§8 towers, §9 regen hooks, §10.7 `undead`, §15.2, §19, §20.2 ids) were not part of this
-    review and are still open.
+25. ~~`art-and-audio-bible.md` music cue rename~~ **Done (2026-10-19):** the cue is "Linden Curfew" (`mus_kingdom_linden_curfew`), and
+    `night watch` / `night_watch` are in `tools/ip/banned_terms.txt`, so the check keeps the old name out of prompts and file names.
+26. `sylvan-and-deathless.md` "rules follow-ups": the lumber values (§4.3, §20.2), the regeneration rows (§8, §9, structures included) and
+    the sunlit-yard rule are **done** (2026-10-19). Still open: §8 towers (the Glare Post is built directly; the deathless tower path),
+    §10.7 `undead`, §6.7 *Damnatio*, §19, §20.2 building ids.
 27. `neutrals.md` §11 follow-up table: the rules rows (recall, buying, group cooldowns, minimap flag, Hardy, unreachable attackers, map sleep
     rules) are now done here.
+
+**New flags and follow-ups from the 2026-10-19 review**
+
+28. **Recall radius and cap** 9.4 m / 23 units (24 bodies with the hero): confirm from WC3 footage (neutrals §11 Q25), then keep or tune.
+29. **Corpse time:** WC3's total (flesh then bones) is reported at ≈ 90 s; tune `corpse_decay` / `remains_decay` from footage.
+30. **Verify:** hero cooldowns keep running while dead; each inn hero once per match; shop and mercenary stock shared or per player.
+31. **Tower retreat** at 60 % HP within 3 s of structure damage is reported WC3 behaviour (neutrals §11 Q23); verify from footage.
+32. **Faction names:** Tormai (clans §1.1 Q7), Glaermere (no clearance search yet) and Long Wake (an existing game title) stay in the
+    string table only, as provisional or internal display text (§20.2 *Name status*).
+33. **Follow-ups in other docs (not edited here):** `sylvan-and-deathless.md`: the Lake Whistle and the Coin for the Ferry still say a 3 s
+    channel and 11 units within 6 m (→ §6.8: 5 s, any owner order cancels, 23 units within 9.4 m); its §A7.5 and §B7.5 now point at
+    mnemonic hero letters, which are still to be assigned; §B3.1 mentions "a creep's leash-return regeneration", which no longer exists
+    (returning creeps are invulnerable and fully healed on arrival). `neutrals.md` §1.4 *Status* and the §11 follow-up table: the rules
+    rows are done; its "Hero armour" mentions (§1.1, §5.6) become "Heroic armour". `juice/heroes-abilities-vfx.md` (V5, #24, N9):
+    Flour Bomb → Tattle-Burrs (neutrals §11 table; `kingdom.md` §11 was renamed here). `art-and-audio-bible.md` §9.6: give the Tattle-Burrs their own cue (a burr toss, then a
+    thin bell jingle; neutrals §11) instead of `it_reveal_puff`, counted as a new P0 job. `juice/combat-and-units.md` CMB-31: add the
+    60 s remains stage (§10.8). `architecture.md` §11: Classic hero-ability keys are per-def mnemonics.
 
 **Code follow-ups** are listed in §20.4. `architecture.md` §8 (trees block sight), §10 (type ids) and §11 (hotkey presets) need a line each
 when the code changes, in the same commit (architecture rule).
@@ -1791,7 +1896,7 @@ made in the same change set.
 | 10 | Minor | "Shop dust" / "reveal dust" / "Chalk of Seeing" echo WC3's reveal dust and true-sight gem | §11 now names the Flour Bomb and **Tailor's Chalk** (`item_tailors_chalk`). Done elsewhere: `kingdom.md` §7.4, §10, §11 and juice ITM-03 (plus its other mentions). "Tracer" and "Telltale" avoided |
 | 11 | Minor | "Hero glow" is WC3's own name and pointed at the wrong juice entry | §6.1 row is now **Hero sigil** (juice HER-01); `hero_sigil` in asset and file names |
 | 12 | Minor | Blizzard.j identifiers and WC3's upkeep wording in data keys | `rules.match.twinked_heroes` → `first_hero_recall_grants`; §3.2 cites gameplay-mechanics §1 instead of the constant; upkeep labels `upkeep_tier_0/1/2` (UI "Upkeep 0 % / 30 % / 60 %"); §20.2, §20.3, §20.4 step 4 |
-| 13 | Minor | The brief and the ledger are a written record of deliberate copying; the repo has a public-capable remote | Header "Internal only" note; `docs/.gdignore` added; export presets must exclude `docs/*` (§20.4 step 9); §23 release items 15–17 (repo private until the gate; move WC3 columns and §21 to `docs/research/` before release) |
+| 13 | Minor | The brief and the ledger are a written record of deliberate copying; the repo has a public-capable remote | Header "Internal only" note; `docs/.gdignore` added; export presets must exclude `docs/*` (§20.4 step 9); §23 release items 15–17 (repo private until the gate; move WC3 columns and §21 to `docs/research/` before release). *Superseded: the repo was found public; see round 2, #1* |
 | 14 | Major | Recall rule out of date (3 s, stun-cancelled, nearest hall) and three recall items behaved three ways | §6.8 rewritten: point or hall target, 5 s, enemy-proof, 11 units, charge spent on completion; `recall_target`, `recall_enemy_interruptible`; §21 row added. Done elsewhere: `kingdom.md` §7.4 Homeward Horn, `clans.md` §9 Homeward Felt |
 | 15 | Major | Any unit could buy; faction shops had no rule | §16: buying needs an own hero in range; hiring, reviving and services any unit; item routing to the hero; applies to faction shops; neutral buildings invulnerable and `NEUTRAL_PASSIVE`; `rules.neutral.buy_needs_hero` |
 | 16 | Major | §15 kept creep rules that neutrals had replaced | §10.2 Hardy: heroes for control and Spell damage, no polymorph or remove-from-game. §15.1: unreachable-attacker rule replaces the tower row; camp mode fights a structure that damages it; `acquire_override`. §15.3: ≤ 1 `day` camp per map, ≥ 60 % asleep at night, `sleeps_override`. Data: `unreachable_drop_time` 2.0, `unreachable_return_time` 3.0, `unreachable_path_factor` 2.0, `recent_attacker_window` 3.0, `max_day_camps`, `min_night_sleep_fraction` |
@@ -1816,4 +1921,44 @@ made in the same change set.
 | 35 | Minor | Rule sets without tests | §22 adds `test_recall`, `test_shop_buy`, `test_inn_revive`, `test_creep_sleep_wake`, `test_creep_unreachable`, `test_construction_refund`, `test_repair_cost`, `test_extra_builders`, `test_autocast_scope`, `test_splash_rings`, `test_attack_ground`, `test_artillery_dodge`, `test_surround`, `test_prd`, `test_alert_router` |
 
 Not done here (listed as follow-ups in §23 #22–27): juice ITM-04 retiming for the 5 s recall, architecture notes, remaining "Hollow Harvest"
-mentions in the slice plan and combat juice, the bible's "Linden Night Watch" cue title, and the open sylvan-and-deathless rules follow-ups.
+mentions in the slice plan and combat juice, the bible's "Linden Night Watch" cue title (done in round 2), and the open sylvan-and-deathless rules follow-ups.
+
+---
+
+## Review log, round 2 (2026-10-19: IP-safety and WC3-fidelity reviews)
+
+Where IP safety and fidelity conflicted, IP won and the closest legal alternative was used. "Done elsewhere" names the sibling-file edits
+made in the same change set; anything not done is a numbered follow-up in §23.
+
+| # | Severity | Issue | Change |
+|---|---|---|---|
+| 1 | Blocker | The header's safeguard ("the repo stays private") was false: `gh api repos/m1omg/Vibecraft` returns `private: false`, so the brief, the WC3 columns, the §21 ledger and the codename are public | Not fixable from a doc: **owner action** to make the repo private. Header now states the verified state (public, checked 2026-10-19, with the command) and both remedies (private now, or move the WC3 columns, §21 and the brief out of the tree now and purge history). §23 #15 rewritten, new **#15a** (the release gate and every push session run the check and stop on `false`), #17 now includes the brief. Round-1 log #13 marked superseded. Nothing was moved or purged: that is the owner's call |
+| 2 | Major | §3.1 made `PlayerState.COLORS` (the reference 12 colours in the reference order; 7 slots fail `check_value_echo.py`) the team-colour source | §3.1 lists the bible §2.4 colours in table order and defers assignment and conflict rules to the bible; §20.4 step 10 replaces `PlayerState.COLORS`; §22 `test_team_colours` (`check_value_echo.py` exits 0). Re-ran the check: it still fails on the code table until step 10 lands |
+| 3 | Minor | Slice map called "Greenvale" (the internal tileset id) | §3.1: "Wether Downs (tileset id `greenvale`, shown to players as Downland)" |
+| 4 | Minor | Uncleared display names hard-coded in data | `factions.<id>.name` holds string keys `faction_name_<id>` (§20.2, §20.3); new *Name status* row (Brennmark cleared; Tormai provisional, Q7, fallback Tormun; Glaermere provisional, no search; Long Wake internal only, fallback "the Unending Wake"); string table `data/strings/en.json` (§20.2 note, §20.4 step 11); §23 #32 |
+| 5 | Minor | "'…under attack' phrasing gets each faction's own voice" read as permission to re-voice the reference advisor templates | §17.3 now bans the templates and rewordings ("… is under attack", "We require more …", "Not enough …", "Build/construct more [supply building]", "[hero] has fallen", "No/Low/High upkeep"); each faction words every trigger in its own idiom |
+| 6 | Minor | "Night Watch", "reveal dust" and "Chalk of Seeing" were retired but never banned; the bible still titled a cue "Linden Night Watch" | Added `night watch`, `night_watch`, `chalk of seeing`, `reveal dust`, `dust of appearance` to `tools/ip/banned_terms.txt`. Done elsewhere: bible cue → **"Linden Curfew"** (`mus_kingdom_linden_curfew`), and one bible sentence (§9 prompt rules) that named the reference item as "reveal dust" was reworded so the new ban passes. §23 #25 marked done; the checker passes |
+| 7 | Minor | No player-facing labels for status flags (tooltips would fall back to "Magic Immunity" / "True Sight"); armour `hero` kept the label "Hero" | §10.7 display-name table: `spell_immune` **Spellproof**, `true_sight` **Keen Sight** (faction flavour "Lantern-sight", "Mirror-sight"), `spectral` Spectral, hardy creeps **Hardy**, the rest plain words; §10.5 and §11 headings use them; armour `hero` shown as **Heroic** (id unchanged) in §6.5, §6.6, §7.1, §7.2, §7.10. New `tools/ip/banned_ui_terms.txt` (`true sight`, `true seeing`, `magic immunity`, `magic immune`) and a UI-string pass in `check_banned_terms.py` over `data/strings/` only, so ids such as `true_sight` stay legal (probed: a "True Sight" string fails, the id does not). Done elsewhere: "Heroic armour" in `kingdom.md` §6.1 and `clans.md` §6 (neutrals: §23 #33) |
+| 8 | Minor | "Journeyman Papers → Master's Seal" in the caster-training slots still read as a word swap of the reference ladder | T3 renamed **Guild Seal** (ids `kingdom_<caster>_guild_seal`); Journeyman Papers kept. Done elsewhere: `kingdom.md` §1, §5, §7.1, §7.2, §7.5 (Collegium key **G**), §8, §9 ("Master" rank → Guild Seal) and `slice-plan.md` E17 and the T3 data row. `master's seal`, `master_seal`, `masters_seal` banned |
+| 9 | Minor | Round-1 sylvan values (8 lumber at 1.0 s, flat noonlight regen, no sunlit-yard rule) could rebuild the version retired for IP reasons | §4.3: 10 per trip, 1 per 0.9 s (Deep Spigots 12, Bored Spigots 14) plus its rate check; §8: Pall, noonlight and sunlit yard (structures only by day); §9: noonlit units +1.5 HP/s, structures +1 HP/s, lumber-fuelled lanterns, sunlit yard structures only, no time-of-day unit regen, terrain regen skips mechanical units (deathless structures +1 HP/s added too); §20.2 `lumber_per_trip` 10, `chop_interval` 0.9; §21 lumber row; §23 #26 updated |
+| 10 | Blocker | Returning creeps were vulnerable at 2 %/s, an exploit neutrals §1.4 calls blocking, and the engine had two specs | §15.2: walks home **invulnerable**, **full HP and mana** on arrival, ordinary target once home, for every kind of return. Data: `return_invulnerable` true, new `return_full_heal` true, `return_regen` **dropped** (§20.2, §20.3, §20.4 step 12). §1 creeps row; §21 "Creep return \| Invulnerable, full heal \| Same \| Kept (verify)"; `test_creep_leash` extended |
+| 11 | Major | No tower-creeping counter | §15.1 **Tower retreat** row (structure damage in the last 3 s and below 60 % → home, invulnerable, full heal; camp-mates fight on); `tower_retreat_hp` 0.6, `tower_retreat_window` 3.0; `test_creep_tower_retreat`; §21 row; flag §23 #31 |
+| 12 | Major | Recall moved hero + 11 within 6 m (half an army), marked "Kept"; cancel rules incomplete | `recall_radius` **9.4 m**, `recall_max_units` **23** (24 bodies), flag §23 #28 to confirm from footage; §6.8: any owner order to the hero (move, stop, hold, attack, cast, item use) cancels and keeps the charge, no auto-acquire during the channel, the one exception to §10.2; §6.5 Channels row points to it; §21 row; `test_recall` rewritten. Done elsewhere: `kingdom.md` §7.4 Homeward Horn and `clans.md` §9 Homeward Felt (sylvan and deathless items: §23 #33) |
+| 13 | Minor | Hall upgrade: queue and mid-upgrade state unspecified; "paid on start" | §4.6: paid **on queue**, behind a training worker, blocks the queue; §5.1: during an upgrade the hall keeps food, drop-off, tier, hero slots and cripple status, new food and max HP on completion; §4.4 Providers note; §21 row; `test_hall_upgrade` |
+| 14 | Minor | Inn heroes unique only per player | §6.1: each inn hero once per match, greyed for everyone else, also after death; `rules.heroes.inn_hero_unique = "match"`; `test_shop_buy` case; §21 row (verify) |
+| 15 | Minor | §6.4 gave the single-hero bonus to flat-XP power-ups, against neutrals §1.6 | §6.3 row and §6.4 step 5 (kill XP only); `rules.items.flat_xp_ignores_single_hero_bonus` (§20.2, §20.3); `test_xp` case |
+| 16 | Minor | Five neutrals follow-ups unapplied | Flour Bomb → **Tattle-Burrs** (§11 ×2), Free Company Camp → **Hiring Fair** (§16); wake rule (buy, hire or service incl. the inn; footprint edge within 10 m of any member, edge to edge; passive auras never wake) in §15.3 and §16 and `test_creep_sleep_wake`; selling charged items × remaining / base charges (§16, `test_shop_buy`); `rng_critter` in §2.3. `flour bomb`, `flour_bomb`, `free company camp`, `free_company_camp` banned. Done elsewhere: `kingdom.md` §11 detection row and the bible's item sound map now say Tattle-Burrs (its own cue: §23 #33; the bible's minimap glyph row already said Hiring Fair after its own round-2 revision) |
+| 17 | Minor | AI creeping text vs neutrals: "by distance", an impossible Hard red gate, `camp_level_ratio` undocumented | §19: every level follows the authored `creep_route`; ratio 0.8 / 1.2 / 1.5 described; Hard red gate "hero 1 level 4+, hero 2 level 3+, ≥ 30 army food". Data: `creep_order` "route" (all levels), `red_camp_hero_levels` [4, 3] and `red_camp_min_army_food` 30 (Hard; null otherwise) |
+| 18 | Minor | Classic gave heroes Q/W/E/R, not WC3's per-ability mnemonics | Option (a): §18.4 Classic uses each ability def's mnemonic `hotkey` (unique per card, avoiding M, S, H, A, P, O; the Learn card reuses them); Q/W/E/R stays as an optional setting and the Grid preset keeps Z/X/C/V; §21 row. Done elsewhere: letters for all 8 slice-faction heroes in `kingdom.md` §6.1 and §7.5 and `clans.md` §7.2 (kit-table Q/W/E/R kept as slot order); `sylvan-and-deathless.md` §A7.5 and §B7.5 point at mnemonics (letters to be assigned) |
+| 19 | Minor | Class baselines contradicted the rosters (Brass Kestrel 280 HP, 1 food) and §4.4 (heavy food) | §7.10: new **Air scout** row (250–350 HP, 0–1 Light, 6.0–6.25 m/s, 1–2 food); heavy row food **4–6**, matching §4.4 (deathless Wake Barge 6; clans Thoom 5) |
+| 20 | Minor | "Structures 10–20 % below WC3, Δ for siege tempo" was wrong | §8 and §21: halls ≈ +3 %; most production buildings at or within 10 % of their role's WC3 value (Drill Yard −10 %; clans Mirror Yurt 760, Home Yurt 620); status **Kept (± 10 %)** |
+| 21 | Minor | 8 s corpses empty the field early; not marked Δ | §10.8: 8 s body, then a 60 s **remains** stage drawn from the slice on (bones decal), both usable as corpses; `combat.defaults.remains_decay` 60 ✱; `test_corpse_stages`; §21 row "≈ Kept (verify)"; flag §23 #29; juice CMB-31 follow-up (§23 #33) |
+| 22 | Minor | Charge merging and per-player stock not marked Δ | §21: Inventory "Kept; charge merge **Δ** QoL"; new row "Shop and mercenary stock \| Shared per building (unverified) \| Per player \| **Δ** fairness (verify)"; §16 Stock row says so |
+| 23 | Minor | No rule for a worker whose tree is felled | §4.2 Felling: retarget the nearest reachable tree within 8 m (ties by id), else idle; `rules.economy.tree_retarget_radius` 8.0; `test_lumber_retarget` |
+| 24 | Minor | Armed orders on the minimap missing | §18.1 row: Attack, Move, Patrol, Attack Ground and point-target abilities and items issue at the matching world point, Shift queues; `test_minimap_orders` |
+| 25 | Minor | Cooldowns while dead and XP rounding unspecified | §6.7: cooldowns keep running while dead and are not reset on revive (verify, §23 #30); §6.4 step 7: XP is a float, the UI shows `floor(xp)`; cases in `test_xp` and `test_revive_costs` |
+| 26 | Minor | `day_length` = 480 is the whole cycle and invites a wrong "fix" | Renamed `rules.daynight.cycle_length` (§20.2, §20.3); §20.4 step 5 says `DAY_LENGTH` is the whole cycle, kept as a fallback alias, and no separate night length is added |
+
+**Checks run:** `python3 tools/ip/check_banned_terms.py` passes with the new terms and the UI pass; the §20.3 JSON block parses;
+`python3 tools/ip/check_value_echo.py` still reports the 7 `PlayerState.COLORS` errors, which §20.4 step 10 removes. `neutrals.md` was not
+edited here (it had uncommitted changes from another session); its stale rows are listed in §23 #33.

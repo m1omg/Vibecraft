@@ -285,3 +285,32 @@ wicker brute
 wicker_brute
 chapbook
 chapbooks
+# rules.md review, round 2 (2026-10-19): a WoW human militia name, echoes of the reference reveal item, and retired neutral and
+# kingdom names (rules.md Review log round 2, #6, #8 and #16; the "_" forms catch snake_case ids such as mus_kingdom_x_night_watch)
+night watch
+night_watch
+chalk of seeing
+reveal dust
+dust of appearance
+flour bomb
+flour_bomb
+free company camp
+free_company_camp
+master's seal
+master_seal
+masters_seal
+# Art-and-audio bible review, round 2 (2026-10-19): retired neutral names (neutrals.md §10.1 round 2) and other-IP echoes renamed in
+# the bible (§13 #26). "flour bomb" and "free company camp" are listed above; "free company" also covers the retired camp's horn.
+free company
+free_company
+almanac
+almanacs
+keen edge
+keen_edge
+homeward horn
+homeward_horn
+homeward felt
+homeward_felt
+cauldron-father
+cauldron father
+cauldron_father

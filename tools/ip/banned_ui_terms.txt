@@ -1,0 +1,9 @@
+# Player-facing labels that must never appear in the string table (data/strings/), even though the underlying rule or flag is ours.
+# Scanned by check_banned_terms.py only under data/strings/ (code and data ids such as `true_sight` and `spell_immune` stay legal).
+# One term per line, case-insensitive, whole words. See docs/design/rules.md §10.7 for the display names to use instead.
+# The reference game's own status labels (use "Keen Sight", "Spellproof" and "Spectral", rules.md §10.7):
+true sight
+true seeing
+magic immunity
+magic immune
+ethereal

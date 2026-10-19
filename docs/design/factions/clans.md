@@ -822,7 +822,7 @@ All four heroes use the global hero rules (rules §6):
 | Rule | Value |
 |---|---|
 | Cost | First hero free (5 food), plus one **Homeward Felt** (rules §3.2); later ones 425 g / 100 l, 5 food, 55 s (rules §6.1) |
-| Combat | Heroic attack type (`heroic`), Hero armour (×0.7 from Spell damage, rules §7.2) |
+| Combat | Heroic attack type (`heroic`), Heroic armour (id `hero`; ×0.7 from Spell damage, rules §7.1–§7.2) |
 | Inventory and revive | 6 item slots; revive at the Naming Stones (rules §6.7) |
 | Skills | Abilities learned at levels 1/3/5 (3 ranks each), ultimate at level 6. Hotkeys Q, W, E, R (rules §6.5) |
 | Attributes | STR +25 HP and +0.05 HP/s; AGI +0.3 armour and +2% attack speed; INT +15 mana and +0.05 mana/s; primary attribute +1 damage (rules §6.6) |
@@ -1019,7 +1019,8 @@ flowchart LR
 ### 7.2 Command cards and hotkeys (Classic preset; rules §18.4)
 
 Letters are unique per card (`Defs` validates this). Unit cards always carry Move **M**, Stop **S**, Hold **H**, Attack **A**, Patrol
-**P**; heroes add Learn **O** and abilities **Q / W / E / R** (§6.1). Production buildings carry Rally **R**. Passives (Shove, Heel-Seeker,
+**P**; heroes add Learn **O** and one mnemonic letter per ability (Heroes row; the same letters on the Learn card; the optional "Hero
+abilities on Q / W / E / R" setting uses the kit-table slot order). Production buildings carry Rally **R**. Passives (Shove, Heel-Seeker,
 Roof-Burner, Sun on the Blades, Heavy Ladle, Shelter, Keen Edge, Warm Benches) show as icons without a key.
 
 | Card | Buttons (letter) |
@@ -1037,7 +1038,7 @@ Roof-Burner, Sun on the Blades, Heavy Ladle, Shelter, Keen Edge, Warm Benches) s
 | Guest Ring | Thoom **T**, Heavy Ladle **L**, Rally **R** |
 | Tea Tent | Salt Tea **S**, Kettle-Bottom Tea **K**, Brick-Tea Shavings **B**, Overnight Steep **O**, Hail-Eye Pebble **E**, Homeward Felt **H**, Folded Yurt **Y**, Glint Charm **C** |
 | Unit abilities (Q / W / E in §5.2 table order) | Hookbill Rider: Shriek-Scatter **Q**, Hobble-Bola **W**. Gustcaller: Unbind **Q**, Wind at Your Back **W**, Dust Shroud **E**. Pole-Carver: Mirror Pole **Q**, Grain-Reader's Mark **W**, Kettle Pole **E**. Hill-Listener: Between Breaths **Q**, Kin-Thread **W**, Hands of the Hill **E**. Sling-Cart: Attack Ground **G**. Glintback: Withdraw **Q**. Sky-Kite: Updraft **Q**. Hail-Swifts and poles: unit commands only (poles have none) |
-| Heroes | the Uncut: Dust Veil **Q**, Braid Lash **W**, Keen Edge **E**, Through the Tall Grass **R**. Skymirror: Sunglint **Q**, Bronze Window **W**, Hail-Swifts **E**, Swallowed Sun **R**. Cauldron-Father: Bowl Over **Q**, Cauldron Ring **W**, Warm Welcome **E**, Under My Roof **R**. Omen-Mother: Kettle Blessing **Q**, Marmot Curse **W**, Tea-Leaf Omen **E**, Grandmother's Tale **R** |
+| Heroes (letters avoid M, S, H, A, P, O; a passive's letter is used on the Learn card only) | the Uncut: Dust Veil **D**, Braid Lash **L**, Keen Edge **K**, Through the Tall Grass **T**. Skymirror: Sunglint **G**, Bronze Window **B**, Hail-Swifts **W**, Swallowed Sun **U**. Cauldron-Father: Bowl Over **B**, Cauldron Ring **C**, Warm Welcome **W**, Under My Roof **R**. Omen-Mother: Kettle Blessing **K**, Marmot Curse **C**, Tea-Leaf Omen **T**, Grandmother's Tale **G** |
 
 ---
 
@@ -1083,7 +1084,7 @@ Weighstall's Rosehip Draught and Bluebell Cordial (260 / 160). Heals share the i
 | **Brick-Tea Shavings** (`item_clans_brick_tea`) | T1 | 65 g | 3 / 30 s | Restores 120 mana over 10 s; stops if the drinker takes damage | ✅ |
 | **Overnight Steep** (`item_clans_overnight_steep`) | T1 | 105 g | 3 / 60 s | A cup left steeping all night, bitter enough to make a sleeping Thoom sit up: **+130 mana at once** (`mana_instant`). Group `mana` | ✅ |
 | **Hail-Eye Pebble** (`item_clans_hail_eye_pebble`; 3 charges) | T1 | 90 g | 2 / 60 s | Sets a pale hail-white pebble, invisible to enemies, within 5 m: **14 m vision for 4 min**. Vision only: it does **not** see invisible units (`place_ward`) | ✅ |
-| **Homeward Felt** (`item_homeward_felt`) | T1 | 325 g | 2 / 100 s | **Target a point or an own finished hall** (minimap clicks work; hotkey twice = highest-tier hall). After a **5 s** channel (rules §6.8: enemy stuns, silences and damage do not stop it; your own Stop or move order does), the hero and up to 11 of your non-structure units within 6 m return to your finished hall nearest that point. The first hero also gets one free (rules §3.2) | ✅ |
+| **Homeward Felt** (`item_homeward_felt`) | T1 | 325 g | 2 / 100 s | **Target a point or an own finished hall** (minimap clicks work; hotkey twice = highest-tier hall). After a **5 s** channel (rules §6.8: enemy stuns, silences and damage do not stop it; any order you give the hero does), the hero and up to 23 of your non-structure units within 9.4 m return to your finished hall nearest that point. The first hero also gets one free (rules §3.2) | ✅ |
 | **Folded Yurt** (`item_clans_folded_yurt`) | T2 | 170 g / 35 l | 1 / 90 s | Unfolds into a finished Home Yurt (+10 food) at a target point within 6 m in 4 s (normal placement rules). It reuses the Home Yurt mesh, so it costs only an icon | ✅ |
 | **Glint Charm** (`item_clans_glint_charm`) | T2 | 210 g | 1 / 120 s | Permanent: **+1 armour**, and the hero's attacks **reveal** the target for 3 s (it stays visible through fog; vision only, not detection). Not an attack orb: no bonus damage and no on-hit proc | later |
 
@@ -1542,3 +1543,8 @@ Where IP and fidelity conflicted, IP won and the closest legal alternative was u
 **Cross-doc changes from the rules.md review (2026-10-17):** attack id `pure` → `raw` (display **Raw**); the Homeward Felt follows the
 new rules §6.8 recall (point target, 5 s, enemy-proof). The §13 Q8 rules follow-ups (§6.5 `allow_heroes`, per-source `spectral_multiplier`,
 `dispel_mode`, the §18.2 Enter row, the §19 push-trigger override and lumber-worker note) are now in rules.md.
+
+**Cross-doc changes from the rules.md review, round 2 (2026-10-19):** hero abilities use **mnemonic letters** in the Classic preset
+(§7.2 Heroes row; the kit tables' Q / W / E / R is the slot order and the optional setting); the Homeward Felt takes up to **23** units
+within **9.4 m**, and any order to the hero cancels it (§9); "Hero armour" is labelled **Heroic armour** (§6). Details: rules.md review
+log, round 2.

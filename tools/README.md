@@ -12,6 +12,9 @@ paid generation API.
 | `autorig.py` | bpy | **free auto-rig**: static character GLB → template skeleton fitted to the mesh, bone-heat skin, library clips, game-ready GLB + QA |
 | `texture_tools.py` | python3 | `seamless`, `tile-preview`, `seam-score`, `resize`, `array`, `atlas`, `icon`, `palette-match` |
 | `render_preview.py` | python3 + Godot | load a GLB through `GLTFDocument` (load check + JSON report) and render a labelled contact sheet |
+| `kits/doodads.py` | bpy | procedural Greenvale doodads, trees + LODs and neutral structures (see "Procedural doodad kit") |
+| `kits/lineup.py` | python3 + Godot | line-up render of the kit at the real RTS camera |
+| `kits/buildings.py` | bpy | procedural faction buildings: every [SLICE] kingdom / clans building + the T2 hall add-ons (see "Procedural building kit") |
 | `vc_bpy.py` | (library) | shared Blender helpers: import/export, actions/NLA, retarget math |
 | `preview/` | Godot | tiny separate Godot project used by `render_preview.py` (`inspect.gd`, `turntable.gd`) |
 | `tests/` | bpy / bash | synthetic rigged characters and props, retarget checker, `run_all.sh` end-to-end test, `test_autorig.sh` |
@@ -141,6 +144,94 @@ model, ground lines are 1 m (dark lines every 2 m = terrain TILE), the red arrow
 --path tools/preview -s turntable.gd` (lavapipe ICD set automatically) renders frames, Pillow
 composes the sheet. Exit code 1 if Godot fails to load the file or prints `ERROR` lines.
 ~15 s per model with software Vulkan.
+
+## Procedural doodad kit (`tools/kits/`)
+
+Greenvale doodads and neutral structures built entirely in bpy (no paid API calls), from the repo's painted
+swatches, terrain textures and foliage cards plus procedurally painted textures. Deterministic: re-running
+gives byte-identical GLBs and manifest.
+
+```bash
+$PY tools/kits/doodads.py                          # all 42 assets + assets/models/doodads/manifest.json (~25 s)
+$PY tools/kits/doodads.py --only "tree_*,gold_mine" # subset (prefix* allowed); --list shows the ids
+python3 tools/kits/lineup.py                        # tests/output/doodads_lineup.png (vignette, neutrals, catalogue)
+```
+
+| File | What |
+|---|---|
+| `kits/doodads.py` | asset builders, registry, manifest writer (CLI above) |
+| `kits/doodads_lib.py` | parts (sweep / lathe / slab / box / blob / card / ribbon), painted textures, AO + vertex-colour bake, deterministic GLB writer |
+| `kits/foliage_sway.gdshader` | reference shader for `SWAY` materials (wind sway, AO, alpha scissor); the preview and lineup use it |
+| `kits/lineup.gd`, `kits/lineup.py` | line-up renderer: real RtsCamera (pitch 56, FOV 45), DayNight day light, painted terrain splat, labelled catalogue |
+
+Outputs: `assets/models/doodads/<id>.glb` (trees + `_lod1`, rocks, walls, hedge, fence, props, creep-camp kit),
+`assets/models/neutral/<id>.glb` (`gold_mine`, `gold_mine_collapsed`, `neutral_weighstall`, `neutral_hale_spring`).
+The manifest lists per asset: size, tris, suggested blocked footprint in cells, sight blocking, sway, materials,
+texel density, LODs, animated nodes (with pivots) and extras (smoke / lantern / adit points).
+
+What the game must do with these GLBs (Godot's glTF importer does not do it):
+* **Vertex colours**: every non-foliage material carries painted AO / moss in `COLOR_0` and is tagged with glTF
+  extras `vc_vertex_color: "multiply"` (Godot material meta `extras`). Set `vertex_color_use_as_albedo = true`
+  on those materials, as `render_preview.py` (turntable.gd) and `lineup.gd` do.
+* **Foliage** (`*_SWAY`, extras `vc_vertex_color: "sway"`): `COLOR_0` R = sway weight (0 at the trunk base → 1 at
+  the canopy edge), G = painted AO, B = per-cluster phase; alpha scissor (MASK). Render with
+  `kits/foliage_sway.gdshader` (or the tree MultiMesh shader built from it), never with the imported material.
+* **UV2** on every vertex: x = sway weight (also on bark), y = normalized height 0..1 → build / collapse reveal:
+  `discard` where `UV2.y > progress` (no extra construction meshes).
+* **Emissive tags**: `_GLOW` (Gold Seam stratum: pulse when a worker enters), `_LAMP` (lanterns, night),
+  `_EMBER` (camp vents and fire beds), `_GLYPH` (cup-and-ring marks, night only), `_WATER` (pool / sluice).
+* **Facing**: fronts face −Z like units; the default camera sits on +Z, so spawn neutral buildings with
+  facing = PI for the door-toward-camera look. No TEAM materials: neutrals never carry team colour (bible §3.1).
+
+## Procedural building kit (`tools/kits/buildings.py`)
+
+Every [SLICE] building of `kingdom` and `clans` except the two AI-modelled halls, built in bpy from shared
+modules (half-timber walls with rubble plinths and jetties, gable / hip / pyramid roofs with ridge-tile team
+bands, crow-stepped gables, onion domes, chimneys, scout-tower frames, doors, shuttered windows, pennants,
+banners, wheels and wagons; felt yurts on stadium or round plans with lattice band, rolled skirt, crown ring and
+smoke-ring glow, tortoise-shell domes, carved masts with felt streamers, standing stones with glyph decals,
+gong frames, ring fences, kilns, urns, sun-mirror posts, a recurve bow on a swivel, lattice galleries). No paid
+API. Deterministic (byte-identical GLBs and manifest on re-run; ~25 s for all 19).
+
+```bash
+$PY tools/kits/buildings.py                                  # all -> assets/models/buildings/<id>.glb + manifest.json
+$PY tools/kits/buildings.py --only kingdom_croft,clans_tea_tent
+$PY tools/kits/buildings.py --coverage --sheets tests/output/buildings --lineup tests/output/buildings_lineup.png
+$PY tools/kits/buildings.py --no-build --lineup out.png --hall-scale 1   # line-up with the AI halls at native 8 m
+```
+
+| File | What |
+|---|---|
+| `kits/buildings.py` | kit modules, the 19 building generators, manifest, CLI, line-up / coverage drivers |
+| `kits/buildings_lib.py` | swatch tiling (crossfade or pattern-period crop), procedural paint (iron, brick, straw, wattle, stone, glyphs, log rings, leaves, palette, team cloth, windows, embers), parts (prism with gridded CDT caps, lathe incl. stadium plans, sweep, plate, blob), refinement, smooth-noise jitter, ray-cast AO bake, atlas packing with UV cuts on tile lines, deterministic GLB writer |
+| `kits/buildings_lineup.gd` | line-up renderer (meadow ground, RTS pitch, per-faction team colours, label anchors) |
+| `kits/buildings_teammask.gd` | flat TEAM / non-TEAM masks from the RTS pitch for the coverage numbers in the manifest |
+
+Conventions: footprint = faction-doc cells x 0.5 m (Croft / Home Yurt / towers 4x4, Oath Hall / Foundry / Curio
+Cabinet / Naming Stones / Casting Pit / Tea Tent 6x6, the rest 8x8), heights from art bible 1.3 (10-cell column),
+origin at the footprint centre, door on −Z (spawn with facing = PI to show it to the default +Z camera). Each GLB
+has one mesh with up to three materials: `<id>` (opaque atlas of the swatches it uses, 448 px cells with 32 px
+wrap padding, ~128-220 px/m), `<id>_GLOW` (windows, forge / kiln / crown glow; emissive: raise its energy at
+night) and `<id>_TEAM` (light grey cloth for UnitView's albedo multiply). `COLOR_0` = painted AO (tagged
+`vc_vertex_color: "multiply"` like the doodad kit); the primitives are ordered GLOW, atlas, TEAM because Godot
+4.7's glTF import never sets `vertex_color_use_as_albedo` on a mesh's first primitive (buildings without GLOW
+start with a hidden 1 mm dummy triangle), so stock import already shows the AO.
+
+Construction (no `_construction` meshes): `TEXCOORD_1` (UV2) y = normalized height (0 ground, 1 top), x = build
+layer (0 frame / lattice / masts / walls, 1 covering: roofs, felt, team bands). Kingdom "scaffold-raised": discard
+`UV2.y > progress` (+ a noise band); clans "Raising" in two passes:
+```glsl
+float p = mix(progress / 0.6, (progress - 0.4) / 0.6, step(0.5, UV2.x));   // lattice first, felt over it
+if (UV2.y > clamp(p, 0.0, 1.0) + 0.03 * edge_noise) discard;
+```
+T2 hall upgrades are add-ons in the AI hall's model space (8 m): `kingdom_walled_burg` (ring of team-banded
+wagons, stone buttresses, taller ribbed onion dome enclosing the T1 turret, four banner poles; 11.7 m ≤ +15 %)
+and `clans_banner_shell` (lattice gallery, two shell-domed kiosks, four felt-banner masts, a second gong; 6.5 m).
+Parent them with the same transform as `kingdom_moot_hall.glb` / `clans_shell_hall.glb` and show both.
+
+Known limits: `mathutils.noise.noise_vector()` is clock-seeded per process (use scalar `noise()` or call
+`noise.seed_set()` for deterministic jitter); bmesh `bevel` emits vertices in a run-dependent order (the kit
+chamfers by sweeping a profile and the writer sorts vertices and triangles canonically).
 
 ## Free auto-rig
 

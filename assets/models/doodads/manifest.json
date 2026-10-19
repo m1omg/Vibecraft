@@ -1,0 +1,1506 @@
+{
+ "generator": "tools/kits/doodads.py",
+ "conventions": {
+  "units": "metres, Y up, origin at footprint centre on the ground",
+  "facing": "front (door, adit, counter, open side) faces -Z like units; the default RtsCamera sits on the +Z side, so spawn neutral buildings with facing = PI for the door-toward-camera look",
+  "nodes": "animated parts are child nodes whose origin is the pivot (Godot space, relative to the asset root)",
+  "footprint_cells": "suggested blocked pathing cells [x, z] (0.5 m cells); null = walkable decoration",
+  "sway_materials": "name contains SWAY: alpha scissor; COLOR_0 R sway weight (0 trunk base -> 1 canopy edge), G painted AO, B cluster phase; shader tools/kits/foliage_sway.gdshader",
+  "other_materials": "COLOR_0 RGB painted AO / base darkening / moss tint: multiply into the albedo. Godot's glTF importer leaves vertex_color_use_as_albedo off: set it on every material whose meta 'extras'.vc_vertex_color == 'multiply' (see tools/kits/lineup.gd _fix_materials)",
+  "uv2": "x sway weight, y normalized height 0..1 (build_progress reveal: discard where UV2.y > progress)",
+  "emissive": "materials tagged GLOW / LAMP / EMBER / GLYPH are emissive; scale emission energy to pulse",
+  "team_colour": "none: neutrals and doodads never carry team colour (art bible \u00a73.1 rule 8)"
+ },
+ "assets": [
+  {
+   "id": "tree_hill_oak",
+   "path": "assets/models/doodads/tree_hill_oak.glb",
+   "category": "tree",
+   "size": [
+    6.453,
+    5.716,
+    6.478
+   ],
+   "aabb_min": [
+    -3.442,
+    0.0,
+    -3.18
+   ],
+   "tris": 1293,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": true,
+   "materials": [
+    "tree_hill_oak_bark",
+    "tree_hill_oak_leaves_SWAY"
+   ],
+   "texel_density_px_per_m": {
+    "tree_hill_oak_bark": 128
+   },
+   "lods": [
+    "tree_hill_oak_lod1"
+   ],
+   "nodes": [],
+   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Place with \u00b120 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Default tree-wall species."
+  },
+  {
+   "id": "tree_hill_oak_lod1",
+   "path": "assets/models/doodads/tree_hill_oak_lod1.glb",
+   "category": "tree_lod",
+   "size": [
+    7.604,
+    6.414,
+    8.049
+   ],
+   "aabb_min": [
+    -3.866,
+    0.0,
+    -4.104
+   ],
+   "tris": 259,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": true,
+   "materials": [
+    "tree_hill_oak_lod1_bark",
+    "tree_hill_oak_lod1_leaves_SWAY"
+   ],
+   "texel_density_px_per_m": {
+    "tree_hill_oak_lod1_bark": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Low LOD / impostor source of tree_hill_oak: same materials and atlas, closed leafy hulls + 4 cards per cluster, no thin branches (clean silhouette for octahedral impostor baking).",
+   "lod_of": "tree_hill_oak"
+  },
+  {
+   "id": "tree_linden",
+   "path": "assets/models/doodads/tree_linden.glb",
+   "category": "tree",
+   "size": [
+    4.441,
+    6.238,
+    4.757
+   ],
+   "aabb_min": [
+    -2.386,
+    0.0,
+    -2.423
+   ],
+   "tris": 1207,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": true,
+   "materials": [
+    "tree_linden_bark",
+    "tree_linden_leaves_SWAY"
+   ],
+   "texel_density_px_per_m": {
+    "tree_linden_bark": 128
+   },
+   "lods": [
+    "tree_linden_lod1"
+   ],
+   "nodes": [],
+   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Place with \u00b120 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Taller rounded cone with summer blossom; mix into tree lines near kingdom starts."
+  },
+  {
+   "id": "tree_linden_lod1",
+   "path": "assets/models/doodads/tree_linden_lod1.glb",
+   "category": "tree_lod",
+   "size": [
+    5.864,
+    6.496,
+    5.83
+   ],
+   "aabb_min": [
+    -2.971,
+    0.001,
+    -2.79
+   ],
+   "tris": 259,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": true,
+   "materials": [
+    "tree_linden_lod1_bark",
+    "tree_linden_lod1_leaves_SWAY"
+   ],
+   "texel_density_px_per_m": {
+    "tree_linden_lod1_bark": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Low LOD / impostor source of tree_linden.",
+   "lod_of": "tree_linden"
+  },
+  {
+   "id": "tree_hazel",
+   "path": "assets/models/doodads/tree_hazel.glb",
+   "category": "tree",
+   "size": [
+    3.377,
+    3.11,
+    3.347
+   ],
+   "aabb_min": [
+    -1.792,
+    0.0,
+    -1.56
+   ],
+   "tris": 875,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": true,
+   "materials": [
+    "tree_hazel_bark",
+    "tree_hazel_leaves_SWAY"
+   ],
+   "texel_density_px_per_m": {
+    "tree_hazel_bark": 213
+   },
+   "lods": [
+    "tree_hazel_lod1"
+   ],
+   "nodes": [],
+   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Place with \u00b120 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Many-stemmed coppice that fills gaps inside tree lines (harvestable like the others)."
+  },
+  {
+   "id": "tree_hazel_lod1",
+   "path": "assets/models/doodads/tree_hazel_lod1.glb",
+   "category": "tree_lod",
+   "size": [
+    3.95,
+    3.223,
+    3.663
+   ],
+   "aabb_min": [
+    -2.046,
+    0.0,
+    -1.756
+   ],
+   "tris": 273,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": true,
+   "materials": [
+    "tree_hazel_lod1_bark",
+    "tree_hazel_lod1_leaves_SWAY"
+   ],
+   "texel_density_px_per_m": {
+    "tree_hazel_lod1_bark": 213
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Low LOD / impostor source of tree_hazel.",
+   "lod_of": "tree_hazel"
+  },
+  {
+   "id": "rock_boulder_small",
+   "path": "assets/models/doodads/rock_boulder_small.glb",
+   "category": "rock",
+   "size": [
+    0.97,
+    0.549,
+    0.704
+   ],
+   "aabb_min": [
+    -0.506,
+    -0.04,
+    -0.357
+   ],
+   "tris": 120,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "rock_boulder_small_rock"
+   ],
+   "texel_density_px_per_m": {
+    "rock_boulder_small_rock": 107
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Mossy flat-topped boulder ~0.9 m; cluster 3-7 objects at transitions (bible \u00a76.4)."
+  },
+  {
+   "id": "rock_boulder_medium",
+   "path": "assets/models/doodads/rock_boulder_medium.glb",
+   "category": "rock",
+   "size": [
+    1.607,
+    0.736,
+    1.236
+   ],
+   "aabb_min": [
+    -0.817,
+    -0.04,
+    -0.666
+   ],
+   "tris": 320,
+   "footprint_cells": [
+    3,
+    3
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "rock_boulder_medium_rock"
+   ],
+   "texel_density_px_per_m": {
+    "rock_boulder_medium_rock": 107
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Mossy flat-topped boulder ~1.4 m."
+  },
+  {
+   "id": "rock_boulder_large",
+   "path": "assets/models/doodads/rock_boulder_large.glb",
+   "category": "rock",
+   "size": [
+    2.383,
+    1.089,
+    2.031
+   ],
+   "aabb_min": [
+    -1.151,
+    -0.04,
+    -0.907
+   ],
+   "tris": 384,
+   "footprint_cells": [
+    4,
+    4
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "rock_boulder_large_rock"
+   ],
+   "texel_density_px_per_m": {
+    "rock_boulder_large_rock": 107
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Mossy boulder ~2.4 m with a leaning companion stone."
+  },
+  {
+   "id": "wall_drystone_straight",
+   "path": "assets/models/doodads/wall_drystone_straight.glb",
+   "category": "wall",
+   "size": [
+    2.052,
+    1.314,
+    0.932
+   ],
+   "aabb_min": [
+    -1.032,
+    0.0,
+    -0.459
+   ],
+   "tris": 352,
+   "footprint_cells": [
+    4,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "wall_drystone_straight_drystone"
+   ],
+   "texel_density_px_per_m": {
+    "wall_drystone_straight_drystone": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "2 m module on the tile centre line (X -1..1), 1.3 m with coping; blocks pathing, not sight."
+  },
+  {
+   "id": "wall_drystone_corner",
+   "path": "assets/models/doodads/wall_drystone_corner.glb",
+   "category": "wall",
+   "size": [
+    1.414,
+    1.334,
+    1.562
+   ],
+   "aabb_min": [
+    -1.022,
+    0.0,
+    -1.102
+   ],
+   "tris": 380,
+   "footprint_cells": [
+    4,
+    4
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "wall_drystone_corner_drystone"
+   ],
+   "texel_density_px_per_m": {
+    "wall_drystone_corner_drystone": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Corner module joining a straight on the west (-X) and one on the north (-Z); rotate for other corners."
+  },
+  {
+   "id": "wall_drystone_end_broken",
+   "path": "assets/models/doodads/wall_drystone_end_broken.glb",
+   "category": "wall",
+   "size": [
+    2.617,
+    1.391,
+    1.593
+   ],
+   "aabb_min": [
+    -1.027,
+    -0.07,
+    -0.709
+   ],
+   "tris": 324,
+   "footprint_cells": [
+    4,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "wall_drystone_end_broken_drystone"
+   ],
+   "texel_density_px_per_m": {
+    "wall_drystone_end_broken_drystone": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Broken end: full height at -X, crumbling toward +X with tumbled stones (walkable beyond x > 1)."
+  },
+  {
+   "id": "hedge_hawthorn",
+   "path": "assets/models/doodads/hedge_hawthorn.glb",
+   "category": "hedge",
+   "size": [
+    2.816,
+    1.452,
+    1.432
+   ],
+   "aabb_min": [
+    -1.476,
+    -0.012,
+    -0.663
+   ],
+   "tris": 552,
+   "footprint_cells": [
+    4,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": true,
+   "materials": [
+    "hedge_hawthorn_leaves_SWAY",
+    "hedge_hawthorn_bark"
+   ],
+   "texel_density_px_per_m": {
+    "hedge_hawthorn_bark": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Hawthorn hedgerow 2 m module along X: blocks pathing but not sight; non-harvestable; never inside a tree line."
+  },
+  {
+   "id": "fence_wattle",
+   "path": "assets/models/doodads/fence_wattle.glb",
+   "category": "fence",
+   "size": [
+    2.014,
+    1.166,
+    0.144
+   ],
+   "aabb_min": [
+    -1.008,
+    -0.051,
+    -0.073
+   ],
+   "tris": 751,
+   "footprint_cells": [
+    4,
+    1
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "fence_wattle_wattle",
+    "fence_wattle_bark"
+   ],
+   "texel_density_px_per_m": {
+    "fence_wattle_wattle": 301,
+    "fence_wattle_bark": 213
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Woven hazel hurdle, 2 m module along X."
+  },
+  {
+   "id": "hay_stook",
+   "path": "assets/models/doodads/hay_stook.glb",
+   "category": "prop",
+   "size": [
+    0.849,
+    1.153,
+    0.797
+   ],
+   "aabb_min": [
+    -0.4,
+    -0.02,
+    -0.382
+   ],
+   "tris": 455,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "hay_stook_straw"
+   ],
+   "texel_density_px_per_m": {
+    "hay_stook_straw": 160
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Leaning sheaves; scatter in fields near kingdom-side farms."
+  },
+  {
+   "id": "tree_stump",
+   "path": "assets/models/doodads/tree_stump.glb",
+   "category": "tree_stump",
+   "size": [
+    1.186,
+    0.624,
+    1.126
+   ],
+   "aabb_min": [
+    -0.692,
+    0.0,
+    -0.553
+   ],
+   "tris": 148,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "tree_stump_bark",
+    "tree_stump_endgrain"
+   ],
+   "texel_density_px_per_m": {
+    "tree_stump_bark": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Replaces a felled tree (walkable). Pale rings #E9CF9B on the cut."
+  },
+  {
+   "id": "tree_felled_log",
+   "path": "assets/models/doodads/tree_felled_log.glb",
+   "category": "prop",
+   "size": [
+    3.627,
+    1.112,
+    0.688
+   ],
+   "aabb_min": [
+    -1.817,
+    -0.26,
+    -0.32
+   ],
+   "tris": 201,
+   "footprint_cells": [
+    7,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "tree_felled_log_bark",
+    "tree_felled_log_endgrain"
+   ],
+   "texel_density_px_per_m": {
+    "tree_felled_log_bark": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Fallen oak log, 3.6 m along X; shores and woodland floors."
+  },
+  {
+   "id": "reeds_clump",
+   "path": "assets/models/doodads/reeds_clump.glb",
+   "category": "shore",
+   "size": [
+    1.186,
+    1.463,
+    1.293
+   ],
+   "aabb_min": [
+    -0.587,
+    -0.007,
+    -0.635
+   ],
+   "tris": 290,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": true,
+   "materials": [
+    "reeds_clump_reeds_SWAY"
+   ],
+   "texel_density_px_per_m": {},
+   "lods": [],
+   "nodes": [],
+   "notes": "Reeds and bulrushes, shores only (bible \u00a76.3); walkable decoration."
+  },
+  {
+   "id": "lily_pads",
+   "path": "assets/models/doodads/lily_pads.glb",
+   "category": "shore",
+   "size": [
+    2.026,
+    0.104,
+    1.679
+   ],
+   "aabb_min": [
+    -1.019,
+    -0.006,
+    -1.271
+   ],
+   "tris": 132,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "lily_pads_lily"
+   ],
+   "texel_density_px_per_m": {},
+   "lods": [],
+   "nodes": [],
+   "notes": "Lily pads with white flowers; origin = water surface (place at the water height)."
+  },
+  {
+   "id": "wildflowers_yellow",
+   "path": "assets/models/doodads/wildflowers_yellow.glb",
+   "category": "meadow_card",
+   "size": [
+    0.929,
+    0.893,
+    1.137
+   ],
+   "aabb_min": [
+    -0.501,
+    -0.02,
+    -0.671
+   ],
+   "tris": 20,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": true,
+   "materials": [
+    "wildflowers_yellow_meadow_SWAY"
+   ],
+   "texel_density_px_per_m": {},
+   "lods": [],
+   "nodes": [],
+   "notes": "Yellow wildflower clump (cards)."
+  },
+  {
+   "id": "wildflowers_white",
+   "path": "assets/models/doodads/wildflowers_white.glb",
+   "category": "meadow_card",
+   "size": [
+    0.964,
+    0.896,
+    1.215
+   ],
+   "aabb_min": [
+    -0.488,
+    -0.02,
+    -0.736
+   ],
+   "tris": 20,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": true,
+   "materials": [
+    "wildflowers_white_meadow_SWAY"
+   ],
+   "texel_density_px_per_m": {},
+   "lods": [],
+   "nodes": [],
+   "notes": "White wildflower clump (cards)."
+  },
+  {
+   "id": "wildflowers_mixed",
+   "path": "assets/models/doodads/wildflowers_mixed.glb",
+   "category": "meadow_card",
+   "size": [
+    0.96,
+    0.895,
+    1.282
+   ],
+   "aabb_min": [
+    -0.497,
+    -0.02,
+    -0.654
+   ],
+   "tris": 20,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": true,
+   "materials": [
+    "wildflowers_mixed_meadow_SWAY"
+   ],
+   "texel_density_px_per_m": {},
+   "lods": [],
+   "nodes": [],
+   "notes": "Mixed clump: yellow and white with a few tiny blue flowers (blue only as tiny flowers)."
+  },
+  {
+   "id": "grass_tuft",
+   "path": "assets/models/doodads/grass_tuft.glb",
+   "category": "meadow_card",
+   "size": [
+    0.872,
+    0.743,
+    0.851
+   ],
+   "aabb_min": [
+    -0.464,
+    -0.02,
+    -0.489
+   ],
+   "tris": 24,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": true,
+   "materials": [
+    "grass_tuft_meadow_SWAY"
+   ],
+   "texel_density_px_per_m": {},
+   "lods": [],
+   "nodes": [],
+   "notes": "Grass tuft cards for clusters and cliff lips."
+  },
+  {
+   "id": "mushroom_ring",
+   "path": "assets/models/doodads/mushroom_ring.glb",
+   "category": "prop",
+   "size": [
+    2.251,
+    0.384,
+    2.421
+   ],
+   "aabb_min": [
+    -1.098,
+    -0.007,
+    -1.214
+   ],
+   "tris": 650,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "mushroom_ring_mushroom"
+   ],
+   "texel_density_px_per_m": {},
+   "lods": [],
+   "nodes": [],
+   "notes": "Fairy ring of pale caps, deep woods only."
+  },
+  {
+   "id": "cart_broken",
+   "path": "assets/models/doodads/cart_broken.glb",
+   "category": "prop",
+   "size": [
+    4.386,
+    1.026,
+    2.641
+   ],
+   "aabb_min": [
+    -1.776,
+    -0.05,
+    -0.79
+   ],
+   "tris": 664,
+   "footprint_cells": [
+    6,
+    4
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "cart_broken_timber",
+    "cart_broken_painted"
+   ],
+   "texel_density_px_per_m": {
+    "cart_broken_timber": 160,
+    "cart_broken_painted": 160
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Wrecked market wagon (kingdom painted side boards)."
+  },
+  {
+   "id": "milestone",
+   "path": "assets/models/doodads/milestone.glb",
+   "category": "prop",
+   "size": [
+    0.621,
+    0.933,
+    0.548
+   ],
+   "aabb_min": [
+    -0.217,
+    -0.113,
+    -0.212
+   ],
+   "tris": 156,
+   "footprint_cells": [
+    1,
+    1
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "milestone_stone"
+   ],
+   "texel_density_px_per_m": {
+    "milestone_stone": 160
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Roadside milestone, neutral; along roads."
+  },
+  {
+   "id": "cairn_small",
+   "path": "assets/models/doodads/cairn_small.glb",
+   "category": "prop",
+   "size": [
+    0.704,
+    1.098,
+    0.661
+   ],
+   "aabb_min": [
+    -0.352,
+    -0.031,
+    -0.334
+   ],
+   "tris": 512,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "cairn_small_rock"
+   ],
+   "texel_density_px_per_m": {
+    "cairn_small_rock": 107
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Small roadside cairn of flat stones."
+  },
+  {
+   "id": "camp_campfire",
+   "path": "assets/models/doodads/camp_campfire.glb",
+   "category": "camp",
+   "size": [
+    1.623,
+    1.285,
+    1.651
+   ],
+   "aabb_min": [
+    -0.77,
+    -0.02,
+    -0.734
+   ],
+   "tris": 678,
+   "footprint_cells": [
+    3,
+    3
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "camp_campfire_rock",
+    "camp_campfire_ember_EMBER",
+    "camp_campfire_bark"
+   ],
+   "texel_density_px_per_m": {
+    "camp_campfire_rock": 107,
+    "camp_campfire_ember_EMBER": 213,
+    "camp_campfire_bark": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Stone-ringed campfire with a cooking tripod; EMBER material glows (flames and smoke are VFX)."
+  },
+  {
+   "id": "camp_lean_to",
+   "path": "assets/models/doodads/camp_lean_to.glb",
+   "category": "camp",
+   "size": [
+    3.001,
+    2.185,
+    2.295
+   ],
+   "aabb_min": [
+    -1.5,
+    -0.019,
+    -1.295
+   ],
+   "tris": 392,
+   "footprint_cells": [
+    6,
+    6
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "camp_lean_to_bark",
+    "camp_lean_to_oilcloth",
+    "camp_lean_to_canvas"
+   ],
+   "texel_density_px_per_m": {
+    "camp_lean_to_bark": 128,
+    "camp_lean_to_oilcloth": 160,
+    "camp_lean_to_canvas": 160
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Sootcoat lean-to, open side to the front (-Z)."
+  },
+  {
+   "id": "camp_tent",
+   "path": "assets/models/doodads/camp_tent.glb",
+   "category": "camp",
+   "size": [
+    2.815,
+    1.557,
+    2.55
+   ],
+   "aabb_min": [
+    -1.407,
+    -0.007,
+    -1.275
+   ],
+   "tris": 196,
+   "footprint_cells": [
+    4,
+    4
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "camp_tent_bark",
+    "camp_tent_canvas"
+   ],
+   "texel_density_px_per_m": {
+    "camp_tent_bark": 128,
+    "camp_tent_canvas": 160
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Small patched ridge tent, door to the front (-Z)."
+  },
+  {
+   "id": "camp_charcoal_clamp",
+   "path": "assets/models/doodads/camp_charcoal_clamp.glb",
+   "category": "camp",
+   "size": [
+    3.572,
+    1.252,
+    3.774
+   ],
+   "aabb_min": [
+    -1.842,
+    -0.036,
+    -1.749
+   ],
+   "tris": 344,
+   "footprint_cells": [
+    7,
+    7
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "camp_charcoal_clamp_turf",
+    "camp_charcoal_clamp_ember_EMBER",
+    "camp_charcoal_clamp_bark"
+   ],
+   "texel_density_px_per_m": {
+    "camp_charcoal_clamp_turf": 128,
+    "camp_charcoal_clamp_ember_EMBER": 213,
+    "camp_charcoal_clamp_bark": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Turf-covered charcoal clamp (Charcoal Clamp / Charcoal Yard / Collier's Hut camps); EMBER vents; emit smoke VFX at extras.smoke_points (Godot space).",
+   "extras": {
+    "smoke_points": [
+     [
+      0.0,
+      1.16,
+      -0.0
+     ],
+     [
+      1.108,
+      0.62,
+      -0.758
+     ],
+     [
+      -1.317,
+      0.5,
+      -0.623
+     ],
+     [
+      -0.375,
+      0.75,
+      1.16
+     ]
+    ]
+   }
+  },
+  {
+   "id": "camp_cordwood_stack",
+   "path": "assets/models/doodads/camp_cordwood_stack.glb",
+   "category": "camp",
+   "size": [
+    2.057,
+    1.002,
+    0.705
+   ],
+   "aabb_min": [
+    -1.017,
+    -0.001,
+    -0.361
+   ],
+   "tris": 770,
+   "footprint_cells": [
+    4,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "camp_cordwood_stack_bark",
+    "camp_cordwood_stack_endgrain"
+   ],
+   "texel_density_px_per_m": {
+    "camp_cordwood_stack_bark": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Cordwood stack, end grain to the front."
+  },
+  {
+   "id": "camp_crates",
+   "path": "assets/models/doodads/camp_crates.glb",
+   "category": "camp",
+   "size": [
+    1.955,
+    1.001,
+    1.289
+   ],
+   "aabb_min": [
+    -0.805,
+    -0.024,
+    -0.437
+   ],
+   "tris": 382,
+   "footprint_cells": [
+    4,
+    3
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "camp_crates_timber",
+    "camp_crates_sacking"
+   ],
+   "texel_density_px_per_m": {
+    "camp_crates_timber": 160,
+    "camp_crates_sacking": 160
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Crates, a barrel and sacks (camp stores, Smugglers' Den)."
+  },
+  {
+   "id": "camp_scarecrow_pole",
+   "path": "assets/models/doodads/camp_scarecrow_pole.glb",
+   "category": "camp",
+   "size": [
+    1.703,
+    2.351,
+    0.185
+   ],
+   "aabb_min": [
+    -0.852,
+    -0.051,
+    -0.065
+   ],
+   "tris": 98,
+   "footprint_cells": [
+    1,
+    1
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "camp_scarecrow_pole_bark",
+    "camp_scarecrow_pole_sacking"
+   ],
+   "texel_density_px_per_m": {
+    "camp_scarecrow_pole_bark": 213,
+    "camp_scarecrow_pole_sacking": 160
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Tattiebogle field pole (Turnip Patch / Crow Field): the creeps slump on these by day."
+  },
+  {
+   "id": "camp_turnip_rows",
+   "path": "assets/models/doodads/camp_turnip_rows.glb",
+   "category": "camp",
+   "size": [
+    4.731,
+    0.588,
+    2.483
+   ],
+   "aabb_min": [
+    -2.031,
+    -0.036,
+    -1.241
+   ],
+   "tris": 680,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": true,
+   "materials": [
+    "camp_turnip_rows_soil",
+    "camp_turnip_rows_leaves_SWAY",
+    "camp_turnip_rows_turnip"
+   ],
+   "texel_density_px_per_m": {
+    "camp_turnip_rows_soil": 128
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Turnip Patch furrows, walkable (4.6 x 2.4 m); pair with gv_thick_meadow + furrows ground paint."
+  },
+  {
+   "id": "camp_haystack",
+   "path": "assets/models/doodads/camp_haystack.glb",
+   "category": "camp",
+   "size": [
+    2.178,
+    2.571,
+    2.582
+   ],
+   "aabb_min": [
+    -1.106,
+    -0.02,
+    -1.135
+   ],
+   "tris": 251,
+   "footprint_cells": [
+    5,
+    5
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "camp_haystack_straw",
+    "camp_haystack_bark"
+   ],
+   "texel_density_px_per_m": {
+    "camp_haystack_straw": 160,
+    "camp_haystack_bark": 213
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Crow-picked haystack (Turnip Patch / Crow Field)."
+  },
+  {
+   "id": "camp_standing_stone",
+   "path": "assets/models/doodads/camp_standing_stone.glb",
+   "category": "camp",
+   "size": [
+    0.999,
+    2.395,
+    0.554
+   ],
+   "aabb_min": [
+    -0.506,
+    -0.123,
+    -0.267
+   ],
+   "tris": 114,
+   "footprint_cells": [
+    2,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "camp_standing_stone_rock",
+    "camp_standing_stone_glyph_GLYPH"
+   ],
+   "texel_density_px_per_m": {
+    "camp_standing_stone_rock": 107
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Standing Ring / Cairnwake menhir with cup-and-ring marks: GLYPH material is emissive #E8E29A, drive its emission to 0 by day and ~1.5 at night."
+  },
+  {
+   "id": "beehive_skeps",
+   "path": "assets/models/doodads/beehive_skeps.glb",
+   "category": "prop",
+   "size": [
+    1.3,
+    0.88,
+    0.521
+   ],
+   "aabb_min": [
+    -0.65,
+    0.0,
+    -0.265
+   ],
+   "tris": 294,
+   "footprint_cells": [
+    3,
+    2
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "beehive_skeps_timber",
+    "beehive_skeps_straw"
+   ],
+   "texel_density_px_per_m": {
+    "beehive_skeps_timber": 160,
+    "beehive_skeps_straw": 160
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Straw skeps on a plank bench, near kingdom-side farms."
+  },
+  {
+   "id": "gold_mine",
+   "path": "assets/models/neutral/gold_mine.glb",
+   "category": "neutral_building",
+   "size": [
+    5.314,
+    3.985,
+    4.706
+   ],
+   "aabb_min": [
+    -2.618,
+    -0.03,
+    -2.377
+   ],
+   "tris": 3056,
+   "footprint_cells": [
+    8,
+    8
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": false,
+   "materials": [
+    "gold_mine_rock",
+    "gold_mine_seam_GLOW",
+    "gold_mine_timber",
+    "gold_mine_lamp_LAMP",
+    "gold_mine_water_WATER"
+   ],
+   "texel_density_px_per_m": {
+    "gold_mine_rock": 160,
+    "gold_mine_seam_GLOW": 366,
+    "gold_mine_timber": 160,
+    "gold_mine_lamp_LAMP": 213,
+    "gold_mine_water_WATER": 128
+   },
+   "lods": [],
+   "nodes": [
+    {
+     "name": "windlass_drum",
+     "parent": "gold_mine",
+     "pivot": [
+      0.35,
+      3.6,
+      -0.8
+     ]
+    }
+   ],
+   "notes": "Gold Seam (neutrals \u00a75.2): 8x8 cells, front (adit) faces -Z; spawn with facing PI so it faces the default camera. Materials: rock + timber, seam_GLOW (gold stratum: pulse emission when a worker enters), lamp_LAMP (two lanterns, lit at night), water_WATER (sluice trickle). Node windlass_drum spins about its local X axis while mining. Per the bible's squint test there is no mine cart and no rails (the task brief's 'small cart' is overridden by neutrals \u00a75.2 / \u00a710.2).",
+   "extras": {
+    "adit_point": [
+     0.0,
+     0.0,
+     -0.4
+    ],
+    "worker_enter_point": [
+     0.0,
+     0.0,
+     -1.75
+    ],
+    "lantern_points": [
+     [
+      -1.06,
+      1.4,
+      -1.47
+     ],
+     [
+      1.06,
+      1.4,
+      -1.47
+     ]
+    ]
+   }
+  },
+  {
+   "id": "neutral_weighstall",
+   "path": "assets/models/neutral/neutral_weighstall.glb",
+   "category": "neutral_building",
+   "size": [
+    6.089,
+    7.105,
+    4.372
+   ],
+   "aabb_min": [
+    -3.045,
+    -0.005,
+    -1.907
+   ],
+   "tris": 3170,
+   "footprint_cells": [
+    8,
+    8
+   ],
+   "blocks_pathing": true,
+   "blocks_sight": true,
+   "sway": false,
+   "materials": [
+    "neutral_weighstall_timber",
+    "neutral_weighstall_cloth",
+    "neutral_weighstall_brass",
+    "neutral_weighstall_lamp_LAMP"
+   ],
+   "texel_density_px_per_m": {
+    "neutral_weighstall_timber": 160,
+    "neutral_weighstall_brass": 213,
+    "neutral_weighstall_lamp_LAMP": 213
+   },
+   "lods": [],
+   "nodes": [
+    {
+     "name": "shopkeeper",
+     "parent": "neutral_weighstall",
+     "pivot": [
+      0.3,
+      1.16,
+      -1.1
+     ]
+    },
+    {
+     "name": "balance_beam",
+     "parent": "neutral_weighstall",
+     "pivot": [
+      0.0,
+      6.42,
+      1.62
+     ]
+    },
+    {
+     "name": "balance_pan_l",
+     "parent": "balance_beam",
+     "pivot": [
+      -2.2,
+      6.3,
+      1.62
+     ]
+    },
+    {
+     "name": "balance_pan_r",
+     "parent": "balance_beam",
+     "pivot": [
+      2.2,
+      6.3,
+      1.62
+     ]
+    }
+   ],
+   "notes": "Weighstall merchant (neutrals \u00a75.3): 8x8 cells, counter faces -Z (spawn with facing PI). Nodes: balance_beam (pivot at the beam centre, rotate about local Z to tip) > balance_pan_l / balance_pan_r (pivots at the hanging points: counter-rotate so the pans hang plumb), shopkeeper (curled Rundling: breathe by scaling, uncurl on purchase is VFX/anim). The balance beam reaches 7 m (exempt from the height ratio). lamp_LAMP lit at night.",
+   "extras": {
+    "counter_point": [
+     0.0,
+     1.16,
+     -1.0
+    ],
+    "lantern_points": [
+     [
+      1.6,
+      1.8,
+      -1.72
+     ]
+    ]
+   }
+  },
+  {
+   "id": "neutral_hale_spring",
+   "path": "assets/models/neutral/neutral_hale_spring.glb",
+   "category": "neutral_building",
+   "size": [
+    3.614,
+    1.502,
+    4.013
+   ],
+   "aabb_min": [
+    -1.697,
+    -0.05,
+    -1.819
+   ],
+   "tris": 1622,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": true,
+   "materials": [
+    "neutral_hale_spring_moss",
+    "neutral_hale_spring_water_WATER",
+    "neutral_hale_spring_rock",
+    "neutral_hale_spring_bark",
+    "neutral_hale_spring_meadow_SWAY"
+   ],
+   "texel_density_px_per_m": {
+    "neutral_hale_spring_moss": 128,
+    "neutral_hale_spring_water_WATER": 128,
+    "neutral_hale_spring_rock": 107,
+    "neutral_hale_spring_bark": 128
+   },
+   "lods": [],
+   "nodes": [
+    {
+     "name": "waterwheel",
+     "parent": "neutral_hale_spring",
+     "pivot": [
+      0.083,
+      0.43,
+      0.003
+     ]
+    }
+   ],
+   "notes": "Hale Spring (neutrals \u00a75.8): 6x6 cells, the pool is walkable shallow water (no blocking; the source rock at the back may block 2x2 cells). Front faces -Z. Node waterwheel spins about local X. water_WATER is the pool surface (swap for the game's water shader if wanted); warm sparkles are VFX.",
+   "extras": {
+    "pool_radius": 1.0,
+    "aura_radius": 7.8
+   }
+  },
+  {
+   "id": "gold_mine_collapsed",
+   "path": "assets/models/neutral/gold_mine_collapsed.glb",
+   "category": "neutral_building",
+   "size": [
+    4.171,
+    0.754,
+    3.727
+   ],
+   "aabb_min": [
+    -2.029,
+    -0.071,
+    -1.723
+   ],
+   "tris": 1042,
+   "footprint_cells": null,
+   "blocks_pathing": false,
+   "blocks_sight": false,
+   "sway": false,
+   "materials": [
+    "gold_mine_collapsed_rock",
+    "gold_mine_collapsed_timber"
+   ],
+   "texel_density_px_per_m": {
+    "gold_mine_collapsed_rock": 107,
+    "gold_mine_collapsed_timber": 160
+   },
+   "lods": [],
+   "nodes": [],
+   "notes": "Empty Gold Seam (neutrals \u00a75.2 'collapses when empty'): walkable rubble that replaces gold_mine at the same position and facing; play a dust puff when swapping."
+  }
+ ]
+}

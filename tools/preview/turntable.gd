@@ -73,6 +73,7 @@ func _run() -> void:
 	model = doc.generate_scene(st)
 	world.add_child(model)
 	meta["team_surfaces"] = _tint_team(model, Color(o.team_color))
+	meta["sway_surfaces"] = _sway_preview(model, _load_sway_shader())
 	await process_frame
 	var ab := _model_aabb()
 	meta["aabb_pos"] = [ab.position.x, ab.position.y, ab.position.z]
@@ -234,6 +235,48 @@ func _tint_team(n: Node, col: Color) -> int:
 					count += 1
 	for c in n.get_children():
 		count += _tint_team(c, col)
+	return count
+
+
+## Procedural kit assets (tools/kits/doodads.py) tag their materials with glTF extras
+## `vc_vertex_color`: "multiply" = COLOR_0 is painted AO / tint (Godot's importer leaves
+## vertex_color_use_as_albedo off, so turn it on); "sway" (names contain SWAY) = COLOR holds sway
+## weight / AO / phase, so the kit's reference foliage shader is applied, as the game will.
+func _load_sway_shader() -> Shader:
+	var p := ProjectSettings.globalize_path("res://").path_join("../kits/foliage_sway.gdshader").simplify_path()
+	if not FileAccess.file_exists(p):
+		return null
+	var sh := Shader.new()
+	sh.code = FileAccess.get_file_as_string(p)
+	return sh
+
+
+func _sway_preview(n: Node, sh: Shader) -> int:
+	if sh == null:
+		return 0
+	var count := 0
+	if n is MeshInstance3D:
+		var mi := n as MeshInstance3D
+		if mi.mesh != null:
+			for s in mi.mesh.get_surface_count():
+				var mat := mi.mesh.surface_get_material(s)
+				var vc = (mat.get_meta("extras", {}) as Dictionary).get("vc_vertex_color", "") if mat != null else ""
+				if vc == "multiply" and mat is StandardMaterial3D:
+					var m2 := (mat as StandardMaterial3D).duplicate() as StandardMaterial3D
+					m2.vertex_color_use_as_albedo = true
+					mi.set_surface_override_material(s, m2)
+					count += 1
+				elif mat != null and mat.resource_name.contains("SWAY") and mat is StandardMaterial3D:
+					var sm := ShaderMaterial.new()
+					sm.shader = sh
+					sm.set_shader_parameter("albedo_tex", (mat as StandardMaterial3D).albedo_texture)
+					sm.set_shader_parameter("alpha_cutoff", (mat as StandardMaterial3D).alpha_scissor_threshold)
+					sm.set_shader_parameter("sway_amp", 0.0)
+					sm.set_shader_parameter("flutter", 0.0)
+					mi.set_surface_override_material(s, sm)
+					count += 1
+	for c in n.get_children():
+		count += _sway_preview(c, sh)
 	return count
 
 

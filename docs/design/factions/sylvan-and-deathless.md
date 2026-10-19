@@ -553,7 +553,8 @@ asks; the reference values are kept in `tools/ip/value_echo_reference.json`, not
 ### A7.5 Command cards and hotkeys (Classic preset; rules §18.4)
 
 Letters are unique per card (`Defs` validates this). Unit cards always carry Move **M**, Stop **S**, Hold **H**, Attack **A**, Patrol **P**;
-heroes add Learn **O** and abilities **Q / W / E / R** in kit order (§A6). Production buildings carry Rally **R**. Unit abilities use
+heroes add Learn **O** and one mnemonic letter per ability (rules §18.4; letters to be assigned when the kits enter production; the
+optional "Hero abilities on Q / W / E / R" setting uses kit order, §A6). Production buildings carry Rally **R**. Unit abilities use
 **Q / W / E** in the order listed in §A5.1. The Grid preset uses positions only.
 
 | Card | Buttons (letter) |
@@ -1099,7 +1100,7 @@ kept in `tools/ip/value_echo_reference.json`, not here.
 ### B7.5 Command cards and hotkeys (Classic preset; rules §18.4)
 
 Same conventions as §A7.5: Move **M**, Stop **S**, Hold **H**, Attack **A**, Patrol **P** on unit cards; heroes add Learn **O** and
-**Q / W / E / R**; production buildings carry Rally **R**; unit abilities use **Q / W / E** in §B5.1 order.
+one mnemonic letter per ability (as §A7.5); production buildings carry Rally **R**; unit abilities use **Q / W / E** in §B5.1 order.
 
 | Card | Buttons (letter) |
 |---|---|

@@ -56,7 +56,11 @@ def nrm(a, axis=-1):
 
 
 def smoothstep(e0, e1, x):
-    t = np.clip((np.asarray(x, float) - e0) / max(e1 - e0, 1e-9), 0.0, 1.0)
+    """Hermite step; e0 > e1 gives the falling step (1 below e1 -> 0 above e0)."""
+    d = e1 - e0
+    if abs(d) < 1e-9:
+        d = 1e-9
+    t = np.clip((np.asarray(x, float) - e0) / d, 0.0, 1.0)
     return t * t * (3 - 2 * t)
 
 
@@ -89,7 +93,9 @@ def frame_from_z(n):
 
 
 def noise3(p, scale=1.0, offset=(0.0, 0.0, 0.0)):
-    """Smooth vector noise in [-1, 1]^3 per point (mathutils Perlin)."""
+    """Smooth vector noise in [-1, 1]^3 per point (mathutils Perlin). noise_vector() samples at
+    offsets drawn from mathutils' per-process random state, so reseed first (deterministic output)."""
+    mathutils.noise.seed_set(1)       # NB: 0 would mean "seed from the clock"
     out = np.empty((len(p), 3))
     ox, oy, oz = offset
     for i, q in enumerate(p):
@@ -117,7 +123,7 @@ class Mat:
 
     def __init__(self, key, image, repeat=2.0, size=512, alpha=False, cutoff=0.5, double=False,
                  sway=False, emissive=False, emissive_factor=(1.0, 1.0, 1.0), roughness=1.0, tag="",
-                 base_factor=(1.0, 1.0, 1.0)):
+                 base_factor=(1.0, 1.0, 1.0), emissive_image=None):
         self.key = key
         self.image = image
         self.repeat = repeat          # metres per texture repeat (box / cylinder projection)
@@ -131,6 +137,7 @@ class Mat:
         self.roughness = roughness
         self.tag = tag                # name suffix: SWAY, GLOW, LAMP, WATER ...
         self.base_factor = base_factor
+        self.emissive_image = emissive_image   # optional separate emissive texture (callable -> PIL)
 
     def gltf_name(self, asset_id):
         tags = []
@@ -206,10 +213,10 @@ def swatch(path, seamless=True, tint=None, sat=None, gamma=None, blend=0.125):
 
 def encode_image(mat: Mat):
     """PNG (alpha) or JPEG bytes of a material's texture at its size; cached."""
-    key = (mat.key, id(mat.image), mat.size, mat.alpha)
+    im = mat.image()                      # cached for the whole run, so id() is stable and unique
+    key = (id(im), mat.size, mat.alpha)
     if key in _ENC_CACHE:
         return _ENC_CACHE[key]
-    im = mat.image()
     if im.size != (mat.size, mat.size):
         im = im.resize((mat.size, mat.size), Image.LANCZOS)
     buf = io.BytesIO()
@@ -755,12 +762,29 @@ def uv_disc(v, t, center, radius, axes=(0, 1)):
 # ---------------------------------------------------------------------------- bmesh helpers
 
 def bm_arrays(bm):
-    bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method="BEAUTY", ngon_method="EAR_CLIP")
+    """Vertices + triangles of a bmesh, triangulated here in face order (bmesh.ops.triangulate emits
+    its faces in a run-dependent order, which broke byte-identical output)."""
     bm.verts.index_update()
+    bm.faces.index_update()
     v = np.array([x.co[:] for x in bm.verts], float)
-    t = np.array([[lp.vert.index for lp in f.loops] for f in bm.faces], np.int64)
+    tris = []
+    faces = []
+    for f in bm.faces:
+        ids = [lp.vert.index for lp in f.loops]
+        k = ids.index(min(ids))                 # canonical loop start (bmesh's varies run to run)
+        faces.append(ids[k:] + ids[:k])
+    faces.sort()
+    for ids in faces:
+        if len(ids) == 3:
+            tris.append(ids)
+        elif len(ids) == 4:
+            tris += [[ids[0], ids[1], ids[2]], [ids[0], ids[2], ids[3]]]
+        else:
+            pts = [[bm.verts[k].co.copy() for k in ids]]
+            for a, b, c in mathutils.geometry.tessellate_polygon(pts):
+                tris.append([ids[a], ids[b], ids[c]])
     bm.free()
-    return v, t
+    return v, np.array(tris, np.int64)
 
 
 def icosphere(subdiv=2, radius=1.0):
@@ -1431,7 +1455,7 @@ def write_glb(path, aid, nodes, mats, extras):
     tex_index = {}
     for m in mats:
         data, mime = encode_image(m)
-        k = (id(m.image), m.size, m.alpha)
+        k = (id(m.image()), m.size, m.alpha)
         if k not in tex_index:
             bv = add_view(data)
             images.append({"bufferView": bv, "mimeType": mime, "name": f"{aid}_{m.key}_basecolor"})
@@ -1449,9 +1473,21 @@ def write_glb(path, aid, nodes, mats, extras):
         if m.double:
             md["doubleSided"] = True
         if m.emissive:
-            md["emissiveTexture"] = {"index": ti}
+            if m.emissive_image is not None:
+                eim = m.emissive_image()
+                ek = ("emissive", id(eim), m.size)
+                if ek not in tex_index:
+                    em = Mat(m.key + "_emissive", lambda: eim, size=m.size)
+                    edata, emime = encode_image(em)
+                    bv = add_view(edata)
+                    images.append({"bufferView": bv, "mimeType": emime, "name": f"{aid}_{m.key}_emission"})
+                    textures.append({"sampler": 0, "source": len(images) - 1})
+                    tex_index[ek] = len(textures) - 1
+                md["emissiveTexture"] = {"index": tex_index[ek]}
+            else:
+                md["emissiveTexture"] = {"index": ti}
             md["emissiveFactor"] = [float(x) for x in m.emissive_factor]
-        ex = {}
+        ex = {"vc_vertex_color": "sway" if m.sway else "multiply"}
         if m.sway:
             ex["vertex_color"] = "R=sway weight, G=painted AO, B=cluster phase, A=1"
             ex["uv2"] = "x=sway weight, y=normalized height"
