@@ -1741,28 +1741,23 @@ PIPING_M = 0.045     # neutral piping width round every TEAM area (bible 3.1 rul
 
 
 def split_team_border(A, sw, width=PIPING_M):
-    """Cut the outer `width` metres of a TEAM part's UV field (decals: all four edges; tiled bands:
-    the two long edges, v = 0 and v = 1) out of the TEAM faces. Returns (inner, border) corner arrays;
-    the caller re-maps the border to the faction's neutral piping colour in the atlas."""
+    """Cut the outer band of a TEAM part's UV field (decals: all four edges; tiled bands: the two long
+    edges, v = 0 and v = 1) out of the TEAM faces. The band is `width` m wide (at most 12 % of the
+    field). Returns (inner, border) corner arrays; the caller re-maps the border to the faction's
+    neutral piping colour in the atlas. Each triangle is peeled sequentially (left, right, bottom, top
+    strip), so it yields at most five polygons."""
     if len(A) == 0:
         return A, A[:0]
     mu, mv = _uv_extent(A)
-    bu = 0.0 if sw.kind == "tile" else min(0.16, width / max(mu, 1e-6))
-    bv = min(0.2, width / max(mv, 1e-6))
+    bu = 0.0 if sw.kind == "tile" else min(0.12, width / max(mu, 1e-6))
+    bv = min(0.12, width / max(mv, 1e-6))
     cuts = []
     if bu > 1e-4:
-        cuts += [(0, bu), (0, 1.0 - bu)]
+        cuts += [(0, bu, False), (0, 1.0 - bu, True)]
     if bv > 1e-4:
-        cuts += [(1, bv), (1, 1.0 - bv)]
+        cuts += [(1, bv, False), (1, 1.0 - bv, True)]
     if not cuts:
         return A, A[:0]
-
-    def border_zone(uv):
-        b = uv[1] < bv or uv[1] > 1.0 - bv
-        if bu > 1e-4:
-            b = b or uv[0] < bu or uv[0] > 1.0 - bu
-        return b
-
     lo_u, hi_u = A[..., 0].min(1), A[..., 0].max(1)
     lo_v, hi_v = A[..., 1].min(1), A[..., 1].max(1)
     touch = (lo_v < bv) | (hi_v > 1.0 - bv)
@@ -1770,23 +1765,24 @@ def split_team_border(A, sw, width=PIPING_M):
         touch |= (lo_u < bu) | (hi_u > 1.0 - bu)
     inner = [A[~touch]]
     border = []
+
+    def fan(poly, out):
+        for j in range(1, len(poly) - 1):
+            t3 = np.stack([poly[0], poly[j], poly[j + 1]])
+            if np.linalg.norm(np.cross(t3[1, 2:5] - t3[0, 2:5], t3[2, 2:5] - t3[0, 2:5])) > 1e-10:
+                out.append(t3[None])
+
     for f in np.flatnonzero(touch):
-        polys = [[A[f, 0], A[f, 1], A[f, 2]]]
-        for k, val in cuts:
-            nxt = []
-            for poly in polys:
-                for keep in (False, True):
-                    q = _clip(poly, k, val, keep)
-                    if len(q) >= 3:
-                        nxt.append(q)
-            polys = nxt
-        for poly in polys:
-            for j in range(1, len(poly) - 1):
-                t3 = np.stack([poly[0], poly[j], poly[j + 1]])
-                pa = np.linalg.norm(np.cross(t3[1, 2:5] - t3[0, 2:5], t3[2, 2:5] - t3[0, 2:5]))
-                if pa < 1e-10:
-                    continue
-                (border if border_zone(t3[:, 0:2].mean(0)) else inner).append(t3[None])
+        rest = [A[f, 0], A[f, 1], A[f, 2]]
+        for k, val, upper in cuts:
+            strip = _clip(rest, k, val, keep_ge=upper)        # the band side of this line
+            rest = _clip(rest, k, val, keep_ge=not upper)
+            if len(strip) >= 3:
+                fan(strip, border)
+            if len(rest) < 3:
+                break
+        if len(rest) >= 3:
+            fan(rest, inner)
     inner = np.concatenate([x for x in inner if len(x)]) if any(len(x) for x in inner) else A[:0]
     border = np.concatenate(border) if border else A[:0]
     return inner, border
