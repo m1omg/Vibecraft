@@ -982,6 +982,11 @@ What the review fixes cost here: B16 and its Collegium (E3) moved to P0 at no ne
 kit-built); one icon per research line kept the icon growth to 7 sheets (1.75 cr) for 25 more icons; the Tea Tent swatch, the inn
 references and the new camp props add 1.0 cr; the 2-try concept rule for B12 saves 0.25.
 
+What the round-2 fixes cost: **0 cr this month** (the Gun Tower icon fits the 45 sheets; the `haul` pose, the D2 rules, Burgher's Oath,
+the rope-holder, the flying layer, the third Gold Seam and the lobby colours are code, data or bpy). The **next grant** carries the P1
+roster (48.5 cr, §2.3) and 0.25 cr more of P1 icons. **Krea P0 +31 CU** (VO +24 for the 5-line annoyed runs, S57a +7), so the P1 cap
+falls from 325 to 294 CU.
+
 **Margin ladder** (decided in this order; each rung is logged in the ledger):
 1. **A P0 mesh fails the rendered squint test or the rubric** (§2.16, M2 #6): re-generate it (0.25–0.5 concept + 9 cr). Held items are
    bpy props (B21), so a weapon read such as the war-pick is fixed in bpy at 0 cr first.
@@ -1229,7 +1234,7 @@ Each criterion is scored 1–5 by two reviewers, then averaged and weighted.
    All Clear return every worker to its previous job with its cargo kept. Multi-builder sites: 1 / 1.4 / 1.8 × for the Hod Chain and
    1 / 1.3 × for the rope-holder, each helper paying 5 lumber per 10 s.
 10. **`map_lookalike`:** a reviewer compares the §1.3 sketch and an overhead render (view-only, §2.16 comparison rule) with the overview
-    images of **every 2-player melee map on Liquipedia's Warcraft III map pages**: the classic and expansion ladder pools, the remastered
+    images of **every 2-player melee map on Liquipedia's map pages for the classic game**: the classic and expansion ladder pools, the remastered
     pools and the W3Champions 1v1 pools (the ip-safety §2.1 Maps row is not exhaustive and lacks current-era maps). The ledger records the
     URL list and the verdict. The reviewer checks this map's **specific arrangement**: a merchant in a central basin, a health spring on
     one flank and the red camp on the opposite flank, an inn on the axis, SW/NE starts with one ramp and a guarded natural below it. If
@@ -1564,7 +1569,7 @@ other files are listed in §7, not made here.
 | R2-3 | Major | Nothing in M1 checked our numbers against the classic ones; no kingdom reference rows; equivalents sat just past equality | M1 #11: both IP checkers exit 0; kingdom rows in `value_echo_reference.json` (or the kingdom §6.4 fingerprint test) before data entry; the **≥ 20 % at every rank** policy with a `min_rel_diff` check; known failures listed (Dust Veil → e.g. 60 / 100 / 140, 55 mana, 0.35 s fade; Keen Edge rank 1; Hail-Swifts cooldown) |
 | R2-4 | Minor | Bombard "tapping" line echoed the banned touch premise and a classic artillery gag | New Annoyed 1 ("Measure twice, fire once…"); 4 Annoyed lines; acks trimmed to the 4-word limit; VO lint bans tap / tapped / tapping / prod / jab; §7 rewrites the art bible's "tap" runs |
 | R2-5 | Minor | The clans crew's finish-each-other act moved the classic artillery crew's device to the other faction; "Ready to throw—" | Option B: the brothers speak in unison (a hauling count; their joke is that they always agree); 8 P0 lines in §2.12; lint: no Ready line starts with "Ready to", no split crew lines; §7 clans row |
-| R2-6 | Minor | `banned_terms.txt` lacked explicitly banned lines and names; "wheel-rim shockwave" would ship as an fx id | §7 lists the 17 terms to add now (verified: no hits on the default paths) and the 5 that wait for renames (`milord`, `crowcaller`, `smoker`, the completion-label spellings); `fx_wheel_rim_ring`; gate step 1 notes the gap; VO scripts are exported to `tools/prompts/vo/` so the checker sees them |
+| R2-6 | Minor | `banned_terms.txt` lacked explicitly banned lines and names; "wheel-rim shockwave" would ship as an fx id | §7 lists the 17 terms to add now (verified: no hits on the default paths) and the 6 that wait for renames (`milord`, `crowcaller`, `smoker` and the 3 completion-label spellings); `fx_wheel_rim_ring`; gate step 1 notes the gap; VO scripts are exported to `tools/prompts/vo/` so the checker sees them |
 | R2-7 | Minor | "Militia" as the role word would ship in ids, clips and icons | "levy" everywhere: `kingdom.levy`, `arm_levy`, `kingdom_flail_levy_{128,64}.png` (B1, §2.4, §2.10, Appendix A, §7) |
 | R2-8 | Minor | The path convention wrote "greenvale" into shipped filenames | `assets/textures/terrain/gv_<layer>.png`; rule in §1.12 and §2.16: the word appears only in docs |
 | R2-9 | Minor | `map_lookalike` compared only against a non-exhaustive list | M1 #10: every 2-player melee map on Liquipedia's classic, expansion, remastered and W3Champions pools, view-only, URL list logged, with this map's specific arrangement named; the three map names join `banned_terms.txt` (§7) |
