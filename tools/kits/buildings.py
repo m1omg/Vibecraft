@@ -265,7 +265,7 @@ def wall_prism(c, wall, outline_sz, d0, d1, key, chamfer=0.02, grid=0.6, **kw):
 def plinth(c, x0, x1, y0, y1, h, key="rubble", batter=0.05, chamfer=0.06, z0=0.0, **kw):
     """Battered rubble-stone base."""
     ol = np.array([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], float)
-    p = L.prism(ol, z0, z0 + h, c.sw(key), chamfer=chamfer, grid=0.6, bottom=False)
+    p = L.prism(ol, z0, z0 + h, c.sw(key), chamfer=chamfer, grid=0.6, bottom=False, cap_grid=None)
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     top = p.v[:, 2] > z0 + h * 0.5
     p.v[top, 0] = cx + (p.v[top, 0] - cx) * (1 - batter)
@@ -428,16 +428,37 @@ def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.14, sag=None, flare=0.
         y = yc + side * (half * f + 0.5 * eave_off(x * 1.3, -side) * f ** 3)
         return (x, y, z)
 
+    slope_len = math.hypot(half, z_ridge - z_eave)
+    # grid lines also on every tile line (u = k, v = k), so the atlas mapping needs no extra cuts
+    xs = list(x0 + Lx * np.arange(nu + 1) / nu)
+    for k in range(1, int(Lx / rep) + 1):
+        xt = x0 + k * rep
+        if xt < x1 - 0.05:
+            j = int(np.argmin([abs(x - xt) for x in xs[1:-1]])) + 1 if nu > 1 else None
+            if j is not None and abs(xs[j] - xt) < 0.5 * Lx / nu:
+                xs[j] = xt
+            else:
+                xs.append(xt)
+    xs = sorted(xs)
+    fs = list(np.arange(nv + 1) / nv)
+    for k in range(1, int(slope_len / rep) + 1):
+        ft = k * rep / slope_len
+        if ft < 0.98:
+            j = int(np.argmin([abs(f - ft) for f in fs[1:-1]])) + 1 if nv > 1 else None
+            if j is not None and abs(fs[j] - ft) < 0.5 / nv:
+                fs[j] = ft
+            else:
+                fs.append(ft)
+    fs = sorted(fs)
+    nu, nv = len(xs) - 1, len(fs) - 1
     top_v, grids = [], []
     for side in (1, -1):
         base = len(top_v)
-        for j in range(nv + 1):
-            f = j / nv
-            for i in range(nu + 1):
-                top_v.append(surf(x0 + Lx * i / nu, f, side))
+        for f in fs:
+            for x in xs:
+                top_v.append(surf(x, f, side))
         grids.append(base)
     top_v = np.array(top_v, float)
-    slope_len = math.hypot(half, z_ridge - z_eave)
     parts = []
     for gi, side in enumerate((1, -1)):
         base = grids[gi]
@@ -451,8 +472,8 @@ def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.14, sag=None, flare=0.
                     tri1, tri2 = (a, cc, b), (a, d, cc)
                 for tri in (tri1, tri2):
                     tris.append(tri)
-                    uvs.append([((top_v[k][0] - x0) / rep * side, (slope_len * ((k - base) // (nu + 1)) / nv) / rep)
-                                for k in tri])
+                    uvs.append([((xs[(k - base) % (nu + 1)] - x0) / rep * side,
+                                 (slope_len * fs[(k - base) // (nu + 1)]) / rep) for k in tri])
         parts.append(Part(top_v, np.array(tris), sw, np.array(uvs), 40.0))
     roof_top = L.merge(parts)
     bot = top_v - np.array([0, 0, th])
@@ -475,7 +496,8 @@ def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.14, sag=None, flare=0.
                     q.uv = q.uv[:, ::-1]
                 rimparts.append(q)
     rim = L.merge(rimparts)
-    rim.box_uv(0.6)
+    rim.box_uv(rep)
+    rim.faceted = True
     rim.tint = hexcol("#8A6A60")
     out = [c.add(roof_top, layer=1.0, dice=None), c.add(rim, dice=None, layer=1.0)]
     if soffit:
@@ -516,9 +538,9 @@ def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.14, sag=None, flare=0.
     if barge:
         for xe in (x0 + t * 0.4, x1 - t * 0.4):
             for side in (1, -1):
-                pts = [np.array(surf(xe, j / nv, side)) + np.array([0, 0, t * 0.3]) for j in range(nv + 1)]
-                for k in range(0, nv, 2):
-                    a, b = pts[k], pts[min(k + 2, nv)]
+                pts = [np.array(surf(xe, f, side)) + np.array([0, 0, t * 0.3]) for f in (0.0, 0.5, 1.0)]
+                for k in range(2):
+                    a, b = pts[k], pts[k + 1]
                     out.append(c.add(L.member(a, b, t * 0.9, t * 1.25, c.sw("oak"), rng=c.rng, roll_up=(1, 0, 0))))
     if axis == "y":
         for p in out:
@@ -526,6 +548,19 @@ def gable_roof(c, x0, x1, yc, half, z_eave, z_ridge, th=0.14, sag=None, flare=0.
             p.rot(0, 0, 90)
             p.v = p.v + np.array([cx, yc, 0])
     return out
+
+
+def roof_fit(zw, hw, ov, pitch_deg, th, ridge_len, flare=0.12):
+    """(z_eave, z_ridge) of a gable_roof whose underside clears walls of half-width hw and top zw
+    (accounts for the flare and the default ridge sag)."""
+    tp = math.tan(math.radians(pitch_deg))
+    sag = min(0.26, 0.045 * ridge_len)
+    f = hw / (hw + ov)
+    zf = f + flare * f * (1 - f)
+    rise = (hw + ov) * tp
+    # top surface at the wall line must sit th + 4 cm above the wall even where the ridge sags most
+    z_ridge = zw + th + 0.04 + sag * (1 - 0.6 * f) + rise * zf
+    return z_ridge - rise, z_ridge
 
 
 def roof_z(x_or_off, half, z_eave, z_ridge, flare=0.12):
@@ -1035,7 +1070,8 @@ def roof_solid(c, verts, faces, th, key="roof", deform=None, dice=0.4, soffit=Fa
         rim.append(q)
     if rim:
         r = L.merge(rim)
-        r.box_uv(0.6)
+        r.box_uv(rep)
+        r.faceted = True
         r.tint = hexcol(rim_tint)
         out.append(c.add(r, dice=None, layer=layer))
     if soffit:
@@ -1198,18 +1234,17 @@ def platform(c, cx, cy, z, half, th=0.1, rail_h=0.5, rail=True, key="planks", t=
                 c.add(L.member(a, b, t * 0.8, t * 0.8, c.sw("oak"), rng=c.rng))
 
 
-def pavise(c, pos, facing_deg, h=1.0, w=0.5, lean=8.0):
+def pavise(c, pos, facing_deg, h=1.0, w=0.5, lean=8.0, face_key="team", n=10):
     """Tall flat round-topped shield standing on its foot: team face field with an ivory wheel
     (TEAM decal), dark oak back."""
     x, y, z = pos
     th = 0.05
-    n = 10
     ol = [(-w / 2, 0.0), (w / 2, 0.0)]
     for i in range(n + 1):
         a = i / n * math.pi
         ol.append((math.cos(a) * w / 2, h - w * 0.3 + math.sin(a) * w * 0.3))
     ol = ol[:2] + ol[2:]
-    face = L.prism(np.array(ol[1:] + ol[:1]), 0.0, 0.012, c.sw("team"), chamfer=0.0, bottom=False)
+    face = L.prism(np.array(ol[1:] + ol[:1]), 0.0, 0.012, c.sw(face_key), chamfer=0.0, bottom=False)
     v = face.v[face.t]
     face.uv = np.stack([(v[..., 0] + w / 2) / w, 1 - v[..., 1] / h], -1)
     back = L.prism(np.array(ol[1:] + ol[:1]), -th, 0.0, c.sw("oak"), chamfer=0.01)
@@ -1261,15 +1296,15 @@ def trestle(c, center, rz=0.0, w=0.7, h=0.75):
         c.add(p)
 
 
-def anvil(c, pos, rz=0.0):
+def anvil(c, pos, rz=0.0, s=1.0):
     x, y, z = pos
-    stump = L.lathe([(0.2, 0), (0.18, 0.42), (0.17, 0.45), (0.0, 0.45)], 9, c.sw("bark"))
+    stump = L.lathe([(0.2 * s, 0), (0.18 * s, 0.42 * s), (0.17 * s, 0.45 * s), (0.0, 0.45 * s)], 8, c.sw("bark"))
     stump.move(x, y, z)
     c.add(stump, dice=None, uvrot=True)
-    top = L.box(0.42, 0.16, 0.12, c.sw("iron"), chamfer=0.02, center=(0, 0, 0.62))
-    waist = L.box(0.18, 0.12, 0.12, c.sw("iron"), center=(0, 0, 0.51))
-    foot = L.box(0.3, 0.18, 0.06, c.sw("iron"), center=(0, 0, 0.48))
-    horn = L.lathe([(0.06, 0), (0.0, 0.2)], 6, c.sw("iron")).rot(0, 90, 0).move(0.2, 0, 0.62)
+    top = L.box(0.42 * s, 0.16 * s, 0.12 * s, c.sw("iron"), chamfer=0.02, center=(0, 0, 0.62 * s))
+    waist = L.box(0.18 * s, 0.12 * s, 0.12 * s, c.sw("iron"), center=(0, 0, 0.51 * s))
+    foot = L.box(0.3 * s, 0.18 * s, 0.06 * s, c.sw("iron"), center=(0, 0, 0.48 * s))
+    horn = L.lathe([(0.06 * s, 0), (0.0, 0.2 * s)], 6, c.sw("iron")).rot(0, 90, 0).move(0.2 * s, 0, 0.62 * s)
     for p in (top, waist, foot, horn):
         p.rot(0, 0, rz).move(x, y, z)
         c.add(p, dice=None)
@@ -1341,66 +1376,89 @@ def gable_roof_small(c, base, length, span, rise, rz=0.0, key="roof", th=0.05):
 
 
 def wagon(c, center, rz=0.0, length=1.6, width=0.8, h=0.55, wheel_r=0.38, cover=False, team_band=True,
-          four=True, shafts=True):
-    """Kingdom plank wagon: folk-painted box on spoked wheels; team band on the side boards."""
+          four=True, shafts=True, paint=None, spokes=8):
+    """Kingdom plank wagon on spoked wheels. paint=None: folk-painted planks swatch; paint="burgundy":
+    burgundy boards with ivory top rails (bible K_WAGON). team_band: a team band on the side boards.
+    cover: False | True (ivory canvas with one team stripe round the middle hoop)."""
     x, y, z = center
     zb = wheel_r * 0.95
-    local = []
-    body = L.box(length, width, h, c.sw("planks"), chamfer=0.02, center=(0, 0, zb + h / 2))
-    local.append(body)
-    floor = L.box(length * 1.02, width * 0.96, 0.06, c.sw("oak"), center=(0, 0, zb))
-    local.append(floor)
-    for p in local:
-        p.rot(0, 0, rz).move(x, y, z)
-        c.add(p, dice=None)
+    R = L.rot_matrix(0, 0, rz)
+    o = np.array([x, y, z])
+
+    def put(p):
+        return p.rot(0, 0, rz).move(x, y, z)
+
+    if paint == "burgundy":
+        body = L.box(length, width, h, c.sw("pal"), chamfer=0.02, center=(0, 0, zb + h / 2))
+        c.P(put(body), "#7B1E2E", dice=None)
+        for sy in (-1, 1):
+            rail = L.box(length * 1.02, 0.06, 0.07, c.sw("pal"), center=(0, sy * (width / 2 + 0.01), zb + h - 0.02))
+            c.P(put(rail), "#EDE2C8", dice=None)
+        for sx in (-1, 1):
+            rail = L.box(0.06, width * 1.02, 0.07, c.sw("pal"), center=(sx * (length / 2 + 0.01), 0, zb + h - 0.02))
+            c.P(put(rail), "#EDE2C8", dice=None)
+    else:
+        c.add(put(L.box(length, width, h, c.sw("planks"), chamfer=0.02, center=(0, 0, zb + h / 2))), dice=None)
+    c.add(put(L.box(length * 1.04, width * 0.96, 0.07, c.sw("oak"), center=(0, 0, zb))), dice=None)
     if team_band:
         for sy in (-1, 1):
-            band = L.box(length * 0.92, 0.012, h * 0.22, c.sw("team_band"), center=(0, sy * (width / 2 + 0.008), zb + h * 0.62))
+            band = L.box(length * 0.84, 0.014, h * 0.3, c.sw("team_band"), center=(0, sy * (width / 2 + 0.01), zb + h * 0.5))
             v = band.v[band.t]
-            band.uv = np.stack([v[..., 0] / 0.8, 1 - (v[..., 2] - (zb + h * 0.51)) / (h * 0.22)], -1)
-            band.rot(0, 0, rz).move(x, y, z)
-            c.add(band, dice=None)
+            band.uv = np.stack([v[..., 0] / 0.8, 1 - (v[..., 2] - (zb + h * 0.35)) / (h * 0.3)], -1)
+            c.add(put(band), dice=None)
     xs = (-length * 0.3, length * 0.3) if four else (0.0,)
     for wx in xs:
         for sy in (-1, 1):
-            cc = np.array([wx, sy * (width / 2 + 0.07), wheel_r])
-            R = np.array(L.rot_matrix(0, 0, rz))
-            wc = R @ cc + np.array([x, y, z])
-            for p in wheel(c, tuple(wc), wheel_r, axis="y", spokes=8):
+            cc = np.array([wx, sy * (width / 2 + 0.08), wheel_r])
+            wc = R @ cc + o
+            for p in wheel(c, tuple(wc), wheel_r, axis="y", spokes=spokes, segs=12):
                 p.rot(0, 0, rz, pivot=wc)
     if shafts:
         for sy in (-1, 1):
             a = np.array([length / 2, sy * width * 0.3, zb + 0.05])
-            b = np.array([length / 2 + 0.75, sy * width * 0.25, 0.12])
-            p = L.member(a, b, 0.05, 0.05, c.sw("oak"), rng=c.rng)
-            p.rot(0, 0, rz).move(x, y, z)
-            c.add(p)
+            b = np.array([length / 2 + 0.8, sy * width * 0.25, 0.1])
+            c.add(put(L.member(a, b, 0.06, 0.06, c.sw("oak"), rng=c.rng)))
     if cover:
-        prof = []
-        for i in range(9):
-            a = math.pi * i / 8
-            prof.append((math.cos(a) * width * 0.52, math.sin(a) * width * 0.55))
-        verts = []
-        n = 6
-        for j in range(n + 1):
-            xx = -length * 0.42 + length * 0.84 * j / n
-            for (py, pz) in prof:
-                verts.append((xx, py, zb + h + pz))
-        verts = np.array(verts)
-        K = len(prof)
-        tris, uvs = [], []
-        for j in range(n):
+        # canvas on three hoops: ivory, with one team stripe round the middle (about 1/4 of the canvas)
+        nseg = 8
+        prof = [(math.cos(math.pi * i / nseg) * width * 0.53, math.sin(math.pi * i / nseg) * width * 0.6)
+                for i in range(nseg + 1)]
+        xs_ = [-0.44, -0.12, 0.12, 0.44]
+        for k in range(3):
+            xa, xb = xs_[k] * length, xs_[k + 1] * length
+            verts = []
+            for xx in (xa, xb):
+                for (py, pz) in prof:
+                    sagz = -0.04 if xx not in (xs_[0] * length, xs_[-1] * length) else 0.0
+                    verts.append((xx, py, zb + h + pz + sagz * 0))
+            verts = np.array(verts)
+            K = len(prof)
+            tris = []
             for i in range(K - 1):
-                a, b = j * K + i, j * K + i + 1
-                cc2, d = (j + 1) * K + i + 1, (j + 1) * K + i
-                tris += [(a, b, cc2), (a, cc2, d)]
-        tris = np.array(tris)
-        cv = Part(verts, tris, c.sw("team_band"), None, 60)
-        vv = cv.v[cv.t]
-        ang = np.arctan2(vv[..., 2] - zb - h, vv[..., 1])
-        cv.uv = np.stack([vv[..., 0] / 0.8, (ang / math.pi) * 3 % 1.0], -1)
-        cv.rot(0, 0, rz).move(x, y, z)
-        c.add(cv, dice=None)
+                a, b, cc, d = i, i + 1, K + i + 1, K + i
+                tris += [(a, cc, b), (a, d, cc)]
+            tris = np.array(tris)
+            team_mid = k == 1
+            cv = Part(verts, tris, c.sw("team_band" if team_mid else "pal"), None, 60)
+            vv = cv.v[cv.t]
+            ang = np.arctan2(vv[..., 2] - zb - h, vv[..., 1])
+            cv.uv = np.stack([(vv[..., 0] - xa) / 0.8, ang / math.pi], -1)
+            # bulge the canvas between the hoops
+            cv.v[:, 1:] = cv.v[:, 1:]
+            put(cv)
+            if team_mid:
+                c.add(cv, dice=None, form=0.0)
+            else:
+                c.pal_uv(cv, "#EDE2C8")
+                c.add(cv, dice=None, form=0.0)
+            back = cv.copy()
+            back.t = back.t[:, ::-1]
+            back.uv = back.uv[:, ::-1]
+            c.add(back, dice=None, form=0.0)
+        for xx in xs_:
+            hp = np.array([(xx * length, py * 1.02, zb + h + pz * 1.02) for (py, pz) in prof])
+            hoop = L.sweep(L.rect_profile(0.05, 0.035), hp, c.sw("oak"), up=(1, 0, 0))
+            c.add(put(hoop), dice=None)
 
 
 # =============================================================================================
@@ -1465,16 +1523,14 @@ def k_croft(c):
     on the back of the ridge, a lean-to woodshed and a wattle-fenced cabbage patch on the pad."""
     t = 0.1
     x0, x1, y0, y1 = -1.15, 1.15, -1.55, 0.95
-    zp, zw = 0.22, 1.6
-    pitch = math.radians(52)
+    zp, zw = 0.22, 1.5
     walls, _ = house(c, x0, x1, y0, y1, zp, [zw], t, skip=("front",), ops={
         ("back", 0): [(0.5, 0.42, 0.45, 0.95, "window")],
-        ("right", 0): [(0.35, 0.4, 0.45, 0.95, "window"), (0.75, 0.4, 0.45, 0.95, "window")],
-        ("left", 0): [(0.5, 0.4, 0.45, 0.95, "window")]}, bay=0.6)
+        ("right", 0): [(0.5, 0.4, 0.45, 0.95, "window")],
+        ("left", 0): [(0.5, 0.4, 0.45, 0.95, "window")]}, bay=0.85)
     ov = 0.32
     half = (x1 - x0) / 2
-    z_ridge = zw + half * math.tan(pitch)
-    z_eave = zw - ov * math.tan(pitch) * 0.85
+    z_eave, z_ridge = roof_fit(zw, half, ov, 50, 0.13, y1 - y0 + 0.64)
     gable_roof(c, y0 - 0.3, y1 + 0.34, 0.0, half + ov, z_eave, z_ridge, th=0.13, t=0.13, nu=8, nv=5, axis="y",
                cx=0.0, trim=0.1, ridge_w=0.15)
     fw = Wall((x1, y1), (-1, 0), (0, 1), x1 - x0)
@@ -1483,7 +1539,7 @@ def k_croft(c):
     window(c, fw, fw.L / 2, 2.32, 2.62, 0.3, shutters=True)
     gable_infill(c, Wall((x0, y0), (1, 0), (0, -1), x1 - x0), zw, z_ridge - 0.17, t)
     # chimney through the right slope near the back, stork nest on the back of the ridge
-    chimney(c, 0.55, -0.85, zw, z_ridge + 0.36, 0.44)
+    chimney(c, 0.55, -0.85, zw, z_ridge + 0.12, 0.46)
     stork_nest(c, (0.0, y0 + 0.02, z_ridge - 0.07), r=0.27, facing=150)
     # small pennant on the front gable apex
     pennant(c, (0.0, y1 + 0.3, z_ridge - 0.05), 0.3, 0.5, 0.2, dirn=(-1, 0.45), phase=0.4, pole_r=0.03)
@@ -1493,11 +1549,11 @@ def k_croft(c):
         c.add(L.member((lx0, yy, 0), (lx0, yy, 1.05), 0.09, 0.09, c.sw("oak"), rng=c.rng))
     roof_solid(c, [(lx0 - 0.15, ly0 - 0.15, 0.98), (lx1 + 0.05, ly0 - 0.15, 1.42), (lx1 + 0.05, ly1 + 0.15, 1.42),
                    (lx0 - 0.15, ly1 + 0.15, 0.98)], [[0, 1, 2, 3]], 0.07, "roof", None, dice=0.5)
-    for row in range(3):
-        for k in range(3 - row):
-            rr = 0.12 + 0.02 * c.r()
-            xx = lx0 + 0.18 + k * 0.25 + 0.12 * row
-            log1(c, (xx, (ly0 + ly1) / 2, row * 0.21), 1.75, rr, axis="y", sides=7)
+    for row in range(2):
+        for k in range(2 - row):
+            rr = 0.13 + 0.02 * c.r()
+            xx = lx0 + 0.22 + k * 0.27 + 0.13 * row
+            log1(c, (xx, (ly0 + ly1) / 2, row * 0.23), 1.75, rr, axis="y", sides=7)
     # wattle-fenced cabbage patch at the front right
     fence_wattle(c, (0.35, 1.3), (1.9, 1.3), 0.45)
     fence_wattle(c, (1.9, 1.3), (1.9, -0.2), 0.45)
@@ -1505,7 +1561,6 @@ def k_croft(c):
         cb = L.blob(c.sw("leaves"), radius=0.16, subdiv=1, scale=(1, 1, 0.75), seed=40 + k, noise_amp=0.25)
         cb.move(0.6 + (k % 3) * 0.42 + c.r(-0.05, 0.05), 0.95 - (k // 3) * 0.42, 0.0)
         c.add(cb, dice=None, tint=(0.95, 1.05, 0.85) if k % 2 else (0.8, 0.95, 0.75))
-    barrel(c, (-0.75, y1 + 0.42, 0), r=0.2, h=0.46)
     stook(c, (1.55, -1.45, 0.0), 0.5, 1.1)
     return {"height_target": (3.0, 3.5)}
 
@@ -1562,35 +1617,38 @@ def braziers(c, pts, r=0.16, h=0.55):
         c.add(coals, dice=None, ao=False, min_shade=1.0, form=0.0)
 
 
-def iron_wheel_arch(c, cx, cy, zc, R, depth=0.18, spokes=5):
-    """Oath Hall: half of a giant iron wheel framing the door, rim legs to the ground, a hub boss."""
-    rim_w = R * 0.14
-    n = 14
+def iron_wheel_arch(c, cx, cy, zc, R, depth=0.2, spokes=3, lean=14.0):
+    """Oath Hall gate: the upper half of a giant six-spoked iron wheel (three spokes show) standing
+    free in front of the door on iron rim legs, its top leaning back by `lean` degrees so the arch
+    reads from the high camera; hub boss with the dark-bronze coal of the emblem."""
+    k0 = len(c.parts)
+    rim_w = R * 0.15
+    n = 16
     ang = np.linspace(0, math.pi, n + 1)
     path = np.stack([cx + np.cos(ang) * (R - rim_w / 2), np.full(n + 1, cy), zc + np.sin(ang) * (R - rim_w / 2)], 1)
-    rim = L.sweep(L.rect_profile(rim_w, depth, 0.02), path, c.sw("iron"), up=(0, 1, 0))
-    c.add(rim, dice=None)
-    tyre_path = np.stack([cx + np.cos(ang) * (R + 0.01), np.full(n + 1, cy), zc + np.sin(ang) * (R + 0.01)], 1)
-    c.add(L.sweep(L.rect_profile(rim_w * 0.35, depth * 1.1, 0.01), tyre_path, c.sw("iron"), up=(0, 1, 0)), dice=None,
-          tint=(0.75, 0.75, 0.78))
+    c.add(L.sweep(L.rect_profile(rim_w, depth, 0.03), path, c.sw("iron"), up=(0, 1, 0)), dice=None)
+    tyre_path = np.stack([cx + np.cos(ang) * (R + 0.015), np.full(n + 1, cy), zc + np.sin(ang) * (R + 0.015)], 1)
+    c.add(L.sweep(L.rect_profile(rim_w * 0.35, depth * 1.12), tyre_path, c.sw("iron"), up=(0, 1, 0)), dice=None,
+          tint=(1.25, 1.25, 1.3))
     for sx in (-1, 1):
-        c.add(L.member((cx + sx * (R - rim_w / 2), cy, 0.0), (cx + sx * (R - rim_w / 2), cy, zc + 0.02), rim_w * 1.05, depth,
-                       c.sw("iron"), roll_up=(0, 1, 0)))
-        foot = L.box(rim_w * 2.2, depth * 1.8, 0.22, c.sw("rubble"), chamfer=0.03, center=(cx + sx * (R - rim_w / 2), cy, 0), base=True)
-        c.add(foot, dice=None)
+        c.add(L.member((cx + sx * (R - rim_w / 2), cy, 0.0), (cx + sx * (R - rim_w / 2), cy, zc + 0.02), rim_w * 1.05,
+                       depth, c.sw("iron"), roll_up=(0, 1, 0)))
     hub = L.lathe([(0, -depth * 0.8), (R * 0.2, -depth * 0.8), (R * 0.22, 0), (R * 0.2, depth * 0.8), (R * 0.1, depth * 1.4),
-                   (0, depth * 1.5)], 12, c.sw("iron"))
+                   (0, depth * 1.5)], 10, c.sw("iron"))
     hub.rot(-90, 0, 0).move(cx, cy, zc)
     c.add(hub, dice=None)
     for k in range(spokes):
-        a = math.pi * (k + 0.5) / spokes
-        d = np.array([math.cos(a), 0.0, math.sin(a)])
+        a_ = math.pi * (k + 0.5) / spokes
+        d = np.array([math.cos(a_), 0.0, math.sin(a_)])
         c.add(L.member(np.array([cx, cy, zc]) + d * R * 0.18, np.array([cx, cy, zc]) + d * (R - rim_w * 0.7),
-                       rim_w * 0.6, depth * 0.7, c.sw("iron"), roll_up=(0, 1, 0)))
-    # hub coal (dark bronze, kingdom emblem)
-    coal = L.lathe([(0, 0), (R * 0.09, 0.0), (R * 0.07, R * 0.06), (0, R * 0.08)], 8, c.sw("pal"))
+                       rim_w * 0.62, depth * 0.75, c.sw("iron"), roll_up=(0, 1, 0)))
+    coal = L.lathe([(0, 0), (R * 0.1, 0.0), (R * 0.08, R * 0.06), (0, R * 0.08)], 8, c.sw("pal"))
     coal.rot(-90, 0, 0).move(cx, cy + depth * 1.45, zc)
     c.P(coal, "#6E4A26", dice=None)
+    for p in c.parts[k0:]:
+        p.rot(lean, 0, 0, pivot=(cx, cy, 0.0))
+    for sx in (-1, 1):
+        pbox(c, rim_w * 2.6, depth * 2.4, 0.3, "rubble", center=(cx + sx * (R - rim_w / 2), cy, 0))
 
 
 def floor_wheel(c, cx, cy, r):
@@ -1609,388 +1667,420 @@ def floor_wheel(c, cx, cy, r):
 
 
 def k_oath_hall(c):
-    """Oath Hall (altar, 6x6 cells = 3 m): squat stone hall, hip roof, a giant iron wheel arch over
-    the door, the oath wheel set in the floor in front."""
-    W, D = c.fp
-    t = 0.1
-    x0, x1, y0, y1 = -1.25, 1.25, -1.2, 0.62
-    zp, zw = 0.26, 1.42
+    """Oath Hall (hero altar, 12x12 cells = 6 m): a squat rubble-stone hall under a heavy hip roof with
+    battered corner buttresses; in front of the door stands its signature, a free-standing gate made
+    of the upper half of a giant iron wheel, rising well above the eaves (about 1.4x) and leaning back
+    towards the camera; the oath wheel is set in the floor before it, braziers and team banners flank it."""
+    t = 0.12
+    x0, x1, y0, y1 = -2.4, 2.4, -2.75, 0.65
+    zp, zw = 0.3, 2.45
     walls, _ = house(c, x0, x1, y0, y1, zp, [zw], t, stone=(0,), ops={
-        ("front", 0): [(0.5, 0.62, 0.0, 0.98, "door")],
-        ("left", 0): [(0.5, 0.26, 0.42, 0.86, "window")],
-        ("right", 0): [(0.5, 0.26, 0.42, 0.86, "window")],
-        ("back", 0): [(0.3, 0.26, 0.42, 0.86, "window"), (0.7, 0.26, 0.42, 0.86, "window")]})
-    # heavy corner buttresses
+        ("front", 0): [(0.5, 1.3, 0.0, 2.1, "door"), (0.18, 0.42, 0.9, 1.6, "window"), (0.82, 0.42, 0.9, 1.6, "window")],
+        ("left", 0): [(0.5, 0.4, 0.9, 1.6, "window")],
+        ("right", 0): [(0.5, 0.4, 0.9, 1.6, "window")]})
     for sx, sy in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
         bx, by = (x1 if sx > 0 else x0), (y1 if sy > 0 else y0)
-        p = L.gbox(0.34, 0.34, 1.25, c.sw("rubble"), chamfer=0.04, center=(bx + sx * 0.04, by + sy * 0.04, 0), grid=0.4)
-        top = p.v[:, 2] > 0.6
-        p.v[top, 0] = bx + sx * 0.04 + (p.v[top, 0] - bx - sx * 0.04) * 0.7
-        p.v[top, 1] = by + sy * 0.04 + (p.v[top, 1] - by - sy * 0.04) * 0.7
-        p.box_uv()
-        c.add(p)
-    ov = 0.2
-    hip_roof(c, x0 - ov, x1 + ov, y0 - ov, y1 + ov + 0.05, zw - 0.06, 2.75, ridge_frac=1.0, th=0.13, kick=0.09, hip_w=0.075,
+        pbox(c, 0.6, 0.6, 2.15, "rubble", center=(bx + sx * 0.06, by + sy * 0.06, 0), taper=0.3, chamfer=0.06, grid=0.6)
+    ov = 0.38
+    hip_roof(c, x0 - ov, x1 + ov, y0 - ov, y1 + ov, zw + 0.02, 4.75, ridge_frac=0.85, th=0.17, kick=0.1, hip_w=0.09,
              hips=True)
-    iron_wheel_arch(c, 0.0, y1 + 0.13, zp + 0.98, 0.72)
-    floor_wheel(c, 0.0, y1 + 0.62, 0.27)
-    braziers(c, [(-0.88, y1 + 0.55), (0.88, y1 + 0.55)])
+    iron_wheel_arch(c, 0.0, y1 + 1.0, 1.95, 1.55, lean=15.0)
+    floor_wheel(c, 0.0, y1 + 1.95, 0.48)
+    braziers(c, [(-1.95, y1 + 1.25), (1.95, y1 + 1.25)], r=0.22, h=0.75)
     for sx in (-1, 1):
-        banner(c, (sx * 0.98, y1 + 0.05, zw - 0.02), 0.42, 0.95, normal=(0, 1))
-    # pennants on the ridge ends
-    rl = 1.0 * abs((x1 - x0) / 2 - (y1 - y0 + 0.05) / 2)
-    ycen = (y0 + y1 + 0.05) / 2
+        x = sx * 2.65
+        c.add(L.member((x, y1 + 0.75, 0), (x, y1 + 0.75, 3.7), 0.13, 0.13, c.sw("oak"), rng=c.rng, chamfer=0.02))
+        pbox(c, 0.42, 0.42, 0.25, "rubble", center=(x, y1 + 0.75, 0))
+        banner(c, (x, y1 + 0.84, 3.55), 0.62, 1.35, normal=(0, 1))
+        ball = L.lathe([(0, 0), (0.09, 0.05), (0.1, 0.14), (0.04, 0.22), (0, 0.27)], 7, c.sw("iron"))
+        ball.move(x, y1 + 0.75, 3.7)
+        c.add(ball, dice=None)
+    rl = 0.85 * abs((x1 - x0) / 2 - (y1 - y0) / 2)
+    ycen = (y0 + y1) / 2
     for sx in (-1, 1):
-        pennant(c, (sx * rl, ycen, 2.72), 0.7, 0.75, 0.28, dirn=(sx, 0.5), phase=sx)
-    return {"height_target": (2.8, 3.6)}
+        pennant(c, (sx * rl, ycen, 4.7), 0.6, 0.7, 0.28, dirn=(sx, 0.5), phase=sx)
+    return {"height_target": (4.5, 5.5)}
 
 
 def k_drill_yard(c):
-    """Drill Yard (barracks, 8x8 cells = 4 m): timber longhouse with a front cross-gable, a fenced
-    yard with a pavise wall, a weapon rack and a straw drill dummy; tall pennant mast."""
-    t = 0.11
-    x0, x1, y0, y1 = -1.8, 1.8, -1.72, -0.32
-    zp, zw = 0.3, 1.5
-    walls, _ = house(c, x0, x1, y0, y1, zp, [zw], t, ops={
-        ("front", 0): [(0.16, 0.34, 0.35, 0.82, "window"), (0.84, 0.34, 0.35, 0.82, "window")],
-        ("back", 0): [(0.25, 0.34, 0.35, 0.82, "window"), (0.75, 0.34, 0.35, 0.82, "window")],
-        ("left", 0): [(0.5, 0.3, 0.38, 0.8, "window")], ("right", 0): [(0.5, 0.3, 0.38, 0.8, "window")]}, bay=0.7)
-    ov = 0.22
-    yc = (y0 + y1) / 2
-    half = (y1 - y0) / 2 + ov
-    z_ridge = zw + (y1 - y0) / 2 * math.tan(math.radians(60))
-    gable_roof(c, x0 - 0.2, x1 + 0.2, yc, half, zw - 0.12, z_ridge, th=0.13, sag=0.06, t=0.1, nu=12, nv=5)
-    for k in ("left", "right"):
-        gable_infill(c, walls[k], zw, z_ridge - 0.06, t)
-    # front cross-gable porch over the door
-    wx0, wx1, wy0, wy1 = -0.55, 0.55, y1 - 0.1, y1 + 0.42
-    pw, _ = house(c, wx0, wx1, wy0, wy1, zp, [zw], t, ops={("front", 0): [(0.5, 0.46, 0.0, 0.92, "door")]}, bay=0.5,
-                  plinth_pad=0.04)
-    zr2 = zw + 0.55 * math.tan(math.radians(58))
-    gable_roof(c, wy0 - 0.25, wy1 + 0.18, 0.0, 0.55 + 0.16, zw - 0.1, zr2, th=0.11, sag=0.03, t=0.09, nu=6, nv=4,
-               axis="y", cx=0.0, ridge_team=False)
-    gable_infill(c, pw["front"], zw, zr2 - 0.05, t, window_w=0.26)
-    # yard
-    yy0, yy1 = 0.15, 1.9
-    fence_wattle(c, (-1.9, yy0), (-1.9, yy1), 0.45)
-    fence_wattle(c, (1.9, yy1), (1.9, yy0), 0.45)
-    fence_wattle(c, (-1.9, yy1), (-0.5, yy1), 0.45)
-    fence_wattle(c, (0.5, yy1), (1.9, yy1), 0.45)
-    for gx in (-0.5, 0.5):
-        c.add(L.member((gx, yy1, 0), (gx, yy1, 0.95), 0.1, 0.1, c.sw("oak"), rng=c.rng))
-    for i, px in enumerate(np.linspace(-1.55, -0.35, 4)):
-        pavise(c, (px, 0.55 + 0.05 * (i % 2), 0.0), 0.0, h=0.95, w=0.42, lean=10)
-    weapon_rack(c, (1.25, 0.65, 0.0), rz=0.0, width=1.0, h=0.95, n=4)
-    # drill dummy: post, crossbar, straw body, kettle hat
-    dx, dy = 0.75, 1.3
-    c.add(L.member((dx, dy, 0), (dx, dy, 1.25), 0.08, 0.08, c.sw("oak"), rng=c.rng))
-    c.add(L.member((dx - 0.35, dy, 1.0), (dx + 0.35, dy, 1.0), 0.06, 0.06, c.sw("oak"), rng=c.rng))
-    body = L.blob(c.sw("straw"), radius=0.22, subdiv=1, scale=(1, 0.8, 1.3), seed=7, noise_amp=0.1)
-    body.move(dx, dy, 0.62)
+    """Drill Yard (barracks, 12x12 cells = 6 m): a big timber longhouse with its gable (double door,
+    shuttered windows) to the front, a dormer and a chimney on the slopes; an L-shaped wattle-fenced
+    drill yard round it: a pavise wall of tall shields, a polearm rack, a straw drill dummy in a kettle
+    hat and a tall team pennant mast at the gate."""
+    t = 0.13
+    x0, x1, y0, y1 = -2.9, 0.85, -2.9, 0.95
+    zp, zw = 0.32, 2.35
+    walls, _ = house(c, x0, x1, y0, y1, zp, [zw], t, skip=("front",), ops={
+        ("right", 0): [(0.3, 0.55, 0.75, 1.5, "window"), (0.72, 0.55, 0.75, 1.5, "window")],
+        ("left", 0): [(0.5, 0.55, 0.75, 1.5, "window")]}, bay=1.0)
+    ov = 0.38
+    half = (x1 - x0) / 2
+    xm = (x0 + x1) / 2
+    ridge_len = y1 - y0 + 0.8
+    z_eave, z_ridge = roof_fit(zw, half, ov, 50, 0.16, ridge_len)
+    gable_roof(c, y0 - 0.38, y1 + 0.42, xm, half + ov, z_eave, z_ridge, th=0.16, t=0.16, nu=10, nv=6, axis="y",
+               cx=xm, trim=0.13, ridge_w=0.18)
+    fw = Wall((x1, y1), (-1, 0), (0, 1), x1 - x0)
+    gable_wall(c, fw, zp, zw, z_ridge - 0.22, t, door=(fw.L / 2, 1.35, 2.2),
+               windows=[(fw.L * 0.15, 0.95, 1.6, 0.48), (fw.L * 0.85, 0.95, 1.6, 0.48)])
+    window(c, fw, fw.L / 2, z_ridge - 1.75, z_ridge - 1.15, 0.5, shutters=True)
+    gable_infill(c, Wall((x0, y0), (1, 0), (0, -1), x1 - x0), zw, z_ridge - 0.22, t)
+    chimney(c, xm - 0.95, y0 + 0.95, zw, z_ridge + 0.2, 0.6)
+    zr = roof_z(1.0, half + ov, z_eave, z_ridge)
+    dormer(c, (xm + 1.2, -1.1, zr - 0.4), (1, 0), w=0.95, h=0.8, depth=1.1, rise=0.5)
+    # L-shaped drill yard: front strip + right strip
+    fh = 0.8
+    fence_wattle(c, (2.95, -2.9), (2.95, 2.9), fh)
+    fence_wattle(c, (1.25, -2.9), (2.95, -2.9), fh)
+    fence_wattle(c, (2.95, 2.9), (1.95, 2.9), fh)
+    fence_wattle(c, (0.85, 2.9), (-2.9, 2.9), fh)
+    fence_wattle(c, (-2.9, 2.9), (-2.9, 1.3), fh)
+    for gx in (0.85, 1.95):
+        c.add(L.member((gx, 2.9, 0), (gx, 2.9, 1.35), 0.17, 0.17, c.sw("oak"), rng=c.rng))
+        cap = L.lathe([(0, 0), (0.11, 0.03), (0.12, 0.1), (0.05, 0.16), (0, 0.18)], 6, c.sw("iron"))
+        cap.move(gx, 2.9, 1.35)
+        c.add(cap, dice=None)
+    for i, (px, py) in enumerate(((1.6, -2.15), (2.15, -1.45), (2.6, -0.75), (2.15, -0.05))):
+        pavise(c, (px, py, 0.0), -12.0 * (i - 1.5), h=1.9, w=0.64, lean=9, n=6,
+               face_key="team" if i == 1 else "planks")
+    weapon_rack(c, (2.6, 0.9, 0.0), rz=90.0, width=1.3, h=1.15, n=4)
+    dx, dy = 1.75, 1.85
+    c.add(L.member((dx, dy, 0), (dx, dy, 1.6), 0.11, 0.11, c.sw("oak"), rng=c.rng))
+    c.add(L.member((dx - 0.45, dy, 1.25), (dx + 0.45, dy, 1.25), 0.09, 0.09, c.sw("oak"), rng=c.rng))
+    body = L.blob(c.sw("straw"), radius=0.32, subdiv=1, scale=(1, 0.75, 1.35), seed=7, noise_amp=0.1)
+    body.move(dx, dy, 0.75)
     c.add(body, dice=None)
-    hat = L.lathe([(0.0, 0.0), (0.3, 0.0), (0.3, 0.02), (0.14, 0.05), (0.13, 0.15), (0.0, 0.17)], 10, c.sw("iron"))
-    hat.move(dx, dy, 1.2)
+    hat = L.lathe([(0.0, 0.0), (0.42, 0.0), (0.42, 0.03), (0.19, 0.07), (0.18, 0.21), (0.0, 0.24)], 9, c.sw("iron"))
+    hat.move(dx, dy, 1.56)
     c.add(hat, dice=None)
-    # tall pennant mast at the house corner
-    pennant(c, (1.82, -0.2, 0.0), 3.55, 0.85, 0.34, dirn=(-0.4, 1), phase=0.8)
-    return {"height_target": (3.4, 4.2)}
+    pennant(c, (1.95, 2.92, 1.35), 4.3, 1.25, 0.5, dirn=(-0.7, 1), phase=0.8, pole_r=0.06)
+    barrel(c, (-0.3, 1.75, 0), r=0.26, h=0.6)
+    crate(c, (0.25, 1.65, 0), s=0.42, rz=12)
+    crate(c, (0.25, 1.65, 0.42), s=0.32, rz=35)
+    return {"height_target": (5.0, 6.0)}
+
+
+def open_shed(c, x0, x1, y0, y1, zt, pitch_deg=50, t=0.15, mid_posts=True, back_wall=True, front_banner=True,
+              ov=0.32):
+    """Open timber shed, gable to the front (+y) left open so the work inside shows: posts on rubble
+    footings, tie beams, a plank back wall, a plank back gable, an open front gable with a tie beam,
+    king post and braces. Returns z_ridge."""
+    xs = [x0, (x0 + x1) / 2, x1] if mid_posts else [x0, x1]
+    ys = [y0, (y0 + y1) / 2, y1] if (y1 - y0) > 2.6 else [y0, y1]
+    for x in (x0, x1):
+        for y in ys:
+            c.add(L.member((x, y, 0), (x, y, zt), t, t, c.sw("oak"), rng=c.rng, chamfer=0.02))
+            pbox(c, t * 2.1, t * 2.1, 0.2, "rubble", center=(x, y, 0))
+    if mid_posts:
+        pbox(c, t * 2.1, t * 2.1, 0.2, "rubble", center=(xs[1], y0, 0))
+        c.add(L.member((xs[1], y0, 0), (xs[1], y0, zt), t, t, c.sw("oak"), rng=c.rng, chamfer=0.02))
+    for x in (x0, x1):
+        c.add(L.member((x, y0 - 0.12, zt - t / 2), (x, y1 + 0.12, zt - t / 2), t * 1.1, t * 1.2, c.sw("oak"), rng=c.rng))
+        for ya, yb in ((y0, y0 + 0.55), (y1, y1 - 0.55)):
+            c.add(L.member((x, ya, zt - 0.6), (x, yb, zt - t), t * 0.75, t * 0.75, c.sw("oak"), rng=c.rng))
+    for y in (y0, y1):
+        c.add(L.member((x0 - 0.12, y, zt - t / 2), (x1 + 0.12, y, zt - t / 2), t * 1.1, t * 1.2, c.sw("oak"), rng=c.rng))
+    if back_wall:
+        bw = L.plate((x1 + 0.06, y0 - 0.1, 0.05), (x0 - 0.06, y0 - 0.1, 0.05), (x0 - 0.06, y0 - 0.1, zt - 0.08),
+                     (x1 + 0.06, y0 - 0.1, zt - 0.08), 0.06, c.sw("planks"))
+        bw.box_uv()
+        c.add(bw, uvrot=True)
+    half = (x1 - x0) / 2
+    xm = (x0 + x1) / 2
+    z_eave, z_ridge = roof_fit(zt, half, ov, pitch_deg, 0.14, y1 - y0 + 2 * ov)
+    gable_roof(c, y0 - ov, y1 + ov + 0.05, xm, half + ov, z_eave, z_ridge, th=0.14, t=0.15, nu=10, nv=5, axis="y",
+               cx=xm, trim=0.12, ridge_w=0.17)
+    gable_infill(c, Wall((x0, y0), (1, 0), (0, -1), x1 - x0), zt, z_ridge - 0.18, 0.12, key="planks")
+    # open front gable: king post + braces only
+    fw = Wall((x1, y1), (-1, 0), (0, 1), x1 - x0)
+    za = z_ridge - 0.2
+    c.add(L.member(fw.p(fw.L / 2, zt, 0.04), fw.p(fw.L / 2, za, 0.04), t, t, c.sw("oak"), rng=c.rng))
+    for sgn in (-1, 1):
+        c.add(L.member(fw.p(fw.L / 2, zt + (za - zt) * 0.25, 0.04), fw.p(fw.L / 2 + sgn * fw.L * 0.32, zt + (za - zt) * 0.62, 0.04),
+                       t * 0.8, t * 0.8, c.sw("oak"), rng=c.rng))
+    return z_ridge
+
+
+def giant_wheel(c, center, r, tilt=38.0, spokes=8, rz=0.0):
+    """A big spoked wagon wheel (iron tyre, oak felloes) facing +y, tilted back by `tilt` degrees so
+    it reads as a full circle from the high camera; rz turns it about the vertical."""
+    parts = wheel(c, (0.0, 0.0, 0.0), r, axis="y", spokes=spokes, width=r * 0.12, rim_w=r * 0.13, segs=18,
+                  hub_r=r * 0.17)
+    for p in parts:
+        p.rot(tilt, 0, 0).rot(0, 0, rz).move(*center)    # top leans back, away from the camera
+    return parts
 
 
 def k_timber_yard(c):
-    """Timber Yard (lumber drop-off, 8x8 cells = 4 m): open timber shed over a sawpit with a log on
-    trestles and a two-man pit saw, a tall cribbed log stack at one end, sawn planks."""
-    t = 0.13
-    px = [-1.6, -0.3, 1.0]
-    py = [-1.45, 0.25]
-    zt = 1.62
-    for x in px:
-        for y in py:
-            c.add(L.member((x, y, 0), (x, y, zt), t, t, c.sw("oak"), rng=c.rng, chamfer=0.02))
-            f = L.box(t * 2, t * 2, 0.16, c.sw("rubble"), center=(x, y, 0), base=True, chamfer=0.03)
-            c.add(f, dice=None)
-    for y in py:
-        c.add(L.member((px[0] - 0.15, y, zt - t / 2), (px[-1] + 0.15, y, zt - t / 2), t * 1.1, t * 1.2, c.sw("oak"), rng=c.rng))
-        for i in range(len(px) - 1):
-            for sgn in (0, 1):
-                xa, xb = (px[i], px[i] + 0.45) if sgn == 0 else (px[i + 1], px[i + 1] - 0.45)
-                c.add(L.member((xa, y, zt - 0.45), (xb, y, zt - t), t * 0.7, t * 0.7, c.sw("oak"), rng=c.rng))
-    for x in px:
-        c.add(L.member((x, py[0] - 0.1, zt - t / 2), (x, py[1] + 0.1, zt - t / 2), t, t, c.sw("oak"), rng=c.rng))
-    # back plank wall
-    bw = L.plate((px[-1] + 0.05, py[0] - 0.08, 0.05), (px[0] - 0.05, py[0] - 0.08, 0.05), (px[0] - 0.05, py[0] - 0.08, zt - 0.1),
-                 (px[-1] + 0.05, py[0] - 0.08, zt - 0.1), 0.05, c.sw("planks"))
-    bw.box_uv()
-    c.add(bw, dice=0.4, uvrot=True)
-    yc = (py[0] + py[1]) / 2
-    half = (py[1] - py[0]) / 2 + 0.3
-    gable_roof(c, px[0] - 0.3, px[-1] + 0.3, yc, half, zt - 0.05, zt + 1.1, th=0.12, sag=0.07, t=0.1, nu=12, nv=5)
-    for x in (px[0], px[-1]):
-        w = Wall((x, py[1]), (0, -1), (-1 if x < 0 else 1, 0), py[1] - py[0])
-        if x > 0:
-            w = Wall((x, py[0]), (0, 1), (1, 0), py[1] - py[0])
-        gable_infill(c, w, zt, zt + 1.05, 0.1, key="planks", timbers=True)
-    # sawpit with a log on trestles and a pit saw
-    sx, sy = -0.3, -0.6
-    rim = L.prism(L.rect_profile(1.9, 0.75, 0.05), 0.0, 0.14, c.sw("planks"), chamfer=0.02)
+    """Timber Yard (lumber drop-off, 12x12 cells = 6 m), built at the tree line: an open timber shed
+    (gable to the front, open so its plank racks show) at the back, a sawpit in front with a log on tall
+    trestles, an upright two-man pit-saw frame and a sheer-legs hoist standing above it, and a tall end
+    pile of big logs with their ring ends to the camera."""
+    zt = 2.55
+    z_ridge = open_shed(c, -2.9, 0.75, -2.9, -0.55, zt, pitch_deg=52)
+    # sawn plank racks inside the shed
+    for k in range(4):
+        for j in range(3):
+            pbox(c, 2.6, 0.26, 0.06, "oak", center=(-1.1, -2.45 + j * 0.62, 0.12 + k * 0.08), taper=0.0, jit=0.006)
+    for j in range(3):
+        for sx in (-2.3, 0.1):
+            pbox(c, 0.12, 0.3, 0.12, "oak", center=(sx, -2.45 + j * 0.62, 0.0), taper=0.0)
+    # sawpit: dark pit with a plank rim, log on tall trestles, pit-saw frame, sheer legs + hoist
+    sx, sy = -1.15, 1.05
+    rim = L.prism(L.rect_profile(2.7, 1.2, 0.08), 0.0, 0.16, c.sw("planks"), chamfer=0.03)
     rim.move(sx, sy, 0)
     c.add(rim, dice=None)
-    pit = L.quad((sx - 0.85, sy - 0.28, 0.02), (sx + 0.85, sy - 0.28, 0.02), (sx + 0.85, sy + 0.28, 0.02), (sx - 0.85, sy + 0.28, 0.02),
-                 c.sw("pal"))
+    pit = L.quad((sx - 1.2, sy - 0.45, 0.165), (sx + 1.2, sy - 0.45, 0.165), (sx + 1.2, sy + 0.45, 0.165),
+                 (sx - 1.2, sy + 0.45, 0.165), c.sw("pal"))
     c.P(pit, "#2A2220", ao=False, min_shade=0.0)
-    pit.v[:, 2] = 0.145
-    for tx in (sx - 0.7, sx + 0.7):
-        trestle(c, (tx, sy, 0.14), rz=90, w=0.75, h=0.55)
-    lg = L.lathe([(0.17, -1.0), (0.18, 0), (0.16, 1.0)], 10, c.sw("bark"))
-    lg.rot(0, 90, 0).move(sx, sy, 0.86)
-    c.add(lg, dice=None)
+    for tx in (sx - 0.95, sx + 0.95):
+        trestle(c, (tx, sy, 0.16), rz=90, w=0.9, h=0.95)
+    log1(c, (sx, sy, 1.04), 2.8, 0.26, axis="x", sides=9)
+    fx = sx + 0.35
     for sgn in (-1, 1):
-        e = Part(np.vstack([np.stack([np.cos(a) * 0.165, np.sin(a) * 0.165, np.zeros_like(a)], 1) for a in
-                            [np.arange(10) * 2 * math.pi / 10]] + [np.zeros((1, 3))]),
-                 np.array([(10, j, (j + 1) % 10) for j in range(10)]), c.sw("rings"))
-        vv = e.v[e.t]
-        e.uv = np.stack([0.5 + vv[..., 0] / 0.34, 0.5 - vv[..., 1] / 0.34], -1)
-        e.rot(0, 90 * sgn, 0).move(sx + sgn * 1.0, sy, 0.86)
-        c.add(e, dice=None)
-    blade = L.box(0.02, 0.16, 1.5, c.sw("iron"), center=(sx + 0.25, sy, 0.75))
-    c.add(blade, dice=None)
-    for zz in (0.1, 1.45):
-        c.add(L.member((sx + 0.25, sy - 0.22, zz), (sx + 0.25, sy + 0.22, zz), 0.05, 0.05, c.sw("oak")))
-    # tall cribbed log stack at the right end (logs along y)
-    lx0 = 1.35
-    for row in range(6):
-        for k in range(2):
-            rr = 0.13 + 0.025 * c.r()
-            xx = lx0 + 0.15 + k * 0.29 + (0.06 if row % 2 else 0)
-            zz = 0.14 + row * 0.25
-            Lg = 2.7 + 0.2 * c.r()
-            b = L.lathe([(rr, -Lg / 2), (rr * 1.03, 0), (rr, Lg / 2)], 8, c.sw("bark"), a0=c.r())
-            b.rot(90, 0, 0).move(xx, -0.25 + 0.1 * (c.r() - 0.5), zz)
-            c.add(b, dice=None)
-            for sgn in (-1, 1):
-                ang = np.arange(8) * 2 * math.pi / 8
-                vv = np.vstack([np.stack([np.cos(ang) * rr * 0.98, np.sin(ang) * rr * 0.98, np.zeros(8)], 1), [[0, 0, 0]]])
-                e = Part(vv, np.array([(8, j, (j + 1) % 8) for j in range(8)]), c.sw("rings"))
-                q = e.v[e.t]
-                e.uv = np.stack([0.5 + q[..., 0] / (2 * rr), 0.5 - q[..., 1] / (2 * rr)], -1)
-                e.rot(-90 * sgn, 0, 0).move(xx, b.v[:, 1].mean() + sgn * Lg / 2, zz)
-                c.add(e, dice=None)
-    for yy in (-1.6, 1.1):
-        for xx in (lx0 + 0.02, lx0 + 0.72):
-            c.add(L.member((xx, yy, 0), (xx, yy, 1.75), 0.1, 0.1, c.sw("oak"), rng=c.rng))
-    # sawn planks and a chopping block
-    for i in range(5):
-        p = L.box(1.3, 0.24, 0.05, c.sw("oak"), center=(-1.05 + 0.02 * c.r(), 1.35 + 0.03 * c.r(), 0.025 + i * 0.055))
-        p.rot(0, 0, c.r(-4, 4), pivot=(-1.05, 1.35, 0))
-        c.add(p, dice=None)
-    for i in range(3):
-        p = L.box(1.2, 0.22, 0.05, c.sw("oak"), center=(-1.05, 1.62, 0.025 + i * 0.055))
-        c.add(p, dice=None)
-    pennant(c, (px[0] - 0.25, yc, zt + 1.0), 0.75, 0.8, 0.3, dirn=(-0.6, 1), phase=0.2)
-    for i in range(len(px) - 1):
-        banner(c, ((px[i] + px[i + 1]) / 2, py[1] + 0.09, zt - 0.02), (px[i + 1] - px[i]) * 0.8, 0.58, normal=(0, 1),
-               bar=False)
-    return {"height_target": (3.0, 4.0)}
+        c.add(L.member((fx, sy + sgn * 0.32, 0.2), (fx, sy + sgn * 0.32, 2.75), 0.09, 0.09, c.sw("oak"), rng=c.rng))
+    for zz in (0.25, 2.7):
+        c.add(L.member((fx, sy - 0.42, zz), (fx, sy + 0.42, zz), 0.08, 0.08, c.sw("oak"), rng=c.rng))
+    c.add(L.box(0.025, 0.22, 2.4, c.sw("iron"), center=(fx, sy, 1.5)), dice=None)
+    for zz in (2.95, 0.05):
+        c.add(L.member((fx, sy - 0.32, zz), (fx, sy + 0.32, zz), 0.06, 0.06, c.sw("oak"), rng=c.rng))
+    # sheer legs (A-frames at both pit ends) with a ridge beam and a hoist chain
+    zt2 = 4.35
+    for ex in (sx - 1.35, sx + 1.35):
+        for sgn in (-1, 1):
+            c.add(L.member((ex, sy + sgn * 0.85, 0.0), (ex, sy, zt2), 0.13, 0.13, c.sw("oak"), rng=c.rng))
+        c.add(L.member((ex, sy - 0.55, 1.25), (ex, sy + 0.55, 1.25), 0.09, 0.09, c.sw("oak"), rng=c.rng))
+    c.add(L.member((sx - 1.5, sy, zt2 - 0.05), (sx + 1.5, sy, zt2 - 0.05), 0.14, 0.15, c.sw("oak"), rng=c.rng))
+    pul = L.torus(0.13, 0.04, c.sw("iron"), segs=10, sides=4).rot(90, 0, 0)
+    pul.move(sx - 0.55, sy, zt2 - 0.25)
+    c.add(pul, dice=None)
+    c.add(L.member((sx - 0.55, sy, zt2 - 0.35), (sx - 0.55, sy, 1.32), 0.035, 0.035, c.sw("iron")), dice=None)
+    # tall end pile of big logs, ring ends to the camera, held by posts
+    lx0, lx1 = 1.05, 2.95
+    ly = -0.75
+    Lg = 3.6
+    rows = [(3, 0.0), (3, 0.5), (2, 0.0), (2, 0.5), (1, 0.0)]
+    rr0 = 0.3
+    zz = 0.0
+    for ri, (n, off) in enumerate(rows):
+        for k in range(n):
+            rr = rr0 * (0.9 + 0.18 * c.r())
+            xx = lx0 + 0.34 + (k + off + (3 - n) * 0.5) * 0.6
+            log1(c, (xx, ly + c.r(-0.08, 0.08), zz), Lg * (0.94 + 0.08 * c.r()), rr, axis="y", sides=9)
+        zz += 0.5
+    for px in (lx0 - 0.02, lx1 + 0.02):
+        for py in (ly - 1.3, ly + 1.3):
+            c.add(L.member((px, py, 0), (px, py, 2.85), 0.14, 0.14, c.sw("oak"), rng=c.rng, chamfer=0.02))
+    pennant(c, (lx1 + 0.02, ly + 1.3, 2.85), 1.2, 0.95, 0.38, dirn=(-0.5, 1), phase=0.2, pole_r=0.05)
+    # chopping block with an axe, sawdust heap
+    blk = L.lathe([(0.3, 0), (0.28, 0.5), (0.0, 0.52)], 8, c.sw("bark"))
+    blk.move(0.55, 2.3, 0)
+    c.add(blk, dice=None)
+    c.add(L.member((0.55, 2.3, 0.5), (0.85, 2.45, 1.05), 0.05, 0.05, c.sw("oak"), rng=c.rng))
+    c.add(L.box(0.06, 0.24, 0.2, c.sw("iron"), center=(0.85, 2.48, 1.02)), dice=None)
+    dust = L.blob(c.sw("straw"), radius=0.5, subdiv=1, scale=(1.3, 1.0, 0.35), seed=12, noise_amp=0.15, flat_bottom=0.0)
+    dust.move(sx + 0.2, sy - 0.9, 0)
+    c.add(dust, dice=None, tint=(1.05, 0.95, 0.75))
+    banner(c, (-1.1, -0.6 + 0.1, zt - 0.05), 1.0, 0.7, normal=(0, 1), bar=False)
+    return {"height_target": (5.0, 6.0)}
 
 
 def k_foundry(c):
-    """Foundry (smithy, 6x6 cells = 3 m): stone ground floor, timber upper storey, a crow-stepped
-    front gable, a tall brick chimney with a bronze cap, forge glow through open doors, anvil."""
-    t = 0.1
-    x0, x1, y0, y1 = -1.08, 1.08, -1.12, 0.62
-    zp, z1, z2 = 0.26, 1.22, 2.05
-    jet = 0.1
-    walls, _ = house(c, x0, x1, y0, y1, zp, [z1, z2], t, stone=(0,), jetty=jet, ops={
-        ("front", 0): [(0.5, 0.78, 0.0, 0.88, "blank")],
-        ("left", 0): [(0.5, 0.26, 0.35, 0.72, "window")], ("right", 0): [(0.35, 0.26, 0.35, 0.72, "window")],
-        ("front", 1): [(0.27, 0.3, 0.15, 0.6, "window"), (0.73, 0.3, 0.15, 0.6, "window")],
-        ("left", 1): [(0.5, 0.3, 0.15, 0.6, "window")], ("right", 1): [(0.5, 0.3, 0.15, 0.6, "window")],
-        ("back", 1): [(0.5, 0.3, 0.15, 0.6, "window")]})
-    # forge opening: dark recess, ember glow, open doors, oak lintel
-    fw = Wall((x1, y1), (-1, 0), (0, 1), x1 - x0)
-    s0 = fw.L / 2
-    dk = L.quad(fw.p(s0 - 0.4, zp, 0.045), fw.p(s0 + 0.4, zp, 0.045), fw.p(s0 + 0.4, zp + 0.88, 0.045), fw.p(s0 - 0.4, zp + 0.88, 0.045),
-                c.sw("pal"))
-    c.P(_face_out(dk, fw), "#2A2220", ao=False, min_shade=0.0)
-    gl = L.quad(fw.p(s0 - 0.28, zp, 0.05), fw.p(s0 + 0.28, zp, 0.05), fw.p(s0 + 0.28, zp + 0.5, 0.05), fw.p(s0 - 0.28, zp + 0.5, 0.05),
-                c.sw("ember"))
-    gl.uv = np.array([[(0.15, 0.95), (0.85, 0.95), (0.85, 0.35)], [(0.15, 0.95), (0.85, 0.35), (0.15, 0.35)]])
-    c.add(_face_out(gl, fw), ao=False, min_shade=1.0, form=0.0, occ=False)
-    c.add(L.member(fw.p(s0 - 0.55, zp + 0.95, 0.09), fw.p(s0 + 0.55, zp + 0.95, 0.09), 0.16, 0.14, c.sw("oak"), rng=c.rng))
-    for sgn in (-1, 1):
-        dp = L.box(0.4, 0.86, 0.05, c.sw("planks"))
-        dp.move(sgn * 0.2, 0.43, 0).rot(0, sgn * -62, 0).move(0, 0, 0.06)
-        fw.place(dp, s0 + sgn * 0.4, zp, 0.0)
-        c.add(dp, dice=None, uvrot=True)
-    # roof: ridge along y, gable to the front, crow-stepped front gable
-    pitch = math.radians(52)
+    """Foundry (smithy, 12x12 cells = 6 m): a stone-and-brick forge house with a crow-stepped brick
+    gable to the front and a glowing forge door, a massive square brick chimney stack (about 1.6x the
+    ridge) with a big dark-bronze cap on the camera-side corner (smoke anchor for VFX), and an open
+    lean-to smithy with anvil, quench tub and grindstone; ingots and coal in the yard."""
+    t = 0.12
+    x0, x1, y0, y1 = -2.85, 0.2, -2.85, 0.75
+    zp, zw = 0.3, 2.3
+    walls, _ = house(c, x0, x1, y0, y1, zp, [zw], t, stone=(0,), skip=("front",), ops={
+        ("left", 0): [(0.5, 0.42, 0.95, 1.6, "window")]})
     half = (x1 - x0) / 2
-    z_ridge = z2 + half * math.tan(pitch)
-    ov = 0.18
-    yf = y1 + jet
-    gable_roof(c, y0 - jet - 0.2, yf - 0.02, 0.0, half + ov, z2 - ov * math.tan(pitch) * 0.6, z_ridge, th=0.12, sag=0.04,
-               t=0.09, nu=8, nv=5, axis="y", cx=0.0)
-    # the gable roof built along x then rotated: x range maps to y (after rotation about (0, 0)):
-    gw = Wall((x1, yf), (-1, 0), (0, 1), x1 - x0)
-    ztop = stepped_gable(c, gw, z2, z_ridge, steps=3, th=0.2, key="brick", rise=0.2, d0=-0.12)
-    gable_infill(c, Wall((x0, y0 - jet), (1, 0), (0, -1), x1 - x0), z2, z_ridge - 0.05, t, window_w=0.0)
-    window(c, gw, gw.L / 2, z2 + 0.25, z2 + 0.65, 0.28, shutters=False)
-    # brick chimney with a bronze cap
-    chx, chy = 0.62, -0.78
-    ch = L.gbox(0.55, 0.55, 4.1, c.sw("brick"), center=(chx, chy, 0.0), chamfer=0.03, grid=0.45)
-    top = ch.v[:, 2] > 2.0
-    ch.v[top, 0] = chx + (ch.v[top, 0] - chx) * 0.8
-    ch.v[top, 1] = chy + (ch.v[top, 1] - chy) * 0.8
+    xm = (x0 + x1) / 2
+    ov = 0.25
+    z_eave, z_ridge = roof_fit(zw, half, ov, 44, 0.15, y1 - y0 + 0.5)
+    gable_roof(c, y0 - 0.3, y1 + 0.05, xm, half + ov, z_eave, z_ridge, th=0.15, t=0.15, nu=8, nv=5, axis="y", cx=xm,
+               trim=0.12, ridge_w=0.17)
+    gw = Wall((x1, y1), (-1, 0), (0, 1), x1 - x0)
+    wall_prism(c, gw, [(0, zp), (gw.L, zp), (gw.L, zw), (0, zw)], -0.08, 0.04, "rubble", chamfer=0.03)
+    ztop = stepped_gable(c, gw, zw, z_ridge, steps=3, th=0.24, key="brick", rise=0.24, d0=-0.1)
+    gable_infill(c, Wall((x0, y0), (1, 0), (0, -1), x1 - x0), zw, z_ridge - 0.17, t)
+    window(c, gw, gw.L / 2, zw + 0.35, zw + 0.85, 0.42, shutters=True)
+    # forge door: dark recess, ember glow, open plank doors, oak lintel
+    s0 = gw.L / 2
+    dk = L.quad(gw.p(s0 - 0.65, zp, 0.05), gw.p(s0 + 0.65, zp, 0.05), gw.p(s0 + 0.65, zp + 1.95, 0.05),
+                gw.p(s0 - 0.65, zp + 1.95, 0.05), c.sw("pal"))
+    c.P(_face_out(dk, gw), "#2A2220", ao=False, min_shade=0.0)
+    gl = L.quad(gw.p(s0 - 0.48, zp, 0.055), gw.p(s0 + 0.48, zp, 0.055), gw.p(s0 + 0.48, zp + 1.0, 0.055),
+                gw.p(s0 - 0.48, zp + 1.0, 0.055), c.sw("ember"))
+    gl.uv = np.array([[(0.15, 0.95), (0.85, 0.95), (0.85, 0.35)], [(0.15, 0.95), (0.85, 0.35), (0.15, 0.35)]])
+    c.add(_face_out(gl, gw), ao=False, min_shade=1.0, form=0.0, occ=False)
+    c.add(L.member(gw.p(s0 - 0.9, zp + 2.05, 0.1), gw.p(s0 + 0.9, zp + 2.05, 0.1), 0.2, 0.18, c.sw("oak"), rng=c.rng))
+    for sgn in (-1, 1):
+        dp = L.box(0.66, 1.9, 0.06, c.sw("planks"))
+        dp.move(sgn * 0.33, 0.95, 0).rot(0, sgn * -65, 0).move(0, 0, 0.07)
+        gw.place(dp, s0 + sgn * 0.66, zp, 0.0)
+        c.add(dp, dice=None, uvrot=True)
+    # the chimney stack on the camera-side corner, a dark-bronze cap, smoke anchor
+    chx, chy = x1 + 0.3, y1 - 0.25
+    hch = 5.45
+    ch = L.gbox(1.0, 1.0, hch, c.sw("brick"), center=(chx, chy, 0.0), chamfer=0.04, grid=0.9)
+    zf = ch.v[:, 2] / hch
+    ch.v[:, 0] = chx + (ch.v[:, 0] - chx) * (1 - 0.16 * zf)
+    ch.v[:, 1] = chy + (ch.v[:, 1] - chy) * (1 - 0.16 * zf)
     ch.box_uv()
-    c.add(ch, jit=0.006)
-    band = L.box(0.5, 0.5, 0.1, c.sw("rubble"), center=(chx, chy, 3.5), chamfer=0.02)
-    c.add(band, dice=None)
+    c.add(ch, jit=0.012)
+    for zz, w_ in ((0.0, 1.16), (4.55, 0.98)):
+        pbox(c, w_, w_, 0.22, "rubble", center=(chx, chy, zz), taper=0.04, chamfer=0.04)
+    cap = L.lathe([(0.66, 0.0), (0.7, 0.06), (0.62, 0.14), (0.36, 0.34), (0.16, 0.5), (0.0, 0.58)], 4, c.sw("scales"),
+                  a0=math.pi / 4)
+    cap.move(chx, chy, hch + 0.06)
+    c.add(cap, dice=None)
     for sx in (-1, 1):
         for sy in (-1, 1):
-            c.add(L.member((chx + sx * 0.17, chy + sy * 0.17, 4.08), (chx + sx * 0.17, chy + sy * 0.17, 4.28), 0.05, 0.05,
-                           c.sw("iron")))
-    cap = L.lathe([(0.38, 0.0), (0.36, 0.05), (0.2, 0.24), (0.07, 0.38), (0.0, 0.44)], 4, c.sw("scales"), a0=math.pi / 4)
-    cap.move(chx, chy, 4.26)
-    c.add(cap, dice=None, tint=(1.15, 1.05, 0.95))
-    knob = L.lathe([(0, 0), (0.07, 0.04), (0.06, 0.1), (0, 0.14)], 8, c.sw("pal"))
-    knob.move(chx, chy, 4.66)
-    c.P(knob, "#6E4A26", dice=None)
-    anvil(c, (0.55, y1 + 0.55, 0), rz=20)
-    barrel(c, (-0.62, y1 + 0.5, 0), r=0.2, h=0.42)
-    coal = L.blob(c.sw("pal"), radius=0.3, subdiv=1, scale=(1, 0.8, 0.45), seed=11, noise_amp=0.2, flat_bottom=0.0)
-    coal.move(-1.05, y1 + 0.62, 0)
+            c.add(L.member((chx + sx * 0.3, chy + sy * 0.3, hch - 0.05), (chx + sx * 0.3, chy + sy * 0.3, hch + 0.12), 0.07,
+                           0.07, c.sw("iron")))
+    knob = L.lathe([(0, 0), (0.09, 0.05), (0.08, 0.13), (0, 0.18)], 7, c.sw("pal"))
+    knob.move(chx, chy, hch + 0.62)
+    c.P(knob, "#B07F3E", dice=None)
+    c.anchors["smoke"] = (chx, chy, hch + 0.2)
+    # open lean-to smithy on the right
+    lx0, lx1, ly0, ly1 = 0.8, 2.95, -2.2, 0.55
+    for x, y in ((lx1, ly1), (lx1, ly0), ((lx0 + lx1) / 2 + 0.3, ly1)):
+        c.add(L.member((x, y, 0), (x, y, 1.95), 0.15, 0.15, c.sw("oak"), rng=c.rng, chamfer=0.02))
+        pbox(c, 0.3, 0.3, 0.18, "rubble", center=(x, y, 0))
+    c.add(L.member((lx1, ly0 - 0.15, 1.9), (lx1, ly1 + 0.15, 1.9), 0.15, 0.16, c.sw("oak"), rng=c.rng))
+    roof_solid(c, [(lx0 - 0.1, ly0 - 0.3, 2.75), (lx1 + 0.3, ly0 - 0.3, 1.88), (lx1 + 0.3, ly1 + 0.35, 1.88),
+                   (lx0 - 0.1, ly1 + 0.35, 2.75)], [[0, 1, 2, 3]], 0.12, "roof", None, dice=None)
+    hearth = pbox(c, 1.1, 0.8, 0.75, "brick", center=(1.3, -1.5, 0), taper=0.06)
+    coals = L.quad((0.85, -1.8, 0.76), (1.75, -1.8, 0.76), (1.75, -1.2, 0.76), (0.85, -1.2, 0.76), c.sw("ember"))
+    coals.uv = np.array([[(0.2, 0.8), (0.8, 0.8), (0.8, 0.2)], [(0.2, 0.8), (0.8, 0.2), (0.2, 0.2)]])
+    c.add(coals, ao=False, min_shade=1.0, form=0.0, occ=False)
+    anvil(c, (2.0, -0.25, 0), rz=15, s=1.5)
+    barrel(c, (2.55, 0.75, 0), r=0.28, h=0.55)
+    grind = wheel(c, (1.45, 0.8, 0.5), 0.42, axis="x", spokes=0, key="rubble", width=0.18, rim_w=0.42, segs=12)
+    for sx_ in (-0.12, 0.12):
+        c.add(L.member((1.45 + sx_, 0.8, 0), (1.45 + sx_, 0.8, 0.55), 0.07, 0.07, c.sw("oak"), rng=c.rng))
+    # ingots, coal heap, yard barrel
+    for k in range(3):
+        for j in range(3 - k):
+            ing = pbox(c, 0.36, 0.14, 0.1, "pal", center=(-0.3 + j * 0.2 + k * 0.1, 1.75 + (k % 2) * 0.03, k * 0.1),
+                       taper=0.2, chamfer=0.02)
+            c.pal_uv(ing, "#B07F3E")
+    coal = L.blob(c.sw("pal"), radius=0.5, subdiv=1, scale=(1.2, 0.9, 0.5), seed=11, noise_amp=0.22, flat_bottom=0.0)
+    coal.move(-2.1, 1.65, 0)
     c.P(coal, "#26221F", dice=None)
-    pennant(c, (0.0, yf - 0.02, ztop), 0.65, 0.75, 0.28, dirn=(1, 0.3), phase=1.0)
-    awning(c, -0.62, 0.62, y1 + 0.06, zp + 1.12, 0.42, 0.22, posts=False, stripes=True)
-    for sx in (-1, 1):
-        banner(c, (sx * 0.86, y1 + 0.08, z1 - 0.04), 0.3, 0.62, normal=(0, 1))
-    return {"height_target": (3.0, 4.6)}
+    barrel(c, (-1.15, 1.6, 0), r=0.24, h=0.52)
+    pennant(c, (xm, y1 - 0.02, ztop), 0.7, 0.9, 0.34, dirn=(-1, 0.35), phase=1.0)
+    banner(c, ((lx0 + lx1) / 2 + 0.3, ly1 + 0.42, 1.88), 0.75, 0.62, normal=(0, 1), bar=False)
+    return {"height_target": (5.0, 6.2), "budget_note": "chimney stack 1.6x the ridge (art bible 4.2), the rest <= 4.3 m"}
 
 
 def k_collegium(c):
-    """Collegium (caster hall, 8x8 cells = 4 m): a tall narrow jettied guild house with a bell-cote
-    on its front gable, beside a walled linden herb garden."""
-    t = 0.1
-    x0, x1, y0, y1 = -1.85, -0.05, -1.45, 1.0
+    """Collegium (caster hall, 12x12 cells = 6 m): a tall narrow two-storey jettied guild house with its
+    gable to the front and a little bell-cote on the gable, beside a walled linden herb garden (low
+    lime-washed wall with rubble coping, gate piers, two linden saplings, raised herb beds)."""
+    t = 0.11
+    x0, x1, y0, y1 = -2.9, -0.3, -2.7, 0.95
     zp = 0.3
-    st = [1.2, 1.98, 2.7]
-    jet = 0.1
+    st = [2.15, 3.55]
+    jet = 0.18
     walls, _ = house(c, x0, x1, y0, y1, zp, st, t, jetty=jet, ops={
-        ("front", 0): [(0.5, 0.5, 0.0, 0.92, "door")],
-        ("right", 0): [(0.3, 0.28, 0.35, 0.75, "window"), (0.75, 0.28, 0.35, 0.75, "window")],
-        ("left", 0): [(0.5, 0.28, 0.35, 0.75, "window")],
-        ("front", 1): [(0.25, 0.3, 0.18, 0.62, "window"), (0.75, 0.3, 0.18, 0.62, "window")],
-        ("right", 1): [(0.25, 0.3, 0.18, 0.62, "window"), (0.75, 0.3, 0.18, 0.62, "window")],
-        ("left", 1): [(0.5, 0.3, 0.18, 0.62, "window")], ("back", 1): [(0.5, 0.3, 0.18, 0.62, "window")],
-        ("front", 2): [(0.5, 0.34, 0.14, 0.58, "window")],
-        ("right", 2): [(0.3, 0.26, 0.14, 0.56, "window"), (0.7, 0.26, 0.14, 0.56, "window")],
-        ("left", 2): [(0.5, 0.26, 0.14, 0.56, "window")]})
+        ("front", 0): [(0.5, 1.0, 0.0, 1.85, "door")],
+        ("right", 0): [(0.35, 0.42, 0.8, 1.45, "window"), (0.75, 0.42, 0.8, 1.45, "window")],
+        ("left", 0): [(0.5, 0.42, 0.8, 1.45, "window")],
+        ("front", 1): [(0.25, 0.42, 0.3, 1.05, "window"), (0.75, 0.42, 0.3, 1.05, "window")],
+        ("right", 1): [(0.3, 0.4, 0.3, 1.0, "window"), (0.7, 0.4, 0.3, 1.0, "window")],
+        ("left", 1): [(0.5, 0.4, 0.3, 1.0, "window")]}, bay=0.85)
     xm = (x0 + x1) / 2
     half = (x1 - x0) / 2
-    pitch = math.radians(56)
-    z_ridge = st[-1] + half * math.tan(pitch)
-    ov = 0.14
-    yf, yb = y1 + 2 * jet, y0 - 2 * jet
-    gable_roof(c, yb - 0.16, yf + 0.16, xm, half + ov, st[-1] - ov * math.tan(pitch) * 0.6, z_ridge, th=0.12, sag=0.05,
-               t=0.09, nu=10, nv=6, axis="y", cx=xm)
-    gable_infill(c, Wall((x1, yf), (-1, 0), (0, 1), x1 - x0), st[-1], z_ridge - 0.05, t, window_w=0.0)
-    gable_infill(c, Wall((x0, yb), (1, 0), (0, -1), x1 - x0), st[-1], z_ridge - 0.05, t, window_w=0.0)
-    bell_cote(c, (xm, yf - 0.05, z_ridge - 0.12), size=0.52, rz=0)
-    banner(c, (xm, y1 + 2 * jet + 0.06, st[1] - 0.04), 0.62, 0.72, normal=(0, 1))
-    for sx in (-1, 1):
-        banner(c, (xm + sx * (x1 - x0) * 0.42, y1 + jet + 0.06, st[0] + 0.62), 0.3, 0.75, normal=(0, 1))
-    pennant(c, (xm, yb - 0.08, z_ridge - 0.08), 0.6, 0.75, 0.28, dirn=(1, -0.4), phase=0.9)
-    # walled herb garden
-    gx0, gx1, gy0, gy1 = 0.18, 1.92, -1.85, 1.9
-    wt, wh = 0.16, 0.5
-    segs = [((gx0, gy0), (gx1, gy0)), ((gx1, gy0), (gx1, gy1)), ((gx1, gy1), (1.25, gy1)), ((0.75, gy1), (gx0, gy1)),
+    ov = 0.25
+    yf, yb = y1 + jet, y0 - jet
+    z_eave, z_ridge = roof_fit(st[-1], half, ov, 52, 0.14, yf - yb + 0.4)
+    gable_roof(c, yb - 0.2, yf + 0.22, xm, half + ov, z_eave, z_ridge, th=0.14, t=0.14, nu=8, nv=5, axis="y", cx=xm,
+               trim=0.11, ridge_w=0.16)
+    gable_infill(c, Wall((x1, yf), (-1, 0), (0, 1), x1 - x0), st[-1], z_ridge - 0.17, t, window_w=0.36)
+    gable_infill(c, Wall((x0, yb), (1, 0), (0, -1), x1 - x0), st[-1], z_ridge - 0.17, t, window_w=0.0)
+    bell_cote(c, (xm, yf - 0.02, z_ridge - 0.12), size=0.62, rz=0)
+    banner(c, (xm, yf + 0.06, st[0] + 0.2), 0.95, 0.9, normal=(0, 1))
+    pennant(c, (xm, yb - 0.1, z_ridge - 0.08), 0.5, 0.8, 0.3, dirn=(1, -0.4), phase=0.9)
+    # walled herb garden on the right
+    gx0, gx1, gy0, gy1 = 0.05, 2.9, -2.85, 2.65
+    wt, wh = 0.22, 0.72
+    gate0, gate1 = 1.05, 1.95
+    segs = [((gx0, gy0), (gx1, gy0)), ((gx1, gy0), (gx1, gy1)), ((gx1, gy1), (gate1, gy1)), ((gate0, gy1), (gx0, gy1)),
             ((gx0, gy1), (gx0, gy0))]
-    for (a, b) in segs:
-        a, b = np.array(a, float), np.array(b, float)
-        d = b - a
+    for (a_, b_) in segs:
+        a_, b_ = np.array(a_, float), np.array(b_, float)
+        d = b_ - a_
         Lw = float(np.linalg.norm(d))
         e = d / Lw
         n = np.array([e[1], -e[0]])
-        wl = Wall(a + n * wt / 2, e, n, Lw)
+        wl = Wall(a_ + n * wt / 2, e, n, Lw)
         wall_prism(c, wl, [(-wt / 2, 0.0), (Lw + wt / 2, 0.0), (Lw + wt / 2, wh), (-wt / 2, wh)], -wt, 0.0, "plaster",
-                   chamfer=0.03, grid=0.45)
-        cp = L.box(Lw + wt + 0.04, 0.07, wt + 0.06, c.sw("rubble"), chamfer=0.015)
-        cp.move(Lw / 2, wh + 0.035, -wt / 2)
+                   chamfer=0.03, grid=1.2)
+        cp = L.box(Lw + wt + 0.06, 0.09, wt + 0.08, c.sw("rubble"), chamfer=0.02)
+        cp.move(Lw / 2, wh + 0.045, -wt / 2)
         wl.place(cp)
-        c.add(cp, dice=None)
-    for gx in (0.75, 1.25):
-        c.add(L.box(0.2, 0.2, 0.72, c.sw("rubble"), center=(gx, gy1 - wt / 2, 0), base=True, chamfer=0.03), dice=None)
-        ball = L.lathe([(0, 0), (0.08, 0.04), (0.07, 0.12), (0, 0.15)], 8, c.sw("rubble"))
-        ball.move(gx, gy1 - wt / 2, 0.72)
+        c.add(cp, dice=None, jit=0.012)
+    for gx in (gate0, gate1):
+        pbox(c, 0.34, 0.34, 1.15, "rubble", center=(gx, gy1 - wt / 2, 0), taper=0.08)
+        ball = L.lathe([(0, 0), (0.12, 0.05), (0.11, 0.17), (0, 0.22)], 8, c.sw("rubble"))
+        ball.move(gx, gy1 - wt / 2, 1.15)
         c.add(ball, dice=None)
-    for gx in (0.75, 1.25):
-        c.add(L.member((gx, gy1 - 0.16, 0.7), (gx, gy1 - 0.16, 1.85), 0.06, 0.06, c.sw("oak"), rng=c.rng))
-        banner(c, (gx, gy1 - 0.08, 1.8), 0.3, 0.75, normal=(0, 1))
-    sapling(c, (0.85, -1.05, 0), h=1.9, r=0.5)
-    sapling(c, (1.45, 0.25, 0), h=1.7, r=0.45)
-    for (bx, by) in ((1.25, 1.2), (0.6, -0.15)):
-        bed = L.box(0.7, 0.42, 0.18, c.sw("planks"), center=(bx, by, 0), base=True, chamfer=0.02)
-        c.add(bed, dice=None)
-        soil = L.box(0.64, 0.36, 0.02, c.sw("dirt"), center=(bx, by, 0.18), base=True)
-        c.add(soil, dice=None)
+        banner(c, (gx + (0.24 if gx > 1.5 else -0.24), gy1 + 0.02, 1.08), 0.32, 0.62, normal=(0, 1), bar=False)
+    sapling(c, (0.95, -1.7, 0), h=2.9, r=0.72)
+    sapling(c, (2.05, 0.1, 0), h=2.5, r=0.62)
+    for (bx, by) in ((1.95, -1.6), (0.85, 1.45)):
+        pbox(c, 1.0, 0.55, 0.24, "planks", center=(bx, by, 0), taper=0.0)
+        c.add(L.box(0.92, 0.47, 0.02, c.sw("dirt"), center=(bx, by, 0.24), base=True), dice=None)
         for k in range(4):
-            hb = L.blob(c.sw("leaves"), radius=0.1, subdiv=1, scale=(1, 1, 0.8), seed=int(c.r(0, 9999)), noise_amp=0.25)
-            hb.move(bx - 0.24 + k * 0.16, by + c.r(-0.06, 0.06), 0.18)
+            hb = L.blob(c.sw("leaves"), radius=0.13, subdiv=1, scale=(1, 1, 0.8), seed=int(c.r(0, 9999)), noise_amp=0.25)
+            hb.move(bx - 0.33 + k * 0.22, by + c.r(-0.06, 0.06), 0.24)
             c.add(hb, dice=None, tint=(1.0, 1.08, 0.9) if k % 2 else (0.85, 0.95, 0.8))
-    return {"height_target": (4.0, 4.9)}
-
+    pbox(c, 0.95, 0.3, 0.08, "oak", center=(2.3, 1.6, 0.42), taper=0.0)
+    for sx_ in (1.95, 2.65):
+        pbox(c, 0.12, 0.26, 0.42, "oak", center=(sx_, 1.6, 0.0), taper=0.0)
+    return {"height_target": (5.0, 6.0)}
 
 def k_wainwright_yard(c):
-    """Wainwright Yard (siege workshop, 8x8 cells = 4 m): open shed with a wagon on the stocks, wheels
-    leaning on the posts, and a giant wagon wheel on a pole as the yard sign."""
-    t = 0.13
-    px = [-1.75, -0.45, 0.85]
-    py = [-1.6, -0.2]
-    zt = 1.6
-    for x in px:
-        for y in py:
-            c.add(L.member((x, y, 0), (x, y, zt), t, t, c.sw("oak"), rng=c.rng, chamfer=0.02))
-            c.add(L.box(t * 2, t * 2, 0.16, c.sw("rubble"), center=(x, y, 0), base=True, chamfer=0.03), dice=None)
-    for y in py:
-        c.add(L.member((px[0] - 0.15, y, zt - t / 2), (px[-1] + 0.15, y, zt - t / 2), t * 1.1, t * 1.2, c.sw("oak"), rng=c.rng))
-        for i in range(len(px) - 1):
-            c.add(L.member((px[i], y, zt - 0.45), (px[i] + 0.45, y, zt - t), t * 0.7, t * 0.7, c.sw("oak"), rng=c.rng))
-            c.add(L.member((px[i + 1], y, zt - 0.45), (px[i + 1] - 0.45, y, zt - t), t * 0.7, t * 0.7, c.sw("oak"), rng=c.rng))
-    for x in px:
-        c.add(L.member((x, py[0] - 0.1, zt - t / 2), (x, py[1] + 0.1, zt - t / 2), t, t, c.sw("oak"), rng=c.rng))
-    bw = L.plate((px[-1] + 0.05, py[0] - 0.08, 0.05), (px[0] - 0.05, py[0] - 0.08, 0.05), (px[0] - 0.05, py[0] - 0.08, zt - 0.1),
-                 (px[-1] + 0.05, py[0] - 0.08, zt - 0.1), 0.05, c.sw("planks"))
-    bw.box_uv()
-    c.add(bw, dice=0.4, uvrot=True)
-    yc = (py[0] + py[1]) / 2
-    gable_roof(c, px[0] - 0.28, px[-1] + 0.28, yc, (py[1] - py[0]) / 2 + 0.32, zt - 0.06, zt + 1.05, th=0.12, sag=0.06,
-               t=0.1, nu=12, nv=5)
-    for x, sgn in ((px[0], -1), (px[-1], 1)):
-        w = Wall((x, py[1]), (0, -1), (-1, 0), py[1] - py[0]) if sgn < 0 else Wall((x, py[0]), (0, 1), (1, 0), py[1] - py[0])
-        gable_infill(c, w, zt, zt + 1.0, 0.1, key="planks")
-    # wagon on the stocks (no front wheels yet) under the shed
-    wagon(c, (-0.45, -0.9, 0.12), rz=0.0, length=1.7, width=0.82, h=0.42, wheel_r=0.36, team_band=True, four=False,
+    """Wainwright Yard (siege workshop, 12x12 cells = 6 m): an open shed (gable to the front) with a
+    wagon on the stocks, wheels leaning on the posts, and its sign: a giant wagon wheel (2.8 m) mounted
+    high on a braced pole, tilted back so it reads as a full circle from the RTS camera. A finished
+    wagon with an ivory canvas (one team stripe) waits in the yard."""
+    zt = 2.5
+    sx0, sx1, sy0, sy1 = -0.55, 2.85, -2.85, -0.35
+    open_shed(c, sx0, sx1, sy0, sy1, zt, pitch_deg=50)
+    wagon(c, (1.15, -1.55, 0.18), rz=90.0, length=2.0, width=0.95, h=0.5, wheel_r=0.42, team_band=False, four=False,
           shafts=False)
-    for xx in (-1.15, 0.25):
-        c.add(L.box(0.22, 0.7, 0.3, c.sw("oak"), center=(xx, -0.9, 0), base=True), dice=None)
-    # wheels leaning on posts
-    for (wx, wy, rz) in ((px[0] - 0.08, 0.05, 90), (px[-1] + 0.1, 0.05, 90)):
-        for p in wheel(c, (wx, wy, 0.42), 0.42, axis="y", spokes=8):
-            p.rot(-12, 0, 0, pivot=(wx, wy, 0)).rot(0, 0, rz - 90, pivot=(wx, wy, 0))
-    # the sign: a giant wagon wheel on a pole (front right), pennant above
-    sx_, sy_ = 1.45, 1.15
-    c.add(L.member((sx_, sy_, 0), (sx_, sy_, 3.85), 0.16, 0.16, c.sw("oak"), rng=c.rng, chamfer=0.03))
+    for yy in (-2.25, -0.85):
+        pbox(c, 0.75, 0.28, 0.3, "oak", center=(1.15, yy, 0.0))
+    for (wx, wy) in ((sx0 - 0.12, -1.0), (sx1 + 0.12, -2.0)):
+        for p in wheel(c, (wx, wy, 0.55), 0.55, axis="x", spokes=8, segs=12):
+            p.rot(0, 14 if wx < 0 else -14, 0, pivot=(wx, wy, 0))
+    # the sign: giant wheel on a braced pole, front left
+    px_, py_ = -1.75, 0.35
+    c.add(L.member((px_, py_, 0), (px_, py_, 3.65), 0.24, 0.24, c.sw("oak"), rng=c.rng, chamfer=0.04))
     for k in range(4):
         a = k * math.pi / 2 + math.pi / 4
-        c.add(L.member((sx_ + math.cos(a) * 0.45, sy_ + math.sin(a) * 0.45, 0), (sx_, sy_, 0.9), 0.08, 0.08, c.sw("oak"), rng=c.rng))
-    c.add(L.box(0.5, 0.5, 0.2, c.sw("rubble"), center=(sx_, sy_, 0), base=True, chamfer=0.04), dice=None)
-    wheel(c, (sx_, sy_ + 0.14, 3.2), 0.68, axis="y", spokes=8, width=0.12)
-    pennant(c, (sx_, sy_, 3.8), 0.7, 0.62, 0.26, dirn=(-1, 0.4), phase=0.3)
-    # spare spokes and a felloe pile, a finished wagon in the yard
-    for i in range(6):
-        p = L.member((-1.5 + i * 0.06, 0.6, 0.04), (-0.9 + i * 0.06, 0.95, 0.04), 0.05, 0.05, c.sw("oak"), rng=c.rng)
-        c.add(p)
-    wagon(c, (-0.3, 1.15, 0.0), rz=8.0, length=1.6, width=0.78, h=0.4, wheel_r=0.34, cover=True, team_band=False)
-    return {"height_target": (3.6, 4.6)}
+        c.add(L.member((px_ + math.cos(a) * 0.7, py_ + math.sin(a) * 0.7, 0), (px_, py_, 1.3), 0.11, 0.11, c.sw("oak"),
+                       rng=c.rng))
+    pbox(c, 0.7, 0.7, 0.28, "rubble", center=(px_, py_, 0))
+    c.add(L.member((px_, py_ - 0.1, 3.5), (px_, py_ + 0.45, 3.85), 0.14, 0.14, c.sw("iron")), dice=None)
+    giant_wheel(c, (px_, py_ + 0.5, 3.95), 1.4, tilt=38.0, spokes=8)
+    pennant(c, (px_, py_ - 0.15, 3.65), 1.6, 1.0, 0.4, dirn=(1, 0.35), phase=0.3, pole_r=0.05)
+    # finished wagon with a canvas cover in the yard, spare spokes and felloes, a workbench
+    wagon(c, (1.05, 1.55, 0.0), rz=-8.0, length=2.1, width=0.98, h=0.5, wheel_r=0.44, cover=True, team_band=False)
+    for i in range(7):
+        c.add(L.member((-2.6 + i * 0.07, 2.25, 0.05), (-1.85 + i * 0.07, 2.6, 0.05), 0.06, 0.06, c.sw("oak"), rng=c.rng))
+    pbox(c, 1.5, 0.6, 0.12, "oak", center=(-2.0, -1.85, 0.78), taper=0.0)
+    for sx_ in (-2.6, -1.4):
+        for sy_ in (-2.05, -1.65):
+            c.add(L.member((sx_, sy_, 0), (sx_, sy_, 0.78), 0.09, 0.09, c.sw("oak"), rng=c.rng))
+    c.add(L.box(0.5, 0.06, 0.05, c.sw("iron"), center=(-2.1, -1.8, 0.93)), dice=None)
+    for p in wheel(c, (-2.0, -1.0, 0.07), 0.5, axis="z", spokes=8, segs=12):
+        pass
+    return {"height_target": (5.0, 6.0)}
 
 
 def awning(c, x0, x1, y_wall, z_wall, depth, drop, key="team_band", valance=0.12, posts=False, stripes=False,
@@ -2055,42 +2145,60 @@ def awning(c, x0, x1, y_wall, z_wall, depth, drop, key="team_band", valance=0.12
 
 
 def k_curio_cabinet(c):
-    """Curio Cabinet (shop, 6x6 cells = 3 m): narrow shopfront house with a striped awning over the
-    counter and its sign: a giant painted chest of small drawers standing out on the front."""
-    t = 0.09
-    x0, x1, y0, y1 = -0.92, 0.92, -1.25, 0.5
-    zp, z1, z2 = 0.25, 1.3, 2.18
-    jet = 0.12
-    walls, _ = house(c, x0, x1, y0, y1, zp, [z1, z2], t, jetty=jet, ops={
-        ("front", 0): [(0.24, 0.36, 0.0, 0.9, "door"), (0.68, 0.62, 0.32, 0.86, "window")],
-        ("left", 0): [(0.5, 0.28, 0.35, 0.75, "window")], ("right", 0): [(0.5, 0.28, 0.35, 0.75, "window")],
-        ("front", 1): [(0.5, 0.3, 0.15, 0.6, "window")],
-        ("left", 1): [(0.5, 0.3, 0.15, 0.6, "window")], ("right", 1): [(0.5, 0.3, 0.15, 0.6, "window")],
-        ("back", 1): [(0.5, 0.3, 0.15, 0.6, "window")]}, shutters=True)
+    """Curio Cabinet (faction shop, 12x12 cells = 6 m): a narrow half-timber shopfront with its gable
+    to the front, a wide shop window with a counter under a striped awning, and its sign: a giant
+    painted chest of small drawers standing on a bracket shelf at the eaves in front of the gable; a
+    market table, crates, barrels and a handcart on the pad."""
+    t = 0.1
+    x0, x1, y0, y1 = -2.75, 0.55, -2.7, 0.7
+    zp, zw = 0.25, 2.45
+    walls, _ = house(c, x0, x1, y0, y1, zp, [zw], t, skip=("front",), ops={
+        ("left", 0): [(0.5, 0.42, 0.95, 1.6, "window")],
+        ("right", 0): [(0.3, 0.42, 0.95, 1.6, "window"), (0.7, 0.42, 0.95, 1.6, "window")]}, bay=0.85)
     half = (x1 - x0) / 2
-    pitch = math.radians(58)
-    z_ridge = z2 + half * math.tan(pitch)
-    ov = 0.16
-    yf, yb = y1 + jet, y0 - jet
-    gable_roof(c, yb - 0.16, yf + 0.18, 0.0, half + ov, z2 - ov * math.tan(pitch) * 0.6, z_ridge, th=0.11, sag=0.04,
-               t=0.08, nu=8, nv=5, axis="y", cx=0.0)
-    gable_infill(c, Wall((x1, yf), (-1, 0), (0, 1), x1 - x0), z2, z_ridge - 0.05, t, window_w=0.0)
-    gable_infill(c, Wall((x0, yb), (1, 0), (0, -1), x1 - x0), z2, z_ridge - 0.05, t, window_w=0.24)
-    # counter board under the shop window
-    c.add(L.box(0.75, 0.3, 0.07, c.sw("oak"), center=(x1 - 0.68 * (x1 - x0), y1 + 0.13, zp + 0.3), chamfer=0.02), dice=None)
-    awning(c, x0 - 0.02, x1 + 0.02, y1 + 0.02, z1 - 0.02, 0.55, 0.32, posts=False, stripes=True)
-    # the sign: shelf brackets + giant chest of drawers in front of the upper storey
-    for sx in (-0.42, 0.42):
-        c.add(L.member((sx, yf, z2 - 0.05), (sx, yf + 0.42, z2 + 0.02), 0.07, 0.07, c.sw("oak"), rng=c.rng))
-        c.add(L.member((sx, yf, z2 - 0.4), (sx, yf + 0.38, z2 - 0.02), 0.06, 0.06, c.sw("oak"), rng=c.rng))
-    c.add(L.box(1.1, 0.5, 0.06, c.sw("oak"), center=(0, yf + 0.22, z2 + 0.02), chamfer=0.015), dice=None)
-    drawer_chest(c, (0.0, yf + 0.24, z2 + 0.12), w=1.05, h=0.82, d=0.42, cols=3, rows=3)
-    pennant(c, (0.0, yb - 0.1, z_ridge - 0.06), 0.55, 0.5, 0.2, dirn=(1, -0.2), phase=0.6)
-    barrel(c, (x0 - 0.18, y1 + 0.55, 0), r=0.15, h=0.34)
-    crate(c, (x1 + 0.2, y1 + 0.62, 0), s=0.32, rz=15)
-    crate(c, (x1 + 0.22, y1 + 0.62, 0.32), s=0.24, rz=40)
-    return {"height_target": (3.2, 4.2)}
-
+    xm = (x0 + x1) / 2
+    ov = 0.3
+    z_eave, z_ridge = roof_fit(zw, half, ov, 50, 0.14, y1 - y0 + 0.65)
+    gable_roof(c, y0 - 0.3, y1 + 0.35, xm, half + ov, z_eave, z_ridge, th=0.14, t=0.14, nu=8, nv=5, axis="y", cx=xm,
+               trim=0.11, ridge_w=0.16)
+    fw = Wall((x1, y1), (-1, 0), (0, 1), x1 - x0)
+    gable_wall(c, fw, zp, zw, z_ridge - 0.17, t, door=(fw.L * 0.22, 0.95, 2.05), windows=[])
+    # shop window with a counter board and goods
+    sw0 = fw.L * 0.66
+    window(c, fw, sw0, 0.95, 1.95, 1.35, shutters=False)
+    for sgn in (-1, 1):
+        c.add(L.member(fw.p(sw0 + sgn * 0.74, 0.85, 0.05), fw.p(sw0 + sgn * 0.74, 2.05, 0.05), 0.11, 0.1, c.sw("oak"),
+                       rng=c.rng))
+    c.add(L.member(fw.p(sw0 - 0.8, 2.05, 0.05), fw.p(sw0 + 0.8, 2.05, 0.05), 0.12, 0.1, c.sw("oak"), rng=c.rng))
+    cx_, cy_ = fw.p(sw0, 0.0, 0.0)[:2]
+    pbox(c, 1.55, 0.42, 0.08, "oak", center=(cx_, y1 + 0.2, 0.88), taper=0.0)
+    for k in range(3):
+        jar = L.lathe([(0, 0), (0.07, 0), (0.09, 0.08), (0.06, 0.16), (0.07, 0.19), (0, 0.19)], 7, c.sw("pal"))
+        jar.move(cx_ - 0.45 + k * 0.4, y1 + 0.22, 0.96)
+        c.P(jar, ("#C9B994", "#6E4A26", "#7E9A4A")[k], dice=None)
+    awning(c, cx_ - 0.85, cx_ + 0.85, y1 + 0.02, 2.2, 0.75, 0.38, posts=False, stripes=True)
+    # the sign: shelf on brackets at the eaves, giant painted chest of drawers on it
+    yf = y1
+    for sx in (xm - 0.55, xm + 0.55):
+        c.add(L.member((sx, yf, zw - 0.45), (sx, yf + 0.55, zw + 0.02), 0.09, 0.09, c.sw("oak"), rng=c.rng))
+    pbox(c, 1.7, 0.66, 0.08, "oak", center=(xm, yf + 0.3, zw + 0.02), taper=0.0)
+    drawer_chest(c, (xm, yf + 0.32, zw + 0.12), w=1.55, h=1.15, d=0.55, cols=3, rows=3)
+    pennant(c, (xm, y0 - 0.25, z_ridge - 0.08), 0.55, 0.75, 0.3, dirn=(1, -0.3), phase=0.6)
+    # market table, crates, barrels, handcart
+    tx, ty = 1.75, 0.2
+    trestle(c, (tx - 0.55, ty, 0), rz=90, w=0.7, h=0.78)
+    trestle(c, (tx + 0.55, ty, 0), rz=90, w=0.7, h=0.78)
+    pbox(c, 1.6, 0.75, 0.06, "planks", center=(tx, ty, 0.78), taper=0.0)
+    for k in range(3):
+        crate(c, (tx - 0.5 + k * 0.48, ty + c.r(-0.1, 0.1), 0.84), s=0.3, rz=c.r(-20, 20))
+    for k, (bx, by) in enumerate(((1.25, -1.0), (1.8, -1.15), (2.45, -0.95))):
+        barrel(c, (bx, by, 0), r=0.24, h=0.56)
+    crate(c, (2.5, -2.0, 0), s=0.5, rz=10)
+    crate(c, (2.45, -2.0, 0.5), s=0.38, rz=-15)
+    crate(c, (1.85, -2.1, 0), s=0.44, rz=30)
+    wagon(c, (1.7, 1.85, 0.0), rz=-25.0, length=1.2, width=0.75, h=0.38, wheel_r=0.36, four=False, team_band=False,
+          shafts=True)
+    return {"height_target": (4.5, 5.5)}
 
 def k_lookout(c, gun=False):
     """Lookout (scout tower, 4x4 cells = 2 m): thin splayed timber tower, railed platform, steep

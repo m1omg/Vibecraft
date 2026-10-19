@@ -1109,7 +1109,7 @@ def cap_tris(poly, z, g=None, up=True):
 
 
 def prism(outline, z0, z1, sw, chamfer=0.03, bottom=True, top=True, repeat=None, uv_off=(0.0, 0.0),
-          smooth=30.0, grid=None):
+          smooth=30.0, grid=None, cap_grid="same"):
     """Extruded polygon (outline (K, 2), any winding, may be concave) from z0 to z1 with a chamfered
     top edge. grid (m): subdivide outline edges, add rings up the sides and interior points on the
     caps so the baked AO has vertices to vary on. Box-projected UVs."""
@@ -1148,12 +1148,13 @@ def prism(outline, z0, z1, sw, chamfer=0.03, bottom=True, top=True, repeat=None,
             cc, d = (s_ + 1) * K + (k + 1) % K, (s_ + 1) * K + k
             tris += [(a, b, cc), (a, cc, d)]
     tris = [np.array(tris, np.int64)]
+    cg = grid if cap_grid == "same" else cap_grid
     if top:
-        tv, tt = cap_tris(rings[-1][0], z1, grid, up=True)
+        tv, tt = cap_tris(rings[-1][0], z1, cg, up=True)
         tris.append(tt + len(V))
         V = np.vstack([V, tv])
     if bottom:
-        bv, bt = cap_tris(ol, z0, grid, up=False)
+        bv, bt = cap_tris(ol, z0, cg, up=False)
         tris.append(bt + len(V))
         V = np.vstack([V, bv])
     part = Part(V, np.concatenate(tris), sw, smooth=smooth)

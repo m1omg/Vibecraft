@@ -1456,12 +1456,16 @@ def build_mushroom_ring(aid):
 # =============================================================================================
 
 def M_timber():
-    return Mat("timber", L.swatch(SW + "neutral_mine_timber.png", seamless=True, sat=0.9), repeat=1.6, size=256)
+    """neutral_mine_timber cropped between its battens (only planks: grain runs along image u), made
+    seamless and tiled twice; UVs put u along each member (uv_along / beam), so posts never show
+    planks running across them."""
+    return Mat("timber", L.swatch(SW + "neutral_mine_timber.png", seamless=True, sat=0.9, crop=(0.27, 0.0, 0.73, 1.0),
+                                  tile=2, s_cap=0.5), repeat=1.6, size=256)
 
 
 def M_timber_light():
     return Mat("timber", L.swatch(SW + "neutral_mine_timber.png", seamless=True, sat=0.9, tint=(1.12, 1.04, 0.92),
-                                  gamma=0.82), repeat=1.6, size=256)
+                                  gamma=0.82, crop=(0.27, 0.0, 0.73, 1.0), tile=2, s_cap=0.5), repeat=1.6, size=256)
 
 
 def M_planks_painted():
@@ -1606,7 +1610,9 @@ def build_cairn(aid):
 # =============================================================================================
 
 def M_ember():
-    return Mat("ember", L.tex_glow("ember", 128), repeat=0.6, size=128, emissive=True, tag="EMBER")
+    return Mat("ember", L.tex_glow("ember", 128), repeat=0.6, size=128, emissive=True, tag="EMBER", uv_kind="atlas",
+               emissive_factor=(0.5, 0.5, 0.5),
+               extras={"emission": "live coals: a dim 0.5 by day; raise emission_energy to ~1.5 at night"})
 
 
 def M_oilcloth():
@@ -1625,6 +1631,11 @@ def M_sacking():
 
 def M_turf():
     return Mat("turf", L.swatch(TEX + "gv_grassy_dirt.png", seamless=False, sat=0.9), repeat=2.0, size=256)
+
+
+def M_turf_hill():
+    """Grass for hill tops and banks: gv_thick_meadow at the terrain's own scale (128 px/m, 4 m per repeat)."""
+    return Mat("turf", L.swatch(TEX + "gv_thick_meadow.png", seamless=False, s_cap=0.46), repeat=4.0, size=512)
 
 
 def M_soil():
@@ -2195,17 +2206,171 @@ def M_seam():
 
 
 def M_lamp():
-    return Mat("lamp", L.tex_glow("lamp", 64), repeat=0.3, size=64, emissive=True, tag="LAMP")
+    return Mat("lamp", L.tex_glow("lamp", 64), repeat=0.3, size=64, emissive=True, tag="LAMP", uv_kind="atlas",
+               emissive_factor=(0.0, 0.0, 0.0),
+               extras={"emission": "night only: emissiveFactor ships at 0; DayNight raises emission_energy "
+                                   "(windows light at 17:45, bible §1.5)"})
 
 
 def M_water():
+    """Muted spring water #5AA3A0 (bible §2.3), S <= 0.45; tagged WATER so the game can swap in its water shader."""
     def fn():
         im = L.load_rgb(TEX + "water_ripples.png").convert("RGB").resize((256, 256), L.Image.LANCZOS)
         a = np.asarray(im, np.float32) / 255.0
         lum = a.mean(axis=2, keepdims=True)
-        col = hexcol("#3F8A88") * (0.72 + 0.3 * (lum - lum.mean()) / max(lum.std() * 3, 1e-3))
-        return L.to_img(col)
-    return Mat("water", lambda: L.cached_image(("water",), fn), repeat=2.0, size=256, roughness=0.35, tag="WATER")
+        col = hexcol("#5AA3A0") * 0.82 * (0.8 + 0.28 * (lum - lum.mean()) / max(lum.std() * 3, 1e-3))
+        return L.to_img(L.hsv_limit(np.clip(col, 0, 1), 1.0, 0.45))
+    return Mat("water", lambda: L.cached_image(("water_v2",), fn), repeat=2.0, size=256, roughness=0.35, tag="WATER")
+
+
+def seam_beds():
+    """Gold Seam strata (z0, z1) on the cut face; the seam (quartz-and-gold line) is the thin bed."""
+    return [(0.0, 0.62), (0.62, 1.3), (1.3, 2.02), (2.02, 2.14), (2.14, 2.82), (2.82, 3.7)]
+
+
+def tex_seam_face(seed=29, n=1024):
+    """Unique paint for the Gold Seam rock (6.4 x 6.4 m at 160 px/m, u = (x + 3.2) / 6.4, v = (6.4 - z) / 6.4):
+      region A (v >= 0.42, z <= 3.7)  the cut face: one painted limestone course per stratum (bed edges line up
+                                       with the geometric ledges: lit lips, dark undercuts), cool grey, S <= 0.42
+      region S (v 0.405 .. 0.424)      the seam strip: a thin cream-quartz line with #D8B048 gold flecks
+      region B (v < 0.39)              scree / gravel (spoil heap, loose stones)
+    """
+    def fn():
+        rng = np.random.default_rng(seed)
+        ppm = n / 6.4
+        src = np.asarray(L.load_rgb(TEX + "cliff_limestone.png").convert("RGB"), np.float32) / 255.0
+        courses = [(137, 382), (382, 578), (578, 778), (778, 1000), (0, 137)]
+        out = np.zeros((n, n, 3), np.float32)
+        beds = [b for b in seam_beds() if b[1] - b[0] > 0.2]
+        beds[2] = (beds[2][0], 2.02)
+        beds[3] = (2.02, beds[3][1])
+        for i, (z0, z1) in enumerate(beds):
+            r0, r1 = int(round(n - z1 * ppm)), int(round(n - z0 * ppm))
+            c0, c1 = courses[(i * 2 + 1) % len(courses)]
+            band = L.Image.fromarray((src[c0:c1] * 255).astype(np.uint8))
+            s = (r1 - r0) / (c1 - c0)
+            wb = max(8, int(round(src.shape[1] * s * 1.15)))
+            band = np.asarray(band.resize((wb, r1 - r0), L.Image.LANCZOS), np.float32) / 255.0
+            reps = int(math.ceil((n + wb) / wb)) + 1
+            tiled = np.concatenate([band] * reps, axis=1)
+            off = int(rng.integers(0, wb))
+            out[max(r0, 0):r1] = tiled[max(0, -r0):, off:off + n][: r1 - max(r0, 0)]
+        # cool it down and calm the moss (bible §1.4 / §6.2: cliffs <= 30-45 % saturation, value 25-60 %)
+        rows = int(round(n - 3.7 * ppm))
+        a = out[rows:]
+        a = L.hsv_limit(a, 0.8, 0.4) * np.array([0.9, 0.9, 0.93])
+        out[rows:] = a
+        # region B: scree at 160 px/m (gv_scree covers 4 m)
+        scree = L.Image.open(os.path.join(REPO, TEX + "gv_scree.png")).convert("RGB")
+        k = int(round(2.0 * ppm))                            # finer than the terrain: tailings gravel
+        scree = np.asarray(scree.resize((k, k), L.Image.LANCZOS), np.float32) / 255.0
+        big = np.tile(scree, (int(math.ceil(n / k)) + 1, int(math.ceil(n / k)) + 1, 1))
+        b_rows = int(0.39 * n)
+        grav = L.hsv_limit(big[:b_rows, :n], 0.5, 0.22)
+        out[:b_rows] = grav * 1.08 * np.array([0.98, 0.97, 0.95])
+        # region S: the seam strip (and dark crevice padding round it)
+        s0, s1 = int(0.405 * n), int(0.424 * n)
+        out[b_rows:rows] = np.array([0.24, 0.23, 0.22])
+        h = s1 - s0
+        yy, xx = np.mgrid[0:h, 0:n] + 0.5
+        f = yy / h
+        nz = L.periodic_noise(n, seed + 3, 1.6)[:h]
+        quartz = hexcol("#EFE6CB") * (0.9 + 0.14 * nz)[..., None]
+        edge = smoothstep(0.32, 0.0, f) + smoothstep(0.68, 1.0, f)
+        quartz = quartz * (1 - 0.45 * np.clip(edge, 0, 1))[..., None]
+        gold = np.zeros((h, n))
+        for _ in range(int(n * 0.14)):
+            x0, y0 = rng.uniform(0, n), rng.uniform(0.25, 0.75) * h
+            ln, r = rng.uniform(2.0, 9.0), rng.uniform(1.0, 2.1)
+            d = np.hypot((xx - x0) / max(ln, 1.0), (yy - y0) / r)
+            gold = np.maximum(gold, smoothstep(1.0, 0.45, d))
+        gcol = hexcol("#D8B048") * (0.95 + 0.15 * nz)[..., None]
+        strip = quartz * (1 - gold[..., None]) + gcol * gold[..., None]
+        out[s0:s1] = strip
+        return L.to_img(out)
+    return lambda: L.cached_image(("seam_face", seed, n), fn)
+
+
+def tex_seam_emit(n=1024):
+    """Emission mask of the Gold Seam rock: only the seam strip (region S) is non-black."""
+    def fn():
+        a = np.asarray(tex_seam_face(n=n)(), np.float32) / 255.0
+        m = np.zeros((n, 1, 1), np.float32)
+        m[int(0.405 * n):int(0.424 * n)] = 1.0
+        return L.to_img(a * m * np.array([1.0, 0.92, 0.7]))
+    return lambda: L.cached_image(("seam_emit", n), fn)
+
+
+def M_seam_rock():
+    return Mat("rock", tex_seam_face(), repeat=6.4, size=1024, emissive=True, emissive_image=tex_seam_emit(),
+               emissive_factor=(0.0, 0.0, 0.0), tag="GLOW",
+               extras={"emission": "only the seam strip has emission texels; emissiveFactor ships at 0 (no daylight "
+                                   "glow): raise emission_energy / emission colour to pulse it while a worker is inside"})
+
+
+def SEAM_U(x):
+    return (np.asarray(x, float) + 3.2) / 6.4
+
+
+def uv_face(v, t):
+    """Project rock parts of the Gold Seam into region A of its unique paint (160 px/m): side-facing
+    triangles use (x or y, z), up/down-facing ones (x, y) squeezed into the face rows."""
+    p = v[t]
+    n = np.cross(p[:, 1] - p[:, 0], p[:, 2] - p[:, 0])
+    ax = np.argmax(np.abs(n), axis=1)
+    uv = np.zeros((len(t), 3, 2))
+    zc = np.clip(p[..., 2], 0.0, 3.68)
+    mx, my, mz = ax == 0, ax == 1, ax == 2
+    uv[mx, :, 0] = SEAM_U(p[mx, :, 1])
+    uv[my, :, 0] = SEAM_U(p[my, :, 0])
+    uv[mx | my, :, 1] = (6.4 - zc[mx | my]) / 6.4
+    uv[mz, :, 0] = SEAM_U(p[mz, :, 0])
+    uv[mz, :, 1] = 0.43 + SEAM_U(p[mz, :, 1]) * 0.565
+    return uv
+
+
+def uv_gravel(v, t):
+    """Region B (scree) of the Gold Seam paint, 160 px/m (spoil heap, loose stones, rubble)."""
+    p = v[t]
+    n = np.cross(p[:, 1] - p[:, 0], p[:, 2] - p[:, 0])
+    ax = np.argmax(np.abs(n), axis=1)
+    uv = np.zeros((len(t), 3, 2))
+    mx, my, mz = ax == 0, ax == 1, ax == 2
+    uv[mx, :, 0] = SEAM_U(p[mx, :, 1])
+    uv[my, :, 0] = SEAM_U(p[my, :, 0])
+    uv[mx | my, :, 1] = 0.01 + np.clip(p[mx | my, :, 2], 0, 2.2) / 6.4
+    uv[mz, :, 0] = SEAM_U(p[mz, :, 0])
+    uv[mz, :, 1] = 0.01 + np.clip(p[mz, :, 1] + 3.0, 0, 6.2) / 6.4 * 0.36
+    return uv
+
+
+def uv_along(v, t, axis, rep, off=(0.0, 0.0)):
+    """Timber UVs with the grain (image u) along the member's long `axis` (0 x, 1 y, 2 z) on every
+    side face; end faces get a plain box projection. Stops plank texture running across posts."""
+    p = v[t]
+    n = np.cross(p[:, 1] - p[:, 0], p[:, 2] - p[:, 0])
+    ax = np.argmax(np.abs(n), axis=1)
+    uv = L.uv_box(v, t, rep, off)
+    side = ax != axis
+    other = 3 - axis - ax
+    for f in np.nonzero(side)[0]:
+        uv[f, :, 0] = p[f, :, axis] / rep + off[0]
+        uv[f, :, 1] = -p[f, :, other[f]] / rep + off[1]
+    return uv
+
+
+def beam(mat, p0, p1, w, h=None, seed=0, chamfer=0.035, jitter=0.01):
+    """Chamfered square timber from p0 to p1 (grain along its length)."""
+    h = w if h is None else h
+    p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
+    d = p1 - p0
+    up = (0, 0, 1) if abs(nrm(d)[2]) < 0.9 else (1, 0, 0)
+    q = L.sweep(L.chamfer_rect(w, h, chamfer), np.stack([p0, (p0 + p1) / 2, p1]), mat, up=up, cap0=True, cap1=True,
+                smooth=25.0)[0]
+    q.uv = np.stack([-q.uv[..., 1], q.uv[..., 0]], axis=-1) + np.array([(seed * 0.37) % 1.0, (seed * 0.61) % 1.0])
+    if jitter:
+        q.jitter(jitter, seed)
+    return q
 
 
 def lantern(frame_mat, lamp_mat, hang, seed=0):
@@ -2229,176 +2394,402 @@ def lantern(frame_mat, lamp_mat, hang, seed=0):
 
 
 def build_gold_mine(aid):
-    """Gold Seam: an adit (low square timber-framed tunnel mouth) cut into a short layered cliff with a
-    thin bright quartz-and-gold stratum (GLOW, pulse it when a worker enters), a windlass headframe on
-    the lip (node `windlass_drum`), a spoil heap of grey tailings, a wooden sluice with a trickle of
-    water, two lanterns on hooks (LAMP, lit at night). No cart, no rails (neutrals §5.2, §10.2)."""
+    """Gold Seam (neutrals §5.2, bible §4.4): a wedge cut into a grassy hill. The front (-Z) is a flat,
+    layered limestone cut face (6 m wide, 3.6 m tall) with a low square timber-framed adit in its
+    middle and a thin quartz-and-gold seam line crossing just over the adit (painted; emissive texels
+    only there, factor 0: the game pulses it). Two chunky timber A-frames on the front lip carry a
+    windlass drum (node `windlass_drum`) whose rope and bucket hang over the face. Behind the lip the
+    hill slopes down to the ground on the other three sides as a grassy bank (finished from every side).
+    A gravel spoil heap and a planked sluice on trestles with a tub at its foot sit at the front left;
+    two lanterns (LAMP, night only) hang beside the adit. No cart, no rails, no heaped nuggets.
+    Everything stays inside the 12 x 12-cell (6 m) footprint."""
     seed = seed_of(aid)
     rng = np.random.default_rng(seed)
-    A = Asset(aid, seed, ao_dist=1.2, ao_strength=1.0, base_dark=0.55, base_h=0.5, top_light=0.2)
-    rock, seam, tim, lamp, water = M_cliff(), M_seam(), M_timber(), M_lamp(), M_water()
-    fy, nw, nd = 1.15, 0.78, 0.15        # front face y, notch half-width, notch back y
-    outer = [(1.85, -1.95), (2.12, -1.3), (2.15, -0.3), (2.05, 0.6), (1.7, fy - 0.02), (1.2, fy + 0.06), (nw, fy),
-             (nw, nd), (-nw, nd), (-nw, fy), (-1.25, fy + 0.04), (-1.75, fy - 0.1), (-2.1, 0.45), (-2.18, -0.6),
-             (-2.0, -1.65), (-1.5, -2.05), (-0.5, -2.12), (0.7, -2.1), (1.4, -2.05)]
-    base_n = densify(outer, 0.42)
-    notch = (np.abs(base_n[:, 0]) <= nw + 1e-6) & (base_n[:, 1] >= nd - 1e-6)
-    plain = [(1.85, -1.95), (2.12, -1.3), (2.15, -0.3), (2.05, 0.6), (1.7, fy - 0.02), (1.2, fy + 0.06),
-             (0.0, fy + 0.04), (-1.25, fy + 0.04), (-1.75, fy - 0.1), (-2.1, 0.45), (-2.18, -0.6), (-2.0, -1.65),
-             (-1.5, -2.05), (-0.5, -2.12), (0.7, -2.1), (1.4, -2.05)]
-    base_p = densify(plain, 0.42)
-    def terrace(poly, amt, front_amt=0.0, k=0, shift=(0.0, 0.0)):
-        """Inset sides and back by an irregular `amt` (noise around the outline), the front face only by
-        `front_amt` (it stays a vertical cut face); `shift` slides the inset part (off-centre crags)."""
-        c = np.array([0.0, -0.4])
-        out = poly.copy()
-        nz = L.noise1(np.c_[poly * 0.9, np.full(len(poly), k * 1.7)], 1.0, (seed % 13 * 0.9, 1.0, 4.0))
-        for i, (x, y) in enumerate(poly):
-            lo_, hi_ = (0.25, 1.9) if amt < 0.8 else (0.75, 1.25)
-            a = amt * float(np.clip(0.45 + 1.4 * (nz[i] + 0.35), lo_, hi_))
-            if y > fy - 0.4:
-                out[i] = (x - np.sign(x) * a * min(1.0, abs(x) / 1.6), y - front_amt)
-            else:
-                d = nrm(np.array([x, y]) - c)
-                out[i] = np.array([x, y]) - d * a + np.asarray(shift) * min(1.0, amt)
-        return out
-    layers = [  # (z0, z1, mat, outline, notched, jitter)
-        (0.0, 0.8, rock, base_n, True, 0.16),
-        (0.8, 1.0, seam, terrace(base_n, 0.04, k=1), True, 0.08),
-        (1.0, 1.85, rock, terrace(base_n, 0.2, k=2), True, 0.16),
-        (1.85, 2.55, rock, terrace(base_p, 0.5, 0.12, k=3, shift=(-0.15, -0.1)), False, 0.17),
-        (2.55, 3.3, rock, terrace(base_p, 1.05, 0.95, k=4, shift=(-0.55, -0.35)), False, 0.15),
-    ]
-    for i, (z0, z1, m, base, notched, jit) in enumerate(layers):
-        ks = notch if notched else None
-        if notched:
-            ks = (np.abs(base[:, 0]) <= nw + 1e-6) & (base[:, 1] >= nd - 1e-6)
-        p = strata_layer(base, z0, z1, m, seed + 7 * i, scale=1.0, off=(0.0, 0.0), jit=jit, keep_straight=ks)
-        if m is rock:
-            moss_tint(p, 0.85 if i >= 2 else 0.7, seed + i, col=(0.46, 0.7, 0.3), up=0.55, patch=-0.3 if i >= 2 else 0.1)
-        A.add(p)
-    # darkness at the back of the adit + inner timber sets for depth
-    back = np.array([(-nw, nd + 0.02, 0.0), (nw, nd + 0.02, 0.0), (nw, nd + 0.02, 1.82), (-nw, nd + 0.02, 1.82)])
-    bt = np.array([(0, 2, 1), (0, 3, 2)])
-    bp = Part(back, bt, tim, L.uv_box(back, bt, tim.repeat), 30.0)
-    bp.tint = np.full((4, 3), 0.04)
-    bp.ao = False
-    bp.ao_fn = lambda q: np.ones(len(q.v))
-    A.add(bp)
-    for y, s in ((fy + 0.06, 1.0), (0.62, 0.92)):
-        posts = []
-        for x in (-nw + 0.1, nw - 0.1):
-            b = L.box((0.2, 0.2, 1.72 * s), tim, center=(x, y, 0.86 * s))
-            b.rot(ry=rng.uniform(-2.5, 2.5), pivot=(x, y, 0))
-            posts.append(b)
-        lin = L.box((2 * nw + 0.45, 0.24, 0.26), tim, center=(0, y, 1.72 * s + 0.1))
-        lin.rot(ry=rng.uniform(-1.5, 1.5))
-        posts.append(lin)
-        if s == 1.0:
-            for x in (-nw + 0.1, nw - 0.1):
-                br = L.box((0.12, 0.14, 0.55), tim, center=(0, 0, 0))
-                br.rot(ry=45 * np.sign(x)).move(x - 0.17 * np.sign(x), y + 0.02, 1.5)
-                posts.append(br)
-            sill = L.box((2 * nw + 0.2, 0.3, 0.1), tim, center=(0, y + 0.05, 0.05))
-            posts.append(sill)
-        for b in posts:
-            b.jitter(0.008, seed + int(y * 10))
-            b.uv = L.uv_box(b.v, b.t, tim.repeat, (rng.uniform(0, 1), rng.uniform(0, 1)))
-            A.add(b)
+    A = Asset(aid, seed, ao_dist=1.2, ao_strength=1.0, base_dark=0.6, base_h=0.45, top_light=0.16)
+    rock, turf, tim, lamp, water, meadow = M_seam_rock(), M_turf_hill(), M_timber(), M_lamp(), M_water(), M_meadow()
+    W, yb, yf, Hc = 2.95, -2.3, 1.55, 3.6
+    yc = yf - 0.6                                            # crest: flat band just behind the lip
+
+    cxc = 1.6                                                # half width of the full-height core
+
+    def g(x):                                                # face top profile across X (for props)
+        ax_ = np.abs(x)
+        return np.where(ax_ <= cxc, 1.0, 0.5 * (1 + np.cos(np.pi * np.clip((ax_ - cxc) / (W - cxc), 0, 1))))
+
+    def Hf(x, y):
+        """Hill height: full height on the core (crest behind the lip), falling off with the elliptical
+        distance from it (rounded back corners, noisy toe line), so from behind it reads as a hill."""
+        x, y = np.asarray(x, float), np.asarray(y, float)
+        q = np.stack([x * 0.7, y * 0.7, np.zeros_like(x)], axis=-1).reshape(-1, 3)
+        nz = L.noise1(q, 1.0, (seed % 17 * 0.7, 3.0, 1.0)).reshape(x.shape)
+        dx = np.maximum(np.abs(x) - cxc, 0.0) / (W - cxc)
+        dy = np.maximum(yc - y, 0.0) / (yc - yb)
+        d = np.sqrt(dx * dx + dy * dy) * (1 + 0.07 * nz)
+        t = np.clip(d, 0, 1)
+        prof = 1.0 - (0.45 * t + 0.55 * (3 * t * t - 2 * t ** 3))
+        base = Hc * prof
+        return np.maximum(base * (1 + 0.04 * nz) + 0.05 * nz * np.clip(base, 0, 1), 0.0)
+
+    # ---------------------------------------------------------------- hill (heightfield) -------------
+    nx_, ny_ = 34, 24
+    xs = np.linspace(-W, W, nx_ + 1)
+    ys = np.linspace(yb, yf, ny_ + 1)
+    X, Y = np.meshgrid(xs, ys)                               # (ny+1, nx+1), row 0 = back
+    Z = Hf(X, Y)
+    # lip: the front row overhangs the face by 12 cm and droops a little (thick sod edge)
+    Yh = Y.copy()
+    Yh[-1] += 0.12
+    Z[-1] -= 0.05 * g(xs)
+    Z = Z - 0.06 * (1 - smoothstep(0.0, 0.35, Z))             # toe dips smoothly under the terrain
+    Z[0] = np.minimum(Z[0], -0.03)
+    Z[:, 0] = np.minimum(Z[:, 0], -0.03)
+    Z[:, -1] = np.minimum(Z[:, -1], -0.03)
+    V = np.stack([X, Yh, Z], axis=-1).reshape(-1, 3)
+    tris = []
+    for j in range(ny_):
+        for i in range(nx_):
+            a = j * (nx_ + 1) + i
+            b, c, d = a + 1, a + nx_ + 2, a + nx_ + 1
+            tris += [(a, b, c), (a, c, d)] if (i + j) % 2 == 0 else [(a, b, d), (b, c, d)]
+    T = np.array(tris)
+    T = T[V[T][..., 2].max(axis=1) > 0.0]                    # drop cells lying under the terrain
+    pts = V[T]
+    fn = np.cross(pts[:, 1] - pts[:, 0], pts[:, 2] - pts[:, 0])
+    # make every face point up
+    flip = fn[:, 2] < 0
+    T[flip] = T[flip][:, ::-1]
+    fn[flip] *= -1
+    fnz = fn[:, 2] / np.maximum(np.linalg.norm(fn, axis=1), 1e-9)
+    cn = L.noise1(V[T].mean(axis=1), 1.3, (4.0, 2.0, 9.0))
+    steep = fnz < 0.3 + 0.08 * cn                            # grass down to ~70 deg, rock only on the steepest
+    grass = Part(V, T[~steep], turf, L.uv_box(V, T[~steep], turf.repeat, (0.13, 0.41)), 40.0)
+    lip = smoothstep(yf - 0.55, yf + 0.1, grass.v[:, 1]) * (grass.v[:, 2] > 1.0)
+    nzv = L.noise1(grass.v, 0.9, (5.0, 1.0, 2.0))
+    grass.tint = np.ones((len(grass.v), 3)) * (0.86 + 0.06 * nzv)[:, None]
+    grass.tint = grass.tint * (1 - lip[:, None]) + np.array([1.0, 1.0, 0.86]) * lip[:, None]
+    A.add(grass)
+    if steep.any():
+        sh = Part(V, T[steep], rock, uv_face(V, T[steep]), 40.0)
+        A.add(moss_tint(sh, 0.5, seed + 2, col=(0.55, 0.72, 0.4), up=0.35, patch=0.1))
+    # sod skirt hanging under the lip in front of the face top
+    top = Hf(xs, np.full_like(xs, yf))
+    sk_v, sk_t = [], []
+    for i, x in enumerate(xs):
+        zt = top[i] - 0.05 * g(x)
+        sk_v += [(x, yf + 0.12, zt), (x, yf + 0.1, max(zt - 0.2, 0.0))]
+    for i in range(nx_):
+        a = 2 * i
+        sk_t += [(a, a + 2, a + 1), (a + 1, a + 2, a + 3)]
+    sk_v, sk_t = np.array(sk_v), np.array(sk_t)
+    keep = np.array([max(sk_v[a, 2], sk_v[b, 2]) > 0.05 for a, b, c in sk_t])
+    skirt = Part(sk_v, sk_t[keep], turf, L.uv_box(sk_v, sk_t[keep], turf.repeat), 40.0)
+    skirt.tint = np.full((len(sk_v), 3), 0.55) * np.array([0.9, 0.85, 0.75])
+    A.add(skirt)
+
+    # ---------------------------------------------------------------- the cut face (strata) ----------
+    beds = seam_beds()
+    adit_w, adit_h = 0.92, 1.7                       # half width of the hole (frame outer edge), height
+    z_rows = sorted({0.0, 0.62, 1.3, adit_h, 2.02, 2.14, 2.82, 3.7})
+    setback = {0: 0.22, 1: 0.14, 2: 0.06, 3: 0.02, 4: -0.04, 5: -0.12}    # beds recede upward: every ledge is a lit lip
+    fx = np.sort(np.unique(np.r_[xs, -adit_w, adit_w]))
+    face_v, face_t, face_uv, seam_t, ledge_t = [], [], [], [], []
+
+    def bed_of(z):
+        for i, (z0, z1) in enumerate(beds):
+            if z0 - 1e-6 <= z < z1 - 1e-6:
+                return i
+        return len(beds) - 1
+    topx = Hf(fx, np.full_like(fx, yf))
+    wob = L.noise1(np.stack([fx * 1.7, np.zeros_like(fx), np.zeros_like(fx)], axis=1), 1.0, (2.0, 7.0, 3.0))
+    for bi, (z0, z1) in enumerate(beds):
+        zr = [z for z in z_rows if z0 - 1e-6 <= z <= z1 + 1e-6]
+        base = len(face_v)
+        for z in zr:
+            for i, x in enumerate(fx):
+                zz = min(z, topx[i] - 0.06)
+                yy = yf + setback[bi] - 0.05 * (zz - z0) + 0.035 * wob[i] + 0.012 * math.sin(x * 7.0 + bi)
+                face_v.append((x, yy, max(zz, 0.0)))
+        K = len(fx)
+        for r in range(len(zr) - 1):
+            for i in range(K - 1):
+                xm = (fx[i] + fx[i + 1]) / 2
+                zm = (zr[r] + zr[r + 1]) / 2
+                if abs(xm) < adit_w and zm < adit_h:
+                    continue
+                a = base + r * K + i
+                b, c, d = a + 1, a + K + 1, a + K
+                quad = [(a, b, c), (a, c, d)]
+                for tri in quad:
+                    (seam_t if bi == 3 else face_t).append(tri)
+        # ledge: the bed's top edge joins the next bed's (set back) bottom edge
+        if bi < len(beds) - 1:
+            nxt = base + len(zr) * K
+            top_row = base + (len(zr) - 1) * K
+            for i in range(K - 1):
+                if (abs((fx[i] + fx[i + 1]) / 2) < adit_w and z1 < adit_h):
+                    continue
+                a, b = top_row + i, top_row + i + 1
+                c, d = nxt + i + 1, nxt + i
+                ledge_t += [(a, c, b), (a, d, c)]
+    FV = np.array(face_v)
+    for name, tl in (("face", face_t + ledge_t), ("seam", seam_t)):
+        tt = np.array(tl)
+        pp = FV[tt]
+        area = np.linalg.norm(np.cross(pp[:, 1] - pp[:, 0], pp[:, 2] - pp[:, 0]), axis=1)
+        tt = tt[area > 1e-6]
+        # orient: side faces toward the front (+Y), ledges up
+        pp = FV[tt]
+        nn = np.cross(pp[:, 1] - pp[:, 0], pp[:, 2] - pp[:, 0])
+        vert = np.abs(nn[:, 1]) >= np.abs(nn[:, 2])
+        bad = np.where(vert, nn[:, 1] < 0, nn[:, 2] < 0)
+        tt[bad] = tt[bad][:, ::-1]
+        pp = FV[tt]
+        uv = np.stack([SEAM_U(pp[..., 0]), (6.4 - np.clip(pp[..., 2], 0, 3.68)) / 6.4], axis=-1)
+        if name == "seam":
+            uv[..., 1] = 0.4055 + np.clip((pp[..., 2] - 2.02) / 0.12, 0, 1) * 0.0175
+        q = Part(FV, tt, rock, uv, 35.0)
+        q.jitter((0.012, 0.02, 0.008), seed + (1 if name == "face" else 2))
+        if name == "face":
+            moss_tint(q, 0.6, seed + 5, col=(0.62, 0.74, 0.45), up=0.55, patch=0.25)
+        A.add(q)
+    # tunnel: dark rock reveals and back wall behind the frame
+    dep = 1.3
+    tun = []
+    for sx in (-1, 1):
+        tun.append(np.array([(sx * adit_w, yf + 0.02, 0.0), (sx * adit_w, yf - dep, 0.0), (sx * adit_w, yf - dep, adit_h),
+                             (sx * adit_w, yf + 0.02, adit_h)]))
+    tun.append(np.array([(-adit_w, yf + 0.02, adit_h), (adit_w, yf + 0.02, adit_h), (adit_w, yf - dep, adit_h),
+                         (-adit_w, yf - dep, adit_h)]))
+    tun.append(np.array([(-adit_w, yf - dep, 0.0), (adit_w, yf - dep, 0.0), (adit_w, yf - dep, adit_h),
+                         (-adit_w, yf - dep, adit_h)]))
+    for k, quad in enumerate(tun):
+        tt = np.array([(0, 1, 2), (0, 2, 3)])
+        for tr in (tt, tt[:, ::-1]):
+            q = Part(quad.copy(), tr, rock, uv_face(quad, tr), 30.0)
+            q.ao = False
+            depth = np.clip((yf - quad[:, 1]) / dep, 0, 1)
+            q.ao_fn = (lambda dd: (lambda p_: 0.32 - 0.24 * dd))(depth) if k < 3 else (lambda p_: np.full(4, 0.06))
+            A.add(q)
+
+    # ---------------------------------------------------------------- adit timber frame ---------------
+    def post(x, y, z0, z1, w=0.24, s=0):
+        b = L.box((w, w, z1 - z0), tim, chamfer=0.03, center=(x, y, (z0 + z1) / 2))
+        b.uv = uv_along(b.v, b.t, 2, tim.repeat, ((s * 0.31) % 1, (s * 0.17) % 1))
+        b.rot(ry=rng.uniform(-2.0, 2.0), pivot=(x, y, z0))
+        b.jitter(0.006, seed + s)
+        return b
+
+    def rail(x0, x1, y, z, w=0.26, h=0.28, s=0):
+        b = L.box((x1 - x0, w, h), tim, chamfer=0.03, center=((x0 + x1) / 2, y, z))
+        b.uv = uv_along(b.v, b.t, 0, tim.repeat, ((s * 0.43) % 1, (s * 0.29) % 1))
+        b.rot(ry=rng.uniform(-1.5, 1.5), pivot=((x0 + x1) / 2, y, z))
+        b.jitter(0.006, seed + 40 + s)
+        return b
+    fy = yf + 0.12
+    for k, (yy, sc) in enumerate(((fy, 1.0), (yf - 0.65, 0.93))):
+        xin = 0.8 * sc
+        A.add(post(-xin, yy, 0.0, adit_h * sc - 0.02, s=k * 2), post(xin, yy, 0.0, adit_h * sc - 0.02, s=k * 2 + 1))
+        A.add(rail(-xin - 0.32, xin + 0.32, yy, adit_h * sc + 0.1, s=k))
+    for sx in (-1, 1):                                       # knee braces
+        A.add(beam(tim, (sx * 0.8, fy + 0.02, adit_h - 0.62), (sx * 0.38, fy + 0.02, adit_h - 0.12), 0.13, seed=seed + 7 + sx))
+    A.add(rail(-0.95, 0.95, fy + 0.06, 0.06, w=0.34, h=0.12, s=7))   # sill
     # lanterns on iron hooks either side of the mouth
-    for x in (-nw - 0.28, nw + 0.28):
-        hook = L.box((0.04, 0.32, 0.04), tim, center=(x, fy + 0.18, 1.55))
-        hook.tint = np.full((len(hook.v), 3), 0.25)
+    lpts = []
+    for sx in (-1, 1):
+        hook = L.box((0.05, 0.36, 0.05), tim, center=(sx * 1.12, fy + 0.12, 1.55))
+        hook.tint = np.full((len(hook.v), 3), 0.22)
         A.add(hook)
-        A.add(lantern(tim, lamp, (x, fy + 0.32, 1.55)))
-    # windlass headframe on the lip (two A-frames, a drum with a crank, a rope to a bucket)
-    top_z = 2.55
-    lip_y = fy - 0.12 - 0.35
-    wx, dz = 0.95, 1.05
-    drum_c = np.array([0.35, lip_y + 0.12, top_z + dz])
-    for x in (drum_c[0] - wx / 2, drum_c[0] + wx / 2):
-        for dy in (-0.55, 0.42):
-            A.add(pole(tim, (x, drum_c[1] + dy, top_z - 0.05), (x, drum_c[1], drum_c[2] + 0.12), 0.07, 0.06, sides=4))
-        A.add(pole(tim, (x, drum_c[1] - 0.3, top_z + 0.45), (x, drum_c[1] + 0.25, top_z + 0.45), 0.05, 0.05, sides=4))
+        A.add(lantern(tim, lamp, (sx * 1.12, fy + 0.3, 1.55)))
+        lpts.append([round(sx * 1.12, 3), 1.3, round(-(fy + 0.3), 3)])
+
+    # ---------------------------------------------------------------- windlass headframe -------------
+    # Two A-frames splayed in X (they read as two 'A's from the RTS camera and notch the silhouette above
+    # the hill line) stand on the crest just behind the lip; the drum spans their apexes; a short jib
+    # carries the rope over the lip so the bucket hangs in front of the face.
+    leg_y, apex_y = yf - 0.55, yf - 0.5
+    zl = float(Hf(0.0, leg_y))
+    apex_z = zl + 2.35
+    for k, xc in enumerate((-1.0, 1.0)):
+        base_l = np.array([xc - 0.62, leg_y, float(Hf(xc - 0.62, leg_y)) - 0.12])
+        base_r = np.array([xc + 0.62, leg_y, float(Hf(xc + 0.62, leg_y)) - 0.12])
+        apex = np.array([xc, apex_y, apex_z])
+        A.add(beam(tim, base_l, apex + np.array([-0.07, 0, 0.08]), 0.23, seed=seed + 11 + k))
+        A.add(beam(tim, base_r, apex + np.array([0.07, 0, 0.08]), 0.23, seed=seed + 13 + k))
+        mid_z = (base_l[2] + apex[2]) / 2 - 0.25
+        A.add(beam(tim, (xc - 0.48, leg_y + 0.12, mid_z), (xc + 0.48, leg_y + 0.12, mid_z), 0.16, seed=seed + 15 + k))
+        bb = np.array([xc, yf - 1.95, float(Hf(xc, yf - 1.95)) - 0.12])
+        A.add(beam(tim, bb, apex + np.array([0, -0.1, -0.08]), 0.18, seed=seed + 17 + k))   # back strut
+        cap = L.box((0.36, 0.36, 0.17), tim, chamfer=0.03, center=(xc, apex_y, apex_z + 0.14))
+        cap.uv = uv_along(cap.v, cap.t, 0, tim.repeat)
+        A.add(cap)
+    drum_c = np.array([0.0, apex_y, apex_z - 0.02])
     A.node("windlass_drum", drum_c)
-    drum = L.lathe([(0.0, -wx / 2 - 0.05), (0.2, -wx / 2 - 0.04), (0.2, -wx / 2 + 0.04), (0.15, -wx / 2 + 0.06),
-                    (0.15, wx / 2 - 0.06), (0.2, wx / 2 - 0.04), (0.2, wx / 2 + 0.04), (0.0, wx / 2 + 0.05)], 8, tim)[0]
+    drum = L.lathe([(0.0, -1.0), (0.1, -0.99), (0.1, -0.62), (0.28, -0.6), (0.28, -0.52), (0.22, -0.5), (0.22, 0.5),
+                    (0.28, 0.52), (0.28, 0.6), (0.1, 0.62), (0.1, 0.99), (0.0, 1.0)], 9, tim)[0]
+    drum.uv = np.stack([-drum.uv[..., 1], drum.uv[..., 0]], axis=-1)
     drum.rot(ry=90).move(*drum_c)
-    crank = [L.box((0.05, 0.05, 0.36), tim, center=(drum_c[0] + wx / 2 + 0.12, drum_c[1], drum_c[2] + 0.16)),
-             L.box((0.24, 0.05, 0.05), tim, center=(drum_c[0] + wx / 2 + 0.22, drum_c[1], drum_c[2] + 0.33)),
-             L.box((0.3, 0.06, 0.06), tim, center=(drum_c[0] + wx / 2 + 0.05, drum_c[1], drum_c[2]))]
-    rope_top = drum_c + np.array([0.0, 0.18, 0.0])
-    bucket_c = np.array([drum_c[0], lip_y + 0.62, 1.95])
-    rope = L.ribbon(np.array([rope_top, bucket_c + np.array([0, 0, 0.42])]), 0.03, tim, u_range=(0.1, 0.12),
-                    normal_hint=(0, 1, 0))
-    rope2 = L.ribbon(np.array([rope_top, bucket_c + np.array([0, 0, 0.42])]), 0.03, tim, u_range=(0.1, 0.12),
-                     normal_hint=(1, 0, 0))
-    for p in [drum] + crank + [rope, rope2]:
+    crank = [beam(tim, drum_c + (1.1, 0, 0), drum_c + (1.1, 0.0, 0.45), 0.08, seed=seed + 21, jitter=0),
+             beam(tim, drum_c + (1.1, 0, 0.45), drum_c + (1.42, 0.0, 0.45), 0.08, seed=seed + 22, jitter=0)]
+    for p in [drum] + crank:
         p.node = "windlass_drum"
-        p.uv = L.uv_box(p.v, p.t, tim.repeat) if p not in (rope, rope2) else p.uv
         A.add(p)
-    rope.tint = np.full((len(rope.v), 3), np.array([1.2, 1.05, 0.75]))
-    rope2.tint = rope.tint.copy()
-    bucket = L.lathe([(0.0, 0.0), (0.16, 0.0), (0.2, 0.3), (0.19, 0.32), (0.0, 0.3)], 7, tim)[0]
+    # jib over the lip with a pulley, braced from the lip
+    tip = np.array([0.0, yf + 0.42, apex_z - 0.12])
+    A.add(beam(tim, (0.0, apex_y - 0.25, apex_z + 0.3), tip + (0, 0.1, 0.0), 0.2, seed=seed + 24))
+    A.add(beam(tim, (0.0, yf - 0.2, float(Hf(0.0, yf - 0.2)) - 0.08), tip + (0, -0.45, -0.08), 0.15, seed=seed + 25))
+    pul_c = tip + np.array([0.0, 0.12, -0.2])
+    pulley = L.lathe([(0.0, -0.07), (0.17, -0.06), (0.13, 0.0), (0.17, 0.06), (0.0, 0.07)], 9, tim)[0]
+    pulley.rot(ry=90).move(*pul_c)
+    pulley.tint = np.full((len(pulley.v), 3), 0.6)
+    A.add(pulley)
+    A.node("windlass_bucket", pul_c + np.array([0, 0.17, 0]))
+    bucket_c = np.array([0.0, pul_c[1] + 0.17, 2.55])
+    rope = []
+    for nh in ((0, 1, 0), (1, 0, 0)):
+        rope.append(L.ribbon(np.array([drum_c + (0, 0.05, 0.22), pul_c + (0, 0, 0.17)]), 0.05, tim, u_range=(0.1, 0.12),
+                             normal_hint=(0, 0, 1) if nh[0] == 0 else (1, 0, 0)))
+        r2 = L.ribbon(np.array([pul_c + (0, 0.17, 0.0), bucket_c + np.array([0, 0, 0.5])]), 0.05, tim,
+                      u_range=(0.1, 0.12), normal_hint=nh)
+        r2.node = "windlass_bucket"
+        rope.append(r2)
+    for r_ in rope:
+        r_.tint = np.full((len(r_.v), 3), np.array([1.35, 1.2, 0.85]))
+    bucket = L.lathe([(0.0, 0.0), (0.21, 0.0), (0.26, 0.4), (0.25, 0.42), (0.0, 0.4)], 8, tim)[0]
     bucket.move(*bucket_c)
-    handle = L.box((0.42, 0.03, 0.03), tim, center=bucket_c + np.array([0, 0, 0.42]))
-    for p in (bucket, handle):
-        p.node = "windlass_drum"
-        A.add(p)
-    # spoil heap of grey tailings, front-left: a low gravel cone with loose stones
-    heap = L.lathe([(1.0, 0.0), (0.85, 0.12), (0.55, 0.38), (0.25, 0.55), (0.0, 0.6)], 12, rock, a0=0.3)[0]
-    heap.v[:, 1] *= 0.8
-    heap.jitter((0.06, 0.06, 0.05), seed + 50, freq=2.2)
+    band = L.lathe([(0.245, 0.28), (0.255, 0.35)], 8, tim)[0]
+    band.tint = np.full((len(band.v), 3), 0.3)
+    band.move(*bucket_c)
+    handle = beam(tim, bucket_c + (-0.26, 0, 0.44), bucket_c + (0.26, 0, 0.44), 0.035, seed=seed + 23, jitter=0)
+    handle.tint = np.full((len(handle.v), 3), 0.35)
+    for p in [bucket, band, handle]:
+        p.node = "windlass_bucket"
+    A.add(rope, bucket, band, handle)
+
+    # ---------------------------------------------------------------- spoil heap (front left) ----------
+    hc = np.array([-1.66, 2.08])
+    prof = [(1.0, 0.0), (0.86, 0.09), (0.62, 0.28), (0.38, 0.46), (0.15, 0.62), (0.0, 0.68)]
+    heap = L.lathe(prof, 14, rock, a0=0.2)[0]
+    heap.v[:, 1] *= 0.92
+    fan = np.clip(heap.v[:, 1], 0, None) * (1 - heap.v[:, 2] / 0.9)       # spills toward the front
+    heap.v[:, 1] += fan * 0.25
+    heap.v[:, 2] *= 1 - 0.25 * np.clip(heap.v[:, 1], 0, 1)
+    heap.jitter((0.07, 0.07, 0.05), seed + 50, freq=2.4)
+    heap.jitter((0.025, 0.025, 0.02), seed + 51)
     heap.v[:, 2] = np.maximum(heap.v[:, 2], 0.0)
-    heap.move(-1.6, 1.5, -0.03)
-    heap.uv = L.uv_box(heap.v, heap.t, 9.0, (0.42, 0.55))
-    heap.tint = np.ones((len(heap.v), 3)) * np.array([0.8, 0.82, 0.88])
-    heap.smooth = 60
+    heap.move(hc[0], hc[1], -0.03)
+    heap.v[:, 0] = np.clip(heap.v[:, 0], -2.97, None)
+    heap.v[:, 1] = np.clip(heap.v[:, 1], None, 2.97)
+    heap.uv = uv_gravel(heap.v, heap.t)
+    heap.smooth = 70
+    heap.tint = np.full((len(heap.v), 3), 0.86)
     A.add(heap)
-    for k in range(14):
-        st = L.blob(rock, rng.uniform(0.08, 0.16), scale=(1, 0.8, 0.6), seed=seed + 60 + k, sphere="uv", segs=(5, 4),
-                    flat_bottom=0.15, smooth=40)
-        a = rng.uniform(0, 6.28)
-        rr = rng.uniform(0.4, 1.05)
-        st.move(-1.6 + math.cos(a) * rr, 1.5 + math.sin(a) * rr * 0.8, max(0.0, 0.5 - rr * 0.5) - 0.03)
-        st.tint = np.ones((len(st.v), 3)) * 0.85
+    for k in range(18):                                     # loose stones lying on its surface and the fan
+        a, rr = rng.uniform(-0.6, 3.8), rng.uniform(0.15, 1.1)
+        x, y = hc[0] + math.cos(a) * rr, hc[1] + math.sin(a) * rr * 0.95
+        if x < -2.85 or y > 2.85:
+            continue
+        zs = float(np.interp(rr, [p_[0] for p_ in prof[::-1]], [p_[1] for p_ in prof[::-1]]))
+        st = L.blob(rock, rng.uniform(0.08, 0.15), scale=(1, 0.8, 0.5), seed=seed + 60 + k, sphere="uv", segs=(6, 4),
+                    flat_bottom=0.2, flat_top=0.8, cuts=1, smooth=40)
+        st.tint = np.full((len(st.v), 3), rng.uniform(0.7, 0.95))
+        st.rot(rz=rng.uniform(0, 360), rx=rng.uniform(-20, 20)).move(x, y, max(0.0, zs * 0.85 - 0.06))
+        st.uv = uv_gravel(st.v, st.t)
         A.add(st)
-    # wooden sluice down the right flank, on two trestles, with a trickle of water
-    s0 = np.array([1.55, -0.6, 2.6])
-    s1 = np.array([2.35, 1.75, 0.42])
-    path = np.stack([s0, s0 + (s1 - s0) * 0.5, s1])
-    trough = L.sweep(np.array([(0.13, 0.12), (0.13, -0.02), (-0.13, -0.02), (-0.13, 0.12), (-0.1, 0.12), (-0.1, 0.02),
-                               (0.1, 0.02), (0.1, 0.12)]), path, tim, up=(0, 0, 1), cap0=True, cap1=True)[0]
-    trough.uv = L.uv_box(trough.v, trough.t, tim.repeat)
+
+    # ---------------------------------------------------------------- sluice (front left) --------------
+    top_l = float(Hf(-0.75, yf))
+    path = np.array([(-0.72, yf + 0.06, top_l + 0.04), (-1.55, yf + 0.5, top_l - 0.8), (-2.25, yf + 0.82, 1.35),
+                     (-2.6, 2.55, 0.66)])
+    trough = L.sweep(np.array([(0.24, 0.22), (0.24, 0.0), (-0.24, 0.0), (-0.24, 0.22), (-0.18, 0.22), (-0.18, 0.05),
+                               (0.18, 0.05), (0.18, 0.22)]), path, tim, up=(0, 0, 1), cap0=True, cap1=True, smooth=25)[0]
+    trough.uv = np.stack([-trough.uv[..., 1], trough.uv[..., 0]], axis=-1)
     A.add(trough)
-    wpath = path + np.array([0, 0, 0.06])
-    wr = L.ribbon(wpath, 0.17, water, normal_hint=(0, 0, 1))
+    for k in range(len(path) - 1):                          # plank joints / cleats
+        c = path[k] + (path[k + 1] - path[k]) * 0.5
+        cl = beam(tim, c + (-0.27, 0, 0.0), c + (0.27, 0, 0.0), 0.06, 0.25, seed=seed + 70 + k, jitter=0)
+        cl.tint = np.full((len(cl.v), 3), 0.8)
+        A.add(cl)
+    wr = L.ribbon(path + np.array([0, 0, 0.09]), 0.3, water, normal_hint=(0, 0, 1))
     wr.nmode = "up"
     wr.ao = False
-    wr.ao_fn = lambda q: np.ones(len(q.v))
+    wr.ao_fn = lambda q: np.full(len(q.v), 0.9)
     A.add(wr)
-    fall = L.ribbon(np.array([s1 + np.array([0, 0.12, 0.05]), s1 + np.array([0, 0.3, -0.42])]), 0.12, water,
-                    normal_hint=(0, 1, 0))
+    for k, t in enumerate((1, 2)):                          # trestles
+        c = path[t]
+        dvec = nrm(path[t + 1] - path[t - 1])
+        side = nrm(np.cross(dvec, (0, 0, 1)))
+        for sg in (-1, 1):
+            foot = c + side * sg * 0.42
+            foot = np.array([foot[0], foot[1], 0.0])
+            A.add(beam(tim, foot, c + side * sg * 0.2 - np.array([0, 0, 0.02]), 0.12, seed=seed + 80 + k * 2 + sg))
+        A.add(beam(tim, c + side * 0.32 - np.array([0, 0, c[2] * 0.55]), c - side * 0.32 - np.array([0, 0, c[2] * 0.55]),
+                   0.09, seed=seed + 90 + k))
+    tub_c = np.array([-2.62, 2.6, 0.0])
+    tub = L.lathe([(0.0, 0.03), (0.3, 0.0), (0.34, 0.42), (0.36, 0.44), (0.3, 0.44), (0.27, 0.06), (0.0, 0.09)], 10, tim)[0]
+    tub.uv = np.stack([-tub.uv[..., 1], tub.uv[..., 0]], axis=-1)
+    tub.v[:, 0] = np.clip(tub.v[:, 0], -0.36, None)
+    tub.move(*tub_c)
+    tub.v[:, 0] = np.maximum(tub.v[:, 0], -2.97)
+    tub.v[:, 1] = np.minimum(tub.v[:, 1], 2.97)
+    A.add(tub)
+    for z in (0.1, 0.36):
+        hp = L.lathe([(0.31 + z * 0.08, z), (0.32 + z * 0.08, z + 0.05)], 10, tim)[0]
+        hp.tint = np.full((len(hp.v), 3), 0.3)
+        hp.move(*tub_c)
+        A.add(hp)
+    tw = L.lathe([(0.0, 0.36), (0.27, 0.36)], 10, water)[0]
+    tw.move(*tub_c)
+    tw.nmode = "up"
+    tw.ao = False
+    tw.ao_fn = lambda q: np.full(len(q.v), 0.85)
+    A.add(tw)
+    fall = L.ribbon(np.array([path[-1] + (0, 0.1, 0.08), tub_c + (0.05, -0.05, 0.4)]), 0.16, water, normal_hint=(0, 1, 0))
     fall.ao = False
     fall.ao_fn = lambda q: np.ones(len(q.v))
     A.add(fall)
-    for t in (0.35, 0.78):
-        c = path[0] + (path[-1] - path[0]) * t
-        for dx in (-0.22, 0.22):
-            A.add(pole(tim, (c[0] + dx, c[1], 0.0), (c[0], c[1], c[2] - 0.02), 0.05, 0.045, sides=4))
-    puddle = L.blob(water, 0.4, scale=(1, 0.8, 0.02), seed=seed + 70, sphere="uv", segs=(8, 3), noise_amp=0.0,
-                    flat_bottom=0.5, smooth=60)
-    puddle.move(s1[0], s1[1] + 0.35, 0.005)
-    puddle.nmode = "up"
-    A.add(puddle)
-    # a few gold-flecked boulders at the cliff foot (not a heap of nuggets)
-    for k, (x, y) in enumerate([(-2.0, -1.2), (1.95, 0.75), (-1.1, -2.1)]):
-        b = L.blob(rock, rng.uniform(0.3, 0.42), scale=(1, 0.85, 0.7), seed=seed + 80 + k, sphere="uv", segs=(8, 5),
-                   flat_top=0.85, flat_bottom=0.1, cuts=2, smooth=38)
+
+    # ---------------------------------------------------------------- right front: pit props, rocks -----
+    for k in range(4):
+        z = 0.11 + (0.2 if k == 3 else 0.0)
+        x0 = 1.45 + (0.2 * k if k < 3 else 0.3)
+        A.add(beam(tim, (x0, 2.05 + rng.uniform(-0.05, 0.05), z), (x0 + rng.uniform(-0.1, 0.1), 2.95, z), 0.18,
+                   seed=seed + 100 + k))
+    for k, (x, y, r) in enumerate([(2.45, 2.0, 0.34), (2.6, 2.6, 0.22), (2.2, 2.7, 0.16)]):
+        b = L.blob(rock, r, scale=(1, 0.85, 0.7), seed=seed + 110 + k, sphere="uv", segs=(8, 5), flat_top=0.85,
+                   flat_bottom=0.1, cuts=2, smooth=38)
         b.move(x, y, -0.03)
-        A.add(moss_tint(b, 0.6, seed + k))
-    A.extras = {"adit_point": [0.0, 0.0, -nd - 0.25], "worker_enter_point": [0.0, 0.0, -(fy + 0.6)],
-                "lantern_points": [[-nw - 0.28, 1.4, -(fy + 0.32)], [nw + 0.28, 1.4, -(fy + 0.32)]]}
+        b.uv = uv_face(b.v, b.t)
+        A.add(moss_tint(b, 0.6, seed + k, col=(0.62, 0.74, 0.45)))
+    # outcrops and shrubs on the slope behind the headframe
+    for k, (x, y, r) in enumerate([(0.55, -0.55, 0.42), (-1.25, -0.15, 0.36), (1.55, -1.25, 0.3), (-0.6, -1.5, 0.26)]):
+        b = L.blob(rock, r, scale=(1, 0.8, 0.6), seed=seed + 120 + k, sphere="uv", segs=(8, 5), flat_top=0.8,
+                   flat_bottom=0.1, cuts=2, smooth=38)
+        b.move(x, y, float(Hf(x, y)) - r * 0.45)
+        b.uv = uv_face(b.v, b.t)
+        b.tint = np.full((len(b.v), 3), 0.78)
+        A.add(moss_tint(b, 0.9, seed + 120 + k, col=(0.5, 0.66, 0.36), up=0.45, patch=-0.1))
+    # grass tufts along the lip and on the bank, a few wildflowers
+    tufts = [(x, yf + 0.08, 3) for x in np.linspace(-2.4, 2.4, 12) if abs(x) > 0.25]
+    tufts += [(x, y, c) for x, y, c in ((0.25, -0.2, 1), (-0.9, -0.9, 0), (1.2, -0.4, 3), (-1.9, -0.6, 3), (1.9, 0.2, 2),
+                                        (0.1, -1.3, 3), (-2.2, 0.6, 1), (2.3, -0.8, 3))]
+    for k, (x, y, cell) in enumerate(tufts):
+        z = float(Hf(x, min(y, yf))) - (0.08 if y > yf else 0.02)
+        if z < 0.1 and y > yf:
+            continue
+        for j in range(2):
+            c = L.card(0.5 if cell == 3 else 0.42, 0.42 if cell == 3 else 0.36, meadow, cell_rect(cell), segs=(1, 1),
+                       pivot="bottom")
+            c.rot(rx=rng.uniform(-12, 12)).rot(rz=rng.uniform(0, 180) + 90 * j)
+            c.move(x + rng.uniform(-0.08, 0.08), y, z)
+            c.nmode = "up"
+            c.ao = False
+            c.ao_fn = lambda q: 0.65 + 0.35 * np.clip((q.v[:, 2] - q.v[:, 2].min()) / 0.4, 0, 1)
+            c.sway = np.clip((c.v[:, 2] - c.v[:, 2].min()) / 0.4, 0, 1)
+            c.phase = rng.uniform(0, 1)
+            A.add(c)
+    A.extras = {"adit_point": [0.0, 0.0, round(-(yf - 0.6), 3)], "worker_enter_point": [0.0, 0.0, -3.5],
+                "lantern_points": lpts, "seam_height_m": [2.02, 2.14], "cliff_height_m": Hc,
+                "silhouette": "flat-black 128 px from the RTS pitch: the two A-frames notch above the hill line"}
     return A
 
 
