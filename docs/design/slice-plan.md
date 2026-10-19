@@ -597,6 +597,7 @@ credits appear to be wiped (see Expiry below).
 | B18 | Fieldkeeper as an AI mesh, only if the procedural scarecrow fails review | 1.9 m | 2.5k | Auto-rig | 9.25 | P2 |
 | B19 | Neutral hero (the Rat-Piper; AGI ranged trapper, crossbow), plus procedural rats. Hired at the Coaching Inn (§1.9). **Concept-review rules** (distance from another game's rat-summoning piper hero): the pipe is carried, never a melee weapon; no rat-swarm ultimate (its rats stay the Sack of Rats summon, neutrals §5.6.3) | 2.1 m | 6k / 1024² | Auto-rig | 9.25 + 1 icon sheet 0.25 + ≈ 20 VO lines | **P1** (next grant, with E17) |
 | B20 | Rundling shopkeeper (P0 uses a curled-ball bpy prop instead) | 1.1 m | 2.5k | Auto-rig | 9.25 | P2 |
+| B21 | Hand-prop kit: falchion, pavise, hand-cannon, hod, flail, kettle hat, javelin bundle, sabre, staff, mirror disc, rake, **war-pick** (B4 rules) and **wheel-shield**. Used whenever H3.1 thins or fuses a held item: the item is cut from the mesh and replaced by a bpy prop on the hand bone | 0.3–1.5 m | 100–400 each | Parented to `RightHand` / `LeftHand` | 0 (reuses faction swatches) | P0 |
 | B22 | `kingdom.caster2` (**Lacewright**; Collegium; autocast slow Tangle Thread, ally invisibility Muslin Veil with Lacewright Journeyman Papers; kingdom §5.2: 150 g / 25 l / 2 food, 32 s). The second T2 caster, so the kingdom player chooses which casters to make | 1.7 m | 3.5k / 512² | Auto-rig; cast clip 129 | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + 14 VO lines | **P1** (next grant) |
 | B23 | `clans.caster2` (**Pole-Carver**; Mirror Yurt; Mirror Pole, an invisible sentry pole; clans §5.1: 150 g / 30 l / 2 food, 32 s). Poles are bpy props | 1.7 m | 3.5k / 512² | Auto-rig; cast clip 129 | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + 14 VO lines | **P1** (next grant) |
 | B24 | `kingdom.hero3` (**Flail Hetman**; STR melee stunner; kingdom §6.3; a tall human with a three-club flail, never a dwarf or a hammer, kingdom §2.6) | 2.3 m | 6k / 1024² | Auto-rig | 0.5 + 9 = 9.5 + 1 icon sheet 0.25 + ≈ 20 VO lines | **P1** (next grant) |
@@ -609,7 +610,6 @@ bipeds, auto-rigged, and reuse the owned clips. Their VO (≈ 88 lines) needs �
 the Higgsfield `elevenlabs_v4` dialogue model from the next grant if the M1 probe clears its price and terms, otherwise from probe
 savings. Names lock by 3 Nov with the rest; VO by 15 Dec. **If neither the heroes nor the Rat-Piper are funded**, the third hero slot
 leaves E17 and M4 #8 is dropped.
-| B21 | Hand-prop kit: falchion, pavise, hand-cannon, hod, flail, kettle hat, javelin bundle, sabre, staff, mirror disc, rake, **war-pick** (B4 rules) and **wheel-shield**. Used whenever H3.1 thins or fuses a held item: the item is cut from the mesh and replaced by a bpy prop on the hand bone | 0.3–1.5 m | 100–400 each | Parented to `RightHand` / `LeftHand` | 0 (reuses faction swatches) | P0 |
 
 **Concept iteration:** 2 tries for B12 and any later rank-and-file subject, 3 for heroes and halls (all done). The concept rules and
 faction prompt kits are in kingdom §2.7, clans §12.3 and neutrals §8.2. Every prompt carries the art-doc style suffix and **no** banned
