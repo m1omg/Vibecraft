@@ -66,7 +66,7 @@ def main(argv=None):
     ap.add_argument("--jobs")
     ap.add_argument("--speaker")
     ap.add_argument("--all", action="store_true")
-    ap.add_argument("--model", default="small.en")
+    ap.add_argument("--model", default="medium.en")
     ap.add_argument("--min-ratio", type=float, default=0.6)
     ap.add_argument("--json")
     a = ap.parse_args(argv)

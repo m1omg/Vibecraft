@@ -125,5 +125,11 @@ rec("claypot_hit","ranged","derived",[{"max_ms":800,"fade_out_ms":150,"layers":[
     {"synth":"noise","dur":0.6,"lp":2500,"hp":150,"decay":0.15,"attack":0.01,"gain_db":-11,"offset_ms":20}]}
     for a,b,c in ((1,0,0),(3,2,2),(4,4,3),(5,1,4))],
     "clay pot smash: our bombard_hit debris (Seed Audio) pitched up + Kenney CC0 crack and thump + procedural dust")
+rec("sw_pierce","combat","derived",[{"max_ms":260,"fade_out_ms":70,"layers":[own("combat/sw_slash_%02d.wav"%a,pitch=p,start_ms=st)]}
+    for a,p,st in ((1,1.25,60),(3,1.3,50),(4,1.2,70),(1,1.35,40))],
+    "placeholder: short sharp air cuts derived from our sw_slash takes (Seed Audio), pitched up and shortened")
+rec("vox_death_clans","combat","derived",[{"layers":[own("combat/vox_death_kingdom_%02d.wav"%a,pitch=p)]}
+    for a,p in ((1,0.72),(2,0.7),(3,0.74))],
+    "placeholder until generated: our vox_death_kingdom takes (Seed Audio) pitched down to a deep-chested register")
 json.dump({"_doc":"Recipes for tools/audio/build_layered_sfx.py: CC0 (Kenney, assets_src/audio/cc0/kenney, licence files beside them) and procedural placeholder takes. A take with a 'name' is a kit item: it is written as <id>_<name>_<nn>.wav.","recipes":R},open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)),'layered_recipes.json'),'w'),indent=1)
 print(len(R))

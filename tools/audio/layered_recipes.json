@@ -2036,6 +2036,90 @@
      ]
     }
    ]
+  },
+  {
+   "id": "sw_pierce",
+   "group": "combat",
+   "source": "derived",
+   "note": "placeholder: short sharp air cuts derived from our sw_slash takes (Seed Audio), pitched up and shortened",
+   "takes": [
+    {
+     "max_ms": 260,
+     "fade_out_ms": 70,
+     "layers": [
+      {
+       "own": "combat/sw_slash_01.wav",
+       "pitch": 1.25,
+       "start_ms": 60
+      }
+     ]
+    },
+    {
+     "max_ms": 260,
+     "fade_out_ms": 70,
+     "layers": [
+      {
+       "own": "combat/sw_slash_03.wav",
+       "pitch": 1.3,
+       "start_ms": 50
+      }
+     ]
+    },
+    {
+     "max_ms": 260,
+     "fade_out_ms": 70,
+     "layers": [
+      {
+       "own": "combat/sw_slash_04.wav",
+       "pitch": 1.2,
+       "start_ms": 70
+      }
+     ]
+    },
+    {
+     "max_ms": 260,
+     "fade_out_ms": 70,
+     "layers": [
+      {
+       "own": "combat/sw_slash_01.wav",
+       "pitch": 1.35,
+       "start_ms": 40
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "vox_death_clans",
+   "group": "combat",
+   "source": "derived",
+   "note": "placeholder until generated: our vox_death_kingdom takes (Seed Audio) pitched down to a deep-chested register",
+   "takes": [
+    {
+     "layers": [
+      {
+       "own": "combat/vox_death_kingdom_01.wav",
+       "pitch": 0.72
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "own": "combat/vox_death_kingdom_02.wav",
+       "pitch": 0.7
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "own": "combat/vox_death_kingdom_03.wav",
+       "pitch": 0.74
+      }
+     ]
+    }
+   ]
   }
  ]
 }

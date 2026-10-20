@@ -1,0 +1,12 @@
+{
+ "opening_kingdom": {
+  "piece": "Opening cue, kingdom",
+  "file": "res://assets/audio/music/opening_kingdom.ogg",
+  "length_s": 2.4,
+  "prompt_id": "bible-10.3/Opening cue, kingdom",
+  "job_id": "17222d0d-0ed8-41af-91ce-99ebcdb923a4",
+  "music_length_ms_sent": 10000,
+  "music_length_ms_bible": 10000,
+  "kind": "opening"
+ }
+}

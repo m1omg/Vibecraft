@@ -8,7 +8,14 @@
    "kind": "opening",
    "music_length_ms": 10000,
    "force_instrumental": true,
-   "prompt": "Short instrumental match-opening flourish for a town-militia kingdom: one bright strike of a small town bell, then a quick rising fiddle and hurdy-gurdy figure that climbs five notes and holds, in D major. About 10 seconds with a natural decay; only the first 2.4 seconds are used. No vocals."
+   "prompt": "Short instrumental match-opening flourish for a town-militia kingdom: one bright strike of a small town bell, then a quick rising fiddle and hurdy-gurdy figure that climbs five notes and holds, in D major. About 10 seconds with a natural decay; only the first 2.4 seconds are used. No vocals.",
+   "result": {
+    "file": "assets/audio/music/opening_kingdom.ogg",
+    "job_id": "17222d0d-0ed8-41af-91ce-99ebcdb923a4",
+    "music_length_ms_sent": 10000,
+    "raw": "assets_src/audio/music/opening_kingdom__17222d0d.mp3",
+    "cost_cu": 444.44
+   }
   },
   {
    "id": "kingdom_1",
@@ -17,7 +24,8 @@
    "kind": "track",
    "music_length_ms": 210000,
    "force_instrumental": true,
-   "prompt": "Instrumental fantasy strategy-game score for a stubborn, warm-hearted kingdom of craftsmen who defend their towns with wagons and early gunpowder. A Central European village band gone to war, not a symphony orchestra: hurdy-gurdy drone, bright fiddle melody, hammered dulcimer arpeggios, frame drum and a crisp field snare, two low natural horns, a soft wordless male hum far in the background. D Mixolydian, 92 BPM, proud, sturdy and good-humoured with a hint of melancholy. Melody idea: a short five-note figure that climbs step by step and holds its last two notes. Structure: hurdy-gurdy and dulcimer intro (20 seconds), main theme on fiddle, a marching B section where the horns take the melody over the snare, a lighter interlude of dulcimer and plucked fiddle, the full theme again, then a calm outro that resolves on the tonic. Mid-level dynamics, background music that never overwhelms, no lyrics, no big choir, no brass fanfare."
+   "prompt": "Instrumental fantasy strategy-game score for a stubborn, warm-hearted kingdom of craftsmen who defend their towns with wagons and early gunpowder. A Central European village band gone to war, not a symphony orchestra: hurdy-gurdy drone, bright fiddle melody, hammered dulcimer arpeggios, frame drum and a crisp field snare, two low natural horns, a soft wordless male hum far in the background. D Mixolydian, 92 BPM, proud, sturdy and good-humoured with a hint of melancholy. Melody idea: a short five-note figure that climbs step by step and holds its last two notes. Structure: hurdy-gurdy and dulcimer intro (20 seconds), main theme on fiddle, a marching B section where the horns take the melody over the snare, a lighter interlude of dulcimer and plucked fiddle, the full theme again, then a calm outro that resolves on the tonic. Mid-level dynamics, background music that never overwhelms, no lyrics, no big choir, no brass fanfare.",
+   "status": "not generated: ElevenLabs Music v2.5 measured at about 444 CU per 10 s job on 2026-10-20 (agent audio-sfx), far over the 130 CU music cap"
   },
   {
    "id": "clans_1",
@@ -26,7 +34,8 @@
    "kind": "track",
    "music_length_ms": 210000,
    "force_instrumental": true,
-   "prompt": "Instrumental fantasy strategy-game score for proud, courteous nomad households of the open grasslands. Deep frame drums in a galloping 6/8 over 4/4, struck and bowed bronze gongs, a raspy two-string bowed fiddle carrying the melody, jaw harp pulses, long low bronze horns, a swelling wordless deep overtone chant, hand claps and stamps. D Dorian, 92 BPM, proud, windswept and warm. Melody idea: a falling three-note figure that comes to rest after a held note. Structure: gong swell and jaw-harp intro (20 seconds), fiddle theme over galloping drums, a B section where the horns and the chant swell together, a sparse windy interlude, the theme again with full percussion, a resolving outro on D. Background music, no lyrics, no taiko, no electric guitar, no brass section."
+   "prompt": "Instrumental fantasy strategy-game score for proud, courteous nomad households of the open grasslands. Deep frame drums in a galloping 6/8 over 4/4, struck and bowed bronze gongs, a raspy two-string bowed fiddle carrying the melody, jaw harp pulses, long low bronze horns, a swelling wordless deep overtone chant, hand claps and stamps. D Dorian, 92 BPM, proud, windswept and warm. Melody idea: a falling three-note figure that comes to rest after a held note. Structure: gong swell and jaw-harp intro (20 seconds), fiddle theme over galloping drums, a B section where the horns and the chant swell together, a sparse windy interlude, the theme again with full percussion, a resolving outro on D. Background music, no lyrics, no taiko, no electric guitar, no brass section.",
+   "status": "not generated: ElevenLabs Music v2.5 measured at about 444 CU per 10 s job on 2026-10-20 (agent audio-sfx), far over the 130 CU music cap"
   },
   {
    "id": "opening_clans",
@@ -35,7 +44,8 @@
    "kind": "opening",
    "music_length_ms": 10000,
    "force_instrumental": true,
-   "prompt": "Short instrumental match-opening flourish for proud nomad households: a swelling bronze gong bloom with two long bronze horns calling a falling figure that comes to rest, in D Dorian. About 10 seconds with a natural decay; only the first 2.4 seconds are used. No vocals."
+   "prompt": "Short instrumental match-opening flourish for proud nomad households: a swelling bronze gong bloom with two long bronze horns calling a falling figure that comes to rest, in D Dorian. About 10 seconds with a natural decay; only the first 2.4 seconds are used. No vocals.",
+   "status": "not generated: ElevenLabs Music v2.5 measured at about 444 CU per 10 s job on 2026-10-20 (agent audio-sfx), far over the 130 CU music cap"
   },
   {
    "id": "menu",
@@ -44,7 +54,8 @@
    "kind": "loop",
    "music_length_ms": 105000,
    "force_instrumental": true,
-   "prompt": "Instrumental main-menu theme for an original heroic fantasy strategy game about a town-militia kingdom and proud nomad households. It begins with a lone hurdy-gurdy drone and one soft bronze gong bloom; then a fiddle states a climbing five-note melody and a raspy two-string fiddle answers with a falling one, two cultures meeting. Frame drums enter, then hammered dulcimer and long bronze horns, building to a broad, warm climax at about 1:10, then thinning back to the hurdy-gurdy drone and a gong so it can loop. D Dorian, 80 BPM, hopeful, grand but intimate, no lyrics, no choir, no orchestra."
+   "prompt": "Instrumental main-menu theme for an original heroic fantasy strategy game about a town-militia kingdom and proud nomad households. It begins with a lone hurdy-gurdy drone and one soft bronze gong bloom; then a fiddle states a climbing five-note melody and a raspy two-string fiddle answers with a falling one, two cultures meeting. Frame drums enter, then hammered dulcimer and long bronze horns, building to a broad, warm climax at about 1:10, then thinning back to the hurdy-gurdy drone and a gong so it can loop. D Dorian, 80 BPM, hopeful, grand but intimate, no lyrics, no choir, no orchestra.",
+   "status": "not generated: ElevenLabs Music v2.5 measured at about 444 CU per 10 s job on 2026-10-20 (agent audio-sfx), far over the 130 CU music cap"
   }
  ]
 }

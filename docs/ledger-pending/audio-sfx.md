@@ -22,3 +22,20 @@ Balance at start: 1419.61 CU (2026-10-20, before any job of this agent).
 | Krea Seed Audio 1.0 | `bombard_hit` (O, 4 × 1.0 s) | 68fe935c-021e-4da1-8738-916732a25fb5 | 12.92 CU (see the row above) | OK: 5 impacts, two pairs overlapping (split by hand at 1.19 s and 5.47 s); kept 5, ≤ 1.3 s, 150 ms fade |
 | Krea Seed Audio 1.0 | `slingcart_throw` (O, 3 × 1.2 s) | 331290c8-95da-4b26-8c84-5ed13ca58e4e | 11.26 CU (balance 1276.72 → 1265.46; 6.14 s) | OK: 3 takes (creak, arm whip, thump), kept 3 |
 | Krea Seed Audio 1.0 | `gust_bolt` (O, 4 × 0.6 s) | d0698ba7-6fc2-4526-86ca-7a6725d6b4ab | 9.07 CU (balance 1265.46 → 1256.39; 4.96 s) | USABLE: 3 soft dusty swishes (asked for 4), generated very quiet (peak −35 dBFS) and falling rather than rising in pitch, no clear impact puff; kept 3, normalised (+34 dB). Candidate for a re-roll |
+| Krea Seed Audio 1.0 | `atk_herb_mote` (O, 4 × 0.3 s) | 9ca5758a-b2c0-4537-a379-cbc7d934853a | 7.74 CU (4.26 s at the measured ≈ 1.833 CU/s; it ran together with the music probe, see the next row) | OK: 3 soft leafy thuds (asked for 4), kept 3 |
+| Krea ElevenLabs Music v2.5 | PROBE music: Opening cue, kingdom (10 000 ms, force_instrumental) | 17222d0d-0ed8-41af-91ce-99ebcdb923a4 | **≈ 444.44 CU** (balance 1256.39 → 804.21 = 452.18 CU for this job and `atk_herb_mote`; no other job was logged by either audio agent in that window; preflight had returned no quote) | OK musically (bell strike, rising figure, held chord; 10.03 s, 48 kHz stereo) → `assets/audio/music/opening_kingdom.ogg` (2.4 s, 300 ms fade, −16 LUFS). **STOP: ElevenLabs Music v2.5 through Krea costs ≈ 44 CU per second of music (or a flat ≈ 444 CU per job). All further music was cancelled** |
+
+**Totals for this agent (2026-10-20):** SFX 161.99 CU (15 Seed Audio jobs; cap 170) + music 444.44 CU (1 probe; cap 130) =
+**≈ 606.44 CU, over the 300 CU agent cap by ≈ 306 CU because of the single music probe**. Balance after the last job: 804.21 CU.
+No paid job was submitted after the music charge was seen.
+
+**Measured prices (2026-10-20):**
+- Seed Audio 1.0: billed per second of OUTPUT, ≈ 1.83–1.84 CU/s (9 jobs measured alone or in pairs: 9.26 CU / 5.07 s, 10.00 / 5.46,
+  9.07 / 4.96, 11.26 / 6.14 ...). The model picks the length itself (4.1–9.5 s here) and ignores "about half a second of silence"
+  (gaps were 0.6–1.6 s) and usually returns one take fewer than asked. Effective cost ≈ 2.5–3.5 CU per usable take.
+- ElevenLabs Music v2.5: ≈ 444.44 CU (= 12 000/27) for a 10 s request with `music_length_ms` 10 000. Preflight returns
+  `compute_units: null`. At that rate a 210 s track would cost thousands of CU; the bible §11 music plan is unaffordable on Krea.
+
+**Free sources used instead of paid jobs** (see `assets/audio/CREDITS.md`): Kenney CC0 packs "Impact Sounds" and "RPG Audio"
+(downloaded 2026-10-20 from kenney.nl, licence files in `assets_src/audio/cc0/kenney/`), procedural layers, and variants derived from
+our own generated takes. Recipes: `tools/audio/gen_layered_recipes.py` → `layered_recipes.json` → `build_layered_sfx.py`.
