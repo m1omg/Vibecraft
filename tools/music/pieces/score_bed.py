@@ -4,15 +4,16 @@
 Composer's note. Form (bars of 6/8): intro 1-4 | dialogue I 5-14 | interlude 15-19 | dialogue II 20-27 | settle 28-30.
 The menu theme's two roads, slowed into a tired, swaying 6/8 over a frame-drum heartbeat (lub-dub on each dotted
 quarter). Dialogue I is one period traded between the fiddles: the kingdom fiddle climbs the Wheel from a pickup
-(D-E-F, G, held A), the clans' two-string takes the A and falls with the Gong-Ring but stops open on its held E
-(bar 9); the fiddle climbs the Wheel again on G to the high D and the two-string closes the period with the menu's
-cadence line (D-C-G, A-G-F-E, D). The interlude drops the drone: the dulcimer plays the Wheel's head in sequence
-(C-D-E-F, D-E-F-G) and the lute answers with the Gong-Ring's head (G-F-C, E-D-A) over a bass F-E-G-A, then sings
-the held second B resolving to A. Dialogue II swaps the roads: the two-string climbs the Wheel, the fiddle answers
-with the Gong-Ring in stretto over its held A, and the two lines meet on one D (bar 23, a held unison: the clans
-slide into it, the kingdom steps into it); they close in parallel sixths, the two-string's E a suspension over the
-fiddle's last D. The settle is drone, a last gong and the dulcimer's E-D; the fiddle answers it softly with the
-Gong-Ring's fall (A-G-D), and that D fades across the loop seam, so the drone-only stretch stays short on every cycle.
+(D-E-F, G, held A), the clans' two-string takes the A and falls with the Gong-Ring but stops open on its held E (bar
+9); the fiddle climbs the Wheel again on G to the high D and the two-string closes the period with the menu's cadence
+line (D-C-G, A-G-F-E, D). The interlude drops the drone: the dulcimer plays the Wheel's head in sequence (C-D-E-F,
+D-E-F-G) and the lute answers with the Gong-Ring's head (G-F-C, E-D-A) over a bass F-E-G-A, then sings the held second
+B resolving to A. Dialogue II swaps the roads: the two-string climbs the Wheel, the fiddle answers with the Gong-Ring
+in stretto over its held A, and the two lines meet on one D (bar 23, a held unison: the clans slide into it, the
+kingdom steps into it); they close with the menu's consequent (the turn D-B-C at the top) in sixths, the two-string's
+E a suspension over the fiddle's last D. The settle is drone, a last gong and the dulcimer's E-D; the fiddle answers
+it softly with the Gong-Ring's fall (A-G-D), and that D fades across the loop seam, so the drone-only stretch stays
+short on every cycle.
 Render: python3 tools/music/render.py tools/music/pieces/score_bed.py --length-check
 (The module is score_bed.py so it never shadows the toolkit's score.py; the piece is still named "score".)
 """
@@ -169,11 +170,11 @@ def build():
     vc.swell(B(22), B(25, 1.5), 50, 92, peak=0.7)
     vc.curve(B(26), B(28, 2), 88, 44)
     # together: the fiddle sings the menu's consequent, the two-string falls under it in sixths
-    mel(fid, B(24), "G4:.5 A4:.5 B4:.5 C5:1.5 | D5:1:gu C5:.5 G4:1.5 | A4:1 G4:.5 F4:.5 E4:1:m | D4:4",
+    mel(fid, B(24), "G4:.5 A4:.5 B4:.5 C5:1.5 | D5:1:gu B4:.5 C5:1.5 | A4:1 G4:.5 F4:.5 E4:1:m | D4:4",
         vel=78, dyn="arch")
     fid.swell(B(24), B(27), 80, 112, peak=0.4)
     fid.curve(B(27), B(28, 1.0), 92, 46)
-    mel(two, B(24, 1.5), "C4:1.5 | B3:1 A3:.5 G3:1.5 | C4:1 B3:.5 A3:.5 E3:2.5 D3:6:sd", vel=70, dyn="arch")
+    mel(two, B(24, 1.5), "C4:1.5 | B3:1 D4:.5 E4:1.5 | C4:1 B3:.5 A3:.5 E3:2.5 D3:6:sd", vel=70, dyn="arch")
     two.swell(B(24, 1.5), B(27, 1.5), 82, 100, peak=0.5)
     two.curve(B(27, 1.5), B(28, 1.5), 92, 70)
     two.curve(B(28, 1.5), B(29, 1.5), 70, 36)                       # the last D fades under the dulcimer's E-D
