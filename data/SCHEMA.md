@@ -423,3 +423,52 @@ scenario's map.
 | `players[].groups` | `[{id, role, pos, face, row, spacing?, units, attack_after?, target?}]`: `units` = `[[def, count], ...]` front row first, laid out in rows of `row` facing the point `face`; validated: mobile unit defs, counts > 0 |
 | `role` | `army` (no script), `workers` (idle), `guard` (holds `pos`, defends, assists, regroups), `wave` (waits like a guard, then after `attack_after` s attack-moves at `target` — `hall` = the first enemy structure listed — and keeps hunting the nearest enemy entity) |
 
+
+## 16. Juice data (visual and audio only; the simulation never reads these)
+
+Read by the juice runtime (`src/fx/`, `src/autoload/audio.gd`; docs/architecture.md §11, §12).
+Changing them never changes a match outcome (`tests/unit/test_juice_determinism.gd`).
+
+**`fx_units.json`** — per-entity feel sheets, merged by `FxDefs.sheet(unit)` in this order:
+`defaults` → `grammars.<kingdom|clans|creep|neutral>` → values derived from the def
+(`armor_material[armor_type]` → `material`, `weapon_hint[weapon]` → `weapon`, the projectile
+model → `missile` / `ranged`, `radius / 0.45` → `mass`) → `units.<def_id>` → the def's own
+optional `fx` block; then the `weapons.<weapon>` row fills the keys the unit does not set, and the
+`ranged.<class>` row is copied as `ranged_<key>`.
+
+| Field | Meaning |
+|---|---|
+| `mass` | body mass (knockback ω = clamp(24/√m, 12, 30), ζ, impact weight, fall sound pitch) |
+| `material`, `material_front {material, arc_deg}` | struck material, and the material of hits from inside the frontal arc (a pavise) |
+| `weapon` | weapon class: `slash`, `blunt`, `chop`, `flail`, `pierce`, `grapple`, `claw`, `magic` |
+| `gait`, `stride_len_m`, `bob_amp`, `lean_deg` | locomotion: `biped` banks into turns, `wheeled` does not; m per stride (step dust); cruise lean |
+| `ack`, `nod_deg`, `nod_down_ms`, `nod_up_ms` | order ripple nod and voice-ack style per faction grammar |
+| `stop_zeta`, `stop_squash` | stop plant spring damping and squash |
+| `split`, `pull`, `c1`, `hit_stop_ms` | the anticipation curve of a strike (load share, pull-back, recovery overshoot) and the visual hit-stop |
+| `cone_deg`, `count`, `knock_m`, `ground_ring` | impact spark cone and count multiplier, knockback base (m), blunt ground ring |
+| `whoosh`, `smear` | swing sound family (its peak lands on contact); smear shape `over`, `side`, `thrust` or empty |
+| `reach_m` | optional smear reach beyond the unit radius (default 1.1) |
+| `missiles.<model>` | `ranged` class, `trail` RGBA, `trail_w` m, `hdr`, `launch_sfx` / `hit_sfx` sound families |
+| `ranged.<class>` | `count`, `knock_m`, `sticks` (arrows and javelins stick) |
+| `materials.<m>` | `bursts` `[[kind, count]]` (kinds in `fx_particles.json`), `sound` (material of the hit sound family) |
+
+**`fx_particles.json`** — burst kinds for `ParticlePool` (one pool of one-shot emitters each;
+`GPUParticles3D`, or `CPUParticles3D` on Compatibility): `tex` (FxTextures name or
+`assets/fx/<tex>.png`), `blend` `add|mix|cutout`, `amount` (max particles per burst), `life`
+`[min, max]` s, `speed` `[min, max]` m/s, `spread` (cone half-angle °), `gravity` m/s²,
+`damping`, `size` `[min, max]` m, `size_end` (scale at the end of life), `color`, `color_end`,
+`color_var` (second start colour), `hdr` (emission multiplier; only VFX exceed 1), `spin` rad/s,
+`align` (velocity-aligned streaks), `pool` (emitters).
+
+**`sfx_events.json`** — the Audio director's table. `defaults` and `families.<family>`:
+`onset_ms` / `peak_ms` (measured from the samples), `bus`, `cap` (voices of the family at once),
+`spacing_ms` (minimum gap between starts). `events.<id>`: `bus`, `priority`, `total_cap`, `2d`,
+`layers` `[{family, gain_db, when, pitch {base, per_mass, clamp, jitter}, align
+onset|peak|start, bus, no_cut_ms, priority}]`; `family` is a template or a list of templates
+filled from the call's ctx (`hit_{material}_{weight}`), the first existing one plays; `when` is
+`key`, `!key`, `key>=n`, `key<=n`, `key>n` or `key<n` on the ctx.
+
+**`feel/feel_default.tres`** — the `FeelConstants` resource (`src/fx/feel_constants.gd`): every
+global juice number (time, readability, density governor, motion, locomotion, knockback,
+selection and orders, health bars, camera, audio, text, missiles) with its legal range checked by
+`FeelConstants.validate()`.
