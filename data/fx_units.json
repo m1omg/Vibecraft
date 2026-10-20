@@ -31,14 +31,14 @@
     "siege": {"count": 1.4, "knock_m": 0.18, "sticks": false}
   },
   "missiles": {
-    "arrow": {"ranged": "bow", "trail": [0.95, 0.93, 0.85, 0.55], "trail_w": 0.05},
-    "javelin": {"ranged": "thrown", "trail": [0.95, 0.9, 0.8, 0.5], "trail_w": 0.06},
-    "bullet": {"ranged": "gun", "trail": [1.0, 0.86, 0.55, 0.8], "trail_w": 0.04, "hdr": 2.0},
-    "arcane_bolt": {"ranged": "bolt", "trail": [0.7, 0.85, 1.0, 0.7], "trail_w": 0.12, "hdr": 1.6},
-    "ice_pellet": {"ranged": "bolt", "trail": [0.85, 0.95, 1.0, 0.6], "trail_w": 0.06},
-    "coal_lump": {"ranged": "coal", "trail": [1.0, 0.55, 0.2, 0.7], "trail_w": 0.08, "hdr": 1.6},
-    "bombard_ball": {"ranged": "siege", "trail": [0.55, 0.52, 0.48, 0.5], "trail_w": 0.14},
-    "clay_pot": {"ranged": "siege", "trail": [0.6, 0.5, 0.4, 0.4], "trail_w": 0.12}
+    "arrow": {"ranged": "bow", "trail": [0.95, 0.93, 0.85, 0.55], "trail_w": 0.05, "launch_sfx": "", "hit_sfx": "javelin_hit"},
+    "javelin": {"ranged": "thrown", "trail": [0.95, 0.9, 0.8, 0.5], "trail_w": 0.06, "launch_sfx": "javelin_throw", "hit_sfx": "javelin_hit"},
+    "bullet": {"ranged": "gun", "trail": [1.0, 0.86, 0.55, 0.8], "trail_w": 0.04, "hdr": 2.0, "launch_sfx": "hookgun_fire", "hit_sfx": "bullet_hit"},
+    "arcane_bolt": {"ranged": "bolt", "trail": [0.7, 0.85, 1.0, 0.7], "trail_w": 0.12, "hdr": 1.6, "launch_sfx": "gust_bolt", "hit_sfx": "atk_herb_mote"},
+    "ice_pellet": {"ranged": "bolt", "trail": [0.85, 0.95, 1.0, 0.6], "trail_w": 0.06, "launch_sfx": "", "hit_sfx": "atk_herb_mote"},
+    "coal_lump": {"ranged": "coal", "trail": [1.0, 0.55, 0.2, 0.7], "trail_w": 0.08, "hdr": 1.6, "launch_sfx": "", "hit_sfx": "claypot_hit"},
+    "bombard_ball": {"ranged": "siege", "trail": [0.55, 0.52, 0.48, 0.5], "trail_w": 0.14, "launch_sfx": "bombard_fire", "hit_sfx": "bombard_hit"},
+    "clay_pot": {"ranged": "siege", "trail": [0.6, 0.5, 0.4, 0.4], "trail_w": 0.12, "launch_sfx": "slingcart_throw", "hit_sfx": "claypot_hit"}
   },
   "materials": {
     "metal": {"bursts": [["spark", 7], ["star", 1]], "sound": "metal"},

@@ -180,6 +180,14 @@ static func target_blink_alpha(age: float) -> float:
 	return 0.0
 
 
+## Cuts short the ui-clock marks spawned at `pos` around ui time `t0` (an order marker that
+## yields its slot in the pool of 8): they are removed on the next frame.
+func expire_near(pos: Vector3, t0: float) -> void:
+	for i in live:
+		if _ui[i] == 1 and absf(_t0[i] - t0) < 0.2 and Vector2(_pos[i].x - pos.x, _pos[i].z - pos.z).length() < 0.5:
+			_life[i] = 0.0
+
+
 func count_kind(kind: int) -> int:
 	var n := 0
 	for i in live:

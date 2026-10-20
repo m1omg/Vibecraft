@@ -1,0 +1,654 @@
+{
+ "_doc": "Audio event table (juice bible \u00a74.6, UCA-F3, AUD-02): read by the Audio autoload (src/autoload/audio.gd), never by the simulation. `families`: per sample family (assets/audio/sfx/manifest.json) the measured onset and peak (ms into the file; tools: measured from the wavs), bus, per-family voice cap and minimum start spacing. `events`: a game event maps to layers so code calls Audio.event(id, pos, ctx) once. Layer fields: family (a template or a list of templates, first existing wins; {key} is replaced from ctx), gain_db, when (ctx condition: key, !key, key>=n, key<n), pitch {base, per_mass, clamp, jitter} (jitter from a stateless hash of ctx.seed, never double jitter), align onset|peak|start (onset: the transient lands on the event frame), bus (overrides the family bus), no_cut_ms (cannot be stolen for that long), priority (overrides the event's). Missing families are silent no-ops. `defaults`: values for families not listed.",
+ "defaults": {
+  "onset_ms": 0,
+  "peak_ms": 120,
+  "bus": "SFX",
+  "cap": 4,
+  "spacing_ms": 60
+ },
+ "families": {
+  "atk_herb_mote": {
+   "onset_ms": 118,
+   "peak_ms": 190,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 70
+  },
+  "bombard_fire": {
+   "onset_ms": 20,
+   "peak_ms": 32,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 70
+  },
+  "bombard_hit": {
+   "onset_ms": 39,
+   "peak_ms": 99,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "bullet_hit": {
+   "onset_ms": 30,
+   "peak_ms": 48,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "bullet_hit_earth": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "bullet_hit_flesh": {
+   "onset_ms": 95,
+   "peak_ms": 145,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "bullet_hit_metal": {
+   "onset_ms": 10,
+   "peak_ms": 25,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "bullet_hit_wood": {
+   "onset_ms": 15,
+   "peak_ms": 20,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "claypot_hit": {
+   "onset_ms": 0,
+   "peak_ms": 10,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "fall_armoured": {
+   "onset_ms": 0,
+   "peak_ms": 20,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 80
+  },
+  "fall_huge": {
+   "onset_ms": 0,
+   "peak_ms": 22,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 80
+  },
+  "fall_light": {
+   "onset_ms": 0,
+   "peak_ms": 5,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 80
+  },
+  "gust_bolt": {
+   "onset_ms": 65,
+   "peak_ms": 243,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 70
+  },
+  "hit_flesh_h": {
+   "onset_ms": 90,
+   "peak_ms": 280,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "hit_flesh_l": {
+   "onset_ms": 82,
+   "peak_ms": 171,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "hit_metal_h": {
+   "onset_ms": 77,
+   "peak_ms": 128,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "hit_metal_l": {
+   "onset_ms": 25,
+   "peak_ms": 97,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "hit_sub": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "Sub",
+   "cap": 1,
+   "spacing_ms": 250
+  },
+  "hit_wood_h": {
+   "onset_ms": 0,
+   "peak_ms": 42,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "hit_wood_l": {
+   "onset_ms": 25,
+   "peak_ms": 40,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "hookgun_fire": {
+   "onset_ms": 19,
+   "peak_ms": 42,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 70
+  },
+  "javelin_hit": {
+   "onset_ms": 30,
+   "peak_ms": 85,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "javelin_hit_earth": {
+   "onset_ms": 0,
+   "peak_ms": 5,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "javelin_hit_flesh": {
+   "onset_ms": 110,
+   "peak_ms": 195,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "javelin_hit_metal": {
+   "onset_ms": 10,
+   "peak_ms": 85,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "javelin_hit_wood": {
+   "onset_ms": 0,
+   "peak_ms": 55,
+   "bus": "Combat",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "javelin_throw": {
+   "onset_ms": 55,
+   "peak_ms": 128,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 70
+  },
+  "slingcart_throw": {
+   "onset_ms": 275,
+   "peak_ms": 398,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 70
+  },
+  "sw_blunt": {
+   "onset_ms": 115,
+   "peak_ms": 231,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 50
+  },
+  "sw_pierce": {
+   "onset_ms": 5,
+   "peak_ms": 16,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 50
+  },
+  "sw_slash": {
+   "onset_ms": 56,
+   "peak_ms": 80,
+   "bus": "Combat",
+   "cap": 3,
+   "spacing_ms": 50
+  },
+  "ui_click_clans": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_click_kingdom": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_disabled_clans": {
+   "onset_ms": 0,
+   "peak_ms": 3,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_disabled_kingdom": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_error_clans": {
+   "onset_ms": 0,
+   "peak_ms": 1,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_error_kingdom": {
+   "onset_ms": 0,
+   "peak_ms": 120,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_order_clans_ability": {
+   "onset_ms": 0,
+   "peak_ms": 35,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_order_clans_attack": {
+   "onset_ms": 0,
+   "peak_ms": 45,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_order_clans_move": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_order_clans_patrol": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_order_kingdom_ability": {
+   "onset_ms": 28,
+   "peak_ms": 28,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_order_kingdom_attack": {
+   "onset_ms": 0,
+   "peak_ms": 45,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_order_kingdom_move": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_order_kingdom_patrol": {
+   "onset_ms": 0,
+   "peak_ms": 85,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_select_clans_bundle": {
+   "onset_ms": 2,
+   "peak_ms": 142,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_select_clans_double": {
+   "onset_ms": 0,
+   "peak_ms": 60,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_select_clans_single": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_select_clans_wave": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_select_kingdom_bundle": {
+   "onset_ms": 0,
+   "peak_ms": 45,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_select_kingdom_double": {
+   "onset_ms": 0,
+   "peak_ms": 70,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_select_kingdom_single": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "ui_select_kingdom_wave": {
+   "onset_ms": 0,
+   "peak_ms": 0,
+   "bus": "UI",
+   "cap": 2,
+   "spacing_ms": 60
+  },
+  "vox_death_clans": {
+   "onset_ms": 78,
+   "peak_ms": 558,
+   "bus": "Combat",
+   "cap": 2,
+   "spacing_ms": 250
+  },
+  "vox_death_kingdom": {
+   "onset_ms": 57,
+   "peak_ms": 400,
+   "bus": "Combat",
+   "cap": 2,
+   "spacing_ms": 250
+  }
+ },
+ "events": {
+  "melee_hit": {
+   "bus": "Combat",
+   "priority": 60,
+   "total_cap": 10,
+   "layers": [
+    {
+     "family": [
+      "hit_{material}_{weight}",
+      "hit_flesh_{weight}"
+     ],
+     "gain_db": -4,
+     "align": "onset",
+     "pitch": {
+      "base": 1.08,
+      "per_mass": -0.06,
+      "clamp": [
+       0.85,
+       1.08
+      ],
+      "jitter": 0.05
+     }
+    },
+    {
+     "family": "hit_sub",
+     "gain_db": -12,
+     "when": "mass>=2.5",
+     "bus": "Sub"
+    },
+    {
+     "family": "hit_metal_h",
+     "gain_db": -2,
+     "when": "clash",
+     "align": "onset",
+     "pitch": {
+      "base": 1.0,
+      "jitter": 0.03
+     }
+    },
+    {
+     "family": "hit_wood_l",
+     "gain_db": -2,
+     "when": "clash",
+     "align": "onset",
+     "pitch": {
+      "base": 1.0,
+      "jitter": 0.03
+     }
+    },
+    {
+     "family": [
+      "hit_{material}_h",
+      "hit_flesh_h"
+     ],
+     "gain_db": -1,
+     "when": "kill",
+     "align": "onset",
+     "pitch": {
+      "base": 0.95
+     },
+     "no_cut_ms": 250,
+     "priority": 70
+    }
+   ]
+  },
+  "missile_hit": {
+   "bus": "Combat",
+   "priority": 55,
+   "total_cap": 8,
+   "layers": [
+    {
+     "family": [
+      "{hit_sfx}_{material}",
+      "{hit_sfx}",
+      "hit_{material}_l",
+      "hit_flesh_l"
+     ],
+     "gain_db": -6,
+     "align": "onset",
+     "pitch": {
+      "base": 1.0,
+      "jitter": 0.05
+     }
+    },
+    {
+     "family": [
+      "hit_{material}_h",
+      "hit_flesh_h"
+     ],
+     "gain_db": -2,
+     "when": "kill",
+     "align": "onset",
+     "pitch": {
+      "base": 0.95
+     },
+     "no_cut_ms": 250,
+     "priority": 70
+    }
+   ]
+  },
+  "missile_stick": {
+   "bus": "Combat",
+   "priority": 30,
+   "layers": [
+    {
+     "family": [
+      "{hit_sfx}_earth",
+      "javelin_hit_earth"
+     ],
+     "gain_db": -12,
+     "align": "onset",
+     "pitch": {
+      "base": 1.0,
+      "jitter": 0.06
+     }
+    }
+   ]
+  },
+  "missile_release": {
+   "bus": "Combat",
+   "priority": 50,
+   "layers": [
+    {
+     "family": "{launch_sfx}",
+     "gain_db": -8,
+     "align": "onset",
+     "pitch": {
+      "base": 1.0,
+      "jitter": 0.04
+     }
+    }
+   ]
+  },
+  "siege_impact": {
+   "bus": "Combat",
+   "priority": 75,
+   "layers": [
+    {
+     "family": [
+      "{hit_sfx}",
+      "bombard_hit"
+     ],
+     "gain_db": -3,
+     "align": "onset",
+     "pitch": {
+      "base": 1.0,
+      "jitter": 0.04
+     },
+     "no_cut_ms": 300
+    },
+    {
+     "family": "hit_sub",
+     "gain_db": -8,
+     "bus": "Sub"
+    }
+   ]
+  },
+  "bolt_impact": {
+   "bus": "Combat",
+   "priority": 45,
+   "layers": [
+    {
+     "family": [
+      "{hit_sfx}",
+      "atk_herb_mote"
+     ],
+     "gain_db": -10,
+     "align": "onset",
+     "pitch": {
+      "base": 1.0,
+      "jitter": 0.06
+     }
+    }
+   ]
+  },
+  "unit_death": {
+   "bus": "Combat",
+   "priority": 65,
+   "layers": [
+    {
+     "family": "vox_death_{faction}",
+     "gain_db": -6,
+     "align": "onset",
+     "pitch": {
+      "base": 1.0,
+      "jitter": 0.04
+     },
+     "no_cut_ms": 400
+    }
+   ]
+  },
+  "body_fall": {
+   "bus": "Combat",
+   "priority": 50,
+   "layers": [
+    {
+     "family": "fall_huge",
+     "when": "mass>=2.5",
+     "gain_db": -6,
+     "pitch": {
+      "base": 1.1,
+      "per_mass": -0.1,
+      "clamp": [
+       0.8,
+       1.1
+      ]
+     }
+    },
+    {
+     "family": "fall_armoured",
+     "when": "armoured",
+     "gain_db": -6,
+     "pitch": {
+      "base": 1.1,
+      "per_mass": -0.1,
+      "clamp": [
+       0.8,
+       1.1
+      ]
+     }
+    },
+    {
+     "family": "fall_light",
+     "when": "!armoured",
+     "gain_db": -8,
+     "pitch": {
+      "base": 1.1,
+      "per_mass": -0.1,
+      "clamp": [
+       0.8,
+       1.1
+      ]
+     }
+    }
+   ]
+  },
+  "whoosh": {
+   "bus": "Combat",
+   "priority": 40,
+   "layers": [
+    {
+     "family": "{family}",
+     "gain_db": -10,
+     "align": "start",
+     "pitch": {
+      "base": 1.08,
+      "per_mass": -0.06,
+      "clamp": [
+       0.85,
+       1.08
+      ],
+      "jitter": 0.04
+     }
+    }
+   ]
+  }
+ }
+}

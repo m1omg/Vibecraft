@@ -34,6 +34,7 @@ var orders: OrderMarkers
 var missiles: MissileFx
 var circles: SelectionCircles
 var bars: HealthBars
+var selected: Array = []                 ## the local selection (Events.selection_changed)
 var tier: int = Tier.CALM
 var intensity: float = 0.0
 var hits_this_frame: int = 0
@@ -160,8 +161,9 @@ func _on_voice(unit: Node, category: String, _length: float) -> void:
 
 
 func _on_selection(units: Array) -> void:
+	selected = units.duplicate()
 	if text != null:
-		text.selected = units.duplicate()
+		text.selected = selected
 
 
 # --- per frame -----------------------------------------------------------------------------------
