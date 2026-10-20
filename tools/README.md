@@ -18,6 +18,7 @@ paid generation API.
 | `vc_bpy.py` | (library) | shared Blender helpers: import/export, actions/NLA, retarget math |
 | `preview/` | Godot | tiny separate Godot project used by `render_preview.py` (`inspect.gd`, `turntable.gd`) |
 | `tests/` | bpy / bash | synthetic rigged characters and props, retarget checker, `run_all.sh` end-to-end test, `test_autorig.sh` |
+| `music/` | python3 + fluidsynth + ffmpeg | **composed music**: `score.py` composition API, `synths.py` numpy instruments, `palette.py`, `render.py` stems → mix → master → Ogg (see "Music toolkit") |
 
 `bpy` = Blender as a Python module: `/opt/bpyenv/v313/bin/python` (bpy 5.2 LTS, Pillow, numpy).
 The bpy tools also work as `blender -b -P tool.py -- <args>`. Every tool has `--help`, prints a
@@ -490,6 +491,27 @@ re-imported: meshes, tris, actions, images).
 generator for a flat, saturated, unused colour on the team-coloured parts. A face becomes a team
 face when the mean mask value at its corners and centre exceeds `--team-threshold` (0.5); the JSON
 reports `texel_coverage`, `team_faces` and `team_face_fraction`.
+
+## Music toolkit (`tools/music/`)
+
+The game's music is composed in Python and rendered offline, with no paid generation. A piece is a module in
+`tools/music/pieces/` whose `build()` returns a `score.Piece` (modal harmony, our motifs with transforms, sections,
+articulations, ornaments, drum grids, CC11 phrasing, seeded humanisation). `render.py` renders one stem per track
+(FluidSynth with the MIT-licensed FluidR3_GM soundfont, or the numpy gong, bell, hurdy-gurdy, jaw harp, chant,
+frame drum and claps of `synths.py`), mixes them with ffmpeg (EQ, pan, a generated room via `afir`, bus
+compression), masters to -16 LUFS / -1 dBTP and writes Ogg Vorbis q6 48 kHz. It also writes a spectrogram, a piano
+roll and a JSON report of the checks:
+
+```bash
+python3 tools/music/render.py tools/music/pieces/style_kingdom.py                    # style test
+python3 tools/music/render.py PIECE.py --out assets/audio/music/clans_1.ogg --length-check
+python3 tools/music/render.py PIECE.py --out assets/audio/music/menu.ogg --loop --xfade 3
+python3 tools/music/render.py PIECE.py --out assets/audio/music/opening_clans.ogg --trim 2.4
+bash tools/music/test_determinism.sh       # byte-identical MIDI, stems and Ogg across two clean renders
+```
+
+The tuned band per faction lives in `tools/music/palette.py` (`gain_db` = dB relative to the melody). The full
+guide is `tools/music/README.md`.
 
 ## Tests
 ```bash
