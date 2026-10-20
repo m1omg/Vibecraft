@@ -174,6 +174,49 @@ func test_guards_defend_their_base() -> void:
 		assert_lt(Grid.flat_dist(u.pos, guard["slots"][i]), BattlefieldScenario.POST_EPS + 1.5, "%s back at its post" % u.def_id)
 
 
+## Creep camps fight back: hit one creep and its camp mates join in.
+func test_creeps_fight_back() -> void:
+	var r := _headless()
+	var w: World = r[0]
+	var b: BattlefieldScenario = r[1]
+	var camp_id := str((Defs.scenario(SCENARIO)["camps"] as Array)[1])
+	var creeps := w.creeps.camp_members(camp_id)
+	assert_true(creeps.size() >= 3, "camp %s spawned" % camp_id)
+	var gunner: Unit = null
+	for u in b.members(b.group("army", 0)):
+		if u.def_id == "kingdom_hookgunner":
+			gunner = u
+			break
+	gunner.teleport(creeps[0].pos + Vector3(0.0, 0.0, -7.5))
+	w.issue({"type": "attack", "player": 0, "units": [gunner.id], "target": creeps[0].id})
+	var engaged := 0
+	for i in 150:
+		w.step()
+	for c in creeps:
+		if c.alive and c.combat_target_id() == gunner.id:
+			engaged += 1
+	assert_true(engaged >= 2, "the camp answers together (%d engaged)" % engaged)
+	assert_lt(gunner.hp, gunner.max_hp, "the creeps hit back")
+
+
+## A player reduced to buildings and workers cannot fight back (no production here): the Tormai
+## guards leave their post and go to finish it.
+func test_guards_hunt_a_defenceless_player() -> void:
+	var r := _headless()
+	var w: World = r[0]
+	var b: BattlefieldScenario = r[1]
+	for u in w.units_of_player(0):
+		if u.is_mobile() and not u.is_worker:
+			u.take_damage(u.hp + 1.0)
+	for i in 30:
+		w.step()
+	var guard := b.group("guard", 1)
+	var hall := w.get_unit(b.structures[0])
+	for u in b.members(guard):
+		assert_true(u.current != null and u.current.type == Order.Type.ATTACK_MOVE, "%s on the hunt" % u.def_id)
+		assert_lt(Grid.flat_dist(u.current.target_pos, hall.pos), 40.0, "%s heads for the Brennish base" % u.def_id)
+
+
 ## Losing everything is a defeat: the result names the Tormai and the match ends once.
 func test_annihilation_defeat() -> void:
 	var r := _headless()
@@ -204,10 +247,35 @@ func test_three_minutes_of_battle_then_victory() -> void:
 	var wave := b.group("warband", 1)
 	var p0_start := b.entity_count(0)
 	var p1_start := b.entity_count(1)
+	# the card offers unit orders for units, not for a building alone
+	var sel: Selection = main.selection
+	var card: CommandCard = main.hud.card
+	sel.select_units([w.get_unit(b.structures[0])])
+	assert_true(card.buttons[0].disabled and card.buttons[3].disabled, "no unit orders for the hall")
+	sel.select_units(b.members(b.group("army", 0)))
+	assert_false(card.buttons[3].disabled, "unit orders for the army")
+	assert_eq(card.buttons[3].text, "Attack\n[A]", "Attack shows its key")
+	var camera: RtsCamera = main.camera
+	var spaced := false
 	for i in BUSY_TICKS:
 		w.step()
 		if i % 60 == 0:
 			await tree.process_frame        # views, HUD and fx run their _process too
+		if not spaced and wave["launched"]:
+			spaced = true
+			await tree.process_frame
+			camera.jump_to(Vector3(96, 0, 96))
+			var ev := InputEventKey.new()
+			ev.physical_keycode = KEY_SPACE
+			ev.keycode = KEY_SPACE
+			ev.pressed = true
+			tree.root.push_input(ev, true)
+			ev = ev.duplicate()
+			ev.pressed = false
+			tree.root.push_input(ev, true)
+			assert_lt(Grid.flat_dist(camera.focus, BattlefieldScenario._centre(b.members(wave))), 8.0,
+				"Space jumps to the war-band alert")
+			assert_eq(main.hud.notice.text, Defs.text("notify_warband_marching"), "the HUD shows the warning")
 	assert_true(wave["launched"], "the war-band marched")
 	assert_eq(b.members(wave).size(), 0, "the war-band was destroyed within 3 minutes")
 	assert_lt(b.entity_count(1), p1_start, "the Tormai lost units")

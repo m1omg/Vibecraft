@@ -12,8 +12,9 @@ extends SimSystem
 ##     post and attack-move at enemy units that come within `defend_radius` of their post or
 ##     an own structure, then regroup; a `wave` group waits like a guard group, attack-moves at
 ##     the enemy hall after `attack_after` seconds and then keeps hunting the nearest enemy
-##     entity; idle group mates join a member that is fighting (within `assist_radius`);
-##     `workers` idle (no economy in this playtest)
+##     entity; idle group mates join a member that is fighting (within `assist_radius`); once
+##     the enemy has no fighting unit left (no production here) every group hunts its last
+##     structures and workers; `workers` idle (no economy in this playtest)
 ##   - victory "annihilation": a player with no living unit or structure is defeated
 ##     (PlayerState.defeated); when one side is left `result` is set and `ended` +
 ##     Events.match_ended are emitted once
@@ -292,6 +293,9 @@ func _guard(g: Dictionary) -> void:
 	if units.is_empty():
 		return
 	var pid := int(g["player"])
+	if not _enemy_has_army(pid):
+		_hunt(pid, units)        # nothing left that could attack: finish the enemy off
+		return
 	if _assist(units):
 		g["quiet_since"] = world.tick_count
 		return
@@ -320,13 +324,28 @@ func _wave(g: Dictionary) -> void:
 			_attack_move(pid, units, goal)
 		_announce(pid, _centre(units))
 		return
-	# marching: idle members hunt the nearest enemy entity
-	var idle := _idle(units, false)
+	_hunt(pid, units)
+
+
+## Idle members attack-move at the nearest enemy entity (structures included).
+func _hunt(pid: int, units: Array[Unit]) -> void:
+	var idle := _idle(units, true)
 	if idle.is_empty():
 		return
 	var t := _nearest_enemy(pid, _centre(idle), false)
 	if t != null:
 		_attack_move(pid, idle, t.pos)
+
+
+## Does any enemy player still have a mobile unit with a weapon that is not a worker? Without
+## production (this playtest) a side reduced to buildings and workers cannot fight back, so the
+## AI's guards go and finish it instead of waiting forever.
+func _enemy_has_army(pid: int) -> bool:
+	for u in world.unit_list:
+		if u.alive and u.is_mobile() and not u.is_worker and u.can_attack() \
+				and u.player_id < PlayerState.NEUTRAL_HOSTILE and world.is_enemy(pid, u.player_id):
+			return true
+	return false
 
 
 ## Every other scenario player hears that the wave marches; Space jumps to it.

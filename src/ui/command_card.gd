@@ -58,7 +58,7 @@ static func hotkey_label(slot: int) -> String:
 
 
 func refresh() -> void:
-	var active := commands != null and not selection.selected_ids().is_empty()
+	var active := commands != null and commands.has_orderable()
 	for i in SLOTS:
 		var b := buttons[i]
 		var cmd: String = CommandInput.CARD.get(i, "")

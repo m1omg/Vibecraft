@@ -76,7 +76,7 @@ static func hotkey_action(slot: int) -> String:
 ## the game is paused (no orders while paused; the HUD stays clickable).
 func activate_card(slot: int, shift: bool = false) -> bool:
 	var cmd: String = CARD.get(slot, "")
-	if cmd.is_empty() or selection.selected_ids().is_empty() or not can_process():
+	if cmd.is_empty() or not has_orderable() or not can_process():
 		return false
 	if TARGETED.has(cmd):
 		_set_targeting(cmd)
@@ -95,6 +95,17 @@ func command_ground(ground: Vector3, shift: bool = false) -> void:
 			_set_targeting("")
 		return
 	_issue({"type": "smart", "pos": ground, "queue": shift})
+
+
+## True when the selection holds an own mobile unit (the unit card applies; structures alone
+## have no Move / Stop / Hold / Attack / Patrol).
+func has_orderable() -> bool:
+	if selection == null:
+		return false
+	for u in selection.selected:
+		if u.alive and u.player_id == player_id and u.is_mobile():
+			return true
+	return false
 
 
 func cancel_targeting() -> void:
