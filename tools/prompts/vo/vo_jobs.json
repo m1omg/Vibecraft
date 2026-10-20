@@ -1,0 +1,25 @@
+[
+ {
+  "date": "2026-10-20",
+  "job_id": "10192392-602c-4eb3-817d-d2a712c8db67",
+  "speaker": "hodman",
+  "category": "what",
+  "lines": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "model_id": "eleven_v4",
+  "prompt": "[wry, brisk] Mm? Mind the mortar.\n\n[long pause]\n\nThirty years. One Agnes.\n[pause]\nLime in my ears.\n\nWanting a wall, then?",
+  "chars": 121,
+  "cost": 8.963,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/hodman/what_10192392.mp3",
+  "note": "PROBE: separators [long pause] / [pause] / blank line; 121 chars",
+  "url": "https://app-uploads.krea.ai/audio/dc0cf5b7-ef44-4e01-b2c0-7521954954e1.mp3",
+  "tier": "probe",
+  "result": "split 4/4 correct (ASR-checked); what_01 1.39 s, what_03 1.38 s, what_04 1.11 s shipped; what_02 \"Thirty years. One Agnes.\" 2.4 s REJECTED (over 1.4 s at atempo 1.15)"
+ }
+]

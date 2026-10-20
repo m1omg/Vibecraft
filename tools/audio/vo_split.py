@@ -256,6 +256,10 @@ def run(raw, names=None, expect=None, out_dir=None, max_s=None, post="", tail=0.
             seg = trim(x[a * HOP: b * HOP], noise_db)
             report["lines"].append({"n": i + 1, "start": round(a * HOP / SR, 2), "raw_s": round(len(seg) / SR, 3)})
         return report
+    max_s_list = None
+    if max_s is not None:
+        max_s_list = list(max_s) if isinstance(max_s, (list, tuple)) else [max_s] * len(segs)
+        max_s_list += [max_s_list[-1] if max_s_list else None] * max(0, len(segs) - len(max_s_list))
     for i, (a, b) in enumerate(segs):
         name = names[i] if names and i < len(names) else f"line_{i + 1:02d}"
         row = {"n": i + 1, "name": name, "start": round(a * HOP / SR, 2)}
@@ -265,22 +269,24 @@ def run(raw, names=None, expect=None, out_dir=None, max_s=None, post="", tail=0.
             continue
         seg = trim(x[a * HOP: b * HOP], noise_db)
         row["raw_s"] = round(len(seg) / SR, 3)
-        if max_gap:
-            seg = tighten(seg, noise_db, max_gap)
+        gap_i = max_gap[i] if isinstance(max_gap, (list, tuple)) else max_gap
+        cap = max_s_list[i] if max_s_list else None
+        if gap_i:
+            seg = tighten(seg, noise_db, gap_i)
             row["tight_s"] = round(len(seg) / SR, 3)
         tempo = 1.0
         y, l = process_line(seg, post, tail, noise_db, tempo, lufs, max_tempo)
         dur = len(y) / SR
         for _ in range(4):  # padding and fades do not scale with atempo, so converge in a few steps
-            if not max_s or dur <= max_s or tempo >= max_tempo:
+            if not cap or dur <= cap or tempo >= max_tempo:
                 break
-            tempo = min(max_tempo, tempo * dur / max_s * 1.015)
+            tempo = min(max_tempo, tempo * dur / cap * 1.015)
             y, l = process_line(seg, post, tail, noise_db, tempo, lufs, max_tempo)
             dur = len(y) / SR
         row.update({"tempo": round(tempo, 3), "final_s": round(dur, 3), "lufs_in": round(l, 1),
                     "peak_dbfs": round(20 * np.log10(np.max(np.abs(y)) + 1e-12), 1)})
-        if max_s and dur > max_s:
-            row["status"] = f"REJECTED (over {max_s} s at atempo {max_tempo})"
+        if cap and dur > cap:
+            row["status"] = f"REJECTED (over {cap} s at atempo {max_tempo})"
         else:
             path = os.path.join(out_dir, name + ".ogg")
             export_ogg(y, path, quality)

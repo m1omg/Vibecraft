@@ -1,0 +1,1248 @@
+{
+ "_doc": "Voice script of record for the slice (art bible 8.2 counts). Every line here is original and was checked against art bible 8.1 (word budgets, faction vocabulary, one tic per speaker, the IP trap list) and ip-safety 2.2. tools/audio/vo_tool.py builds the TTS prompts, the cost table, docs/design/voice-lines.md and assets/audio/voice/manifest.json from this file. Category order inside 'lines' is the file order (<category>_<nn>.ogg, nn from 01); annoyed lines play in order and the last one is the punchline. Speaker 'tags' are one short eleven_v4 audio tag per request, by category group (ack = what and yes); one tag per request because the tags are billed per character like the text (2/27 CU each).",
+ "caps": {
+  "ready": [
+   8,
+   3.3
+  ],
+  "what": [
+   4,
+   1.4
+  ],
+  "yes": [
+   4,
+   1.4
+  ],
+  "attack": [
+   4,
+   1.6
+  ],
+  "warcry": [
+   5,
+   2.0
+  ],
+  "annoyed": [
+   16,
+   7.0
+  ],
+  "built": [
+   8,
+   3.3
+  ],
+  "mech": [
+   8,
+   3.3
+  ],
+  "need_mana": [
+   4,
+   1.8
+  ],
+  "pack_full": [
+   4,
+   1.8
+  ],
+  "ab_q": [
+   4,
+   1.8
+  ],
+  "ab_w": [
+   4,
+   1.8
+  ],
+  "ab_e": [
+   4,
+   1.8
+  ],
+  "ultimate_shout": [
+   4,
+   2.0
+  ],
+  "levelup_a": [
+   8,
+   3.3
+  ],
+  "levelup_6": [
+   8,
+   3.3
+  ],
+  "rival": [
+   8,
+   3.3
+  ],
+  "death_word": [
+   6,
+   2.5
+  ],
+  "advisor": [
+   11,
+   4.4
+  ]
+ },
+ "speakers": {
+  "hodman": {
+   "faction": "kingdom",
+   "name": "Hodman (also the Flail Levy)",
+   "role": "worker",
+   "def_ids": [
+    "kingdom_hodman",
+    "kingdom_flail_levy"
+   ],
+   "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+   "voice_name": "Callum (preset)",
+   "casting": "bible 8.3",
+   "tic": "Bills the player by the click; his hod is called Agnes.",
+   "post": "rubberband=pitch=0.97:formant=preserved,equalizer=f=250:t=q:w=1:g=2,equalizer=f=4000:t=q:w=1:g=-2",
+   "tags": {
+    "ack": "[wry]",
+    "ready": "[wry]",
+    "attack": "[shouts]",
+    "warcry": "[shouts]",
+    "annoyed": "[deadpan]",
+    "built": "[satisfied]",
+    "mech": "[shouts]"
+   },
+   "source": "bible 8.6 (finished lines); 'Signed, sealed and plastered' not used (kingdom 3.3 VO lint rejects 'signed, sealed...')",
+   "lines": {
+    "ready": [
+     "Hodman, on the ledger. Agnes, say hello."
+    ],
+    "what": [
+     "Mm? Mind the mortar.",
+     "Thirty years. One Agnes.",
+     "Lime in my ears.",
+     "Wanting a wall, then?"
+    ],
+    "yes": [
+     "On the ledger.",
+     "Lifting with the knees.",
+     "Slow and square.",
+     "Your coin, your wall."
+    ],
+    "attack": [
+     "This is extra, mind.",
+     "Flail's out, heads down!",
+     "Right. Overtime it is."
+    ],
+    "warcry": [
+     "OFF OUR BOARDS!"
+    ],
+    "annoyed": [
+     "That's a click. I'm writing it down.",
+     "Another click. Guild rate's a copper a click.",
+     "We're at half a silver. Agnes is impressed.",
+     "Agnes says you've got the hands of a pickpocket.",
+     "Right. That's a full silver. Agnes is drawing up the invoice. She has lovely handwriting."
+    ],
+    "built": [
+     "Raised, roofed, and only slightly crooked."
+    ],
+    "mech": [
+     "Horn's blowing! Straw off, iron on!",
+     "Flail's on the hook. Agnes, where were we?"
+    ]
+   },
+   "notes": {
+    "attack": "spoken as the Flail Levy",
+    "mech": "01 = arm (Levy Horn, Take Up the Flail); 02 = release (Lay Down Flails)"
+   }
+  },
+  "pavisier": {
+   "faction": "kingdom",
+   "name": "Pavisier",
+   "role": "infantry",
+   "def_ids": [
+    "kingdom_pavisier"
+   ],
+   "voice_id": "TX3LPaxmHKxFdv7VOQHJ",
+   "voice_name": "Liam (preset)",
+   "casting": "bible 8.3",
+   "tic": "Proud of the wheel he painted on his pavise, badly.",
+   "post": "acompressor=threshold=-20dB:ratio=2.5:attack=5:release=80:makeup=2",
+   "tags": {
+    "ack": "[earnest]",
+    "ready": "[proud]",
+    "attack": "[shouts]",
+    "warcry": "[shouts]",
+    "annoyed": "[earnest]",
+    "mech": "[earnest]"
+   },
+   "source": "bible 8.7 (finished lines)",
+   "lines": {
+    "ready": [
+     "I brought the big shield. They're all big."
+    ],
+    "what": [
+     "Wall here!",
+     "Shield's the tall bit.",
+     "Point me somewhere.",
+     "Mind the wet paint."
+    ],
+    "yes": [
+     "Boards up, feet forward.",
+     "Step and plant.",
+     "Carrying the wall over.",
+     "Where you point."
+    ],
+    "attack": [
+     "Shield first, sharp second!",
+     "Wall, forward!",
+     "Square into them!"
+    ],
+    "warcry": [
+     "HOLD THE BOARDS!"
+    ],
+    "annoyed": [
+     "You're knocking on a wall. Walls don't open.",
+     "I painted that wheel myself. Took three goes.",
+     "The spokes are uneven because the brush was uneven.",
+     "My nan says it's the best wheel in Brennmark. She's biased. And short-sighted.",
+     "…Fine. I'll repaint it. Happy? No? Me neither."
+    ],
+    "mech": [
+     "Pavise set. Shoot all you like.",
+     "Wall's portable again."
+    ]
+   },
+   "notes": {
+    "mech": "01 = Plant Pavise on; 02 = off"
+   }
+  },
+  "hookgunner": {
+   "faction": "kingdom",
+   "name": "Hookgunner",
+   "role": "ranged (faction standout, 7 annoyed)",
+   "def_ids": [
+    "kingdom_hookgunner"
+   ],
+   "voice_id": "SOYHLrjzK2X1ezoPC6cr",
+   "voice_name": "Harry (preset)",
+   "casting": "bible 8.3",
+   "tic": "Slightly deaf from gunfire: mishears orders (repeats them wrong, then goes anyway).",
+   "post": "highpass=f=300,lowpass=f=5000,acompressor=threshold=-20dB:ratio=2:attack=5:release=80",
+   "tags": {
+    "ack": "[loud]",
+    "ready": "[loud]",
+    "attack": "[loud]",
+    "warcry": "[shouts]",
+    "annoyed": "[confused]",
+    "mech": "[loud]"
+   },
+   "source": "new (this pass); some ready/attack wording from the kingdom 3.2 pool",
+   "lines": {
+    "ready": [
+     "Match lit, barrel clean. Did someone speak?"
+    ],
+    "what": [
+     "Say again? Ringing.",
+     "Who's whispering?",
+     "Speak into this ear.",
+     "Hm? Missed that."
+    ],
+    "yes": [
+     "Walk the goat? Going.",
+     "Left? Right. Going.",
+     "Bake a cake? Fine.",
+     "Moving. Somewhere."
+    ],
+    "attack": [
+     "Hook down. Fire!",
+     "Cover your ears, lads!",
+     "That lot? Bang!"
+    ],
+    "warcry": [
+     "WHAT? FIRE EVERYTHING!"
+    ],
+    "annoyed": [
+     "What? You'll have to click louder.",
+     "The guild gave me an ear-trumpet. I've been using it as a powder funnel.",
+     "Mother writes to me now. Big letters. Very big letters.",
+     "Her last letter just said 'COME HOME', across three pages.",
+     "I wrote back, 'WHAT?' Took me four pages.",
+     "Now she's coming here. With Father's old hookgun.",
+     "His is louder than mine. That's where I get it from."
+    ],
+    "mech": [
+     "Hook set. Everybody hold your ears."
+    ]
+   },
+   "notes": {
+    "mech": "the first Braced Shot plant after a move order (at most 1 per 20 s)"
+   }
+  },
+  "linden_sister": {
+   "faction": "kingdom",
+   "name": "Linden Sister",
+   "role": "caster",
+   "def_ids": [
+    "kingdom_linden_sister"
+   ],
+   "voice_id": "Xb7hH8MSUJpSbSDYk0k2",
+   "voice_name": "Alice (preset)",
+   "casting": "chosen this pass (bible 8.3 says audition: brisk, warm alto, 40s; not a clans preset)",
+   "tic": "\"Sit. Drink this.\" Brisk, motherly field healer.",
+   "post": "aecho=0.85:0.5:19|31:0.14|0.09",
+   "tags": {
+    "ack": "[brisk]",
+    "ready": "[warm]",
+    "attack": "[stern]",
+    "warcry": "[shouts]",
+    "annoyed": "[brisk]",
+    "need_mana": "[sighs]",
+    "ab": "[brisk]"
+   },
+   "source": "new (this pass); ready/what/annoyed 1-4 adapted from the kingdom 3.2 pool",
+   "lines": {
+    "ready": [
+     "Kettle's hot, basket's full. Who's bleeding?"
+    ],
+    "what": [
+     "Sit. Drink this.",
+     "Show me the scrape.",
+     "Speak up, I'm steeping.",
+     "Hands washed? Good."
+    ],
+    "yes": [
+     "Basket and all.",
+     "Mind the brew.",
+     "Coming. Don't bleed.",
+     "Brisk walk, then."
+    ],
+    "attack": [
+     "Out of my ward!",
+     "I'll not have it!",
+     "Bitter tonic for you!"
+    ],
+    "warcry": [
+     "SIT DOWN, ALL OF YOU!"
+    ],
+    "annoyed": [
+     "Clicking won't make it steep faster.",
+     "I've a tea for nerves. You're having two cups.",
+     "My mother nursed a whole regiment and never got clicked at.",
+     "One more and it's the bitter tonic. The very bitter one.",
+     "There. Sit. Drink this. All of it. And don't pull that face."
+    ],
+    "need_mana": [
+     "The pot's run dry."
+    ],
+    "ab_q": [
+     "Hold still. Poultice."
+    ],
+    "ab_w": [
+     "Rue smoke. Breathe deep."
+    ]
+   },
+   "notes": {
+    "ab_q": "Herb Poultice",
+    "ab_w": "Smoke of Rue"
+   }
+  },
+  "bombard_wagon": {
+   "faction": "kingdom",
+   "name": "Bombard Wagon gunner (one voice; the loader is non-verbal)",
+   "role": "siege",
+   "def_ids": [
+    "kingdom_bombard_wagon"
+   ],
+   "voice_id": "pFZP5JQG7iQjIQuC4Bku",
+   "voice_name": "Lily (preset)",
+   "casting": "chosen this pass (bible 8.3 says audition: older woman, gravelly alto; not a clans preset)",
+   "tic": "Rates every shot out of ten, never above six (the annoyed punchline breaks the rule).",
+   "post": "rubberband=pitch=0.94:formant=preserved,acompressor=threshold=-20dB:ratio=2.5:attack=5:release=80,highpass=f=250,lowpass=f=6000",
+   "tags": {
+    "ack": "[gruff]",
+    "ready": "[dry]",
+    "attack": "[gruff]",
+    "warcry": "[shouts]",
+    "annoyed": "[dry]",
+    "mech": "[gruff]"
+   },
+   "source": "slice-plan 2.12 P0 lines (ready, what 1, yes 1, attack 1, annoyed 1-4); the rest new (this pass)",
+   "lines": {
+    "ready": [
+     "Barrel's swabbed. Nobody touch the fuse."
+    ],
+    "what": [
+     "Talk slow. Measuring powder.",
+     "Last shot? A five.",
+     "Don't lean on her."
+    ],
+    "yes": [
+     "Chock the wheels.",
+     "Hitch up, lad.",
+     "Mind the ruts."
+    ],
+    "attack": [
+     "Ranging shot first.",
+     "Light it, lad.",
+     "Aim for a six."
+    ],
+    "warcry": [
+     "GIVE THEM A SIX!"
+    ],
+    "annoyed": [
+     "Measure twice, fire once. You've measured eleven times.",
+     "The lad's coughing, not laughing. Probably.",
+     "Now he's laughing. Powder doesn't like laughing. Neither do I.",
+     "Right. I'm chalking 'the boss' on the next ball. Neat letters, mind.",
+     "There. Lovely letters, straight flight. I'm giving that one a seven."
+    ],
+    "mech": [
+     "Brace her. Spades in. Nobody sneeze."
+    ]
+   },
+   "notes": {
+    "mech": "the deploy brace (at most 1 per 20 s)",
+    "yes": "01 is the slice-plan line: an order to the loader"
+   }
+  },
+  "wheel_marshal": {
+   "faction": "kingdom",
+   "name": "Wheel Marshal",
+   "role": "hero",
+   "def_ids": [
+    "kingdom_wheel_marshal"
+   ],
+   "voice_id": "XrExE9yKIg1WjnnlVkGX",
+   "voice_name": "Matilda (preset)",
+   "casting": "bible 8.3",
+   "tic": "Carter and road metaphors (never 'the turning wheel' or 'rolling out', kingdom 3.3 lint).",
+   "post": "equalizer=f=150:t=q:w=1:g=2,aecho=0.85:0.45:23|37:0.12|0.08",
+   "tags": {
+    "ack": "[calm]",
+    "ready": "[resolute]",
+    "attack": "[resolute]",
+    "warcry": "[shouts]",
+    "annoyed": "[dry]",
+    "levelup": "[proud]",
+    "ab": "[resolute]",
+    "other": "[calm]"
+   },
+   "source": "new (this pass); ready/what/attack/annoyed 2 partly from the kingdom 3.2 pool",
+   "lines": {
+    "ready": [
+     "Spokes tight, rim true. Show me the road."
+    ],
+    "what": [
+     "The Marshal attends.",
+     "Which road, which wall?",
+     "Speak over the axles.",
+     "Ruts ahead. Speak."
+    ],
+    "yes": [
+     "On the road.",
+     "Steady pace.",
+     "Down the cart-track.",
+     "Mind the ditch."
+    ],
+    "attack": [
+     "Brace, then break them!",
+     "Wheel to wall!",
+     "Hold, then push!",
+     "Off my road!"
+    ],
+    "warcry": [
+     "IRON RIMS, IRON NERVE!"
+    ],
+    "annoyed": [
+     "Every road has a rut. You've found mine.",
+     "I replaced thirty spokes this year. Don't be the thirty-first.",
+     "A good carter checks the wheel before a journey. Not during.",
+     "The last carter who rattled my axle walked home.",
+     "That was four winters ago. He still writes.",
+     "Every letter says the same thing. 'Nearly there.'",
+     "He lives two doors down. He's taking the long way."
+    ],
+    "need_mana": [
+     "The axle's dry."
+    ],
+    "pack_full": [
+     "The cart's full."
+    ],
+    "ab_q": [
+     "Linden for the road."
+    ],
+    "ab_w": [
+     "Chock and brace!"
+    ],
+    "ab_e": [
+     "One pace. Together."
+    ],
+    "ultimate_shout": [
+     "Wagons in a ring!"
+    ],
+    "levelup_a": [
+     "A mile further, and the rim still true."
+    ],
+    "levelup_6": [
+     "Now every wagon answers my whistle."
+    ],
+    "rival": [
+     "You're a rut. I've driven through worse."
+    ],
+    "death_word": [
+     "Unhitch me… gently."
+    ]
+   },
+   "notes": {
+    "ab_q": "Linden Balm",
+    "ab_w": "Brace the Wheel",
+    "ab_e": "Measured Cadence (aura: plays when learned)",
+    "ultimate_shout": "The Wagon Ring",
+    "levelup_a": "bible 8.2: recorded in 3 takes of the same text"
+   }
+  },
+  "firewright": {
+   "faction": "kingdom",
+   "name": "Firewright",
+   "role": "hero",
+   "def_ids": [
+    "kingdom_firewright"
+   ],
+   "voice_id": "iP95p4xoKVk53GoZ742B",
+   "voice_name": "Chris (preset)",
+   "casting": "chosen this pass (bible 8.3 says audition: husky, quick, excitable man, 40s; not a clans preset)",
+   "tic": "No eyebrows left; counts and names his fuses lovingly (his favourite is Margery; the Grand Bombard is 'Grandmother').",
+   "post": "volume=3dB,asoftclip=type=tanh,volume=-3dB",
+   "tags": {
+    "ack": "[gleeful]",
+    "ready": "[gleeful]",
+    "attack": "[gleeful]",
+    "warcry": "[shouts]",
+    "annoyed": "[gleeful]",
+    "levelup": "[proud]",
+    "ab": "[gleeful]",
+    "other": "[gleeful]"
+   },
+   "source": "new (this pass); some wording from the kingdom 3.2 pool",
+   "lines": {
+    "ready": [
+     "Firewright! Freshly singed, fuses counted."
+    ],
+    "what": [
+     "Hm? Mind the flasks.",
+     "Fuse one, fuse two…",
+     "Eyebrows? Long gone.",
+     "Stand back. Further."
+    ],
+    "yes": [
+     "Fuses packed. Going!",
+     "To the warm side!",
+     "Mind the sparks.",
+     "Walking, not running."
+    ],
+    "attack": [
+     "Here's some warmth!",
+     "With my compliments!",
+     "Fuse seven, my favourite!",
+     "Everyone duck! Not you."
+    ],
+    "warcry": [
+     "WHO WANTS TO GET WARM?"
+    ],
+    "annoyed": [
+     "Careful. I'm combustible.",
+     "I've lost two eyebrows and a good hat to this trade.",
+     "The eyebrows I don't miss. The hat had a feather.",
+     "I've named all my fuses. That one's Margery. She's quick.",
+     "Click once more and I'll juggle the flasks.",
+     "One… two… three… See? Perfectly safe.",
+     "…Ooh, Margery's fizzing. That's not good. That's not good at all."
+    ],
+    "need_mana": [
+     "Fuses all spent."
+    ],
+    "pack_full": [
+     "Pockets full of flasks."
+    ],
+    "ab_q": [
+     "Flask number nine!"
+    ],
+    "ab_w": [
+     "There's your fuse!"
+    ],
+    "ab_e": [
+     "Hot wadding, everyone!"
+    ],
+    "ultimate_shout": [
+     "Wheel out Grandmother!"
+    ],
+    "levelup_a": [
+     "More fuses, fewer eyebrows. Lovely."
+    ],
+    "levelup_6": [
+     "Grandmother's mine to light now!"
+    ],
+    "rival": [
+     "Oh, you look flammable."
+    ],
+    "death_word": [
+     "Not… the hat…"
+    ]
+   },
+   "notes": {
+    "ab_q": "Naphtha Flask",
+    "ab_w": "Fuse Mark",
+    "ab_e": "Incendiary Wadding (aura: plays when learned)",
+    "ultimate_shout": "Grand Bombard",
+    "levelup_a": "bible 8.2: recorded in 3 takes of the same text"
+   }
+  },
+  "reeve": {
+   "faction": "kingdom",
+   "name": "The Reeve (advisor)",
+   "role": "advisor",
+   "def_ids": [],
+   "voice_id": "JBFqnCBsd6RMkjVDRZzb",
+   "voice_name": "George (preset)",
+   "casting": "chosen this pass (bible 8.3 says audition: clipped, dry man, 50s; not onwK4e9ZLuTAKqWW03F9)",
+   "tic": "Town official; everything is a line item.",
+   "post": "highpass=f=200,lowpass=f=6000,acompressor=threshold=-20dB:ratio=2:attack=5:release=80",
+   "tags": {
+    "advisor": "[dry]",
+    "alert": "[urgent]"
+   },
+   "source": "bible 8.10 (finished lines); building_finished from kingdom 3.2 (optional P1 event line)",
+   "lines": {
+    "need_gold": [
+     "The strongbox is light."
+    ],
+    "need_lumber": [
+     "We're short on timber."
+    ],
+    "need_supply": [
+     "Every croft's full. No room for more hands."
+    ],
+    "hero_slot_full": [
+     "Every captain's chair is taken."
+    ],
+    "cannot_build": [
+     "The ground won't take it there."
+    ],
+    "hall_attacked": [
+     "Our hall is taking a beating!"
+    ],
+    "building_attacked": [
+     "They're pulling down our timber!"
+    ],
+    "units_attacked": [
+     "Our people are in a fight!"
+    ],
+    "workers_attacked": [
+     "They're at the Hodmen! Shall I sound the horn?"
+    ],
+    "hero_in_danger": [
+     "Our captain is in trouble out there!"
+    ],
+    "hero_fallen": [
+     "A captain is down. The Oath Hall can raise them."
+    ],
+    "hero_ready": [
+     "A captain stands sworn."
+    ],
+    "research_finished": [
+     "The guild has signed it off."
+    ],
+    "hall_tier_finished": [
+     "The burg is walled."
+    ],
+    "mine_low": [
+     "The seam is running thin."
+    ],
+    "mine_exhausted": [
+     "The seam is spent."
+    ],
+    "upkeep_rises": [
+     "Wages are eating the strongbox."
+    ],
+    "no_hall": [
+     "We've no hall! Raise one, or the whole valley will know."
+    ],
+    "revealed": [
+     "Every roof we own is on their map now."
+    ],
+    "building_finished": [
+     "Raised and roofed. The guild approves."
+    ]
+   }
+  },
+  "yurtwright": {
+   "faction": "clans",
+   "name": "Yurtwright",
+   "role": "worker",
+   "def_ids": [
+    "clans_yurtwright"
+   ],
+   "voice_id": "pqHfZKP75CvOlQylNhV4",
+   "voice_name": "Bill (preset)",
+   "casting": "bible 8.4 / clans 3.3",
+   "tic": "Counts things (\"eleven clicks\").",
+   "post": "rubberband=pitch=0.9:formant=shifted,equalizer=f=220:t=q:w=1:g=2,equalizer=f=6000:t=q:w=1:g=-2",
+   "tags": {
+    "ack": "[polite]",
+    "ready": "[courteous]",
+    "attack": "[polite]",
+    "warcry": "[shouts]",
+    "annoyed": "[fussy]",
+    "built": "[satisfied]",
+    "mech": "[urgent]"
+   },
+   "source": "bible 8.8 (finished lines)",
+   "lines": {
+    "ready": [
+     "Hm-hm. Twelve poles, one roof. Ready."
+    ],
+    "what": [
+     "Mallet in hand.",
+     "The wright hears you.",
+     "Roof, or mending?",
+     "Between two knots. Yes?"
+    ],
+    "yes": [
+     "With care.",
+     "Pole by pole.",
+     "I bring the kettle.",
+     "Sensible."
+    ],
+    "attack": [
+     "Forgive me. Firmly.",
+     "Mallet first. Apology after.",
+     "Please hold still, guest."
+    ],
+    "warcry": [
+     "NOT ON MY FELT!"
+    ],
+    "annoyed": [
+     "Hm. One click is a greeting.",
+     "Three clicks is a question. I have answered it.",
+     "Seven clicks. In my household, seven clicks means you want stew.",
+     "Eleven clicks. There is no custom for eleven. You are inventing customs.",
+     "Sit. I will pour. Hold the cup with both hands, where I can see them."
+    ],
+    "built": [
+     "Twelve poles, one roof, no leaks."
+    ],
+    "mech": [
+     "The gong! Inside, everyone, inside!",
+     "All clear? Good. My stew is going cold."
+    ]
+   },
+   "notes": {
+    "mech": "01 = arm (Sound the Gong / Roll the Felt); 02 = release (All Clear)"
+   }
+  },
+  "grappler": {
+   "faction": "clans",
+   "name": "Grappler",
+   "role": "infantry",
+   "def_ids": [
+    "clans_grappler"
+   ],
+   "voice_id": "pNInz6obpgDQGcFmaJgB",
+   "voice_name": "Adam (preset)",
+   "casting": "bible 8.4 / clans 3.3",
+   "tic": "Wrestling etiquette (bows, footing, the ring).",
+   "post": "rubberband=pitch=0.84:formant=shifted,equalizer=f=180:t=q:w=1:g=4,acompressor=threshold=-20dB:ratio=3:attack=5:release=100",
+   "tags": {
+    "ack": "[formal]",
+    "ready": "[formal]",
+    "attack": "[amused]",
+    "warcry": "[shouts]",
+    "annoyed": "[formal]",
+    "mech": "[formal]"
+   },
+   "source": "bible 8.9 (finished lines); 'Your grip, Ring-Elder?' left as an alternate (address-word line flagged in the round-2 review)",
+   "lines": {
+    "ready": [
+     "Hm-hm. The ring is drawn."
+    ],
+    "what": [
+     "The Grappler attends.",
+     "Big shoulders, small patience.",
+     "Yes? I was stretching.",
+     "Someone to lift?"
+    ],
+    "yes": [
+     "Slowly. Surely.",
+     "Respectfully, yes.",
+     "A fair hold.",
+     "Walking."
+    ],
+    "attack": [
+     "Meet the ground, guest.",
+     "Excuse my grip.",
+     "Pardon. A throw."
+    ],
+    "warcry": [
+     "INTO THE GRASS!"
+    ],
+    "annoyed": [
+     "You lay a hand on my arm. That is how a bout begins.",
+     "Again? Now we have touched shoulders. We are rivals.",
+     "A third time. In my household, that is an engagement.",
+     "I must ask my mother. She will want to see your grip.",
+     "She says no. Too small. I am so sorry."
+    ],
+    "mech": [
+     "Step back, please."
+    ]
+   },
+   "notes": {
+    "mech": "Shove (at most 1 per 10 s)"
+   }
+  },
+  "javelineer": {
+   "faction": "clans",
+   "name": "Javelineer",
+   "role": "ranged (faction standout, 7 annoyed, 4 attack, no mechanic)",
+   "def_ids": [
+    "clans_javelineer"
+   ],
+   "voice_id": "cgSgspJ2msm6clMCkdW9",
+   "voice_name": "Jessica (preset)",
+   "casting": "bible 8.4 / clans 3.3",
+   "tic": "Quotes distances (\"forty paces!\"); a running rivalry with her sister.",
+   "post": "rubberband=pitch=0.94:formant=shifted,acompressor=threshold=-20dB:ratio=2:attack=5:release=80",
+   "tags": {
+    "ack": "[boastful]",
+    "ready": "[boastful]",
+    "attack": "[competitive]",
+    "warcry": "[shouts]",
+    "annoyed": "[boastful]"
+   },
+   "source": "new (this pass); ready and annoyed 1-2 from the clans 3.3 pool",
+   "lines": {
+    "ready": [
+     "Forty paces, and I have not warmed up."
+    ],
+    "what": [
+     "Is it far?",
+     "Arm loose. Speak.",
+     "Pacing the yard again.",
+     "Name the distance."
+    ],
+    "yes": [
+     "Thirty paces. Easy.",
+     "Count my steps.",
+     "Downwind, naturally.",
+     "Closer, but not much."
+    ],
+    "attack": [
+     "Fifty paces. Watch.",
+     "Stand still. Thank you.",
+     "Sixty paces. Mine.",
+     "One, then another!"
+    ],
+    "warcry": [
+     "SIXTY PACES, NO WOBBLE!"
+    ],
+    "annoyed": [
+     "Fifteen clicks. My sister only managed twelve.",
+     "You click from very far away. I respect that.",
+     "How far, exactly? Hold still. I am pacing it out.",
+     "Eighty paces. And a little bit. The little bit counts.",
+     "My sister says the little bit does not count.",
+     "My sister also says she threw ninety paces once. Nobody saw it.",
+     "I was there. I saw it. I am still not telling anyone."
+    ]
+   },
+   "notes": {
+    "attack": "4 lines: the mechanic slot is an extra attack line (Throwing-Sticks is a passive)"
+   }
+  },
+  "gustcaller": {
+   "faction": "clans",
+   "name": "Gustcaller",
+   "role": "caster",
+   "def_ids": [
+    "clans_gustcaller"
+   ],
+   "voice_id": "EXAVITQu4vr4xnSDxMaL",
+   "voice_name": "Sarah (preset)",
+   "casting": "bible 8.4 / clans 3.3",
+   "tic": "Petty family and neighbour gossip she says the wind brought her (never spirits, omens or voices; no wind-breaking jokes; no 'to the winds' or 'winds guide').",
+   "post": "chorus=0.7:0.9:40:0.25:0.5:2,aecho=0.85:0.4:70:0.15",
+   "tags": {
+    "ack": "[gossipy]",
+    "ready": "[gossipy]",
+    "attack": "[playful]",
+    "warcry": "[shouts]",
+    "annoyed": "[gossipy]",
+    "need_mana": "[breathy]",
+    "ab": "[breathy]"
+   },
+   "source": "new (this pass); annoyed 1, 2 and 4 adapted from the clans 3.3 pool",
+   "lines": {
+    "ready": [
+     "Hm-hm. Here I am, and I have news."
+    ],
+    "what": [
+     "Have you heard?",
+     "Lean closer, dear.",
+     "The wind says hello.",
+     "Quickly, I am gossiping."
+    ],
+    "yes": [
+     "Drifting that way.",
+     "Lightly, lightly.",
+     "Mind my ribbons.",
+     "Coming, coming."
+    ],
+    "attack": [
+     "A little gust, guest.",
+     "Mind your hat, guest.",
+     "The wind dislikes you."
+    ],
+    "warcry": [
+     "HOLD ON TO YOUR HATS!"
+    ],
+    "annoyed": [
+     "Hm-hm. The wind says you keep clicking me. The wind notices everything.",
+     "The wind also says your cousin still owes me tea.",
+     "Three bricks of tea. Since the spring fair. Not that I count.",
+     "Now the wind is telling the whole valley about you. Everyone will know by supper.",
+     "Do not look at me. I only told the wind."
+    ],
+    "need_mana": [
+     "Not a breath left."
+    ],
+    "ab_q": [
+     "Let it all loose."
+    ],
+    "ab_w": [
+     "A tailwind, dear."
+    ]
+   },
+   "notes": {
+    "ab_q": "Unbind",
+    "ab_w": "Wind at Your Back"
+   }
+  },
+  "sling_cart": {
+   "faction": "clans",
+   "name": "Sling-Cart crew (two brothers in unison)",
+   "role": "siege (4 attack, no mechanic)",
+   "def_ids": [
+    "clans_sling_cart"
+   ],
+   "voice_id": "CwhRBWXzGAHq8TQ4Fs17",
+   "voice_name": "Roger (preset, older brother) + Charlie IKne3meq5aSn9XLyUdCD (younger brother)",
+   "voice_id_2": "IKne3meq5aSn9XLyUdCD",
+   "casting": "clans 3.3 candidates; both read the same text and the takes are mixed in unison",
+   "tic": "They always agree, even when wrong, and count their hauls together. Never a split line, who-is-who confusion, partnership talk or explosion punchline.",
+   "post": "rubberband=pitch=0.9:formant=shifted,acompressor=threshold=-20dB:ratio=2:attack=5:release=80",
+   "tags": {
+    "ack": "[deadpan]",
+    "ready": "[deadpan]",
+    "attack": "[eager]",
+    "warcry": "[shouts]",
+    "annoyed": "[deadpan]"
+   },
+   "source": "slice-plan 2.12 P0 lines (ready, what 1, yes 1, attack 1, annoyed 1-4); the rest new (this pass)",
+   "lines": {
+    "ready": [
+     "Pots stacked. Wheels round."
+    ],
+    "what": [
+     "Two ropes, one arm.",
+     "We both heard.",
+     "We agree. Speak."
+    ],
+    "yes": [
+     "Heave on the count.",
+     "One, two, walk.",
+     "We agree: that way."
+    ],
+    "attack": [
+     "One, two… loose!",
+     "We agree. Loose!",
+     "Pots away, guests!",
+     "Heave, and loose!"
+    ],
+    "warcry": [
+     "ONE, TWO, AND AGAIN!"
+    ],
+    "annoyed": [
+     "Hm-hm. One, two… three? We only count to two.",
+     "We both heard that. We both agree it was rude.",
+     "Mother said never argue before guests. So we agree: you are strange.",
+     "We discussed it, together, as always. The answer is more pots.",
+     "We have checked. The sky is green. We agree. Do not argue."
+    ]
+   },
+   "notes": {
+    "attack": "4 lines: no deploy, so the mechanic slot is an extra attack line"
+   }
+  },
+  "uncut": {
+   "faction": "clans",
+   "name": "The Uncut",
+   "role": "hero",
+   "def_ids": [
+    "clans_hero_uncut"
+   ],
+   "voice_id": "FGY2WhTYpPnrIDTdsKH5",
+   "voice_name": "Laura (preset)",
+   "casting": "bible 8.4 / clans 3.3",
+   "tic": "Keeps a duel tally (she is at forty). No curved blade in any line (bible 8.1).",
+   "post": "rubberband=pitch=0.9:formant=preserved,aecho=0.85:0.4:17|29:0.12|0.08",
+   "tags": {
+    "ack": "[dry]",
+    "ready": "[dry]",
+    "attack": "[confident]",
+    "warcry": "[shouts]",
+    "annoyed": "[dry]",
+    "levelup": "[confident]",
+    "ab": "[confident]",
+    "other": "[dry]"
+   },
+   "source": "new (this pass); annoyed 1-3 and ultimate from the clans 3.3 pool",
+   "lines": {
+    "ready": [
+     "The Uncut walks. The tally stands at forty."
+    ],
+    "what": [
+     "Quickly. Steel gets bored.",
+     "Talk while I walk.",
+     "Forty-one? Not yet.",
+     "My sword hand listens."
+    ],
+    "yes": [
+     "Already gone.",
+     "Lightly.",
+     "Follow the dust.",
+     "Quiet feet."
+    ],
+    "attack": [
+     "Draw, if you can.",
+     "Tally forty-one.",
+     "Send me their best.",
+     "Count the cuts."
+    ],
+    "warcry": [
+     "DUST AND STEEL!"
+    ],
+    "annoyed": [
+     "Hands off the braid.",
+     "Tug it once more and we duel.",
+     "You tugged it. Draw.",
+     "…You did not draw. Then the duel counts as mine.",
+     "Forty-one. My mother stopped at forty.",
+     "She still says she was being polite to forty-one.",
+     "…Whoever you are up there, you are forty-two. Once I find a ladder."
+    ],
+    "need_mana": [
+     "Not now. Breathing."
+    ],
+    "pack_full": [
+     "My hands are full."
+    ],
+    "ab_q": [
+     "Into the dust."
+    ],
+    "ab_w": [
+     "The braid says come."
+    ],
+    "ab_e": [
+     "One clean cut."
+    ],
+    "ultimate_shout": [
+     "Through the grass!"
+    ],
+    "levelup_a": [
+     "The tally grows. So do I."
+    ],
+    "levelup_6": [
+     "Now the tall grass hides me whole."
+    ],
+    "rival": [
+     "You will make a fine number."
+    ],
+    "death_word": [
+     "Cut… at last."
+    ]
+   },
+   "notes": {
+    "ab_q": "Dust Veil",
+    "ab_w": "Braid Lash",
+    "ab_e": "Clean Cut (passive: plays when learned)",
+    "ultimate_shout": "Through the Tall Grass",
+    "levelup_a": "bible 8.2: recorded in 3 takes of the same text"
+   }
+  },
+  "skymirror": {
+   "faction": "clans",
+   "name": "Skymirror",
+   "role": "hero",
+   "def_ids": [
+    "clans_hero_skymirror"
+   ],
+   "voice_id": "nPczCjzI2devNBz1zQrb",
+   "voice_name": "Brian (preset)",
+   "casting": "bible 8.4 / clans 3.3",
+   "tic": "Polishes mid-sentence; narrates tiny far-off things the mirror shows; never fortunes or yes/no answers, no eye jokes.",
+   "post": "rubberband=pitch=0.88:formant=shifted,aecho=0.85:0.35:13|27:0.10|0.07",
+   "tags": {
+    "ack": "[vain]",
+    "ready": "[grand]",
+    "attack": "[grand]",
+    "warcry": "[shouts]",
+    "annoyed": "[vain]",
+    "levelup": "[vain]",
+    "ab": "[grand]",
+    "other": "[vain]"
+   },
+   "source": "new (this pass); ready, annoyed 1-6 and several ability lines from the clans 3.3 pool (trimmed to the budgets)",
+   "lines": {
+    "ready": [
+     "Skymirror. Mind the fingerprints."
+    ],
+    "what": [
+     "A hare dropped something.",
+     "One moment. Polishing.",
+     "A crow sneezed. Continue.",
+     "Speak. Mind the bronze."
+    ],
+    "yes": [
+     "A shiny walk.",
+     "Going, gleaming.",
+     "Mind the bronze.",
+     "The long way, shinier."
+    ],
+    "attack": [
+     "Into the light, guest.",
+     "Hold still. Smudging.",
+     "Bronze bright, aim true.",
+     "Let me brighten you."
+    ],
+    "warcry": [
+     "BEHOLD THE BRONZE!"
+    ],
+    "annoyed": [
+     "Please. Not the mirror. Fingers.",
+     "I see a thumb. A very large thumb. Yours.",
+     "Far away, a goat is wearing a hat. I prefer the goat.",
+     "Every click is a smudge. That is forty smudges.",
+     "I am now polishing you out of the mirror. Gently. Thoroughly.",
+     "There. Spotless, and you are gone from it. Peace at last.",
+     "…Oh. The goat has seen you. It is coming this way."
+    ],
+    "need_mana": [
+     "The bronze needs sun."
+    ],
+    "pack_full": [
+     "No room. Mirror first."
+    ],
+    "ab_q": [
+     "A little sunshine, guest!"
+    ],
+    "ab_w": [
+     "Behind that hill…"
+    ],
+    "ab_e": [
+     "Out, little hailstones!"
+    ],
+    "ultimate_shout": [
+     "Put the sun away!"
+    ],
+    "levelup_a": [
+     "Brighter. Naturally."
+    ],
+    "levelup_6": [
+     "Even the sun fits in my mirror now."
+    ],
+    "rival": [
+     "You would look better smaller. Far away."
+    ],
+    "death_word": [
+     "Mind… the… mirror…"
+    ]
+   },
+   "notes": {
+    "ab_q": "Sunglint",
+    "ab_w": "Bronze Window",
+    "ab_e": "Hail-Swifts",
+    "ultimate_shout": "Swallowed Sun",
+    "levelup_a": "bible 8.2: recorded in 3 takes of the same text"
+   }
+  },
+  "gong_keeper": {
+   "faction": "clans",
+   "name": "The gong-keeper (advisor)",
+   "role": "advisor",
+   "def_ids": [],
+   "voice_id": "onwK4e9ZLuTAKqWW03F9",
+   "voice_name": "Daniel (preset)",
+   "casting": "bible 8.4 / clans 3.3",
+   "tic": "Announces everything as if striking the gong.",
+   "post": "rubberband=pitch=0.9:formant=preserved,aecho=0.8:0.5:60|110|170:0.22|0.14|0.08",
+   "tags": {
+    "advisor": "[measured]",
+    "alert": "[urgent]"
+   },
+   "source": "bible 8.10 (finished lines); building_finished from clans 3.3 (optional P1 event line)",
+   "lines": {
+    "need_gold": [
+     "The purse is thin. More sun-teeth, please."
+    ],
+    "need_lumber": [
+     "We are short of lattice-wood."
+    ],
+    "need_supply": [
+     "Every yurt is full. Our guests are sleeping in the rain."
+    ],
+    "hero_slot_full": [
+     "Every seat by the fire is taken."
+    ],
+    "cannot_build": [
+     "The ground says no."
+    ],
+    "hall_attacked": [
+     "Someone is striking the Shell!"
+    ],
+    "building_attacked": [
+     "Someone is striking our felt!"
+    ],
+    "units_attacked": [
+     "Our kin are fighting!"
+    ],
+    "workers_attacked": [
+     "They are chasing the wrights. Shall I sound the gong?"
+    ],
+    "hero_in_danger": [
+     "A name is wavering. Bring them home."
+    ],
+    "hero_fallen": [
+     "A name has gone quiet. The Stones will call it back."
+    ],
+    "hero_ready": [
+     "A name stands up from the Stones."
+    ],
+    "research_finished": [
+     "The bronze has cooled."
+    ],
+    "hall_tier_finished": [
+     "The banners are raised."
+    ],
+    "mine_low": [
+     "The sun-teeth are wearing thin."
+    ],
+    "mine_exhausted": [
+     "The sun-teeth are gone from this hill."
+    ],
+    "upkeep_rises": [
+     "Many mouths, small pot. The purse shrinks."
+    ],
+    "no_hall": [
+     "Without a hall the whole steppe will see us. Raise one!"
+    ],
+    "revealed": [
+     "Hm-hm. The whole steppe can see our felt now."
+    ],
+    "building_finished": [
+     "The felt is tied. It stands."
+    ]
+   }
+  }
+ }
+}
