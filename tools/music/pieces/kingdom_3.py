@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""Kingdom 3, "Linden Curfew" (assets/audio/music/kingdom_3.ogg). A Dorian, 84 BPM, 3/4, about 3:28.
+"""Kingdom 3, "Linden Curfew" (assets/audio/music/kingdom_3.ogg). A Dorian, 84 BPM, 3/4, about 3:26.
 
 Composer's note. Form (bars, 1-based): intro 1-10 | A 11-42 (two 16-bar periods) | B 43-58 | interlude 59-70 |
 A' 71-86 | coda 87-94. The only 3/4 piece of the set: an evening air over a soft hurdy-gurdy drone (A-E) and a
 frame-drum heartbeat. The fiddle's tune is the Wheel stretched to the waltz (A-B-C in quarters, D and E held a bar
 each, bars 11-13); the antecedent turns on the Dorian F# and stops on a half cadence on Em (bar 18), the consequent
-climbs to the high A (bar 22) and closes with the Wheel's answer, D falling to A, over the Dorian IV-i (D to Am).
-The second period ornaments it (slides, grace notes) under a cello counter-line in contrary motion. B moves to D,
-the kingdom's home key (the homesick turn): the fiddle states the Wheel's head and its sequence, inversion and
-fall in 2-bar phrases and a single far horn answers each with a two-note call. The interlude is the dulcimer alone,
-slower (78 BPM), sparse, playing the Wheel in retrograde and the falling-fourth answer with space around it. A'
-is the tune once more, the viola taking the counter-line and doubling the consequent an octave down; the coda lets
-the dulcimer recall the Wheel's head, the fiddle answers D-A in augmentation, and it settles on A. Arc: low
-intensity throughout; A2 and A' are the warmest, the interlude the quietest.
+climbs to the high A (bar 22) and closes with the Wheel's answer, D falling to A, over the Dorian IV-i (D to Am);
+a soft viola second voice holds under its consequent. The second period is the air with a lilt (dotted quarter
+and eighth), eighth-note passing tones and pickups into its phrases, ornamented (slides, grace notes, a turn),
+under a cello counter-line in contrary motion; it closes stepwise. B moves to D, the kingdom's home key (the
+homesick turn): the fiddle states the Wheel's head and its sequence, inversion and fall in 2-bar phrases, its held
+notes turning, re-bowing and sliding while a single far horn answers each with a two-note call. The interlude is
+the dulcimer alone, slower (78 BPM), sparse, playing the Wheel in retrograde and the falling-fourth answer with
+space around it. A' is a variation: the air in the viola an octave down under an ornamented fiddle descant, then
+a new consequent in the fiddle (an arpeggio rise to the high A and a stepwise close D-C-B-A). In the coda the
+dulcimer recalls the Wheel's head, the fiddle falls gently to A, and the far horn has the last word, the falling
+fifth E-A. Arc: low intensity throughout; A2 and A' are the warmest, the interlude the quietest.
 """
 import os
 import sys
@@ -23,12 +26,15 @@ from ext_kingdom import bass_of, dulcimer_bar, mel  # noqa: E402
 from score import Piece  # noqa: E402
 
 A_CHORDS = ["Am", "D", "C", "Em", "G", "Em", "Bm", "Em", "Am", "D", "C", "D", "C", "Am", "D", "Am"]
+NEW_CON_CHORDS = ["Am", "D", "C", "D", "Am", "Em", "D", "Am"]
 HARMONY = {}
 for i, c in enumerate(["Am", "Am", "Am", "G", "D", "Am", "Em", "Am", "G", "Em"]):
     HARMONY[1 + i] = c
 for base in (11, 27, 71):
     for i, c in enumerate(A_CHORDS):
         HARMONY[base + i] = c
+for i, c in enumerate(NEW_CON_CHORDS):
+    HARMONY[79 + i] = c
 for i, c in enumerate(["D", "G", "D", "D", "Em", "D", "C", "G", "D", "C", "Em", "Em", "C", "G", "Em", "Em"]):
     HARMONY[43 + i] = c
 for i, c in enumerate(["Am", "Em", "G", "Am", "D", "C", "Em", "Am", "Am", "D", "Am", "Am"]):
@@ -36,11 +42,22 @@ for i, c in enumerate(["Am", "Em", "G", "Am", "D", "C", "Em", "Am", "Am", "D", "
 for i, c in enumerate(["Am", "D", "D", "Am", "Am", "Am", "Am", "Am"]):
     HARMONY[87 + i] = c
 
-TUNE_A1 = ("A4:1 B4:1 C5:1 | D5:3:s | E5:3 | G5:1 F#5:1 E5:1 | D5:2 C5:1 | B4:2 C5:1 | D5:3 | B4:3 | "
-           "A4:1 B4:1 C5:1 | D5:3 | E5:2 G5:1 | A5:2 G5:1 | E5:2 D5:1 | C5:2 B4:1 | D5:3:gu | A4:3")
-TUNE_A2 = ("A4:1 B4:1 C5:1 | D5:2:s E5:1 | E5:3:m | G5:1:gu F#5:1 E5:1 | D5:2 C5:1 | B4:1 C5:1 D5:1 | "
-           "D5:2 F#5:1 | B4:3:s | A4:1 B4:1 C5:1 | D5:3 | E5:1 F#5:1 G5:1 | A5:3:gd | G5:2 E5:1 | E5:2 D5:1 | "
-           "D5:3:t | A4:3")
+TUNE_A1 = ("A4:1 B4:1 C5:1 | D5:3:s | E5:3 | G5:1 F#5:1 E5:1 | D5:2 C5:1 | B4:1.5 A4:.5 B4:.5 C5:.5 | D5:3 | "
+           "B4:2 G4:.5 B4:.5 | "
+           "A4:1 B4:1 C5:1 | D5:3 | E5:2 G5:1 | A5:2 G5:1 | E5:2 D5:1 | C5:2 B4:.5 C5:.5 | D5:3:gu | A4:3")
+# A2: the same air with a lilt (dotted quarter + eighth), eighth-note passing tones and pickups into the phrases
+TUNE_A2 = ("A4:1.5 B4:.5 C5:1 | D5:2:s C5:.5 D5:.5 | E5:3:m | G5:1.5:gu F#5:.5 E5:1 | "
+           "D5:1.5 E5:.5 D5:.5 C5:.5 | B4:1 C5:1 D5:1 | D5:1.5 E5:.5 F#5:1 | B4:2:s A4:.5 G4:.5 | "
+           "A4:1.5 B4:.5 C5:1 | D5:2:s C5:.5 D5:.5 | E5:1.5 F#5:.5 G5:1 | A5:2:gd G5:.5 F#5:.5 | "
+           "G5:2 E5:.5 D5:.5 | E5:1.5 D5:.5 C5:1 | D5:2:t C5:.5 B4:.5 | A4:3")
+# A': the air in the viola, an ornamented fiddle descant above it, then a new consequent in the fiddle
+TUNE_LOW = "A3:1 B3:1 C4:1 | D4:3:s | E4:3 | G4:1 F#4:1 E4:1 | D4:2 C4:1 | B3:2 C4:1 | D4:3 | B3:3"
+DESCANT = ("A5:2:gd G5:.5 E5:.5 | F#5:3:m | G5:2 E5:1 | E5:1 F#5:1 G5:1 | G5:2:t A5:.5 G5:.5 | G5:2 E5:1 | "
+           "F#5:3:m | E5:2:s D5:.5 B4:.5")
+NEW_CON = ("A4:1 C5:1 E5:1 | F#5:1.5:m E5:.5 D5:1 | G5:2:gu E5:1 | D5:1 F#5:1 G5:.5 A5:.5 | A5:2:gd E5:1 | "
+           "G5:1 A5:.5 G5:.5 E5:1 | D5:1.5 C5:.5 B4:1 | A4:3")
+NEW_CON_VLA = "E4:3 | F#4:3 | G4:3 | D4:3 | E4:3 | B3:3 | F#4:1.5 E4:.5 D4:1 | C4:3"
+A1_VLA = "E4:3 | F#4:3 | E4:3 | D4:3 | G4:3 | E4:3 | F#4:3 | E4:3"          # a soft second voice, A1 bars 19-26
 COUNTER = ("A3:3 | F#3:3 | E3:3 | G3:3 | B3:2 A3:1 | G3:3 | F#3:3 | E3:3 | "
            "E3:3 | F#3:3 | G3:2 E3:1 | F#3:3 | G3:3 | E3:2 C3:1 | F#3:3 | E3:3")
 
@@ -48,7 +65,7 @@ COUNTER = ("A3:3 | F#3:3 | E3:3 | G3:3 | B3:2 A3:1 | G3:3 | F#3:3 | E3:3 | "
 def build():
     p = Piece("kingdom_3", seed=3303, bpm=84, meter=(3, 4), key="A", mode="dorian")
     p.mix = P.MIX_KINGDOM
-    p.kind, p.tail_s, p.length_range = "track", 5.0, (200.0, 220.0)
+    p.kind, p.tail_s, p.length_range = "track", 2.0, (200.0, 220.0)   # the tail is the room's real decay
     p.out = "assets/audio/music/kingdom_3.ogg"
 
     def B(bar, beat=0.0):
@@ -107,6 +124,8 @@ def build():
     mel(fid, B(11), TUNE_A1, vel=72, dyn="arch")
     for s, e, lo, hi in ((11, 15, 70, 98), (15, 19, 80, 100), (19, 23, 76, 108), (23, 27, 90, 70)):
         fid.swell(B(s), B(e), lo, hi, peak=0.55) if s != 23 else fid.curve(B(s), B(e), lo, hi)
+    mel(vla, B(19), A1_VLA, vel=54, dyn="arch")                     # pp: a second voice under the held notes
+    vla.swell(B(19), B(27), 52, 78, peak=0.55)
 
     # ================================================================ A2 (27-42): ornamented, cello counter-line
     mel(fid, B(27), TUNE_A2, vel=78, dyn="arch")
@@ -117,17 +136,17 @@ def build():
     vc.swell(B(35), B(43), 74, 100, peak=0.5)
 
     # ================================================================ B (43-58): in D; a far horn answers the fiddle
-    phrases = [  # (bar, fiddle phrase, horn call)
-        (43, "D5:1 E5:1 F#5:1 | G5:5", ["D4", "A3"]),          # the Wheel's head in D ... falling fourth
-        (47, "E5:1 F#5:1 G5:1 | A5:5", ["C4", "G3"]),          # a step higher (sequence)
-        (51, "A5:1 G5:1 F#5:1 | E5:5", ["B3", "E3"]),          # inverted: falling
-        (55, "G5:1 F#5:1 E5:1 | D5:2 C5:1", ["E4", "B3"]),     # falling further: half cadence on E
+    phrases = [  # (bar, fiddle phrase, horn call): the held notes turn, re-bow and slide while the horn answers
+        (43, "D5:1 E5:1 F#5:1 | G5:2:t A5:.5 G5:.5 | F#5:2:s", ["D4", "A3"]),     # the Wheel's head in D;
+        (47, "E5:1 F#5:1 G5:1 | A5:2:m G5:.5 F#5:.5 | G5:2:s", ["C4", "G3"]),     # a step higher (sequence)
+        (51, "A5:1 G5:1 F#5:1 | E5:2:t D5:.5 E5:.5 | G5:2:s", ["B3", "E3"]),      # inverted: falling
+        (55, "G5:1.5 F#5:.5 E5:1 | D5:1 E5:.5 D5:.5 C5:1", ["E4", "B3"]),         # half cadence on E
     ]
     for bar, phrase, call in phrases:
         mel(fid, B(bar), phrase, vel=74, dyn="arch")           # the held note fades under the horn
         fid.swell(B(bar), B(bar + 2, 2), 70, 100, peak=0.5)
         horn.notes_seq(B(bar + 2), call, [3.0, 4.5], vel=72, art="legato")
-    mel(fid, B(57), "B4:3 | B4:2:s C5:1", vel=66)
+    mel(fid, B(57), "B4:2 A4:.5 B4:.5 | B4:2:s G4:1", vel=66)
     fid.curve(B(57), B(59), 86, 64)
     for bar in range(43, 59, 2):
         r = bass_of(HARMONY[bar], 2)
@@ -146,12 +165,17 @@ def build():
     hurdy.curve(B(68), B(71), 56, 70)
 
     # ================================================================ A' (71-86): the air once more
-    mel(fid, B(71), TUNE_A1.replace("D5:3:s", "D5:3:gu").replace("A5:2 G5:1", "A5:2:s G5:1"), vel=76, dyn="arch")
-    for s, e, lo, hi in ((71, 75, 72, 100), (75, 79, 82, 102), (79, 83, 80, 112), (83, 87, 96, 70)):
-        fid.swell(B(s), B(e), lo, hi, peak=0.55) if s != 83 else fid.curve(B(s), B(e), lo, hi)
-    mel(vla, B(71), COUNTER, tr=12, vel=64, dyn="arch")           # the counter-line moves up to the viola
-    vla.swell(B(71), B(79), 70, 96, peak=0.6)
-    vla.double(fid, B(79), B(87), interval=-12, vel=0.55)          # ... and joins the consequent an octave down
+    mel(vla, B(71), TUNE_LOW, vel=80, dyn="arch")                  # the air in the viola ...
+    vla.swell(B(71), B(75), 86, 108, peak=0.55)
+    vla.swell(B(75), B(79), 88, 110, peak=0.55)
+    mel(fid, B(71), DESCANT, vel=70, dyn="arch")                    # ... under an ornamented fiddle descant
+    fid.swell(B(71), B(75), 66, 92, peak=0.55)
+    fid.swell(B(75), B(79), 70, 96, peak=0.55)
+    mel(fid, B(79), NEW_CON, vel=78, dyn="arch")                    # a new consequent, closing D-C-B-A
+    fid.swell(B(79), B(83), 82, 112, peak=0.7)
+    fid.curve(B(83), B(87), 104, 72)
+    mel(vla, B(79), NEW_CON_VLA, vel=66, dyn="arch")
+    vla.curve(B(79), B(87), 86, 70)
     for bar in range(71, 87):
         r = bass_of(HARMONY[bar], 2)
         vc.note(B(bar), r if r >= 41 else r + 12, 3, vel=58, art="legato")
@@ -162,14 +186,14 @@ def build():
 
     # ================================================================ coda (87-94): settle on A
     mel(dul, B(87), "A4:1 B4:1 C5:1 | D5:3:o", vel=54)              # the Wheel's head, once more
-    mel(fid, B(89), "D5:3 A4:6", vel=66)                             # its answer, augmented
-    fid.curve(B(89), B(92), 84, 50)
-    mel(vla, B(89), "F#4:3 E4:6", vel=56)
+    mel(fid, B(89), "F#5:1.5 E5:.5 D5:1 | C5:2 B4:1 | A4:3", vel=64, dyn="dim")   # a lilting fall to A
+    fid.curve(B(89), B(92), 82, 52)
+    mel(vla, B(89), "D4:3 E4:6", vel=56)
     vla.curve(B(89), B(92), 72, 44)
-    dul.chord(B(91), ["A3", "E4", "B4", "C5", "E5"], 9, vel=52, strum=0.06, art="ring")
+    dul.chord(B(91), ["A3", "E4", "A4", "C5", "E5"], 9, vel=52, strum=0.06, art="ring")
     vc.note(B(87), "A2", 15, vel=56, art="legato")
     vc.curve(B(87), B(94), 76, 30)
-    horn.notes_seq(B(92), ["E3", "A2"], [3.0, 6.0], vel=56, art="legato")
+    horn.notes_seq(B(92), ["E3", "A2"], [3.0, 6.0], vel=58, art="legato")     # the last word: the far horn, E-A
 
     # ================================================================ heartbeat (very soft)
     fd.pattern(B(5), 6, "x.o...", vel=42)
