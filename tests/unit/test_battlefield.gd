@@ -199,6 +199,85 @@ func test_creeps_fight_back() -> void:
 	assert_lt(gunner.hp, gunner.max_hp, "the creeps hit back")
 
 
+## Rules §15.1 "the camp acts as one": a melee hero that simply walks into a camp is acquired by
+## the nearest creep, and every other member of that camp joins within about a second, even the
+## ones whose own acquire range does not reach it. Creeps of other camps stay out of it.
+func test_creep_camp_fights_as_one() -> void:
+	var r := _headless()
+	var w: World = r[0]
+	var b: BattlefieldScenario = r[1]
+	var camp_id := str((Defs.scenario(SCENARIO)["camps"] as Array)[1])
+	var creeps := w.creeps.camp_members(camp_id)
+	assert_true(creeps.size() >= 3, "camp %s spawned" % camp_id)
+	var centre: Vector3 = w.creeps.camps()[camp_id]["pos"]
+	var marshal: Unit = null
+	for u in b.members(b.group("army", 0)):
+		if u.def_id == "kingdom_wheel_marshal":
+			marshal = u
+	# the hero walks in from the open field east of the camp, starting 12 m from the closest
+	# creep (out of every acquire range)
+	var first := creeps[0]
+	for c in creeps:
+		if c.pos.x > first.pos.x:
+			first = c
+	marshal.teleport(first.pos + Vector3(12.0, 0.0, 0.0))
+	w.issue({"type": "move", "player": 0, "units": [marshal.id], "pos": centre})
+	var aggro: Array = []
+	var on_aggro := func(cid: String) -> void: aggro.append(cid)
+	Events.camp_aggro.connect(on_aggro)
+	var first_tick := -1
+	var all_tick := -1
+	for i in 300:
+		w.step()
+		var n := 0
+		for c in creeps:
+			if c.alive and c.combat_target_id() == marshal.id:
+				n += 1
+		if n > 0 and first_tick < 0:
+			first_tick = i
+		if n == creeps.size():
+			all_tick = i
+			break
+	Events.camp_aggro.disconnect(on_aggro)
+	assert_true(first_tick >= 0, "a creep acquires the hero")
+	assert_true(all_tick >= 0, "every member of the camp engages the hero")
+	assert_lt(all_tick - first_tick, 31, "the whole camp joins within about 1 s (%d ticks)" % (all_tick - first_tick))
+	assert_eq(aggro, [camp_id], "camp_aggro once, for this camp only")
+	for u in w.unit_list:
+		if u.is_creep() and u.camp_id != camp_id:
+			assert_true(u.combat_target_id() == 0, "creep of another camp (%s) stays out" % u.camp_id)
+	# the camp calms down again once nobody fights (the hero leaves, the creeps leash home)
+	marshal.teleport(Vector3(30, 0, 180))
+	w.issue({"type": "stop", "player": 0, "units": [marshal.id]})
+	for i in 600:
+		w.step()
+	assert_false(bool(w.creeps.camps()[camp_id]["aggro"]), "the camp is calm again")
+
+
+## A creep that is already fighting still wakes its camp-mates when something else hits it.
+func test_busy_creep_still_calls_its_camp() -> void:
+	var r := _headless()
+	var w: World = r[0]
+	var b: BattlefieldScenario = r[1]
+	var camp_id := str((Defs.scenario(SCENARIO)["camps"] as Array)[0])
+	var creeps := w.creeps.camp_members(camp_id)
+	assert_true(creeps.size() >= 2, "camp %s spawned" % camp_id)
+	var army := b.members(b.group("army", 0))
+	var decoy: Unit = army[0]
+	var shooter: Unit = null
+	for u in army:
+		if u.def_id == "kingdom_hookgunner":
+			shooter = u
+	decoy.teleport(creeps[0].pos + Vector3(30.0, 0.0, 30.0))
+	creeps[0].engage(decoy)
+	shooter.teleport(creeps[0].pos + Vector3(0.0, 0.0, -8.0))
+	creeps[0].take_damage(1.0, shooter)
+	for c in creeps:
+		if c != creeps[0]:
+			assert_eq(c.combat_target_id(), shooter.id, "%s answers the call" % c.def_id)
+	assert_eq(creeps[0].combat_target_id(), decoy.id, "the busy creep keeps its target")
+
+
 ## A player reduced to buildings and workers cannot fight back (no production here): the Tormai
 ## guards leave their post and go to finish it.
 func test_guards_hunt_a_defenceless_player() -> void:

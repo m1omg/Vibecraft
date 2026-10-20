@@ -21,7 +21,7 @@ extends SimSystem
 
 const RING := 2.5
 
-var _camps: Dictionary = {}    ## camp instance id -> {template, pos, members: Array[int], cleared}
+var _camps: Dictionary = {}    ## camp instance id -> {template, pos, members: Array[int], cleared, aggro}
 
 
 ## Spawns every camp of `map` (owner NEUTRAL_HOSTILE). Map camps without a template (test maps)
@@ -58,7 +58,8 @@ func spawn_camps(map: MapData, only: Array = []) -> int:
 				u.set_home(u.pos)
 				members.append(u.id)
 				n += 1
-		_camps[cid] = {"template": str(c.get("template", "")), "pos": centre, "members": members, "cleared": false}
+		_camps[cid] = {"template": str(c.get("template", "")), "pos": centre, "members": members,
+			"cleared": false, "aggro": false}
 	return n
 
 
@@ -99,6 +100,25 @@ func is_asleep(_u: Unit) -> bool:
 	return false
 
 
+## Rules §15.1 "the camp acts as one": a member of `camp_id` acquired `target` or was hit by
+## it, so every awake, idle member engages it (busy members keep their target; other camps
+## never join). Called by Unit (acquire / _on_attacked) inside the units stage, in unit order,
+## so it is deterministic. Emits camp_aggro the first time a calm camp is pulled. Returns the
+## number of members that engaged.
+func alert_camp(camp_id: String, target: Unit) -> int:
+	var c: Dictionary = _camps.get(camp_id, {})
+	if c.is_empty() or target == null or not target.alive:
+		return 0
+	if not bool(c.get("aggro", false)):
+		c["aggro"] = true
+		Events.camp_aggro.emit(camp_id)
+	var n := 0
+	for m in camp_members(camp_id):
+		if not is_asleep(m) and m.answer_call(target):
+			n += 1
+	return n
+
+
 ## Bounty for killing creep `u` (rules §15.5); draws from world.rng.
 func bounty_for(u: Unit) -> int:
 	var b: Dictionary = Defs.rule("creeps.bounty", {"per_level": 4, "base": 2, "rand": 4})
@@ -111,7 +131,20 @@ func wake_near(_building: Unit) -> void:
 	pass
 
 
-## Sleep schedules, leash and return, give-up timers. Stub: nothing yet (Unit's idle behaviour
-## still walks creeps home).
+## Camp bookkeeping: a pulled camp calms down once no member is fighting (the next pull emits
+## camp_aggro again) and a camp whose members are all dead is cleared once (camp_cleared).
+## Not in yet: sleep schedules and the give-up timer (Unit's idle behaviour leashes creeps and
+## walks them home).
 func sim_tick(_w: World, _dt: float) -> void:
-	pass
+	for cid: String in _camps:
+		var c: Dictionary = _camps[cid]
+		if bool(c["cleared"]):
+			continue
+		var alive := camp_members(cid)
+		if alive.is_empty():
+			c["cleared"] = true
+			c["aggro"] = false
+			Events.camp_cleared.emit(cid)
+			continue
+		if bool(c.get("aggro", false)) and alive.all(func(m: Unit) -> bool: return m.engage_id == 0):
+			c["aggro"] = false

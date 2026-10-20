@@ -791,9 +791,12 @@ func give_up(t: Unit) -> void:
 ## (unreachable or stuck) and, for melee units, one they cannot walk to are ignored, so a unit
 ## under fire from a cliff keeps doing its job.
 func _on_attacked(src: Unit) -> void:
-	if acquire_range <= 0.0 or not can_attack() or not is_valid_target(src) or engage_id != 0:
+	if not is_valid_target(src) or (returning and is_creep()):
 		return
-	if src.id == _skip_id or (returning and is_creep()):
+	# a creep that is hit wakes its whole camp even while it is busy itself (rules §15.1)
+	if is_creep():
+		_call_for_help(src)
+	if acquire_range <= 0.0 or not can_attack() or engage_id != 0 or src.id == _skip_id:
 		return
 	if current != null and not OrderHandlers.of(current.type).accepts_retaliation(self, current):
 		return
@@ -802,18 +805,40 @@ func _on_attacked(src: Unit) -> void:
 	engage(src)
 	if current != null:
 		resume_path = true
+
+
+## Auto-acquired `t` (idle scan): creeps bring their camp along (rules §15.1).
+func acquire(t: Unit) -> void:
+	engage(t)
 	if is_creep():
-		_call_for_help(src)
+		_call_for_help(t)
 
 
+## Rules §15.1 "the camp acts as one": every idle member of this creep's camp engages `src`
+## (CreepSystem.alert_camp). A creep without a camp asks idle creeps within help_radius.
 func _call_for_help(src: Unit) -> void:
+	if not camp_id.is_empty() and world.creeps != null:
+		world.creeps.alert_camp(camp_id, src)
+		return
 	var r := float(Defs.combat_default("help_radius", 6.0))
 	world.spatial.query_radius(pos, r, _help_buf)
 	for m: Unit in _help_buf:
-		if m != self and m.alive and m.player_id == player_id and m.current == null \
-				and m.engage_id == 0 and not m.returning and m.can_attack():
-			m.engage(src)
+		if m != self and m.alive and m.player_id == player_id:
+			m.answer_call(src)
 	_help_buf.clear()
+
+
+## A camp-mate called for help against `src`: an idle, calm creep that can fight it engages.
+## Busy ones (already fighting, returning home, under an order) keep what they are doing.
+## Returns true when it engaged.
+func answer_call(src: Unit) -> bool:
+	if not alive or current != null or engage_id != 0 or returning or not can_attack() \
+			or acquire_range <= 0.0 or not is_valid_target(src) or src.id == _skip_id:
+		return false
+	if not _can_reach(src, edge_distance(src)):
+		return false
+	engage(src)
+	return true
 
 
 # --- attacking -----------------------------------------------------------------------------

@@ -20,7 +20,7 @@ func tick(u: Unit, _o: Order, dt: float) -> Vector3:
 		if t == null:
 			u.settle()
 			return Vector3.ZERO
-		u.engage(t)
+		u.acquire(t)
 	if Grid.flat_dist(u.pos, u.guard_pos) > u.leash_range or u.is_lost(t):
 		u.give_up(t)
 		u.return_to(u.guard_pos)
