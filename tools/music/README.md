@@ -238,6 +238,7 @@ their PNGs are kept in `docs/audio/music-style/` for review.
   `<out>_perc.ogg` (perc tracks) through the same room, glue gain, form and master gain as the full mix. They are
   sample-synchronous with it, but main + perc only nulls against the full mix to about -18 dB, because the bus
   compressor and limiter react to level. Put a drum in the main stem with `P.FRAME_DRUM.variant(perc=False)`.
-* Rendering takes about real time (40 s for a 40 s piece, most of it the numpy synths and the ffmpeg passes); the stem
-  cache makes mix-only changes fast.
+* Rendering takes about real time: 40 s for a style test; a 188 s, 10-track stress piece took about 3.3 min the
+  first time and 1.7 min with the stem cache (mix-only changes), with a peak of about 2.5 GB of memory. Do not run
+  more than a few renders at once.
 * Pieces are rendered at 48 kHz only; the stem MIDI uses up to 2 channels per mono track and channel 10 for kits.

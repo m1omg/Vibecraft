@@ -507,15 +507,21 @@ def render(piece_path, out=None, kind=None, xfade=None, trim=None, trim_fade=Non
             stems[k] = f.result()
     stem_list, stem_info, hashes = [], {}, {"midi": sha(midi_path)}
     for k in piece.tracks:
+        write_wav(os.path.join(work, "stems", f"{k}.wav"), stems[k])
+    lv = {}
+    if levels:
+        with cf.ThreadPoolExecutor(max_workers=jobs) as ex:
+            futs = {k: ex.submit(stem_level, os.path.join(work, "stems", f"{k}.wav"), piece.tracks[k].inst)
+                    for k in piece.tracks}
+            lv = {k: f.result() for k, f in futs.items()}
+    for k in piece.tracks:
         p = os.path.join(work, "stems", f"{k}.wav")
-        write_wav(p, stems[k])
         y = stems[k].astype(np.float64)
         trim_g = 10 ** (piece.tracks[k].inst.trim_db / 20)
         rms = math.sqrt(np.mean(y ** 2)) * trim_g
         stem_info[k] = {"rms_db_trimmed": round(20 * math.log10(rms + 1e-12), 1),
                         "peak_db_trimmed": round(20 * math.log10(np.max(np.abs(y)) * trim_g + 1e-12), 1)}
-        if levels:
-            stem_info[k].update(stem_level(p, piece.tracks[k].inst))
+        stem_info[k].update(lv.get(k, {}))
         hashes["stem:" + k] = sha(p)
         stem_list.append((p, piece.tracks[k].inst))
     report["stems"] = stem_info
