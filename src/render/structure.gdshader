@@ -7,7 +7,7 @@ shader_type spatial;
 //   reveal height  = UV2.y (normalized, written by the building kit) or model-space Y / model_height.
 //   UV2.x = build layer (0 frame / lattice, 1 covering): covering rises after the frame.
 
-render_mode blend_mix, depth_draw_opaque, cull_back, specular_disabled;
+render_mode blend_mix, depth_draw_opaque, cull_disabled, specular_disabled;
 
 #include "res://src/render/unit_uniforms.gdshaderinc"
 
@@ -88,6 +88,13 @@ void fragment() {
 		albedo *= 1.0 - 0.15 * fl.a;
 	}
 	emission += reveal_edge.rgb * edge_glow * 0.6;
+	if (!FRONT_FACING) {
+		// inside faces (seen through the construction cut, or the back of a banner): a dark,
+		// warm interior so a half-built shell reads solid
+		albedo *= progress < 0.999 ? 0.28 : 0.75;
+		NORMAL = -NORMAL;
+		emission *= 0.0;
+	}
 	ALBEDO = albedo;
 	EMISSION = emission;
 	ROUGHNESS = 1.0;

@@ -471,8 +471,8 @@ func _build_decor() -> void:
 				continue
 			match slot:
 				TerrainTextures.MEADOW, TerrainTextures.THICK_MEADOW, TerrainTextures.GRASSY_DIRT:
-					var n := 2 if slot == TerrainTextures.THICK_MEADOW else (1 if slot == TerrainTextures.MEADOW else 1)
-					var p_tuft := 0.5 if slot == TerrainTextures.GRASSY_DIRT else 0.85
+					var n := 3 if slot == TerrainTextures.THICK_MEADOW else (2 if slot == TerrainTextures.MEADOW else 1)
+					var p_tuft := 0.5 if slot == TerrainTextures.GRASSY_DIRT else 0.8
 					for k in n:
 						var hk := _hash(Vector2i(tx * 31 + k * 5, ty * 17 + k * 11))
 						if hk.x < p_tuft:
