@@ -57,6 +57,8 @@ static var _merged: Dictionary = {}       ## "def|colour" -> merged placeholder 
 static var _vc_material: ShaderMaterial
 static var _placeholder_unit_mat: ShaderMaterial
 static var _parts: Array = []
+static var _frustum: Array[Plane] = []    ## camera frustum, refreshed once per frame
+static var _frustum_frame: int = -1
 
 var unit: Unit
 var rig: Node3D
@@ -80,6 +82,7 @@ var _params: Dictionary = {}              ## last value written per instance uni
 var _mesh: GeometryInstance3D             ## placeholder mesh
 var _fall_dir: float = 1.0
 var _driven_t: float = -1.0
+var _skipped: float = 0.0                 ## animation time owed while off-screen
 
 
 func setup(u: Unit) -> void:
@@ -216,7 +219,12 @@ func _process(delta: float) -> void:
 	_move = move_toward(_move, target, delta * 6.0)
 	var swing := unit.swing_progress()
 	if _anim != null:
-		_drive_clips(delta, swing, spd)
+		# off-screen rigs skip the skeleton work; looping clips catch up when seen again
+		if not on_screen():
+			_skipped = minf(_skipped + delta, 4.0)
+			return
+		_drive_clips(delta + _skipped, swing, spd)
+		_skipped = 0.0
 		return
 	_procedural_motion(swing)
 
@@ -243,6 +251,23 @@ func _drive_clips(delta: float, swing: float, spd: float) -> void:
 		_loop("walk", walk_rate(spd), delta)
 	elif _clips.has("idle"):
 		_loop("idle", 1.0, delta)
+
+
+## Bounding-sphere test against the current camera's frustum (true without a camera, e.g. tests).
+func on_screen() -> bool:
+	var frame := Engine.get_process_frames()
+	if frame != _frustum_frame:
+		_frustum_frame = frame
+		var cam := get_viewport().get_camera_3d() if is_inside_tree() else null
+		_frustum.assign(cam.get_frustum() if cam != null else [])
+	if _frustum.is_empty():
+		return true
+	var r := maxf(height, 1.0)
+	var c := global_position + Vector3(0.0, r * 0.5, 0.0)
+	for p in _frustum:
+		if p.distance_to(c) > r:
+			return false
+	return true
 
 
 ## Optional animation hint published by sim systems ("work", "cast"); never required.
