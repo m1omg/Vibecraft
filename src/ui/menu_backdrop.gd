@@ -15,6 +15,19 @@ const KINGDOM := Color("#2EAE3A")
 const CLANS := Color("#285DE6")
 
 var _t: float = 0.0
+var _sky_tex: GradientTexture2D
+
+
+func _ready() -> void:
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.62, 0.9, 1.0])
+	g.colors = PackedColorArray([SKY_TOP, SKY_MID, SKY_LOW, SKY_LOW])
+	_sky_tex = GradientTexture2D.new()
+	_sky_tex.gradient = g
+	_sky_tex.width = 4
+	_sky_tex.height = 256
+	_sky_tex.fill_from = Vector2(0, 0)
+	_sky_tex.fill_to = Vector2(0, 1)
 
 
 func _process(delta: float) -> void:
@@ -44,14 +57,8 @@ func _draw() -> void:
 
 
 func _sky(s: Vector2) -> void:
-	var bands := 48
-	for i in bands:
-		var f0 := float(i) / bands
-		var f1 := float(i + 1) / bands
-		var c := SKY_TOP.lerp(SKY_MID, clampf(f0 / 0.45, 0.0, 1.0)) if f0 < 0.45 \
-			else SKY_MID.lerp(SKY_LOW, clampf((f0 - 0.45) / 0.2, 0.0, 1.0))
-		draw_rect(Rect2(0.0, s.y * f0 * 0.7, s.x, s.y * (f1 - f0) * 0.7 + 1.0), c)
-	draw_rect(Rect2(0.0, s.y * 0.7, s.x, s.y * 0.3), SKY_LOW)
+	draw_texture_rect(_sky_tex, Rect2(0.0, 0.0, s.x, s.y * 0.72), false)
+	draw_rect(Rect2(0.0, s.y * 0.72 - 1.0, s.x, s.y * 0.28 + 1.0), SKY_LOW)
 
 
 func _ridge_y(s: Vector2, x: float, base: float, amp: float, freq: float, phase: float) -> float:
@@ -68,10 +75,15 @@ func _ridge(s: Vector2, base: float, amp: float, freq: float, phase: float, col:
 	pts.append(Vector2(s.x, s.y))
 	pts.append(Vector2(0.0, s.y))
 	draw_colored_polygon(pts, col)
-	# hedge line along the crest
-	for i in range(2, steps - 1, 5):
-		var x := s.x * i / steps
-		draw_circle(Vector2(x, _ridge_y(s, x, base, amp, freq, phase) + 2.0), 3.0 + (i % 3), col.darkened(0.35))
+	# hedgerows: short clumps of bushes running down from the crest
+	var hedge := col.darkened(0.3)
+	for i in range(3, steps - 2, 9):
+		var x0 := s.x * i / steps
+		var y0 := _ridge_y(s, x0, base, amp, freq, phase)
+		var r := 2.5 + amp * 0.08
+		for k in 7:
+			var p := Vector2(x0 + k * r * 1.3 + sin(k * 2.3 + i) * r * 0.4, y0 + 3.0 + k * r * 0.9)
+			draw_circle(p, r * (1.0 + 0.25 * sin(k * 1.9 + i)), hedge)
 
 
 ## A tiny hall silhouette: gabled block (kingdom) or a dome (clans), with a waving pennant.

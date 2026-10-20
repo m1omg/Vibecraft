@@ -92,7 +92,13 @@ func test_setup_follows_the_data() -> void:
 			assert_false(other.intersects(s.footprint), "%s overlaps another structure" % s.def_id)
 		rects.append(s.footprint)
 		assert_lt(Grid.flat_dist(s.pos, Vector3.ZERO), 1000.0)
-	assert_eq(rects.size(), 14, "7 structures per side")
+	var listed_structures := 0
+	for p: Dictionary in sc["players"]:
+		listed_structures += (p["structures"] as Array).size()
+	assert_eq(rects.size(), listed_structures, "every listed structure placed")
+	for pid in 2:
+		var ps := w.player(pid)
+		assert_true(ps.food_used <= ps.food_cap, "player %d army fits its supply (%d / %d)" % [pid, ps.food_used, ps.food_cap])
 	for u in w.unit_list:
 		if u.is_hero:
 			assert_eq(u.level, int(sc["hero_level"]), "%s level" % u.def_id)
