@@ -6,8 +6,9 @@ retransition 49-52 | A' 53-68 | outro 69-76. The fiddle's theme is the Wheel (D-
 fourth G-D (bars 9-10); bars 11-12 sequence it a third up to the Mixolydian C and close on a half cadence on A (Am),
 and bars 13-16 let the Wheel climb past the fifth to the octave before the answer brings it home (C-Am-Dsus4-D).
 In B the harmony turns to G: two far-off horns call in two-note signals (the falling minor third D-B, the rising
-fourth D-G) and viola and cello answer in octaves with the Wheel inverted in a dotted march rhythm, over a field-snare
-ostinato and a hurdy-gurdy re-tuned to G-D; in its second half the fiddle adds a descant. The interlude drops the
+fourth D-G) and the viola answers above them (G4-E5, the cello an octave below, the fiddle joining in unison) with
+the Wheel inverted in a dotted march rhythm, over a field-snare ostinato and a hurdy-gurdy re-tuned low to D2-G2;
+in its second half the tune drops an octave under a fiddle descant. The interlude drops the
 drone and the drums: dulcimer and plucked fiddle trade the Wheel in diminution, then run it in stretto a third apart.
 The retransition fragments the Wheel's first three notes in a rising sequence over an A pedal (G/A) into A', where
 the second period lifts the Wheel an octave (climax at bar 66, the top A) with the hum and the timpani. The outro
@@ -20,7 +21,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import palette as P  # noqa: E402
 from ext_kingdom import bass_bar, bass_of, chord as _ch, coups, dulcimer_bar, mel  # noqa: E402
-from score import Piece, wheel, wheel_answer  # noqa: E402
+from score import Mode, Piece, wheel, wheel_answer  # noqa: E402
 
 # Harmony, bar by bar (1-based). "A:2 B:2" = A for two beats then B; plain tokens split the bar evenly.
 HARMONY = {
@@ -52,11 +53,15 @@ def segs(bar):
 def build():
     p = Piece("kingdom_1", seed=1101, bpm=92, meter=(4, 4), key="D", mode="mixolydian")
     p.mix = P.MIX_KINGDOM
-    p.kind, p.tail_s, p.length_range = "track", 6.0, (200.0, 220.0)
+    p.kind, p.tail_s, p.length_range = "track", 2.0, (200.0, 220.0)   # the tail is the room's real decay
     p.out = "assets/audio/music/kingdom_1.ogg"
 
     def B(bar, beat=0.0):            # 1-based bar numbers, as in the composer's note
         return p.at(bar - 1, beat)
+
+    # the bass approach notes stay in the mode: D Mixolydian in A, G Mixolydian (F natural) in the muster
+    SC_D = p.mode.scale(28, 62)
+    SC_G = Mode("G", "mixolydian").scale(28, 62)
 
     hurdy = p.track("hurdy", P.HURDY)
     dul = p.track("dulcimer", P.DULCIMER)
@@ -94,7 +99,7 @@ def build():
 
     # ================================================================ hurdy-gurdy: the floor and the pulse
     hurdy.drone(B(1), B(25), ["D2", "A2"], vel=88)
-    hurdy.drone(B(25), B(40, 2), ["D3", "G3"], vel=86)          # re-tuned to G for the muster
+    hurdy.drone(B(25), B(40, 2), ["D2", "G2"], vel=88)          # re-tuned to G for the muster, under the tune
     hurdy.drone(B(40, 2), B(41), ["D2", "A2"], vel=84)
     hurdy.drone(B(49), B(77, 3), ["D2", "A2"], vel=88)
     hurdy.curve(B(1), B(3), 25, 92)
@@ -109,7 +114,7 @@ def build():
     hurdy.note(B(2, 2), "D3", 0.3, vel=58, stroke="buzz")       # the wheel catching
     for bar in range(5, 41):
         b0 = B(bar)
-        pitch = "G3" if 25 <= bar <= 39 else "D3"
+        pitch = "D3"                                            # the trompette stays on D (the fifth of G)
         if bar < 9:
             coups(hurdy, b0, 4, pitch, 66, at=(1, 3))
         elif bar < 17:
@@ -175,7 +180,7 @@ def build():
         sg = segs(bar)
         nxt = segs(bar + 1)[0][1]
         if len(sg) == 1:
-            bass_bar(bass, B(bar), sg[0][1], nxt, "march", vel=76 if bar < 17 else 82)
+            bass_bar(bass, B(bar), sg[0][1], nxt, "march", vel=76 if bar < 17 else 82, scale=SC_D)
         else:
             for k, (off, sym, d) in enumerate(sg):
                 bass_bar(bass, B(bar, off), sym, None, "root", vel=76 if bar < 17 else 82, beats=min(d, 1.5))
@@ -206,21 +211,22 @@ def build():
                   "A3:.75 B3:.25 C4:.5 A3:.5 D4:1 C4:1 | B3:1 A3:1 G3:2")
     for base in (25, 33):
         loud = 1.0 if base == 25 else 1.1
+        up = 12 if base == 25 else 0          # B1: the tune lies above the horns and the drone (viola G4-E5)
         horn_call(base, ["D4", "B3"], ["B3", "G3"], vel=74 * loud)              # falling minor third
-        mel(vla, B(base + 1), MARCH_ANS1, vel=86 * loud, art="normal")
+        mel(vla, B(base + 1), MARCH_ANS1, vel=86 * loud, art="normal", tr=up)
         horn_call(base + 2, ["D4", "G4"], ["B3", "D4"], vel=76 * loud)          # rising fourth
-        mel(vla, B(base + 3), MARCH_ANS2, vel=88 * loud, art="normal")
+        mel(vla, B(base + 3), MARCH_ANS2, vel=88 * loud, art="normal", tr=up)
         if base == 25:
-            mel(vla, B(base + 4), MARCH_TUNE, vel=90, art="normal", dyn="arch")
+            mel(vla, B(base + 4), MARCH_TUNE, vel=90, art="normal", dyn="arch", tr=up)
             horn_call(base + 7, ["C4", "G3"], ["A3", "B3"], durs=(1.0, 3.0), beat=0.0, vel=70)
         else:
             mel(vla, B(base + 4), "G3:.5 A3:.5 B3:.5 C4:1.5 D4:1 | D4:.75 E4:.25 D4:.5 C4:.5 B3:1 G3:1 | "
                                   "C4:.75 D4:.25 E4:.5 C4:.5 G3:1 E4:1 | D4:4", vel=96, art="normal", dyn="arch")
             horn_call(base + 7, ["G3", "D3"], ["B2", "A2"], durs=(1.0, 3.0), vel=78)   # the answer, home on D
-    vc.double(vla, B(33), B(41), interval=-12, vel=0.9)          # the cello joins for the second muster
-    for bar in range(25, 33):                                 # ... and only holds the bass of the first
-        vc.note(B(bar), bass_of(segs(bar)[0][1], 2), 4, vel=60, art="legato")
-    vla.curve(B(25), B(33), 104, 114)
+    vc.double(vla, B(25), B(41), interval=-12, vel=0.86)         # the cello an octave under the viola's tune
+    fid.double(vla, B(26), B(33), interval=0, vel=0.78)           # B1: the fiddle joins the muster in unison
+    fid.curve(B(26), B(33), 96, 110)
+    vla.curve(B(25), B(33), 112, 120)
     vla.curve(B(33), B(41), 110, 122)
     vc.curve(B(25), B(33), 70, 84)
     vc.curve(B(33), B(41), 100, 112)
@@ -238,10 +244,10 @@ def build():
         sg = segs(bar)
         nxt = segs(bar + 1)[0][1]
         for off, sym, d in sg:
-            dulcimer_bar(dul, B(bar, off), sym, "pulse" if bar < 33 else "roll", vel=48 if bar < 33 else 54,
-                         octave=4 if bar < 33 else 3, beats=d, ring=1.5)
+            dulcimer_bar(dul, B(bar, off), sym, "pulse" if bar < 33 else "roll", vel=52 if bar < 33 else 54,
+                         octave=3, beats=d, ring=1.5)                  # under the tune, not above it
         if len(sg) == 1:
-            bass_bar(bass, B(bar), sg[0][1], nxt, "march", vel=80)
+            bass_bar(bass, B(bar), sg[0][1], nxt, "march", vel=80, scale=SC_G)
         else:
             for off, sym, d in sg:
                 bass_bar(bass, B(bar, off), sym, None, "halves", vel=78, beats=d)
@@ -351,7 +357,7 @@ def build():
             dulcimer_bar(dul, B(bar, off), sym, fig, vel=60 if bar < 61 else 64, octave=4 if bar >= 61 else 3,
                          beats=d, ring=1.7)
         if len(sg) == 1:
-            bass_bar(bass, B(bar), sg[0][1], nxt, "march", vel=88)
+            bass_bar(bass, B(bar), sg[0][1], nxt, "march", vel=88, scale=SC_D)
         else:
             for off, sym, d in sg:
                 bass_bar(bass, B(bar, off), sym, None, "halves", vel=86, beats=d)
@@ -371,7 +377,9 @@ def build():
     fd.pattern(B(68), 1, {"dum": "X...x...x.x.x...", "tek": "..g...g........."}, vel=88)
     hum.note(B(61), "D3", 32, vel=62, vowel="m")
     hum.note(B(61), "A2", 32, vel=58, vowel="m")
-    hum.note(B(61), "F#3", 16, vel=48, vowel="m")
+    for bar, beat, pitch, d in ((62, 0, "G3", 2), (62, 2, "F#3", 3.5), (63, 1.5, "E3", 1.5),
+                                (63, 3, "G3", 3), (64, 2, "A3", 2)):       # the hum's third follows the chords
+        hum.note(B(bar, beat), pitch, d, vel=48, vowel="m")
     hum.swell(B(61), B(69), 50, 112, peak=0.7)
     timp.note(B(61), "D2", 2, vel=70)
     timp.roll(B(67, 2), 2.0, "A1", vel0=30, vel1=72, rate=0.125)
