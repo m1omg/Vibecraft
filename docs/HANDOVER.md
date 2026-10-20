@@ -56,11 +56,15 @@ original (`docs/research/ip-safety.md`).
   - SFX for combat, ranged and UI: Seed Audio plus Kenney CC0 (`assets/audio/CREDITS.md`).
   - Voice: tier-a acks (ready, what, yes, attack) for the hodman, pavisier, hookgunner, yurtwright and grappler. The script for the
     whole cast is in `docs/design/voice-lines.md`.
-  - **Music: composed in-house**, 13 pieces, with `tools/music` (fluidsynth + FluidR3_GM, MIT, + numpy synths). The `music/p0` branch
-    was finishing integration when this was written. If it is not yet merged into the dev branch, merge it. If `/tmp/vc_music` is
-    gone, the dev branch has a checkpoint merge (57ecfa3) and the pieces can be re-rendered from `tools/music/pieces/*.py`.
-    **Music is not yet wired to play in-game**: that needs per-faction playlists with 20–40 s gaps, menu/score loops and the
-    victory/defeat stingers (juice MUS-* rows).
+  - **Music: composed in-house** with `tools/music` (fluidsynth + FluidR3_GM, MIT, + numpy synths): 13 pieces (kingdom 1–3, clans
+    1–3, menu, score bed, victory/defeat ×2, clans opening cue), merged in eacaad7. Manifest: `assets/audio/music/manifest.json`.
+    The Audio director already plays the opening cues and the victory/defeat stingers.
+  - **Not wired yet:**
+    - the in-game playlist: per faction, shuffled, 20–40 s gaps, first track 6 s after the opening cue;
+    - the menu loop;
+    - the score bed after the stinger.
+    `tools/music/README.md` "In the game" and the juice MUS-* rows give the spec. The two-person listening check from the bible is
+    still pending: ask the user.
 
 ## 4. Next steps
 
