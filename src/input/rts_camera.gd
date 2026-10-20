@@ -68,7 +68,9 @@ func setup(w: World, start: Vector3) -> void:
 	jump_to(start)
 
 
+## Instant jump (minimap, Space, groups): the pan momentum is dropped.
 func jump_to(p: Vector3) -> void:
+	pan_velocity = Vector2.ZERO
 	focus = Vector3(p.x, 0.0, p.z)
 	if world != null:
 		focus = world.map.clamp_to_map(focus, map_margin)
