@@ -1,6 +1,7 @@
 extends "res://tests/test_case.gd"
 ## Drives the real main scene with synthetic input events (headless): box select, right-click
-## move, control groups, ctrl-click select-same-type and targeting via the command card.
+## move, control groups, ctrl-click / double-click select-same-type, shift-click add/remove,
+## targeting via the command card and the camera controls (arrows, wheel, middle-drag).
 
 var main: Node
 var world: World
@@ -236,3 +237,74 @@ func test_grid_preset_hotkeys() -> void:
 	assert_eq(commands.targeting, "patrol", "A = slot 4 (Patrol) in the Grid preset")
 	commands.cancel_targeting()
 	assert_eq(CommandCard.hotkey_label(3), "R", "card shows the Grid key")
+
+
+## Double-click selects every own unit of that type on screen; shift+click adds a unit to the
+## selection and shift+click on a selected unit removes it.
+func test_double_click_and_shift_click() -> void:
+	var army := _army()
+	var soldiers := army.filter(func(u: Unit) -> bool: return u.def_id == "dummy_soldier")
+	var others := army.filter(func(u: Unit) -> bool: return u.def_id != "dummy_soldier")
+	assert_lt(1, soldiers.size(), "several soldiers to double-click")
+	assert_lt(0, others.size(), "a unit of another type")
+	var soldier: Unit = soldiers[0]
+	_mouse(MOUSE_BUTTON_LEFT, _screen(soldier), true, {"double": true})
+	_mouse(MOUSE_BUTTON_LEFT, _screen(soldier), false)
+	assert_eq(sel.selected.size(), soldiers.size(), "double-click selects all soldiers on screen")
+	for u in sel.selected:
+		assert_eq(u.def_id, "dummy_soldier", "only the double-clicked type")
+	sel.clear()
+	_mouse(MOUSE_BUTTON_LEFT, _screen(soldier), true)
+	_mouse(MOUSE_BUTTON_LEFT, _screen(soldier), false)
+	var other: Unit = others[0]
+	_mouse(MOUSE_BUTTON_LEFT, _screen(other), true, {"shift": true})
+	_mouse(MOUSE_BUTTON_LEFT, _screen(other), false, {"shift": true})
+	assert_eq(sel.selected.size(), 2, "shift+click adds")
+	assert_true(sel.selected.has(soldier) and sel.selected.has(other), "both units selected")
+	_mouse(MOUSE_BUTTON_LEFT, _screen(soldier), true, {"shift": true})
+	_mouse(MOUSE_BUTTON_LEFT, _screen(soldier), false, {"shift": true})
+	assert_eq(sel.selected.size(), 1, "shift+click on a selected unit removes it")
+	assert_true(sel.selected.has(other), "the other unit stays selected")
+
+
+## Camera controls: arrow keys pan (refresh-rate independent: the same real time pans the same
+## distance at 60 and 240 fps), the wheel zooms within the limits, middle-drag grabs the ground.
+func test_camera_arrows_wheel_and_middle_drag() -> void:
+	var start := world.map.start_locations[0]
+	camera.jump_to(start + Vector3(10, 0, -10))
+	camera.distance = camera.target_distance
+	var f0 := camera.focus
+	Input.action_press("cam_right")
+	for i in 15:
+		camera._process(1.0 / 60.0)
+	var f60 := camera.focus
+	camera.jump_to(f0)
+	for i in 60:
+		camera._process(1.0 / 240.0)
+	var f240 := camera.focus
+	Input.action_release("cam_right")
+	assert_lt(1.0, f60.x - f0.x, "right arrow pans east")
+	assert_lt(absf(f60.x - f240.x), 0.05, "pan distance does not depend on the frame rate")
+	assert_lt(absf(f60.z - f0.z), 0.01, "no drift on the other axis")
+	camera.jump_to(f0)
+	var centre := tree.root.get_visible_rect().size * 0.5
+	var d0 := camera.target_distance
+	_mouse(MOUSE_BUTTON_WHEEL_UP, centre, true)
+	_mouse(MOUSE_BUTTON_WHEEL_UP, centre, false)
+	assert_lt(camera.target_distance, d0, "wheel up zooms in")
+	for i in 50:
+		_mouse(MOUSE_BUTTON_WHEEL_UP, centre, true)
+		_mouse(MOUSE_BUTTON_WHEEL_UP, centre, false)
+	assert_eq(camera.target_distance, camera.min_distance, "zoom stops at the near limit")
+	for i in 50:
+		_mouse(MOUSE_BUTTON_WHEEL_DOWN, centre, true)
+		_mouse(MOUSE_BUTTON_WHEEL_DOWN, centre, false)
+	assert_eq(camera.target_distance, camera.max_distance, "zoom stops at the far limit")
+	camera.jump_to(f0)
+	_mouse(MOUSE_BUTTON_MIDDLE, centre, true)
+	_motion(centre + Vector2(-120, 0), Vector2(-120, 0))
+	_mouse(MOUSE_BUTTON_MIDDLE, centre + Vector2(-120, 0), false)
+	assert_lt(1.0, camera.focus.x - f0.x, "dragging the ground left moves the view east")
+	var f1 := camera.focus
+	_motion(centre, Vector2(120, 0))
+	assert_eq(camera.focus, f1, "releasing the middle button ends the drag")
