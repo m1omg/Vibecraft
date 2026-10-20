@@ -336,7 +336,11 @@ Combat behaviour (all in `Unit.sim_tick`, integer tick timers):
   ring), unless already in weapon range; ranged units may shoot across cliffs and water.
 - **Retaliation**: an idle, attack-moving, patrolling or following unit that is hit engages the
   attacker (a follower resumes following afterwards); not a target it just gave up on, and for
-  melee units not one it cannot reach. Creeps also wake idle camp mates within `help_radius` (6 m).
+  melee units not one it cannot reach. **The camp acts as one** (rules §15.1): when a creep
+  auto-acquires a target or is hit (even while it is already fighting), `CreepSystem.alert_camp`
+  makes every awake, idle member of its `camp_id` that can reach the target engage it (other
+  camps never join; `camp_aggro` once per pull, the camp calms when nobody fights). A creep
+  without a camp wakes idle creeps within `help_radius` (6 m).
 - **Chasing**: path requests at most every `REPATH_TICKS` (10) and only when the target drifted
   more than 1 m from the last goal; at a stale goal the unit steers straight at the target. A
   target within `DIRECT_CHASE` (5 m) and in plain sight (`line_of_walk`) is chased without a
