@@ -67,14 +67,18 @@ func _run() -> void:
 	await _shot("dusk_default", 17.6, k_start + inward0 * 4.0, 25.8)
 	await _shot("night_default", 22.0, k_start + inward0 * 4.0, 25.8)
 	await _shot("night_close", 22.5, c_start + _inward(c_start, m) * 8.5, 18.75)
+	# cliffs, a ramp and the lake shore (south ramp of the north-west plateau faces the camera)
+	var ramp: Dictionary = m.ramps[6]
+	var rect: Rect2i = ramp["rect"]
+	await _shot("day_cliffs", 14.0, Vector3((rect.position.x + rect.size.x * 0.5) * 2.0, 0,
+		(rect.position.y + rect.size.y * 0.5) * 2.0 + 3.0), 25.8)
 	# the clash: both armies meet in the middle
 	if only.is_empty() or only.has("battle"):
 		var mid := _open_ground(m, Vector3(96, 0, 96))
-		_teleport_army(0, mid + Vector3(-5.5, 0, 2.0))
-		_teleport_army(1, mid + Vector3(5.5, 0, -2.0))
-		for pid in 2:
-			var ids: Array = armies[pid].map(func(u: Object) -> int: return u.id)
-			world.issue({"type": "attack_move", "player": pid, "units": ids, "pos": mid})
+		# fresh armies, idle and within acquisition range: auto-acquire starts the fight
+		armies = [[], []]
+		_army(0, KINGDOM_ARMY, mid + Vector3(-3.4, 0, 1.2), Vector3(1, 0, 0), Vector3(0, 0, 1), -PI * 0.5)
+		_army(1, CLANS_ARMY, mid + Vector3(3.4, 0, -1.2), Vector3(-1, 0, 0), Vector3(0, 0, -1), PI * 0.5)
 		main.get_node("UI/Selection").call("select_units", [])
 		await _frames(40)
 		await _shot("battle", 13.0, mid, 21.0)
@@ -157,18 +161,6 @@ func _army(pid: int, defs: Array, centre: Vector3, inward: Vector3, side: Vector
 		var u: Object = world.spawn_unit(defs[i], pid, p, face)
 		if u != null:
 			armies[pid].append(u)
-
-
-func _teleport_army(pid: int, centre: Vector3) -> void:
-	for i in armies[pid].size():
-		var u: Object = armies[pid][i]
-		if not u.alive:
-			continue
-		var row := float(i / 4)
-		var col := float(i % 4) - 1.5
-		var off := Vector3(col * 1.4, 0, row * 1.5 * (1.0 if pid == 0 else -1.0))
-		if u.has_method("teleport"):
-			u.call("teleport", centre + off)
 
 
 func _shot(tag: String, hour: float, focus: Vector3, dist: float) -> void:

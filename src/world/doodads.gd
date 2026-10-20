@@ -232,8 +232,12 @@ func _group(key: String, glb: String, counts: Dictionary) -> int:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
+	# white instance colours: the Compatibility renderer multiplies COLOR by them (zero when absent)
+	mm.use_colors = true
 	mm.mesh = _mesh_for(glb)
 	mm.instance_count = int(counts.get(key, 0))
+	for k in mm.instance_count:
+		mm.set_instance_color(k, Color.WHITE)
 	mm.visible_instance_count = 0
 	_mms.append(mm)
 	var idx := _mms.size() - 1

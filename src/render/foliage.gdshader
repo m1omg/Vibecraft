@@ -48,6 +48,10 @@ void vertex() {
 	v_ao = is_leaves ? COLOR.g : 1.0;
 	v_h = UV2.y;
 	vec3 inst = multimesh ? INSTANCE_CUSTOM.rgb : vec3(1.0);
+	// a renderer that drops MultiMesh custom data hands us zeros: fall back to no jitter
+	if (dot(inst, inst) < 0.01) {
+		inst = vec3(1.0);
+	}
 	v_tint = is_leaves ? inst : mix(vec3(1.0), inst, 0.4) * COLOR.rgb;
 	v_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
