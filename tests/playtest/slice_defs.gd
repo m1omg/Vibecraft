@@ -1,7 +1,8 @@
 extends RefCounted
 ## Screenshot / playtest helper: registers the slice roster (docs/design/slice-content.json) as unit
 ## defs for any id data/units.json does not define yet, so visual scripts can place the real
-## kingdom and clans models before the gameplay data lands. Never used by the game or the sim
+## kingdom and clans models before the gameplay data lands (since the M2 data tables the whole
+## slice roster is defined, so this normally registers nothing). Never used by the game or the sim
 ## tests; real data always wins (existing ids are left untouched).
 
 const SLICE := "res://docs/design/slice-content.json"

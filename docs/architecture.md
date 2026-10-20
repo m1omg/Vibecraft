@@ -81,9 +81,12 @@ src/
   autoload/     defs.gd (Defs), audio.gd (Audio), settings.gd (Settings), events.gd (Events)
   main.tscn + main.gd   boots a match: scenario "slice" (data/maps/slice.json, both factions,
                 start halls + workers, mines, neutral buildings, creep camps, AI seat) or
-                "sandbox" (generated test map with dummy defs; engine playtests)
+                "sandbox" (generated test map with dummy defs; engine playtests). Both paths
+                apply the view setup (RenderProfile camera + ViewHooks); `spawn_skirmish =
+                false` skips start bases and creep camps (screenshot / showcase scripts)
   world/        world.gd + world.tscn (match root), grid.gd, map_data.gd, map_generator.gd,
-                terrain_builder.gd, terrain.gdshader, water.gdshader, tree.gdshader,
+                terrain_builder.gd, terrain.gdshader, water.gdshader, tree.gdshader (legacy
+                card-tree shader, unused since the kit trees: they use render/foliage.gdshader),
                 pathing.gd, group_path.gd, spatial_hash.gd, fog.gd, doodads.gd, day_night.gd
   entities/     unit.gd, order.gd, orders/ (one OrderHandler per order type), projectile.gd,
                 unit_view.gd (visuals) + unit_placeholder.gdshader
@@ -328,8 +331,12 @@ name or a res:// path), else the unit manifest alias for the def id (`kingdom_pa
 the def's `shape` hint (`humanoid` capsule + head + team band; `building` box + roof + banner; `mine`
 mound with nuggets; merged into one vertex-coloured mesh per (def, team colour)). Units render at
 native GLB size × `def.model_scale` (default `def.scale`); **structures are scaled uniformly to their
-data footprint** (footprint metres / the building manifest's `footprint_m` or the model AABB), and a
-T2 hall add-on (`addon_of`) is parented with its T1 hall. Every imported material is converted once
+data footprint** (footprint metres / the building manifest's `footprint_m` or the model AABB;
+`model_fit: "none"` keeps `model_scale` / `scale`). Upgraded halls point `model` at the T1 hall and
+list their add-on in `model_addons` (data/SCHEMA.md): each add-on is parented in the hall's model
+space (a building-manifest `addon_of` entry loaded directly is likewise parented with its T1 hall).
+A def with `model_depleted` (Gold Seam) swaps to that model on `Events.mine_depleted`. Every
+imported material is converted once
 (cached per source material) to the shared painterly shaders in `src/render/`: `unit.gdshader`
 (wrap-Lambert + soft two-band key, no specular, model-space value gradient, team colour from the
 `<model>_team.png` texel mask + magenta key or a grey `TEAM` surface multiplied, team-colour rim,
@@ -503,7 +510,8 @@ use these queries so turning fog on changes no call sites.
 Target design: `Fog` keeps per-player `PackedByteArray` grids (0 = unexplored, 1 = explored/fogged, 2 = visible)
 at 1 m resolution. Recomputed ~10 Hz from unit sight radii (cliff level blocks sight to higher
 levels, trees don't for the slice). Uploads the local player's grid into an `ImageTexture` (L8)
-used by terrain/doodad shaders and the minimap. Enemy units outside visible cells are hidden;
+used by the terrain, water and foliage (trees, `src/render/foliage.gdshader`) shaders through
+`World.set_fog_texture` and by the minimap. Enemy units outside visible cells are hidden;
 enemy buildings once seen leave a "ghost" until re-scouted.
 
 ## 9. Players & economy
