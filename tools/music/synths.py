@@ -308,12 +308,14 @@ class Hurdy(Synth):
         nmax = int(min(9000.0, self.sr * 0.42) / f0)
         h = np.arange(1, nmax + 1)
         body = resonances(h * f0 * (1.0 / self.p["body"]), self.BODY, floor=0.12)
+        # the wooden body passes little below its air resonance: the drone is nasal, not boomy
+        hp = 0.18 + 0.82 * highpass(190.0, 2)(h * f0)
         if kind == "buzz":
-            amps = h ** -0.3 * body * (1 + 0.6 * (h % 2 == 0))
+            amps = h ** -0.3 * body * (1 + 0.6 * (h % 2 == 0)) * hp
         elif kind == "melody":
-            amps = h ** -0.85 * body * self.p["bright"]
+            amps = h ** -0.75 * body * self.p["bright"] * hp
         else:
-            amps = h ** -0.95 * body
+            amps = h ** -0.72 * body * hp
         amps *= 1.0 / (1.0 + (h * f0 / 7000.0) ** 4)
         ph = self.ident.uniform(0, 2 * math.pi, nmax)
         tab = harmonic_table(amps, ph)
@@ -504,7 +506,7 @@ class FrameDrum(Synth):
     STROKES = {  # mode amps, decay scale, noise level, noise band (lo, hi), noise decay s
         "dum": ([1.0, 0.22, 0.12, 0.28, 0.06, 0.08, 0.04, 0.05, 0.04, 0.02], 1.0, 0.35, (120, 1800), 0.03),
         "doum": ([1.0, 0.15, 0.08, 0.2, 0.04, 0.05, 0.02, 0.03, 0.02, 0.01], 1.3, 0.25, (80, 1000), 0.04),
-        "tek": ([0.12, 0.45, 0.6, 0.35, 0.5, 0.4, 0.35, 0.3, 0.25, 0.2], 0.35, 0.8, (900, 6000), 0.014),
+        "tek": ([0.04, 0.4, 0.6, 0.35, 0.5, 0.4, 0.35, 0.3, 0.25, 0.2], 0.35, 0.8, (900, 7000), 0.014),
         "slap": ([0.4, 0.5, 0.45, 0.3, 0.3, 0.25, 0.2, 0.15, 0.12, 0.1], 0.3, 1.3, (400, 4000), 0.035),
         "mute": ([1.0, 0.2, 0.1, 0.2, 0.05, 0.05, 0.02, 0.02, 0.02, 0.01], 0.3, 0.4, (150, 1500), 0.02),
     }

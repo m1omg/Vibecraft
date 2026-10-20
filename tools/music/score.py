@@ -329,7 +329,9 @@ class Instrument:
     """One playable voice. Either a General MIDI preset (program/bank, or drums=True for a kit) rendered by
     FluidSynth, or a numpy synth (`synth` = a key of synths.SYNTHS, `synth_params` its settings).
 
-    Mix settings (used by render.py): gain_db, pan (-1..1), width (stereo width 0..1.5), reverb (send 0..1),
+    Mix settings (used by render.py): gain_db (musical balance), trim_db (calibration of the raw preset or
+    synth level; leave it alone), drive (0..1 soft saturation for rasp), pan (-1..1), width (stereo width
+    0..1.5), reverb (send 0..1),
     eq (list of ('hp', f) ('lp', f) ('peak', f, gain_db, q) ('lowshelf', f, gain_db) ('highshelf', f, gain_db)).
     Performance: vel_lo/vel_hi/vel_gamma (velocity curve), timing_ms (jitter sigma), lag_ms (constant
     placement: + behind the beat), accent (metric accent size), mono (one line: alternating channels, bow or
@@ -343,6 +345,8 @@ class Instrument:
     synth: str | None = None
     synth_params: dict = field(default_factory=dict)
     gain_db: float = 0.0
+    trim_db: float = 0.0
+    drive: float = 0.0
     pan: float = 0.0
     width: float = 1.0
     reverb: float = 0.2
@@ -556,6 +560,8 @@ class Track:
     def _drum(self, drum):
         if isinstance(drum, (int, np.integer)):
             return int(drum), {}
+        if not self.inst.drums and not self.inst.drum_map and isinstance(drum, str):
+            return n(drum), {}          # pitched percussion (timpani): a note name
         m = self.inst.drum_map or GM_DRUMS
         if drum not in m:
             raise KeyError(f"{self.name}: unknown drum {drum!r} (known: {', '.join(m)})")
@@ -585,12 +591,13 @@ class Track:
 
     def pattern(self, start, bars, spec, vel=90, steps=None, swing=0.0, drum=None) -> float:
         """Drum grid. spec: a string (with `drum`) or {drum: string}. One string holds one or more bars
-        separated by '|' and is cycled over `bars` bars. Steps per bar = the length of each bar's string,
+        separated by '|' and is cycled over `bars` bars. A plain string without `drum` plays the first drum of
+        the instrument's drum_map. Steps per bar = the length of each bar's string,
         so 16 chars = sixteenths in 4/4 and 12 chars = triplet eighths (the 6/8-over-4/4 gallop).
         Step characters: X accent, x hit, o soft, g ghost, f flam, r roll (3 strokes in the step),
         . or - rest. Spaces are ignored. swing delays every second step by swing x step."""
         if isinstance(spec, str):
-            spec = {drum: spec}
+            spec = {drum if drum is not None else next(iter(self.inst.drum_map or GM_DRUMS)): spec}
         bar0 = self.piece.bar_index(start)
         for dname, s in spec.items():
             segs = [x.replace(" ", "") for x in s.split("|")]
