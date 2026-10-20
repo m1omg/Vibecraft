@@ -1,0 +1,62 @@
+{
+ "src": "/tmp/vc_audio/assets_src/audio/sfx/ranged/bombard_fire__87cce160.mp3",
+ "id": "bombard_fire",
+ "raw_dur": 8.542,
+ "raw_peak_db": 2.11,
+ "detected": 3,
+ "expected": 3,
+ "exported": 3,
+ "takes": [
+  {
+   "dur": 2.373,
+   "peak_db": 1.98,
+   "clip": 0,
+   "rms_db": -10.26,
+   "crest_db": 12.24,
+   "centroid_hz": 1166,
+   "flatness": 0.0176,
+   "silence": 0.189,
+   "periodic": 0.0,
+   "take": 1,
+   "start": 0.147,
+   "end": 2.519,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/bombard_fire_01.wav"
+  },
+  {
+   "dur": 2.388,
+   "peak_db": 2.0,
+   "clip": 0,
+   "rms_db": -11.3,
+   "crest_db": 13.3,
+   "centroid_hz": 1082,
+   "flatness": 0.017,
+   "silence": 0.142,
+   "periodic": 0.0,
+   "take": 2,
+   "start": 3.768,
+   "end": 6.156,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/bombard_fire_02.wav"
+  },
+  {
+   "dur": 1.026,
+   "peak_db": 2.11,
+   "clip": 0,
+   "rms_db": -5.48,
+   "crest_db": 7.59,
+   "centroid_hz": 1078,
+   "flatness": 0.0152,
+   "silence": 0.039,
+   "periodic": 0.0,
+   "take": 3,
+   "start": 7.405,
+   "end": 8.431,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/bombard_fire_03.wav"
+  }
+ ]
+}
