@@ -2,8 +2,12 @@ class_name Selection
 extends Control
 ## Full-screen overlay handling unit selection for the local player: click, drag box,
 ## shift add/remove, ctrl+click / double-click select-all-of-type on screen, control groups
-## (ctrl+N set, shift+N add, N recall, double-tap N centres camera) and tab subgroups.
-## Picking is screen-space against interpolated unit positions (no physics bodies needed).
+## (ctrl+N set, shift+N add, N recall, double-tap N centres camera), Tab / Shift+Tab subgroups,
+## F1–F3 heroes (double-tap centres) and Backspace own halls (rules §18.3).
+## The selection is kept in subgroup priority order (rules §18.3): heroes first (training
+## order), then by food cost (highest first), then by type; the 12-unit cap applies after that
+## order, so a box over a large army keeps its heroes. Picking is screen-space against
+## interpolated unit positions (no physics bodies needed).
 
 const BOX_FILL := Color(0.3, 1.0, 0.35, 0.10)
 const BOX_LINE := Color(0.4, 1.0, 0.45, 0.9)
@@ -22,6 +26,9 @@ var _press_pos: Vector2 = Vector2.ZERO
 var _skip_release: bool = false
 var _last_group: int = -1
 var _last_group_ms: int = 0
+var _last_hero: int = -1
+var _last_hero_ms: int = 0
+var _hall_cursor: int = -1              ## unit id of the hall Backspace selected last
 
 
 func _ready() -> void:
@@ -45,10 +52,35 @@ func select_units(units: Array, add: bool = false) -> void:
 	var next: Array[Unit] = []
 	if add:
 		next = selected.duplicate()
+	var fresh: Array[Unit] = []
 	for u: Unit in units:
-		if u != null and u.alive and not next.has(u) and next.size() < Settings.max_selection:
+		if u != null and u.alive and not next.has(u) and not fresh.has(u):
+			fresh.append(u)
+	fresh.sort_custom(priority_before)
+	for u in fresh:
+		if next.size() < Settings.max_selection:
 			next.append(u)
 	_set_selection(next)
+
+
+## Subgroup priority (rules §18.3): heroes first in training order, then food cost (highest
+## first), then type, then spawn order.
+static func priority_before(a: Unit, b: Unit) -> bool:
+	if a.is_hero != b.is_hero:
+		return a.is_hero
+	if a.is_hero:
+		return a.id < b.id
+	var fa := food_cost(a)
+	var fb := food_cost(b)
+	if fa != fb:
+		return fa > fb
+	if a.def_id != b.def_id:
+		return a.def_id < b.def_id
+	return a.id < b.id
+
+
+static func food_cost(u: Unit) -> int:
+	return int((u.def.get("cost", {}) as Dictionary).get("food", 0))
 
 
 func clear() -> void:
@@ -63,7 +95,8 @@ func selected_ids(own_only: bool = true) -> Array:
 	return ids
 
 
-## Distinct def ids in the selection, in first-seen order (tab cycles through them).
+## Distinct def ids in the selection in subgroup priority order (the selection is kept sorted;
+## Tab / Shift+Tab cycle through them, the first, a hero when there is one, starts active).
 func subgroup_defs() -> Array[String]:
 	var out: Array[String] = []
 	for u in selected:
@@ -164,9 +197,66 @@ func _key(k: InputEventKey) -> void:
 			get_viewport().set_input_as_handled()
 			return
 	if k.is_action_pressed("subgroup_next") and not selected.is_empty():
-		subgroup = (subgroup + 1) % maxi(subgroup_defs().size(), 1)
+		var n := maxi(subgroup_defs().size(), 1)
+		subgroup = posmod(subgroup + (-1 if k.shift_pressed else 1), n)
 		Events.selection_changed.emit(selected)
 		get_viewport().set_input_as_handled()
+		return
+	for n in 3:
+		if k.is_action_pressed("select_hero_%d" % (n + 1)):
+			select_hero(n)
+			get_viewport().set_input_as_handled()
+			return
+	if k.is_action_pressed("cycle_halls"):
+		cycle_halls()
+		get_viewport().set_input_as_handled()
+
+
+## Own living heroes in training order (F1–F3).
+func own_heroes() -> Array[Unit]:
+	var out: Array[Unit] = []
+	for u in world.unit_list:
+		if u.alive and u.is_hero and u.player_id == player_id:
+			out.append(u)
+	out.sort_custom(func(a: Unit, b: Unit) -> bool: return a.id < b.id)
+	return out
+
+
+## F1–F3: selects the n-th hero (0-based); pressing the same key again within the double-click
+## time centres the camera on it. Returns false when there is no such hero.
+func select_hero(n: int) -> bool:
+	var heroes := own_heroes()
+	if n < 0 or n >= heroes.size():
+		return false
+	var h := heroes[n]
+	var now := Time.get_ticks_msec()
+	if _last_hero == n and now - _last_hero_ms < Settings.double_click_ms and selected.size() == 1 \
+			and selected[0] == h:
+		camera.jump_to(h.pos)
+	_last_hero = n
+	_last_hero_ms = now
+	_set_selection([h])
+	return true
+
+
+## Backspace: selects the next own hall (town_hall flag; finished or not) and centres the
+## camera on it. Returns the hall, or null when the player has none.
+func cycle_halls() -> Unit:
+	var halls: Array[Unit] = []
+	for u in world.unit_list:
+		if u.alive and u.player_id == player_id and u.has_flag("town_hall"):
+			halls.append(u)
+	if halls.is_empty():
+		return null
+	var next := halls[0]
+	for i in halls.size():
+		if halls[i].id == _hall_cursor:
+			next = halls[(i + 1) % halls.size()]
+			break
+	_hall_cursor = next.id
+	_set_selection([next])
+	camera.jump_to(next.pos)
+	return next
 
 
 func _recall_group(n: int) -> void:
@@ -248,8 +338,13 @@ func _select_same_type_on_screen(u: Unit) -> void:
 
 
 func _set_selection(units: Array) -> void:
-	var next: Array[Unit] = []
+	var sorted: Array[Unit] = []
 	for u: Unit in units:
+		if not sorted.has(u):
+			sorted.append(u)
+	sorted.sort_custom(priority_before)
+	var next: Array[Unit] = []
+	for u in sorted:
 		if next.size() < Settings.max_selection:
 			next.append(u)
 	selected = next

@@ -375,3 +375,85 @@ func test_minimap_orders() -> void:
 	_mouse(MOUSE_BUTTON_LEFT, at_q, true)
 	_mouse(MOUSE_BUTTON_LEFT, at_q, false)
 	assert_lt(Grid.flat_dist(camera.focus, q), 2.0, "a plain minimap left-click jumps the camera")
+
+
+func _spawn_near(def_id: String, n: int, at: Vector3) -> Array[Unit]:
+	var out: Array[Unit] = []
+	for i in n:
+		var p := at + Vector3(float(i % 4) * 1.2, 0.0, float(i / 4) * 1.2)
+		out.append(world.spawn_unit(def_id, 0, p, 0.0))
+	return out
+
+
+## Rules §18.3: the selection is ordered heroes first, then by food cost, then by type; the
+## 12-unit cap applies after that order (a hero spawned last is never dropped) and the first
+## subgroup (the hero) is active. Tab cycles forward, Shift+Tab backwards.
+func test_selection_order_heroes_first() -> void:
+	var at := world.map.start_locations[0] + Vector3(6, 0, -8)
+	var crowd := _spawn_near("kingdom_pavisier", 10, at)
+	crowd.append_array(_spawn_near("kingdom_hookgunner", 3, at + Vector3(0, 0, 4)))
+	var hero: Unit = world.spawn_unit("kingdom_wheel_marshal", 0, at + Vector3(-2, 0, 0), 0.0)
+	crowd.append(hero)
+	sel.select_units(crowd)
+	assert_eq(sel.selected.size(), 12, "the cap")
+	assert_eq(sel.selected[0], hero, "the hero leads the selection")
+	assert_eq(sel.subgroup_defs(), ["kingdom_wheel_marshal", "kingdom_hookgunner", "kingdom_pavisier"] as Array[String],
+		"subgroups: hero, then food 3, then food 2")
+	assert_eq(sel.active_subgroup_def(), "kingdom_wheel_marshal", "the hero's subgroup is active")
+	for i in range(1, 4):
+		assert_eq(sel.selected[i].def_id, "kingdom_hookgunner", "hookgunners after the hero")
+	_key(KEY_TAB)
+	assert_eq(sel.active_subgroup_def(), "kingdom_hookgunner", "Tab moves to the next subgroup")
+	_key(KEY_TAB, {"shift": true})
+	assert_eq(sel.active_subgroup_def(), "kingdom_wheel_marshal", "Shift+Tab moves back")
+	_key(KEY_TAB, {"shift": true})
+	assert_eq(sel.active_subgroup_def(), "kingdom_pavisier", "Shift+Tab wraps to the last subgroup")
+	# a box over the same crowd keeps the hero too
+	sel.clear()
+	camera.jump_to(at)
+	camera._process(0.016)
+	var box := _box_around(crowd)
+	_mouse(MOUSE_BUTTON_LEFT, box.position, true)
+	_motion(box.position + Vector2(20, 20), Vector2(20, 20))
+	_motion(box.end, box.end - box.position)
+	_mouse(MOUSE_BUTTON_LEFT, box.end, false)
+	assert_eq(sel.selected.size(), 12, "box: the cap")
+	assert_true(sel.selected.has(hero), "box: the hero is kept")
+	assert_eq(sel.selected[0], hero, "box: the hero leads")
+
+
+## Rules §18.3: F1–F3 select the heroes in training order (double-tap centres the camera),
+## Backspace cycles the own halls and centres on each; PgUp / PgDn zoom (§18.1).
+func test_hero_hall_and_zoom_keys() -> void:
+	var at := world.map.start_locations[0] + Vector3(10, 0, -12)
+	var h1: Unit = world.spawn_unit("kingdom_wheel_marshal", 0, at, 0.0)
+	var h2: Unit = world.spawn_unit("kingdom_firewright", 0, at + Vector3(3, 0, 0), 0.0)
+	var other := _army()[0]
+	sel.select_units([other])
+	_key(KEY_F2)
+	assert_eq(sel.selected, [h2] as Array[Unit], "F2 selects the second hero")
+	_key(KEY_F3)
+	assert_eq(sel.selected, [h2] as Array[Unit], "F3 without a third hero changes nothing")
+	camera.jump_to(at + Vector3(40, 0, 40))
+	_key(KEY_F1)
+	assert_eq(sel.selected, [h1] as Array[Unit], "F1 selects the first hero")
+	assert_lt(5.0, Grid.flat_dist(camera.focus, h1.pos), "a single tap does not move the camera")
+	_key(KEY_F1)
+	assert_lt(Grid.flat_dist(camera.focus, h1.pos), 0.5, "a double-tap centres on the hero")
+	var halls: Array[Unit] = []
+	for u in world.unit_list:
+		if u.alive and u.player_id == 0 and u.has_flag("town_hall"):
+			halls.append(u)
+	assert_lt(0, halls.size(), "the sandbox base has a hall")
+	camera.jump_to(at + Vector3(40, 0, 40))
+	_key(KEY_BACKSPACE)
+	assert_eq(sel.selected, [halls[0]] as Array[Unit], "Backspace selects the hall")
+	assert_lt(Grid.flat_dist(camera.focus, halls[0].pos), 0.5, "and centres on it")
+	_key(KEY_BACKSPACE)
+	assert_eq(sel.selected[0], halls[1 % halls.size()], "Backspace again cycles to the next hall")
+	var d0 := camera.target_distance
+	_key(KEY_PAGEUP)
+	assert_lt(camera.target_distance, d0, "PgUp zooms in")
+	_key(KEY_PAGEDOWN)
+	_key(KEY_PAGEDOWN)
+	assert_lt(d0, camera.target_distance, "PgDn zooms out")

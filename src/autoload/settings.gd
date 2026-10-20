@@ -39,8 +39,8 @@ static func default_actions() -> Dictionary:
 		"cam_right": [{"key": KEY_RIGHT}],
 		"cam_up": [{"key": KEY_UP}],
 		"cam_down": [{"key": KEY_DOWN}],
-		"cam_zoom_in": [{"mouse": MOUSE_BUTTON_WHEEL_UP}],
-		"cam_zoom_out": [{"mouse": MOUSE_BUTTON_WHEEL_DOWN}],
+		"cam_zoom_in": [{"mouse": MOUSE_BUTTON_WHEEL_UP}, {"key": KEY_PAGEUP}],
+		"cam_zoom_out": [{"mouse": MOUSE_BUTTON_WHEEL_DOWN}, {"key": KEY_PAGEDOWN}],
 		"cam_drag": [{"mouse": MOUSE_BUTTON_MIDDLE}],
 		"select": [{"mouse": MOUSE_BUTTON_LEFT}],
 		"command": [{"mouse": MOUSE_BUTTON_RIGHT}],
@@ -48,7 +48,11 @@ static func default_actions() -> Dictionary:
 		"cancel": [{"key": KEY_ESCAPE}],
 		"menu": [{"key": KEY_F10}],
 		"jump_alert": [{"key": KEY_SPACE}],
-		"subgroup_next": [{"key": KEY_TAB}],
+		"subgroup_next": [{"key": KEY_TAB}],     # Shift+Tab cycles backwards (Selection)
+		"cycle_halls": [{"key": KEY_BACKSPACE}],
+		"select_hero_1": [{"key": KEY_F1}],
+		"select_hero_2": [{"key": KEY_F2}],
+		"select_hero_3": [{"key": KEY_F3}],
 	}
 	for i in 10:
 		a["group_%d" % i] = [{"key": KEY_0 + i}]
