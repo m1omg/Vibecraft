@@ -16,11 +16,11 @@ uniform int team_mode = 0;              // 0 none, 1 multiply albedo (grey TEAM 
 uniform bool use_vertex_color = false;  // placeholders: sRGB vertex colours are the albedo
 uniform bool vertex_color_multiply = false;
 uniform float gradient_height = 1.8;    // model-space metres of the dark-feet -> light-head gradient
-uniform vec2 gradient_range = vec2(0.80, 1.06);
+uniform vec2 gradient_range = vec2(0.86, 1.1);
 uniform float wrap = 0.55;
 uniform float band_softness = 0.28;
 uniform float shadow_floor = 0.0;
-uniform float rim_power = 3.0;
+uniform float rim_power = 2.2;
 uniform float alpha_cut = 0.0;
 
 varying float v_height;

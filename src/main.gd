@@ -3,6 +3,11 @@ extends Node3D
 ## a hall, barracks, 5 workers and a few soldiers/archers; neutral mines and creep camps.
 
 @export var map_seed: int = 1337
+## false: only the map, lighting and camera are set up (screenshot / showcase scripts place units).
+@export var spawn_skirmish: bool = true
+## Default slot colours (art bible §2.4: kingdom Emerald vs clans Royal Blue, never the reference
+## pairing of blue against red).
+const SLOT_COLORS: Array[Color] = [Color("#2EAE3A"), Color("#285DE6")]
 
 @onready var world: World = $World
 @onready var camera: RtsCamera = $Camera
@@ -16,22 +21,35 @@ extends Node3D
 func _ready() -> void:
 	var map := MapGenerator.test_map(map_seed)
 	world.setup(map, map_seed)
+	_setup_view()
 	for p: PlayerState in [world.add_player(0, 0, "placeholder_a", false),
 			world.add_player(1, 1, "placeholder_b", true)]:
 		var fac := Defs.faction(p.faction)
 		p.gold = int(fac.get("start_gold", 0))
 		p.lumber = int(fac.get("start_lumber", 0))
+		p.color = SLOT_COLORS[p.id]
 	world.add_player(PlayerState.NEUTRAL_HOSTILE, PlayerState.NEUTRAL_HOSTILE)
 	world.add_player(PlayerState.NEUTRAL_PASSIVE, PlayerState.NEUTRAL_PASSIVE)
 	world.local_player_id = 0
-	for pid in 2:
-		_spawn_base(pid, map.start_locations[pid], map.gold_mines[pid], map)
-	_spawn_camps(map)
+	if spawn_skirmish:
+		for pid in 2:
+			_spawn_base(pid, map.start_locations[pid], map.gold_mines[pid], map)
+		_spawn_camps(map)
 	camera.setup(world, map.start_locations[0] + Vector3(0, 0, -4))
 	selection.setup(world, camera, 0)
 	commands.setup(world, camera, selection, 0)
 	hud.setup(world, selection, commands, camera, 0)
 	Events.menu_requested.connect(_toggle_pause)
+
+
+## Environment setup: camera constants (RenderProfile, research README §1) and the view hooks
+## (selection rim highlight, building pads). Lighting and grade live in DayNight.
+func _setup_view() -> void:
+	RenderProfile.apply_camera(camera)
+	var hooks := ViewHooks.new()
+	hooks.name = "ViewHooks"
+	world.add_child(hooks)
+	hooks.setup(world)
 
 
 func _spawn_base(pid: int, start: Vector3, mine: Vector3, map: MapData) -> void:

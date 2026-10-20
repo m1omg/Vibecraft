@@ -29,6 +29,7 @@ uniform float edge_noise_freq = 0.85;        // cycles per metre (~1.7 per 2 m t
 uniform float edge_width = 0.045;
 uniform float edge_rim = 0.16;               // painted darker rim just inside an overlapping tile
 uniform float macro_period = 45.0;
+uniform float ground_saturation = 0.84;     // terrain stays the quietest layer (bible §1.4: <= 45 %)
 uniform float water_level = -0.45;
 uniform sampler2D fog_tex : hint_default_white, filter_linear;
 uniform bool fog_enabled = false;
@@ -151,6 +152,7 @@ void fragment() {
 		// macro tint: +-6 % value, slight warm / cool hue drift (bible §6.1)
 		float mt = vc_vnoise(xz / macro_period) * 0.7 + vc_vnoise(xz / (macro_period * 0.37) + 4.0) * 0.3;
 		col *= mix(vec3(0.93, 0.95, 0.97), vec3(1.06, 1.05, 0.99), mt);
+		col = vc_saturate(col, ground_saturation);
 	}
 	// shore: wet band above the water line, tinted bed below it (bible §6.3)
 	float h = v_world.y;
