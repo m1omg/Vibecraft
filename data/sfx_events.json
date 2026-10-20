@@ -7,6 +7,10 @@
   "cap": 4,
   "spacing_ms": 60
  },
+ "aliases": {
+  "_doc": "family -> recorded stand-in, used only while the family has no takes of its own (asset requests in PLAYTEST.md)",
+  "sw_chop": "sw_slash"
+ },
  "families": {
   "atk_herb_mote": {
    "onset_ms": 118,

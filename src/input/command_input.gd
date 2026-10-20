@@ -47,8 +47,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_smart(mb.position, mb.shift_pressed)
 			get_viewport().set_input_as_handled()
 		elif mb.button_index == MOUSE_BUTTON_LEFT and targeting != "":
-			_issue_targeted(targeting, mb.position, mb.shift_pressed)
-			if not mb.shift_pressed:
+			# a denied click (off the map, an untargetable unit) keeps the targeting mode, as in
+			# the reference: the player retries without pressing the hotkey again
+			if _issue_targeted(targeting, mb.position, mb.shift_pressed) and not mb.shift_pressed:
 				_set_targeting("")
 			get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo:
@@ -135,16 +136,22 @@ func _smart(screen_pos: Vector2, shift: bool) -> void:
 	_marker(ground, Color(0.3, 1.0, 0.35))
 
 
-func _issue_targeted(cmd: String, screen_pos: Vector2, shift: bool) -> void:
+## Returns false when the click was denied (the deny sound plays, nothing is issued).
+func _issue_targeted(cmd: String, screen_pos: Vector2, shift: bool) -> bool:
 	var target := selection.pick_unit(screen_pos)
+	if cmd == "attack_move" and target != null and (target.is_invulnerable or target.is_resource or target.is_item):
+		Audio.deny("error")          # "unable to target": Gold Seams, invulnerable units
+		return false
 	if cmd == "attack_move" and target != null and world.is_enemy(player_id, target.player_id):
 		_issue({"type": "attack", "target": target.id, "queue": shift})
-		return
+		return true
 	var ground := camera.screen_to_ground(screen_pos)
 	if ground == Vector3.INF:
-		return
+		Audio.deny("error")
+		return false
 	_issue({"type": cmd, "pos": ground, "queue": shift})
 	_marker(ground, Color(1.0, 0.3, 0.2) if cmd == "attack_move" else Color(0.3, 1.0, 0.35))
+	return true
 
 
 func _issue(cmd: Dictionary) -> void:
@@ -154,7 +161,20 @@ func _issue(cmd: Dictionary) -> void:
 		return
 	world.issue(cmd)
 	var first := world.get_unit(cmd["units"][0])
-	Audio.play_voice(first, "attack" if cmd["type"] in ["attack", "attack_move"] else "yes")
+	Audio.play_voice(first, ack_category(cmd))
+
+
+## AUD-03: the ack an order asks for: Attack for attack, attack-move and a smart order on an
+## enemy; Yes for everything else (move, patrol, stop, hold, follow).
+func ack_category(cmd: Dictionary) -> String:
+	var type := str(cmd.get("type", ""))
+	if type in ["attack", "attack_move"]:
+		return "attack"
+	if type == "smart" and cmd.has("target"):
+		var t := world.get_unit(int(cmd["target"]))
+		if t != null and world.is_enemy(player_id, t.player_id):
+			return "attack"
+	return "yes"
 
 
 ## Short-lived shrinking ring where an order was given (visual only). A fallback: when the

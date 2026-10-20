@@ -55,6 +55,7 @@ static func start_match(tree: SceneTree, scenario_name: String) -> Node:
 
 ## Back to the main menu (unpauses the tree).
 static func quit_to_menu(tree: SceneTree) -> void:
+	Audio.stop_music(0.5)
 	tree.paused = false
 	tree.change_scene_to_file(MENU_SCENE)
 
@@ -91,6 +92,8 @@ func _ready() -> void:
 	Events.menu_requested.connect(_toggle_pause)
 	Events.unit_died.connect(_on_unit_died)
 	objective.visible = battle != null
+	var lp := world.player(world.local_player_id)
+	Audio.match_started(lp.faction if lp != null else "", world.local_player_id)   # opening cue
 
 
 func _boot_slice(map: MapData) -> void:

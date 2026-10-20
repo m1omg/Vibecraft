@@ -34,6 +34,7 @@ static func button(text: String, font_size: int = 20, min_width: float = 300.0) 
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(min_width, font_size * 2.3)
 	b.add_theme_font_size_override("font_size", font_size)
+	b.pressed.connect(func() -> void: Audio.ui_click())   # UI click in the local faction's material
 	for state: String in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		b.add_theme_color_override(state, TEXT if state == "font_color" else TEXT_GOLD)
 	b.add_theme_color_override("font_disabled_color", TEXT_DIM.darkened(0.3))

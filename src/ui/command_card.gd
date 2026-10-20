@@ -69,7 +69,11 @@ func refresh() -> void:
 		b.set_pressed_no_signal(shown and commands.targeting == cmd)
 
 
+## A press clicks; a press that cannot act (paused, nothing orderable) plays the disabled deny.
 func _on_pressed(slot: int) -> void:
 	if commands != null:
-		commands.activate_card(slot, Input.is_key_pressed(KEY_SHIFT))
+		if commands.activate_card(slot, Input.is_key_pressed(KEY_SHIFT)):
+			Audio.ui_click()
+		else:
+			Audio.deny("disabled")
 	refresh()

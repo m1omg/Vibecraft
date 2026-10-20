@@ -20,7 +20,20 @@ extends Node
 ##   - the selection "What" plays on `Events.selection_changed` when the local player picked new
 ##     units (or clicked the same ones again), never when a death prunes the selection;
 ##   - the listener sits at the camera's ground focus (AUD-04, `follow_camera`);
-##   - the duck arbiter (AUD-01): keyed ducks per bus, the deepest wins, Music ≤ 8 dB down.
+##   - the duck arbiter (AUD-01): keyed ducks per bus (with an optional attack ramp), the
+##     deepest wins, Music ≤ 8 dB down;
+##   - variation (UCA-F3, R20): every take is a stateless-hash pick that never repeats the last
+##     take; SFX get a small hashed volume (±`vol_var_db`, 1.5 dB) and pitch (±`pitch_var`, 3 %)
+##     variation unless the event computes the pitch (no double jitter) or the family is
+##     `pitch_locked`; voice lines vary in volume only (±1 dB, pitch 1.0);
+##   - aliases (data/sfx_events.json `aliases`): a family with no recording yet borrows a
+##     recorded one (sw_chop -> sw_slash) until its own takes exist;
+##   - music (MUS-01 subset, assets/audio/music/manifest.json): `match_started(faction)` plays
+##     the faction's opening cue on the Music bus; no in-game rotation yet (no tracks exist);
+##     `match_ended` (SEQ-02 audio) fades the music over 1.2 s, ducks SFX −10 dB and Ambience
+##     −6 dB over 1.2 s, and plays a victory / defeat stinger at 600 ms when one exists;
+##   - UI: `ui_click()` (buttons, command card), `deny(kind)` (error / disabled, the Deny
+##     player, never dropped by the UI pool) in the local faction's material.
 ## Timing uses `now()` (wall clock, or `clock_override` in tests). Audio never touches sim state.
 
 signal voice_started(unit: Node, category: String, length: float)
@@ -37,7 +50,9 @@ const EXTENSIONS: Array[String] = [".ogg", ".wav", ".mp3"]
 const SFX_MANIFEST := "res://assets/audio/sfx/manifest.json"
 const VOICE_MANIFEST := "res://assets/audio/voice/manifest.json"
 const EVENTS_PATH := "res://data/sfx_events.json"
+const MUSIC_MANIFEST := "res://assets/audio/music/manifest.json"
 const MUSIC_DUCK_MAX_DB := 8.0
+const NO_END := -1000
 
 ## Tests: a fixed time in seconds (>= 0) replaces the wall clock.
 var clock_override: float = -1.0
@@ -45,6 +60,12 @@ var stats: Dictionary = {}
 var listener_focus: Vector3 = Vector3.INF
 var listener_distance: float = 28.0
 var last_ack_category: String = ""
+## The local player's faction ("kingdom" | "clans"): UI clicks, denies and order ticks of the
+## menus use its material. Set by match_started().
+var ui_faction: String = "kingdom"
+var local_player: int = 0
+## The music cue now playing ("" = none).
+var music_id: String = ""
 
 var _families: Dictionary = {}           ## family -> PackedStringArray of paths
 var _meta: Dictionary = {}               ## family -> {onset_ms, peak_ms, bus, cap, spacing_ms}
@@ -70,7 +91,14 @@ var _clicks: Array[float] = []
 var _annoyed_step: int = 0
 var _selection: Array = []
 var _input_frame: int = -100
-var _ducks: Dictionary = {}              ## key -> [bus, db]
+var _ducks: Dictionary = {}              ## key -> [bus, db, t0, attack_s]
+var _aliases: Dictionary = {}            ## family -> stand-in family (data/sfx_events.json)
+var _music_tracks: Dictionary = {}       ## cue id -> PackedStringArray of takes
+var _music: AudioStreamPlayer
+var _music_fade: Vector4 = Vector4(0, 0, -100, 0)   ## from_db, to_db, t0, length_s
+var _deny: AudioStreamPlayer
+var _pending_cue: Array = []             ## [cue id, now() to start]
+var _end_winner: int = NO_END            ## match_ended seen in the tick, handled in _process
 var _warned: Dictionary = {}
 
 
@@ -101,6 +129,13 @@ func _ready() -> void:
 	_sub = AudioStreamPlayer.new()
 	_sub.bus = "Sub"
 	add_child(_sub)
+	_deny = AudioStreamPlayer.new()
+	_deny.bus = "UI"
+	add_child(_deny)
+	_music = AudioStreamPlayer.new()
+	_music.name = "Music"
+	_music.bus = "Music"
+	add_child(_music)
 	for i in fc.one_shot_pool:
 		var v := Voice.new()
 		v.player = AudioStreamPlayer3D.new()
@@ -115,6 +150,8 @@ func _ready() -> void:
 	add_child(_listener)
 	if not Events.selection_changed.is_connected(_on_selection_changed):
 		Events.selection_changed.connect(_on_selection_changed)
+	if not Events.match_ended.is_connected(_on_match_ended):
+		Events.match_ended.connect(_on_match_ended)
 
 
 func now() -> float:
@@ -145,6 +182,11 @@ func reset_state() -> void:
 	if _ack != null:
 		_ack.stop()
 	_ack_end = -100.0
+	_pending_cue = []
+	_end_winner = NO_END
+	stop_music(0.0)
+	_ducks.clear()
+	_apply_ducks()
 	reset_stats()
 
 
@@ -161,6 +203,17 @@ func _load_tables() -> void:
 		_events = ev.get("events", {})
 		_meta = ev.get("families", {})
 		_meta_default.merge(ev.get("defaults", {}), true)
+		_aliases = ev.get("aliases", {})
+	var mu: Variant = _read_json(MUSIC_MANIFEST)
+	if mu is Dictionary:
+		for cue: String in mu:
+			var e: Variant = mu[cue]
+			if e is Dictionary and (e as Dictionary).has("file"):
+				_music_tracks[cue] = PackedStringArray([str(e["file"])])
+			elif e is Dictionary and (e as Dictionary).get("files") is Array:
+				_music_tracks[cue] = PackedStringArray(e["files"])
+			elif e is Array:
+				_music_tracks[cue] = PackedStringArray(e)
 	var vo: Variant = _read_json(VOICE_MANIFEST)
 	if vo is Dictionary and vo.get("speakers") is Dictionary:
 		for sp: String in vo["speakers"]:
@@ -186,12 +239,52 @@ func has_event(id: String) -> bool:
 func has_family(family: String) -> bool:
 	if _families.has(family):
 		return true
-	return _find_stream("sfx", family) != null or _find_stream("ui", family) != null
+	if _find_stream("sfx", family) != null or _find_stream("ui", family) != null:
+		return true
+	var alias := str(_aliases.get(family, ""))
+	return not alias.is_empty() and alias != family and _families.has(alias)
+
+
+## The family whose takes actually play: itself when recorded, else its alias.
+func resolve_alias(family: String) -> String:
+	if _families.has(family):
+		return family
+	var alias := str(_aliases.get(family, ""))
+	return alias if not alias.is_empty() and _families.has(alias) else family
+
+
+## Every take path the manifests list: {"sfx": [...], "voice": [...], "music": [...]}.
+func manifest_paths() -> Dictionary:
+	var out := {"sfx": [], "voice": [], "music": []}
+	for fam: String in _families:
+		for p: String in _families[fam]:
+			if not (out["sfx"] as Array).has(p):
+				out["sfx"].append(p)
+	for did: String in _speakers:
+		for c: String in _speakers[did]:
+			for p: String in _speakers[did][c]:
+				if not (out["voice"] as Array).has(p):
+					out["voice"].append(p)
+	for cue: String in _music_tracks:
+		for p: String in _music_tracks[cue]:
+			out["music"].append(p)
+	return out
+
+
+## Hashed variation of the n-th pick of a family: Vector2(pitch factor, volume dB). Pitch stays
+## 1.0 for `pitch_locked` families and when the caller computed the pitch (no double jitter).
+func variation(family: String, seq: int, pitch_given: bool = false) -> Vector2:
+	var meta := family_meta(family)
+	var pv := 0.0
+	if not pitch_given and not bool(meta.get("pitch_locked", false)):
+		pv = float(meta.get("pitch_var", 0.03)) * Juice.hash11(seq, family.hash(), 41)
+	var vv := float(meta.get("vol_var_db", 1.5)) * Juice.hash11(seq, family.hash(), 43)
+	return Vector2(1.0 + pv, vv)
 
 
 func family_meta(family: String) -> Dictionary:
 	var m: Dictionary = _meta_default.duplicate()
-	m.merge(_meta.get(family, {}), true)
+	m.merge(_meta.get(family, _meta.get(resolve_alias(family), {})), true)
 	return m
 
 
@@ -208,6 +301,7 @@ func onset_s(family: String) -> float:
 ## The next variant of a family (no back-to-back repeat; stateless hash sequence). Legacy ids
 ## (a bare file under assets/audio/sfx or sfx/ui) resolve as one-file families.
 func pick_stream(family: String) -> AudioStream:
+	family = resolve_alias(family)
 	var files: PackedStringArray = _families.get(family, PackedStringArray())
 	if files.is_empty():
 		var legacy := _find_stream("sfx", family)
@@ -288,11 +382,12 @@ func play_3d(id: String, pos: Vector3, opts: Dictionary = {}) -> bool:
 	if stream == null:
 		return false
 	var p := voice.player
+	var vary := variation(id, int(_pick_seq.get(resolve_alias(id), 0)), opts.has("pitch"))
 	p.stop()
 	p.stream = stream
 	p.bus = str(opts.get("bus", meta.get("bus", "SFX")))
-	p.volume_db = float(opts.get("volume_db", 0.0))
-	p.pitch_scale = clampf(float(opts.get("pitch", 1.0)), 0.5, 2.0)
+	p.volume_db = float(opts.get("volume_db", 0.0)) + vary.y
+	p.pitch_scale = clampf(float(opts.get("pitch", 1.0)) * vary.x, 0.5, 2.0)
 	if p.is_inside_tree():
 		p.global_position = pos
 	else:
@@ -363,13 +458,16 @@ func play_2d(id: String, opts: Dictionary = {}) -> bool:
 	var stream := pick_stream(id)
 	if stream == null or _ui.is_empty():
 		return false
-	var p := _ui[_next_ui]
-	_next_ui = (_next_ui + 1) % _ui.size()
+	var p: AudioStreamPlayer = opts.get("player", null) if opts.get("player", null) is AudioStreamPlayer else null
+	if p == null:
+		p = _ui[_next_ui]
+		_next_ui = (_next_ui + 1) % _ui.size()
+	var vary := variation(id, int(_pick_seq.get(resolve_alias(id), 0)), opts.has("pitch"))
 	p.stop()
 	p.stream = stream
 	p.bus = str(opts.get("bus", "UI"))
-	p.volume_db = float(opts.get("volume_db", 0.0))
-	p.pitch_scale = clampf(float(opts.get("pitch", 1.0)), 0.5, 2.0)
+	p.volume_db = float(opts.get("volume_db", 0.0)) + vary.y
+	p.pitch_scale = clampf(float(opts.get("pitch", 1.0)) * vary.x, 0.5, 2.0)
 	p.play()
 	_last_start[id] = t
 	stats["played"] += 1
@@ -379,6 +477,18 @@ func play_2d(id: String, opts: Dictionary = {}) -> bool:
 ## Legacy facade: a UI sound by family or file id.
 func play_ui(id: String) -> void:
 	play_2d(id)
+
+
+## A button press (menus, pause menu, end banner, command card) in the local faction's material.
+func ui_click() -> bool:
+	return play_2d("ui_click_%s" % ui_faction, {"volume_db": -8.0, "spacing_ms": 30})
+
+
+## A denied request: kind "error" (an invalid target or order) or "disabled" (an unavailable
+## button). Plays on the dedicated Deny player, ≤ 1 per 150 ms.
+func deny(kind: String = "error") -> bool:
+	var fam := "ui_%s_%s" % ["disabled" if kind == "disabled" else "error", ui_faction]
+	return play_2d(fam, {"volume_db": -6.0, "spacing_ms": 150, "player": _deny})
 
 
 ## A Sub thump (AUD-02 low end): ≤ 1 per 250 ms, instead of a camera shake.
@@ -549,7 +659,7 @@ func play_voice(unit: Node, category: String) -> bool:
 		return false
 	_ack.stop()
 	_ack.stream = stream
-	_ack.volume_db = 0.0
+	_ack.volume_db = Juice.hash11(stats["acks"], str(unit.get("def_id")).hash(), 47)   # ±1 dB, pitch 1.0
 	_ack.play()
 	var length := stream.get_length()
 	_ack_end = t + maxf(length, 0.05)
@@ -676,9 +786,10 @@ func follow_camera(cam: Camera3D, focus: Vector3, distance: float) -> void:
 
 
 ## AUD-01: a keyed duck on a bus; the deepest duck per bus wins (Music never below −8 dB in
-## play). `release(key)` lifts it.
-func duck(key: StringName, bus: String, db: float) -> void:
-	_ducks[key] = [bus, absf(db)]
+## play, `uncapped` lifts the cap for the end sequence). `attack_ms` ramps it in linearly on
+## now() (refresh-rate independent). `release(key)` lifts it.
+func duck(key: StringName, bus: String, db: float, attack_ms: float = 0.0) -> void:
+	_ducks[key] = [bus, absf(db), now(), maxf(attack_ms, 0.0) / 1000.0]
 	_apply_ducks()
 
 
@@ -689,10 +800,14 @@ func release(key: StringName) -> void:
 
 func duck_db(bus: String) -> float:
 	var deepest := 0.0
+	var t := now()
 	for k: StringName in _ducks:
 		var d: Array = _ducks[k]
 		if str(d[0]) == bus:
-			deepest = maxf(deepest, float(d[1]))
+			var depth := float(d[1])
+			if d.size() > 3 and float(d[3]) > 0.0:
+				depth *= clampf((t - float(d[2])) / float(d[3]), 0.0, 1.0)
+			deepest = maxf(deepest, depth)
 	if bus == "Music":
 		deepest = minf(deepest, MUSIC_DUCK_MAX_DB)
 	return -deepest
@@ -703,6 +818,103 @@ func _apply_ducks() -> void:
 		var idx := AudioServer.get_bus_index(str(b[0]))
 		if idx >= 0:
 			AudioServer.set_bus_volume_db(idx, duck_db(str(b[0])))
+
+
+# --- music (MUS-01 subset) and the end sequence's audio (SEQ-02) -------------------------------
+
+## A match begins for the local player (Main, after the boot): the UI material follows the
+## local faction, end-sequence ducks are lifted and the faction's opening cue plays
+## (`opening_<faction>`; silent when that faction has none yet).
+func match_started(faction: String, player_id: int = 0) -> void:
+	ui_faction = faction if faction == "clans" else "kingdom"
+	local_player = player_id
+	_pending_cue = []
+	_end_winner = NO_END
+	for k: StringName in [&"end_sfx", &"end_ambience"]:
+		_ducks.erase(k)
+	_apply_ducks()
+	play_music("opening_%s" % faction)
+
+
+func has_music(cue: String) -> bool:
+	return not (_music_tracks.get(cue, PackedStringArray()) as PackedStringArray).is_empty()
+
+
+## Starts a music cue (a take picked like a family) on the Music bus. Returns false when the
+## cue has no recording (silent).
+func play_music(cue: String, volume_db: float = -2.0) -> bool:
+	var takes: PackedStringArray = _music_tracks.get(cue, PackedStringArray())
+	if takes.is_empty() or _music == null:
+		_missing("music:" + cue)
+		return false
+	var s := _load(takes[_pick_index("mu:" + cue, takes.size(), 13)])
+	if s == null:
+		_missing("music:" + cue)
+		return false
+	_music.stop()
+	_music.stream = s
+	_music.volume_db = volume_db
+	_music_fade = Vector4(volume_db, volume_db, -100.0, 0.0)
+	_music.play()
+	music_id = cue
+	stats["played"] += 1
+	return true
+
+
+## Fades the music out over `fade_s` (0 = stop now).
+func stop_music(fade_s: float = 1.2) -> void:
+	if _music == null:
+		return
+	if fade_s <= 0.0 or not _music.playing:
+		_music.stop()
+		music_id = ""
+		return
+	_music_fade = Vector4(_music.volume_db, -60.0, now(), fade_s)
+
+
+func is_music_playing() -> bool:
+	return _music != null and _music.playing and not music_id.is_empty()
+
+
+## SEQ-02 (audio, P0): music out over 1.2 s, SFX −10 dB and Ambience −6 dB over 1.2 s, the
+## local result's stinger at 600 ms when recorded (`victory_<faction>` / `defeat_<faction>`).
+## The signal fires inside the sim tick: it only records the result; `_process` acts on it.
+func _on_match_ended(winner: int, _reason: String) -> void:
+	_end_winner = winner
+
+
+func _begin_end_sequence(winner: int) -> void:
+	stop_music(1.2)
+	duck(&"end_sfx", "SFX", 10.0, 1200.0)
+	duck(&"end_ambience", "Ambience", 6.0, 1200.0)
+	var won := winner == local_player
+	_pending_cue = [("victory_" if won else "defeat_") + ui_faction, now() + 0.6]
+
+
+func _process(_delta: float) -> void:
+	var t := now()
+	if _end_winner != NO_END:
+		var w := _end_winner
+		_end_winner = NO_END
+		_begin_end_sequence(w)
+	if _music_fade.w > 0.0 and _music != null:
+		var k := clampf((t - _music_fade.z) / _music_fade.w, 0.0, 1.0)
+		_music.volume_db = lerpf(_music_fade.x, _music_fade.y, Juice.in_quad(k))
+		if k >= 1.0:
+			_music.stop()
+			music_id = ""
+			_music_fade.w = 0.0
+	if not _pending_cue.is_empty() and t >= float(_pending_cue[1]):
+		var cue := str(_pending_cue[0])
+		_pending_cue = []
+		if has_music(cue):
+			_music_fade.w = 0.0
+			play_music(cue, 0.0)
+	for k: StringName in _ducks:
+		var d: Array = _ducks[k]
+		if d.size() > 3 and float(d[3]) > 0.0 and t - float(d[2]) <= float(d[3]) + 0.1:
+			_apply_ducks()
+			break
 
 
 # --- legacy file lookup ---------------------------------------------------------------------------

@@ -133,6 +133,7 @@ static func upkeep_text(food_used: int) -> String:
 
 
 func _on_menu_pressed() -> void:
+	Audio.ui_click()
 	Events.menu_requested.emit()
 
 
