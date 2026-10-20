@@ -23,7 +23,7 @@ uniform sampler2D cliff_tex : source_color, filter_linear_mipmap_anisotropic, re
 uniform vec2 map_tiles = vec2(96.0, 96.0);
 uniform float tile_m = 2.0;
 uniform float ground_uv_scale = 0.16;        // repeats per metre (1024 px over ~6 m)
-uniform float cliff_uv_scale = 0.28;
+uniform float cliff_uv_scale = 0.5;
 uniform float edge_noise_amp = 0.35;         // in tile units (bible §6.1)
 uniform float edge_noise_freq = 0.85;        // cycles per metre (~1.7 per 2 m tile)
 uniform float edge_width = 0.045;
@@ -89,13 +89,27 @@ float edge_noise(vec2 xz, float salt) {
 	return vc_vnoise(p) * 0.62 + vc_vnoise(p * 2.37 + 3.1) * 0.28 + vc_vnoise(p * 5.3 + 9.2) * 0.1 - 0.5;
 }
 
+vec3 cliff_sample(vec2 uv) {
+	// two scales mixed by noise and a gentle domain warp: breaks the straight block courses
+	vec2 w = vec2(vc_vnoise(uv * 1.7), vc_vnoise(uv * 1.7 + 5.3)) - 0.5;
+	vec2 uvw = uv + w * 0.22;
+	vec3 a = texture(cliff_tex, uvw).rgb;
+	vec3 b = texture(cliff_tex, uvw * 0.57 + vec2(0.31, 0.17)).rgb;
+	return mix(a, b, smoothstep(0.35, 0.65, vc_vnoise(uv * 0.6 + 2.0)));
+}
+
 vec3 cliff_color(vec3 p, vec3 n) {
 	vec3 bw = pow(abs(n), vec3(4.0));
 	bw /= (bw.x + bw.y + bw.z);
-	vec3 cx = texture(cliff_tex, vec2(p.z, -p.y) * cliff_uv_scale).rgb;
-	vec3 cy = texture(cliff_tex, p.xz * cliff_uv_scale).rgb;
-	vec3 cz = texture(cliff_tex, vec2(p.x, -p.y) * cliff_uv_scale).rgb;
-	return cx * bw.x + cy * bw.y + cz * bw.z;
+	vec3 cx = cliff_sample(vec2(p.z, -p.y) * cliff_uv_scale);
+	vec3 cy = cliff_sample(p.xz * cliff_uv_scale);
+	vec3 cz = cliff_sample(vec2(p.x, -p.y) * cliff_uv_scale);
+	vec3 c = cx * bw.x + cy * bw.y + cz * bw.z;
+	// deepen the crevices, keep the faces pale (painted, chunky read)
+	c *= mix(0.62, 0.98, smoothstep(0.12, 0.55, vc_luma(c)));
+	// moss on ledges facing the sky
+	c = mix(c, vec3(0.30, 0.38, 0.17), smoothstep(0.35, 0.8, n.y) * 0.6);
+	return c;
 }
 
 void fragment() {

@@ -11,9 +11,9 @@ extends Node3D
 ## lip. Visual only: the sim reads MapData, never this node.
 
 const CHUNK_TILES := 16
-const WALL_COLS := 3
-const WALL_ROW_H := 0.55
-const WALL_JITTER := 0.35
+const WALL_COLS := 4
+const WALL_ROW_H := 0.45
+const WALL_JITTER := 0.42
 const TERRAIN_SHADER := preload("res://src/world/terrain.gdshader")
 const WATER_SHADER := preload("res://src/world/water.gdshader")
 ## MapData legacy layer index (0 grass, 1 dark grass, 2 dirt, 3 rough, 4 rock, 5 sand, 6 dry grass,
@@ -299,7 +299,8 @@ func _add_wall(e0: Vector3, e1: Vector3, bot0: float, top0: float, bot1: float, 
 			var u := float(k) / WALL_COLS
 			var p := e0.lerp(e1, u)
 			p.y = lerpf(lerpf(bot0, top0, v), lerpf(bot1, top1, v), u)
-			var bulge := sin(PI * u) * sin(PI * v)
+			# pillow bulge, fuller near the top so the cliff reads as a chunky rock shoulder
+			var bulge := sin(PI * u) * sin(PI * v) * (0.75 + 0.6 * smoothstep(0.35, 0.85, v))
 			if bulge > 0.001:
 				var nz := _noise.get_noise_3d(p.x, p.y * 1.3, p.z)
 				p += out * WALL_JITTER * bulge * (0.45 + 0.55 * nz)
