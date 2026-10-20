@@ -873,7 +873,8 @@ unwalkable cell it is placed on the nearest walkable one. When the effect ends i
 | **Fog** (explored) | Seen before, not now | Terrain and doodads at reduced value; **ghosts** of enemy and neutral structures as last seen; mines and shops; no units |
 | **Visible** | Inside a friendly sight area now | Everything except invisible enemies |
 
-- Per-player grid at **1 m**, recomputed every **0.1 s** (3 ticks; WC3 0.4 s on 2 m cells). A unit leaving vision is hidden at the next recompute.
+- Per-player grid at **2 m** (`rules.vision.fog_cell`; the first draft said 1 m, which cost 4× as much per re-stamp in GDScript;
+  WC3 used 2 m cells too), recomputed every **0.1 s** (3 ticks; WC3 0.4 s). A unit leaving vision is hidden at the next recompute.
 - An enemy unit is visible when the cell under its centre is visible. Large units (radius > 0.7 m) also count any visible footprint cell.
 - Allies share vision (team games). Neutral hostile and passive players grant no vision to anyone.
 - **Minimap neutral markers** (`rules.minimap.show_unexplored_neutrals = true`): gold mines, neutral-building glyphs and creep-camp pips

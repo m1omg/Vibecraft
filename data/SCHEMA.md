@@ -343,7 +343,8 @@ upgrades; the id equals the target building id).
   `repair_time_factor`, `repair_autocast_range`, `switch_resource_discards_load`,
   `supply_stall_advisory`, `tree_retarget_radius`, `gather_reach`, `dropoff_reach`.
 - `rules.regen`, `rules.daynight` (`cycle_length`, `dawn`, `dusk`, `sight_transition`),
-  `rules.vision` (`unit/worker/structure [day, night]`, `cap`, `fog_cell`, `fog_update`,
+  `rules.vision` (`unit/worker/structure [day, night]`, `cap`, `fog_of_war` (Main turns fog on
+  for the slice and battlefield scenarios), `fog_cell`, `fog_update`,
   occluder switches), `rules.minimap`, `rules.controls`, `rules.alerts`, `rules.ai.<easy|normal|hard>`
   (`think_interval` etc., read by `AiPlayer.tuning()`).
 - `combat`: `armor_k`, `neg_armor_base`, `attack_types`, `armor_types`, `types`

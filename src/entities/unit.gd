@@ -743,9 +743,12 @@ func find_target(r: float) -> Unit:
 	var best: Unit = null
 	var best_score := INF
 	world.spatial.query_hostile(pos, r + radius, hostile, _scan_buf)
+	var fog := world.fog if world.fog != null and world.fog.enabled else null
 	for o: Unit in _scan_buf:
 		if not o.alive or o.id == _skip_id or o.is_invulnerable or o.is_resource or o.is_item or o.hidden:
 			continue
+		if fog != null and not fog.can_see(player_id, o):
+			continue    # no acquisition of what the player cannot see (rules §14)
 		var d := edge_distance(o)
 		if d > r:
 			continue

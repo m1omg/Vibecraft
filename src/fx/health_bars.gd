@@ -134,7 +134,7 @@ func _process(_delta: float) -> void:
 	var now := FxClock.fx_now
 	var n := 0
 	for u in list:
-		if not u.alive or u.is_resource or u.hidden:
+		if not u.alive or u.is_resource or u.hidden or (u.view != null and not u.view.visible):
 			continue
 		var ratio := clampf(u.hp / maxf(u.max_hp, 0.001), 0.0, 1.0)
 		var ghost := ghost_for(u.id, ratio, now)

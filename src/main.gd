@@ -76,6 +76,8 @@ func _ready() -> void:
 		_boot_slice(map)
 	else:
 		_boot_sandbox()
+	if scenario != "sandbox" and bool(Defs.rule("vision.fog_of_war", true)):
+		_enable_fog()
 	selection.setup(world, camera, 0)
 	commands.setup(world, camera, selection, 0)
 	hud.setup(world, selection, commands, camera, 0)
@@ -200,6 +202,14 @@ func _boot_sandbox() -> void:
 			_spawn_sandbox_base(pid, map.start_locations[pid], map.gold_mines[pid], map)
 		world.creeps.spawn_camps(map)
 	camera.setup(world, map.start_locations[0] + Vector3(0, 0, -4))
+
+
+## Fog of war (rules §14): the local player starts seeing only what its units see; the terrain,
+## water, trees and the minimap darken the rest (black mask unexplored, half dark fogged).
+func _enable_fog() -> void:
+	world.fog.enabled = true
+	world.fog.update_now(world)
+	world.set_fog_texture(world.fog.texture(world.local_player_id))
 
 
 ## Environment setup: camera constants (RenderProfile, research README §1) and the view hooks

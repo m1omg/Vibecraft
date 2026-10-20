@@ -564,18 +564,41 @@ bombard ball, lidded clay pot, coal lump, arcane bolt, ice pellet).
 
 ## 8. Fog of war
 
-Contract (stub until agent E lands it; `src/world/fog.gd`, stage `fog`): `Fog.state_at(pid,
-pos) -> UNEXPLORED | FOGGED | VISIBLE`, `is_visible(pid, pos)`, `is_explored(pid, pos)`,
-`can_see(pid, unit)` (visibility + invisibility/detection), `reveal(pid, pos, radius,
-duration, detect) -> handle` (timed reveals expire in the sim), `reveals()`, `grid(pid)`,
-`texture(pid)`, `enabled`. The stub reports everything visible and explored; callers already
-use these queries so turning fog on changes no call sites.
-Target design: `Fog` keeps per-player `PackedByteArray` grids (0 = unexplored, 1 = explored/fogged, 2 = visible)
-at 1 m resolution. Recomputed ~10 Hz from unit sight radii (cliff level blocks sight to higher
-levels, trees don't for the slice). Uploads the local player's grid into an `ImageTexture` (L8)
-used by the terrain, water and foliage (trees, `src/render/foliage.gdshader`) shaders through
-`World.set_fog_texture` and by the minimap. Enemy units outside visible cells are hidden;
-enemy buildings once seen leave a "ghost" until re-scouted.
+`Fog` (`src/world/fog.gd`, stage `fog`; rules §14). Off until `enabled` is set: Main turns it on
+for the slice and battlefield scenarios when `rules.vision.fog_of_war` is true (engine tests keep
+"everything visible"). Queries: `Fog.state_at(pid, pos) -> UNEXPLORED | FOGGED | VISIBLE`,
+`is_visible(pid, pos)`, `is_explored(pid, pos)`, `can_see(pid, unit)` (the cell under its centre,
+any footprint / body cell for structures and units over 0.7 m; own and allied units always),
+`shows(pid, unit)` (what the view draws: visible units plus structures the team has seen, their
+ghosts), `seen_structure`, `reveal(pid, pos, radius, duration, detect) -> handle` (timed, ignores
+occluders, expires in the sim), `reveals()`, `grid(pid)` (L8 bytes), `texture(pid)` (an
+`ImageTexture`, L8: 0 unexplored, 128 fogged, 255 visible), `night_factor(t)`, `update_now(world)`.
+Neutral players have no fog.
+Model: one grid per team (allies share vision) at `rules.vision.fog_cell` **2 m** (96 × 96 on the
+slice; the classic game's resolution; 1 m cost 4× per re-stamp in GDScript). Per cell: a count of
+the sight sources seeing it, an explored flag and the texture byte, kept current as counts change.
+Every living, not-hidden unit of a non-neutral player is a source; it is stamped into its team's
+counts and remembers the cells it marked, and is re-stamped only when its cell, sight radius (day /
+night, 3.2 s transition) or eye level changes; dying or leaving the sim unstamps it at once. Line
+of sight uses precomputed ray stamps (each offset knows its parent one step nearer the viewer): a
+cell is seen when its parent passes sight and its terrain level (height / CLIFF_H, ramps fractional)
+is not above the eye; it passes sight when its occluder top (terrain, or a tree's base level +
+`tree_occluder_levels`) is not above the eye. Flyers and reveals ignore occluders. A felled tree
+lowers its cell and re-stamps the sources that reach it. Attack reveal: an attacker the victim's
+owner cannot see is revealed for 1 s in 1.5 m. Each tick walks `unit_list` from a cursor and
+re-stamps changed sources within a third of `STAMP_BUDGET` (24k cells per 0.1 s), so a full sweep
+takes `fog_update` (3 ticks) and the cost never lands on one tick (250 units marching: ≈3 ms per
+tick, `test_fog`); at the end of a sweep the structure memory updates, the texture uploads and
+`Events.fog_updated(local pid)` fires. Deterministic (unit_list order, no clocks).
+Consumers: `Unit.find_target` never acquires what its player cannot see; UnitView hides itself
+when `shows` is false; picking, box select, hover and health bars skip hidden views; Selection
+drops fogged foreign units; `Vfx.allow` culls effects in the fog; `Construction.can_place` needs
+explored ground; the terrain, water, trees and decor shaders read the texture
+(`World.set_fog_texture`; black mask unexplored, 0.45 brightness fogged); the minimap draws a baked
+map image under a fog layer, static neutral markers (Gold Seams, neutral buildings, camp pips) even
+on the black mask, and only the dots the player may see.
+Not yet: invisibility / detection, the cripple reveal (§14.4), ghosts of structures destroyed out
+of sight (they vanish), fog-gated sounds.
 
 ## 9. Players & economy
 

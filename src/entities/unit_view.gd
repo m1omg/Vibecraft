@@ -238,6 +238,15 @@ func strike_hit_time(state: String) -> float:
 func _process(delta: float) -> void:
 	if unit == null:
 		return
+	# fog of war (rules §14.1): enemies only while the local player sees them, structures once
+	# seen (ghosts); nothing else runs for a hidden view
+	var fog := unit.world.fog if unit.world != null else null
+	if fog != null and fog.enabled:
+		var show := fog.shows(unit.world.local_player_id, unit)
+		if visible != show:
+			visible = show
+		if not show:
+			return
 	if is_structure:
 		_update_structure()
 		if not unit.alive:
