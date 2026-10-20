@@ -15,7 +15,8 @@ script = ExtResource("1_main")
 [node name="Camera" type="Camera3D" parent="."]
 process_mode = 3
 current = true
-fov = 45.0
+fov = 55.0
+keep_aspect = 0
 script = ExtResource("3_camera")
 
 [node name="UI" type="CanvasLayer" parent="."]
