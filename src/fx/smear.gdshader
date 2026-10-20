@@ -34,7 +34,7 @@ void fragment() {
 		float k = (ang - tail) / (head - tail + sign(head - tail) * 0.001);   // 0 tail .. 1 head
 		float inside = step(lo, ang) * step(ang, hi);
 		// band: thick at the head, thinning to the tail; dry-brush streaks across the radius
-		float inner = mix(0.86, 0.6, clamp(k, 0.0, 1.0));
+		float inner = mix(0.9, 0.72, clamp(k, 0.0, 1.0));
 		float band = smoothstep(inner - 0.03, inner + 0.03, r) * (1.0 - smoothstep(0.96, 1.0, r));
 		float streak = 0.55 + 0.45 * step(0.3, hash(floor(r * 22.0)));
 		float lead = 1.0 - smoothstep(0.0, 6.0, abs(ang - head));

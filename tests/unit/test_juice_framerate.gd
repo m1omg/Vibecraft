@@ -272,5 +272,5 @@ func test_smear_reaches_the_tip_on_contact() -> void:
 	assert_near(Smears.look(0.4999, dp, -1.0, 120.0, -15.0, 0.1).x, -15.0, 0.5, "the head reaches the tip at contact")
 	var after := Smears.look(0.6, dp, 0.05, 120.0, -15.0, 0.1)
 	assert_near(after.x, -15.0, 1e-4, "after contact the head stays on the tip")
-	assert_true(after.y < 120.0 and after.z < 0.85, "the tail catches up and fades")
+	assert_true(after.y < 120.0 and after.z < Smears.PEAK_ALPHA, "the tail catches up and fades")
 	assert_true(Smears.look(0.7, dp, 0.1, 120.0, -15.0, 0.1).z <= 0.0, "gone after the fade")

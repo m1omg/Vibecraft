@@ -13,6 +13,7 @@ const SHADER := preload("res://src/fx/smear.gdshader")
 const CAP := 24
 const CAP_COMPAT := 8
 const FLOATS := 16                ## 12 transform + 4 custom
+const PEAK_ALPHA := 0.6           ## a stroke, not a curtain: the unit stays readable through it
 
 var submitted: int = 0
 var dropped: int = 0
@@ -97,9 +98,9 @@ static func look(s: float, dp: float, age: float, a0: float, a1: float, fade: fl
 		if age >= fade:
 			return Vector3(a1, a1, 0.0)
 		var k := age / fade
-		return Vector3(a1, lerpf(a0, a1, Juice.out_quad(k)), 0.85 * (1.0 - k))
+		return Vector3(a1, lerpf(a0, a1, Juice.out_quad(k)), PEAK_ALPHA * (1.0 - k))
 	var start := dp * 0.85
 	if s < start or s >= dp or dp <= 0.0:
 		return Vector3(a0, a0, 0.0)
 	var rev := (s - start) / maxf(dp - start, 0.0001)
-	return Vector3(lerpf(a0, a1, Juice.in_quad(rev)), a0, 0.85)
+	return Vector3(lerpf(a0, a1, Juice.in_quad(rev)), a0, PEAK_ALPHA)
