@@ -1,21 +1,16 @@
 #!/usr/bin/env python3
 """Menu, "Two Roads" (assets/audio/music/menu.ogg). D Dorian, 80 BPM, 4/4, a 105 s loop (main menu, lobby, loading).
 
-Composer's note. Form (bars, 1-based): intro 1-2 | dialogue 3-10 | theme A 11-18 | theme A' 19-26 (climax) |
-release 27-32 | return 33-35, then the loop. Two cultures meeting: the kingdom fiddle (right) climbs the Wheel
-(D-E-F-G-A, short-short-short-long-long) and the clans' raspy two-string fiddle (left) answers from the same A with
-the Gong-Ring (A-G-D, the held E resolving to D) over a small gong (bars 3-6); the exchange is sequenced onto G,
-the Dorian IV with its hopeful B natural (7-10), under the first harmony and the frame drum's heartbeat. The theme
-(11-18) fuses both motifs into one 4+4 period: the Wheel climbs to A and turns straight into the Gong-Ring (A-G-D,
-held E), the antecedent stops open on A; the consequent climbs the Wheel on G to the high D and closes with the
-Wheel in retrograde (G-F-E-D) while the two-string's counter-line is the Gong-Ring augmented twice, then at pace,
-its held E a suspension over the fiddle's final D. The dulcimer enters with the theme, the long bronze horns at
-its consequent (15). A' (19-26) lifts the theme an octave over the viola at the old octave, the horns take the
-Gong-Ring counter in the bass, the overtone chant whistles A-D-E-D, the clans' triplet gallop runs against the
-kingdom's straight frame-drum groove, and a timpani roll and the big gong open the peak (bar 23, about 1:06; the
-high D at 1:09). The release (27-32) swaps the roads: the two-string climbs the Wheel and the fiddle answers with
-the Gong-Ring, then both sing them at once, crossing (31-32): the clans end on A, the kingdom on D. The return
-(33-35) thins to the hurdy-gurdy drone and a gong whose ring crosses the loop seam into the opening bloom.
+Composer's note. Form (bars): intro 1-2 | dialogue 3-10 | theme A 11-18 | A' climax 19-26 | release 27-32 | return 33-35.
+Dialogue: the kingdom fiddle (right) climbs the Wheel D-E-F-G-A and the clans' raspy two-string (left) takes that A
+and falls with the Gong-Ring (A-G-D, held E to D) over a small gong; the exchange is sequenced onto G, the Dorian IV.
+Theme A fuses both motifs into one 4+4 period (the Wheel turns straight into the Gong-Ring, half close on A; the
+consequent climbs the Wheel on G to the high D and closes with the Wheel in retrograde) over the two-string's counter,
+the Gong-Ring augmented, whose held E is a suspension on the final D. Arc: drone and gong, frame drum (7), dulcimer
+(11), long bronze horns (15); A' lifts the theme an octave over the viola, horns take the Gong-Ring in the bass, the
+chant whistles A-D-E-D, triplet gallop against the straight groove, timpani roll and big gong at bar 23 (high D at
+about 1:09). The release swaps the roads (two-string climbs, fiddle falls, then both at once, crossing); the return
+thins to drone and a gong whose ring crosses the loop seam into the opening bloom.
 Render: python3 tools/music/render.py tools/music/pieces/menu.py --length-check
 """
 import os
