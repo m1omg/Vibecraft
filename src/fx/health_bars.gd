@@ -28,6 +28,7 @@ class Ghost:
 	var r0: float = 1.0              ## hp ratio when the hold ended
 	var hit_t: float = -100.0        ## fx time of the latest hit
 	var held: float = 1.0            ## ghost ratio during the hold
+	var flash_t: float = -100.0      ## fx time of the first frame that drew the latest hit
 	var draining: bool = false
 
 
@@ -86,7 +87,7 @@ func ghost_for(id: int, ratio: float, now: float) -> float:
 	var cur := _ghost_value(g, now, hold)
 	if ratio < g.last - 1e-5:
 		g.held = maxf(cur, g.last)
-		g.hit_t = now
+		g.hit_t = minf(FxClock.tick_time(), now)    # back-dated to the damage tick
 		g.draining = false
 	g.last = ratio
 	cur = _ghost_value(g, now, hold)
@@ -110,12 +111,15 @@ func _ghost_value(g: Ghost, now: float, hold: float) -> float:
 	return g.r0 + ghost_gap(g.g0 - g.r0, now - g.hit_t - hold)
 
 
-## Latched 70 ms border flash of a unit at fx time `now` (peak on the hit frame).
+## Latched 70 ms border flash of a unit at fx time `now` (its peak on the first frame that shows
+## the hit, then out over 70 ms).
 func border_flash(id: int, now: float) -> float:
 	var g: Ghost = _state.get(id)
 	if g == null:
 		return 0.0
-	return Juice.latched(now - g.hit_t, 1.0, FeelConstants.c().bar_flash_ms / 1000.0)
+	if g.flash_t < g.hit_t:
+		g.flash_t = now
+	return Juice.latched(now - g.flash_t, 1.0, FeelConstants.c().bar_flash_ms / 1000.0)
 
 
 func _process(_delta: float) -> void:

@@ -26,6 +26,7 @@ const ATTACK_COL := Color("#FF5A48")
 const NEUTRAL_COL := Color("#F2D04A")
 const PATROL_COL := Color("#7FD8FF")
 const PIN_CAP := 8
+const PIN_SCALE := 1.4          ## the 0.35 m pin reads at the default zoom (the bible's 0.35 m at 1.0)
 const FLAG_CAP := 12
 const ORDER_TYPES_WITH_GOAL: Array[String] = ["move", "smart", "attack_move", "patrol", "attack",
 	"follow", "gather", "attack_ground", "rally"]
@@ -314,7 +315,7 @@ func _update_pins(t: float) -> void:
 			if vfx != null and vfx.particles != null:
 				vfx.particles.burst("dust_step", p + Vector3(0, 0.08, 0), Vector3.UP, 1.0, 1)
 		var spin := Basis(Vector3.UP, 0.6 * age)
-		var b := spin.scaled(Vector3.ONE * lk.y)
+		var b := spin.scaled(Vector3.ONE * lk.y * PIN_SCALE)
 		var o := n * 16
 		_pin_buf[o + 0] = b.x.x
 		_pin_buf[o + 1] = b.y.x

@@ -124,7 +124,7 @@ func eval_mark(i: int, now: float) -> PackedFloat32Array:
 		Kind.RIPPLE:
 			var r := lerpf(_r0[i], _r1[i], Juice.out_cubic(u))
 			out[1] = r
-			out[2] = lerpf(0.06, 0.02, u) / maxf(r, 0.05) * 2.4
+			out[2] = lerpf(0.09, 0.035, u) / maxf(r, 0.05) * 2.4
 			out[3] = 0.95 * (1.0 - Juice.in_quad(u))
 			out[5] = 0.6
 		Kind.DUST_RING:

@@ -18,6 +18,11 @@ static var ui_now: float = 0.0
 static var fx_dt: float = 0.0
 static var ui_dt: float = 0.0
 static var frame: int = 0
+## fx seconds since the latest sim tick as the picture shows it (the driver writes
+## World.interpolation_fraction() × DT each frame). Juice anchored to a sim event back-dates to
+## `tick_time()`, so a 144 Hz frame 7 ms after the tick and a 30 Hz frame 33 ms after it show
+## the same curve at the same time. Latched peaks (≤ 60 ms) start at the frame instead.
+static var tick_age: float = 0.0
 static var driven: bool = false      ## true once a driver or a test advanced the clocks
 static var manual: bool = false      ## tests: only advance() moves the clocks
 static var _driver_frame: int = -1
@@ -46,6 +51,11 @@ static func drive(dt: float, fx_running: bool) -> void:
 	advance(dt, fx_running, Engine.time_scale)
 
 
+## fx time of the latest sim tick (never after `fx_now`).
+static func tick_time() -> float:
+	return fx_now - clampf(tick_age, 0.0, 0.25)
+
+
 ## fx time as the shaders see it (`fx_time`, wrapped hourly like RenderAtmos.now()).
 static func shader_time() -> float:
 	return fmod(fx_now, WRAP)
@@ -57,5 +67,6 @@ static func reset(start: float = 10.0) -> void:
 	ui_now = start
 	fx_dt = 0.0
 	ui_dt = 0.0
+	tick_age = 0.0
 	frame = 0
 	_driver_frame = -1

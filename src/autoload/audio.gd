@@ -59,6 +59,7 @@ var _world: Array[Voice] = []
 var _ui: Array[AudioStreamPlayer] = []
 var _next_ui: int = 0
 var _ack: AudioStreamPlayer
+var _ack_end: float = -100.0
 var _ack_protect_until: float = -1.0
 var _sub: AudioStreamPlayer
 var _listener: AudioListener3D
@@ -79,6 +80,7 @@ class Voice:
 	var event_id: String = ""
 	var priority: int = 0
 	var t_start: float = -100.0
+	var t_end: float = -100.0          ## now() when the sample has played out
 	var no_cut_until: float = -100.0
 
 
@@ -138,8 +140,11 @@ func reset_state() -> void:
 		v.player.stop()
 		v.family = ""
 		v.event_id = ""
+		v.t_end = -100.0
+		v.no_cut_until = -100.0
 	if _ack != null:
 		_ack.stop()
+	_ack_end = -100.0
 	reset_stats()
 
 
@@ -292,7 +297,9 @@ func play_3d(id: String, pos: Vector3, opts: Dictionary = {}) -> bool:
 		p.global_position = pos
 	else:
 		p.position = pos
-	p.play(maxf(float(opts.get("from", 0.0)), 0.0))
+	var from := maxf(float(opts.get("from", 0.0)), 0.0)
+	p.play(from)
+	voice.t_end = t + _remaining(stream, from, p.pitch_scale)
 	voice.family = id
 	voice.event_id = str(opts.get("event", ""))
 	voice.priority = priority
@@ -312,9 +319,17 @@ func playing_count(id: String, by_event: bool = false) -> int:
 	return n
 
 
-## A voice counts as sounding while its player plays (headless: the dummy driver also plays).
+## A voice counts as sounding until its sample has played out (voice accounting runs on
+## `now()`, so caps and stealing behave the same with any audio driver and in tests).
 func _sounding(v: Voice) -> bool:
-	return v.player.playing
+	return now() < v.t_end
+
+
+static func _remaining(stream: AudioStream, from: float, pitch: float) -> float:
+	var length := stream.get_length() if stream != null else 0.0
+	if length <= 0.0:
+		length = 0.5
+	return maxf(length - from, 0.05) / maxf(pitch, 0.1)
 
 
 ## A free 3D voice, else steal the lowest priority (oldest first) that is not protected and
@@ -537,6 +552,7 @@ func play_voice(unit: Node, category: String) -> bool:
 	_ack.volume_db = 0.0
 	_ack.play()
 	var length := stream.get_length()
+	_ack_end = t + maxf(length, 0.05)
 	_ack_protect_until = t + length if category == "annoyed" else -1.0
 	stats["acks"] += 1
 	voice_started.emit(unit, category, length)
@@ -559,7 +575,7 @@ func _order_tick(faction: String, category: String) -> void:
 
 
 func is_ack_playing() -> bool:
-	return _ack != null and _ack.playing
+	return now() < _ack_end
 
 
 func _tick(family: String, gain_db: float) -> void:

@@ -173,6 +173,8 @@ func _process(delta: float) -> void:
 	FxClock.drive(delta, running)
 	if world == null:
 		return
+	if not FxClock.manual:
+		FxClock.tick_age = world.interpolation_fraction() * World.DT if running else 0.0
 	hits_this_frame = 0
 	_drain()
 	_update_governor(FxClock.fx_dt)

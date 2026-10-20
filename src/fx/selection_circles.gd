@@ -20,7 +20,7 @@ const ALLY := Color(0.3, 0.75, 1.0)
 const ENEMY := Color(1.0, 0.22, 0.18)
 const NEUTRAL := Color(1.0, 0.9, 0.25)
 const FLOATS := GroundMarks.FLOATS
-const BAND := 0.16
+const BAND := 0.2
 const SHIMMER_MIN_S := 0.45
 
 var world: World

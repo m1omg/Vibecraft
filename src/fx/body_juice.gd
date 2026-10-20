@@ -23,8 +23,8 @@ var dust_spawned: int = 0
 var whooshes: int = 0
 
 var _fc: FeelConstants
-var _above: float = 0.0
-var _below: float = 0.0
+var _above_t: float = -1.0              ## tick time the speed rose above the walk threshold
+var _below_t: float = -1.0              ## tick time it fell below the idle threshold
 # pitch segment (degrees, forward positive)
 var _seg: int = Seg.SPRING
 var _seg_t0: float = -100.0
@@ -36,6 +36,8 @@ var _last_tick: int = -1
 var _last_facing: float = 0.0
 var _yaw_rate: float = 0.0
 var _roll := Vector2.ZERO
+var _bank_t: float = -1.0               ## fx time the bank spring state refers to
+var _bank_target: float = 0.0
 # nods and acks (ui clock)
 var _nod_t0: float = -100.0
 var _nod_scale: float = 1.0
@@ -117,13 +119,14 @@ func knock(origin: Vector3, amount: float, max_hp: float, base_m: float, crit: b
 	var c := cos(unit.facing)
 	var s := sin(unit.facing)
 	var local := Vector2(c * d.x - s * d.y, s * d.x + c * d.y)
-	var now := FxClock.fx_now
-	var st := _knock_state(now)
+	# anchored to the damage tick (back-dated), so every refresh rate shows the same spring
+	var t0 := minf(FxClock.tick_time(), FxClock.fx_now)
+	var st := _knock_state(t0)
 	var kick := Juice.kick_for_peak(a, _k_omega, minf(_k_zeta, 0.99))
 	_k_x0 = Vector2(st.x, st.y)
 	_k_v0 = Vector2(st.z, st.w) + local * kick
-	_k_t0 = now
-	_tremble_t0 = now
+	_k_t0 = t0
+	_tremble_t0 = t0
 
 
 ## Per-frame composition. `dt` = the frame's fx delta (0 while paused).
@@ -132,8 +135,8 @@ func compose(dt: float) -> void:
 		return
 	var now := FxClock.fx_now
 	var ui := FxClock.ui_now
-	_update_gait(dt, now)
-	_update_bank(dt)
+	_update_gait(now)
+	_update_bank(now)
 	var pitch := pitch_at(now) + nod_at(ui) + ack_at(ui)
 	var roll := rad_to_deg(_roll.x)
 	var sy := squash_at(now)
@@ -237,7 +240,10 @@ func knock_offset(t: float = FxClock.fx_now) -> Vector2:
 
 # --- gait, bank, stride, swing -------------------------------------------------------------------
 
-func _update_gait(dt: float, now: float) -> void:
+## Gait hysteresis (CMB-03): walk after the speed stays above 0.35 for 80 ms, idle after it stays
+## below 0.12 for 120 ms. The speed only changes on sim ticks, so the crossings are anchored to
+## the tick time and the push-off / stop plant start at exact, back-dated times.
+func _update_gait(now: float) -> void:
 	var ratio := 0.0
 	if unit.speed > 0.0 and unit.alive:
 		ratio = unit.velocity.length() / unit.speed
@@ -245,24 +251,26 @@ func _update_gait(dt: float, now: float) -> void:
 		ratio = 0.0
 	var enter := _fc.walk_enter_ms / 1000.0
 	var leave := _fc.idle_enter_ms / 1000.0
+	var tt := minf(FxClock.tick_time(), now)
 	if ratio > _fc.walk_enter_ratio:
-		_above += dt
-		_below = 0.0
+		if _above_t < 0.0:
+			_above_t = tt
+		_below_t = -1.0
 	elif ratio < _fc.idle_enter_ratio:
-		_below += dt
-		_above = 0.0
+		if _below_t < 0.0:
+			_below_t = tt
+		_above_t = -1.0
 	else:
-		_above = 0.0
-		_below = 0.0
-	if gait != Gait.WALK and _above >= enter:
-		# back-dated: the push-off starts exactly when the hysteresis was satisfied
-		var t0 := now - (_above - enter)
+		_above_t = -1.0
+		_below_t = -1.0
+	if gait != Gait.WALK and _above_t >= 0.0 and now - _above_t >= enter:
+		var t0 := _above_t + enter
 		_start_seg(Seg.PUSHOFF, t0, float(sheet.get("lean_deg", 4.0)))
 		gait = Gait.WALK
 		if view.on_screen():
 			_dust_at_feet(1.5)
-	elif gait == Gait.WALK and _below >= leave:
-		var t1 := now - (_below - leave)
+	elif gait == Gait.WALK and _below_t >= 0.0 and now - _below_t >= leave:
+		var t1 := _below_t + leave
 		_start_seg(Seg.STOP, t1, 0.0)
 		_squash_t0 = t1
 		gait = Gait.IDLE
@@ -270,7 +278,7 @@ func _update_gait(dt: float, now: float) -> void:
 			_dust_at_feet(1.0)
 	elif gait == Gait.IDLE and ratio >= _fc.idle_enter_ratio and ratio <= _fc.walk_enter_ratio:
 		gait = Gait.SHUFFLE
-	elif gait == Gait.SHUFFLE and _below >= leave:
+	elif gait == Gait.SHUFFLE and _below_t >= 0.0 and now - _below_t >= leave:
 		gait = Gait.IDLE
 
 
@@ -281,21 +289,34 @@ func _start_seg(seg: int, t0: float, target: float) -> void:
 	_seg_target = target
 
 
-func _update_bank(dt: float) -> void:
+## Banking into turns (CMB-02): an exact spring towards a target that changes on sim ticks; the
+## spring is advanced to the tick with the old target, then to now with the new one.
+func _update_bank(now: float) -> void:
 	var w := unit.world
 	if w == null:
 		return
+	if _bank_t < 0.0:
+		_bank_t = now
 	if w.tick_count != _last_tick:
+		_bank_to(minf(maxf(FxClock.tick_time(), _bank_t), now))
 		var ticks := maxi(w.tick_count - _last_tick, 1) if _last_tick >= 0 else 1
 		_yaw_rate = Juice.wrap_angle(unit.facing - _last_facing) / (ticks * World.DT)
 		_last_facing = unit.facing
 		_last_tick = w.tick_count
-	var ratio := unit.velocity.length() / unit.speed if unit.speed > 0.0 else 0.0
-	var k := _fc.bank_k if str(sheet.get("gait", "biped")) == "biped" else 0.0
-	var lim := deg_to_rad(_fc.bank_max_deg)
-	var target := clampf(_yaw_rate * clampf(ratio, 0.0, 1.0) * k, -lim, lim)
-	var r := Juice.spring(_roll.x - target, _roll.y, _fc.bank_omega, _fc.bank_zeta, dt)
-	_roll = Vector2(r.x + target, r.y)
+		var ratio := unit.velocity.length() / unit.speed if unit.speed > 0.0 else 0.0
+		var k := _fc.bank_k if str(sheet.get("gait", "biped")) == "biped" else 0.0
+		var lim := deg_to_rad(_fc.bank_max_deg)
+		_bank_target = clampf(_yaw_rate * clampf(ratio, 0.0, 1.0) * k, -lim, lim)
+	_bank_to(now)
+
+
+func _bank_to(t: float) -> void:
+	var d := t - _bank_t
+	if d <= 0.0:
+		return
+	var r := Juice.spring(_roll.x - _bank_target, _roll.y, _fc.bank_omega, _fc.bank_zeta, d)
+	_roll = Vector2(r.x + _bank_target, r.y)
+	_bank_t = t
 
 
 func _update_stride() -> void:
