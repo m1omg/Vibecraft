@@ -35,7 +35,7 @@ def build():
     sn = p.track("snare", P.SNARE)
     hrn = p.track("horns", P.HORNS)
     hum = p.track("hum", P.HUM)
-    timp = p.track("timpani", P.TIMPANI)
+    timp = p.track("timpani", P.TIMPANI.variant(gain_db=-12.0))   # sparingly: well under the band
 
     intro = p.section("intro", 2)
     ant = p.section("A antecedent", 4)

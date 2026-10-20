@@ -316,6 +316,9 @@ def glue(bus_path, out_path, cfg):
     if m.get("dip"):
         f0, g, q = m["dip"]
         chain.append(f"equalizer=f={f0}:t=q:w={q}:g={g}")
+    if m.get("presence"):
+        f0, g, q = m["presence"]
+        chain.append(f"equalizer=f={f0}:t=q:w={q}:g={g}")
     if m.get("highshelf") and m["highshelf"][1]:
         chain.append(f"highshelf=f={m['highshelf'][0]}:g={m['highshelf'][1]}")
     thr = 10 ** (b["threshold_db"] / 20.0)

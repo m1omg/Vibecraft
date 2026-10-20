@@ -6,9 +6,11 @@ programs by hand, so every piece shares one band sound per faction.
     fid = piece.track("fiddle", P.FIDDLE)                  # as tuned
     hrn = piece.track("horns", P.HORNS.variant(pan=-0.5))  # a per-piece change
 
-Calibration (`trim_db`) brings each raw FluidR3_GM preset or numpy synth to a common reference level
-(a bowed fiddle note at velocity 100, about -27 dB RMS before the mix), measured in the style tests; do not
-change it per piece. `gain_db` is the musical balance and is what a composer adjusts. Measured facts behind
+Calibration (`trim_db`) brings each raw FluidR3_GM preset or numpy synth to one reference: with gain_db = 0
+a typical line of the instrument plays at the melody's level (-30 dB active level after its EQ, measured by
+render.py's per-stem report in the style tests and a calibration run); do not change it per piece.
+`gain_db` is the musical balance relative to the melody and is what a composer adjusts: the defaults are
+melody 0, counter-line -4, accompaniment -4..-6, drone -8, far horns -8..-9, hum and chant -9..-12. Measured facts behind
 the choices (FluidR3_GM, fluidsynth 2.3, see README "Palette notes"):
   * "Fiddle" (110) and "Violin" (40) share one sample; velocity only scales level (about 40*log10(v/127)
     dB), so dynamics come from CC11 phrasing and the per-note bow shaping in score.py.
@@ -44,7 +46,7 @@ CELLO = Instrument("cello", program=42, mono=True, shape="bow", vibrato=dict(BOW
 BASS_PIZZ = Instrument("bass_pizz", program=45, gain_db=-4.0, trim_db=3.4, pan=0.05, width=0.4, reverb=0.12,
                        eq=[("hp", 38), ("lowshelf", 120, 2.0), ("lp", 3500)],
                        vel_lo=50, vel_hi=118, timing_ms=5, lo=28, hi=60, color=(110, 70, 40))
-CONTRABASS = Instrument("contrabass", program=43, mono=True, shape="bow", gain_db=-5.0, trim_db=-1.0, pan=0.0,
+CONTRABASS = Instrument("contrabass", program=43, mono=True, shape="bow", gain_db=-5.0, trim_db=3.4, pan=0.0,
                         width=0.5, reverb=0.15, eq=[("hp", 35), ("lp", 2500)], vel_lo=44, vel_hi=104,
                         timing_ms=8, lag_ms=6, lo=28, hi=55, color=(90, 55, 30))
 DULCIMER = Instrument("dulcimer", program=15, gain_db=-4.0, trim_db=14.1, pan=0.4, width=0.8, reverb=0.28,
@@ -53,17 +55,17 @@ DULCIMER = Instrument("dulcimer", program=15, gain_db=-4.0, trim_db=14.1, pan=0.
 HORNS = Instrument("horns", program=60, mono=True, shape="breath", vibrato=HORN_VIB, gain_db=-9.0, trim_db=9.3,
                    pan=-0.45, width=0.7, reverb=0.65, eq=[("hp", 70), ("lp", 2800), ("peak", 600, -1.5, 0.8)],
                    vel_lo=40, vel_hi=96, timing_ms=10, lag_ms=12, lo=36, hi=72, color=(190, 150, 90))
-BAGPIPE = Instrument("bagpipe", program=109, gain_db=-8.0, trim_db=0.0, pan=0.25, width=0.4, reverb=0.35,
+BAGPIPE = Instrument("bagpipe", program=109, gain_db=-8.0, trim_db=4.2, pan=0.25, width=0.4, reverb=0.35,
                      eq=[("hp", 120), ("peak", 2600, -4.0, 1.0), ("lp", 5000)], vel_lo=60, vel_hi=100,
                      timing_ms=4, lo=55, hi=81, color=(160, 120, 170))
 SNARE = Instrument("field_snare", drums=True, program=48, perc=True, gain_db=-4.0, trim_db=15.1, pan=0.12,
                    width=0.6, reverb=0.2, eq=[("hp", 120), ("peak", 4500, -2.0, 1.0), ("highshelf", 9000, -3.0)],
                    vel_lo=10, vel_hi=118, timing_ms=3, accent=0, color=(200, 200, 200),
                    drum_map={"snare": 38, "snare2": 40, "boom": 35, "boom2": 36, "tambourine": 54})
-BRUSH = Instrument("brush", drums=True, program=40, perc=True, gain_db=-8.0, trim_db=6.0, pan=0.2, width=0.6,
+BRUSH = Instrument("brush", drums=True, program=40, perc=True, gain_db=-8.0, trim_db=15.3, pan=0.2, width=0.6,
                    reverb=0.2, eq=[("hp", 150), ("highshelf", 8000, -2.0)], vel_lo=10, vel_hi=110, timing_ms=4,
                    accent=0, color=(170, 170, 170), drum_map={"tap": 38, "slap": 39, "swirl": 40, "kick": 36})
-TIMPANI = Instrument("timpani", program=47, gain_db=-6.0, trim_db=6.0, pan=0.0, width=0.6, reverb=0.35,
+TIMPANI = Instrument("timpani", program=47, gain_db=-6.0, trim_db=12.3, pan=0.0, width=0.6, reverb=0.35,
                      eq=[("hp", 40), ("lp", 4000)], vel_lo=30, vel_hi=110, timing_ms=4, perc=True, accent=0,
                      color=(120, 100, 80))
 HURDY = Instrument("hurdy_gurdy", synth="hurdy", program=109, gain_db=-8.0, trim_db=-6.0, pan=-0.08, width=0.8,
@@ -89,10 +91,10 @@ BELL = Instrument("town_bell", synth="bell", program=14, gain_db=-6.0, trim_db=3
 # No taiko, no low brass + electric guitar.
 TWO_STRING = Instrument("two_string_fiddle", program=42, mono=True, shape="bow", vibrato=WIDE_VIB, bend_range=4,
                         gain_db=0.0, trim_db=7.4, drive=0.35, pan=0.12, width=0.5, reverb=0.28,
-                        eq=[("hp", 110), ("peak", 1400, 2.0, 1.2), ("peak", 2700, -2.0, 1.2),
-                            ("highshelf", 6500, -4.0)],
+                        eq=[("hp", 110), ("peak", 1300, 1.0, 1.2), ("peak", 2600, -3.0, 1.0),
+                            ("highshelf", 6500, -3.0)],
                         vel_lo=46, vel_hi=112, timing_ms=8, lag_ms=5, lo=43, hi=84, color=(232, 150, 60))
-TWO_STRING_HI = TWO_STRING.variant(name="two_string_high", program=110, trim_db=5.5, gain_db=-2.0, drive=0.25,
+TWO_STRING_HI = TWO_STRING.variant(name="two_string_high", program=110, trim_db=5.6, gain_db=-2.0, drive=0.25,
                                    eq=[("hp", 200), ("peak", 1500, 1.5, 1.2), UNIT_DIP, ("highshelf", 6000, -5.0)],
                                    lo=55, hi=93, color=(240, 190, 90))
 LUTE = Instrument("long_lute", program=106, gain_db=-4.0, trim_db=13.8, pan=-0.35, width=0.5, reverb=0.22,
@@ -137,18 +139,21 @@ CLAPS = Instrument("claps", synth="claps", program=0, perc=True, gain_db=-8.0, t
 # reverb: the generated room (render.make_ir): decay = T60 in s, predelay_ms, early (early-reflection level),
 #         damp (how much faster the highs die, 0..1), width (0..1 decorrelation), hp/lp on the return.
 # bus:    the glue stage: the dry+wet bus is set to `lufs` and compressed (threshold_db, ratio, attack/release ms).
-# master: EQ on the bus (dip = (Hz, dB, Q) for the unit-voice band) and the final target (lufs, tp).
+# master: EQ on the bus (dip = (Hz, dB, Q) for the unit-voice band; presence = a lift above it so the mix is
+#         not muffled; shelves) and the final target (lufs, tp).
 MIX_KINGDOM = {
     "reverb": {"decay": 1.9, "predelay_ms": 20, "early": 0.35, "damp": 0.55, "width": 0.9, "hp": 170, "lp": 9000,
                "seed": 11},
     "bus": {"lufs": -20.0, "threshold_db": -21.0, "ratio": 2.0, "attack": 25, "release": 280, "knee": 4},
-    "master": {"lufs": -16.0, "tp": -1.0, "dip": (2300, -1.5, 0.8), "lowshelf": (90, 0.0), "highshelf": (8500, 1.5)},
+    "master": {"lufs": -16.0, "tp": -1.0, "dip": (2300, -1.5, 0.8), "presence": (4800, 2.0, 0.9), "lowshelf": (90, 0.0),
+               "highshelf": (8500, 1.5)},
 }
 MIX_CLANS = {
     "reverb": {"decay": 2.6, "predelay_ms": 32, "early": 0.25, "damp": 0.65, "width": 1.0, "hp": 140, "lp": 8500,
                "seed": 23},
     "bus": {"lufs": -20.0, "threshold_db": -21.0, "ratio": 2.0, "attack": 30, "release": 320, "knee": 4},
-    "master": {"lufs": -16.0, "tp": -1.0, "dip": (2300, -1.5, 0.8), "lowshelf": (80, 0.0), "highshelf": (8500, 1.5)},
+    "master": {"lufs": -16.0, "tp": -1.0, "dip": (2300, -1.5, 0.8), "presence": (4800, 3.0, 0.9), "lowshelf": (80, 0.0),
+               "highshelf": (8500, 1.5)},
 }
 MIX_SHARED = {  # menu / score bed: both palettes meet
     "reverb": {"decay": 2.3, "predelay_ms": 26, "early": 0.3, "damp": 0.6, "width": 1.0, "hp": 150, "lp": 7000,
@@ -166,8 +171,10 @@ CLANS = {k: v for k, v in globals().items() if isinstance(v, Instrument) and k i
 
 
 if __name__ == "__main__":
+    import argparse
     import json
     from dataclasses import asdict
+    argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter).parse_args()
     print(json.dumps({"kingdom": {k: asdict(v) for k, v in KINGDOM.items()},
                       "clans": {k: asdict(v) for k, v in CLANS.items()},
                       "mix": {"kingdom": MIX_KINGDOM, "clans": MIX_CLANS, "shared": MIX_SHARED}}, indent=1, default=str))
