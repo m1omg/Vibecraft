@@ -16,8 +16,10 @@ The piece module defines build() -> score.Piece. Pipeline (all deterministic):
      shared room (an impulse response generated with numpy, convolved with afir), summed to the bus;
   4. glue: the bus is set to the mix preset's level, gently EQ'd (a dip in the unit-voice band) and bus
      compressed (acompressor, about 2:1);
-  5. form: tracks get a short end fade; --loop crossfades the music after the loop point into the start
-     (equal power, --xfade s); --trim keeps the first N s with a cosine fade (opening cues);
+  5. form: tracks and cues lose any lead-in quieter than -60 dB re the peak when it is longer than 50 ms (cut
+     10 ms before the first sound, 10 ms fade-in: no dead air before the downbeat); tracks get a short end
+     fade; --loop crossfades the music after the loop point into the start (equal power, --xfade s);
+     --trim keeps the first N s with a cosine fade (opening cues);
   6. master: ffmpeg loudnorm two-pass (linear) to -16 LUFS integrated with true peak <= -1 dBTP (a lookahead
      limiter runs first only when the peak-to-loudness ratio would force loudnorm out of linear mode), then
      Ogg Vorbis -q:a 6, 48 kHz stereo, bit-exact muxing;
@@ -332,8 +334,33 @@ def glue(bus_path, out_path, cfg, gain=None):
 
 
 # ----------------------------------------------------------------------------------------------- form
-def shape_form(x, piece, kind, xfade_s, trim_s, trim_fade_s, tail_s):
+LEAD_MAX_S = 0.05     # longest allowed lead-in below LEAD_DB re the peak (integration check: no dead air at the start)
+LEAD_DB = -60.0
+LEAD_KEEP_S = 0.01    # kept before the first sound, faded in
+
+
+def lead_cut(x):
+    """Samples to drop at the start of a track or cue: 0 when the first sound (above LEAD_DB re the peak) comes
+    within LEAD_MAX_S, else everything up to LEAD_KEEP_S before it."""
+    m = np.abs(x).max(axis=1)
+    on = np.flatnonzero(m > m.max() * 10 ** (LEAD_DB / 20))
+    if not len(on) or on[0] <= int(LEAD_MAX_S * SR):
+        return 0
+    return int(on[0] - int(LEAD_KEEP_S * SR))
+
+
+def shape_form(x, piece, kind, xfade_s, trim_s, trim_fade_s, tail_s, cut=None):
+    """cut: lead samples to drop (tracks and cues); None measures it on x (the full mix), the rally stems pass the
+    full mix's value so they stay aligned with it."""
     info = {"kind": kind}
+    if kind != "loop":
+        cut = lead_cut(x) if cut is None else cut
+        info["lead_cut"] = int(cut)
+        if cut:
+            x = x[cut:].copy()
+            K = int(LEAD_KEEP_S * SR)
+            x[:K] *= (0.5 - 0.5 * np.cos(np.arange(K) / K * math.pi))[:, None]
+            info["lead_trim_s"] = round(cut / SR, 3)
     if kind == "loop":
         L = int(round(piece.duration_s * SR))
         X = int(round(xfade_s * SR))
@@ -353,7 +380,7 @@ def shape_form(x, piece, kind, xfade_s, trim_s, trim_fade_s, tail_s):
         y[T - F:] *= (0.5 + 0.5 * np.cos(u * math.pi))[:, None]
         info.update(trim_s=trim_s, trim_fade_s=trim_fade_s)
         return y, info
-    T = min(len(x), int(round((piece.duration_s + tail_s) * SR)))
+    T = min(len(x), int(round((piece.duration_s + tail_s) * SR)) - (cut or 0))
     y = x[:T].copy()
     F = int(min(1.2, tail_s * 0.4) * SR)
     u = np.arange(F) / max(1, F - 1)
@@ -426,7 +453,8 @@ def master(form_path, ogg_path, cfg, work):
 
 
 # ----------------------------------------------------------------------------------------------- rally stems
-def split_perc(piece, stem_list, cfg, work, out, ir_path, form_path, bus_gain, kind, xfade, trim, trim_fade, tail):
+def split_perc(piece, stem_list, cfg, work, out, ir_path, form_path, bus_gain, kind, xfade, trim, trim_fade, tail,
+               cut=0):
     """The rally stems (juice MUS-01): <out>_main.ogg (tracks without Instrument.perc) and <out>_perc.ogg (perc
     tracks), each through the same room, glue gain, form and master gain as the full mix, so main + perc adds up
     to the full mix (up to the bus compressor). The game plays them in an AudioStreamSynchronized."""
@@ -442,7 +470,7 @@ def split_perc(piece, stem_list, cfg, work, out, ir_path, form_path, bus_gain, k
         bus = mix_stems(subset, ir_path, os.path.join(work, f"bus_{label}.wav"), cfg, work, f"mix_{label}.filter")
         glued = os.path.join(work, f"glued_{label}.wav")
         glue(bus, glued, cfg, gain=bus_gain)
-        y, _ = shape_form(read_wav(glued), piece, kind, xfade, trim, trim_fade, tail)
+        y, _ = shape_form(read_wav(glued), piece, kind, xfade, trim, trim_fade, tail, cut=cut)
         fpath = os.path.join(work, f"form_{label}.wav")
         write_wav(fpath, y)
         o = f"{base}_{label}.ogg"
@@ -544,7 +572,8 @@ def render(piece_path, out=None, kind=None, xfade=None, trim=None, trim_fade=Non
     report["hashes"] = hashes
     if split:
         report["rally_stems"] = split_perc(piece, stem_list, cfg, work, out, ir_path, form_path,
-                                           report["glue"]["bus_gain_db"], kind, xfade, trim, trim_fade, tail)
+                                           report["glue"]["bus_gain_db"], kind, xfade, trim, trim_fade, tail,
+                                           cut=form.get("lead_cut", 0))
     # checks
     meas = analyze.measure(out, loop=(kind == "loop"))
     report["measure"] = meas
@@ -559,6 +588,9 @@ def render(piece_path, out=None, kind=None, xfade=None, trim=None, trim_fade=Non
         if not (rng[0] <= meas["duration_s"] <= rng[1]):
             problems.append(f"duration {meas['duration_s']} s outside {rng}")
     audio = analyze.decode(out)
+    lead = form.get("lead_cut", 0)
+    if lead:   # back into score time (the lead-in was cut): section spans and the piano roll's waveform line up
+        audio = np.concatenate([np.zeros((lead, audio.shape[1])), audio])
     spans = []
     for i, s in enumerate(piece.sections):
         t0 = piece.seconds(s.start)

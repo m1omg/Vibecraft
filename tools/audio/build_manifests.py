@@ -5,13 +5,12 @@ SFX: every assets/audio/sfx/<group>/<stem>_<nn>.wav becomes {"<stem>": ["res://a
 Kit items keep their own ids (ui_order_kingdom_move, bullet_hit_wood, ...). Ids listed in AGGREGATES also get a parent
 key holding all their children (material variants a caller may pick at random).
 
-Music: assets/audio/music/*.ogg, with the metadata in tools/audio/music_jobs.json ("result" entries written by the
-post step): {"<piece id>": {"file": "res://...", "length_s": ..., "prompt_id": ..., "job_id": ..., "music_length_ms": ...}}.
+Music: written by tools/music/manifest.py (every piece: id, file, faction, kind, loop, duration, source, hashes and
+loudness; the one generated cue takes its job id from tools/audio/music_jobs.json). Needs numpy and mido.
 """
 import json
 import os
 import re
-import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -42,38 +41,10 @@ def sfx():
     print("sfx manifest: %d ids, %d files" % (len(out), sum(len(v) for k, v in out.items() if k not in AGGREGATES)))
 
 
-def duration(path):
-    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path],
-                       stdout=subprocess.PIPE, text=True)
-    return round(float(r.stdout.strip()), 2)
-
-
 def music():
-    root = os.path.join(REPO, "assets", "audio", "music")
-    jobs = json.load(open(os.path.join(HERE, "music_jobs.json")))["jobs"]
-    out = {}
-    for j in jobs:
-        res = j.get("result")
-        if not res:
-            continue
-        path = os.path.join(REPO, res["file"])
-        if not os.path.exists(path):
-            print("missing", path, file=sys.stderr)
-            continue
-        out[j["id"]] = {
-            "piece": j["piece"],
-            "file": "res://" + res["file"],
-            "length_s": duration(path),
-            "prompt_id": j["prompt_id"],
-            "job_id": res.get("job_id"),
-            "music_length_ms_sent": res.get("music_length_ms_sent", j["music_length_ms"]),
-            "music_length_ms_bible": j["music_length_ms"],
-            "kind": j["kind"],
-        }
-    with open(os.path.join(root, "manifest.json"), "w") as f:
-        json.dump(out, f, indent=1, ensure_ascii=False)
-        f.write("\n")
-    print("music manifest: %d pieces" % len(out))
+    sys.path.insert(0, os.path.join(REPO, "tools", "music"))
+    import manifest  # tools/music/manifest.py: the music manifest's only writer
+    manifest.main([])
 
 
 if __name__ == "__main__":

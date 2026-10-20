@@ -1796,6 +1796,13 @@ death on topple contact. Sleeping camps play only their snore loop (Sootcoats) o
 
 ## 10. Music
 
+> **Composed in-house since 2026-10-20.** Paid music generation is banned (ElevenLabs Music through Krea cost about 444 CU
+> for 10 s; asset ledger). Every piece except the kingdom opening cue is composed by the project in Python with
+> `tools/music` (sources in `tools/music/pieces/`, rendered offline with FluidSynth, the MIT-licensed FluidR3_GM soundfont
+> and numpy synths; list, sources and hashes in `assets/audio/music/manifest.json`). The §10.3 prompts remain as the
+> musical briefs (key, mode, tempo, instruments, mood, structure); §10.1's lengths, avoid list and listening check, the
+> §10.2 motifs (now quoted exactly) and §10.4's loudness and file names still apply.
+
 ### 10.1 Plan and rules
 
 | Piece | Length | Use |
@@ -1881,7 +1888,7 @@ budgeted in the faction docs; this table covers the 2D and audio work owned by t
 | **2D and 3D-redo subtotal** | | | | **≈ 45 cr + ≈ 831 CU** |
 | SFX P0 | 143 jobs (+20 since 2026-10-17: attacks, creep casts, the Signal Shell, reveals, 8 select sounds) | Seed Audio | 4.63 CU (flat) to about 10 CU (if billed per second) | ≈ 660–1,430 CU |
 | Voice | 371 lines in ≈ 150 batched jobs | ElevenLabs TTS | unmeasured | probe |
-| Music | ≈ 25 min in 14 pieces | ElevenLabs Music | unmeasured | probe |
+| Music | ≈ 25 min in 14 pieces | composed in-house with `tools/music` (§10); only the kingdom opening cue came from the one ElevenLabs Music probe (444 CU, already spent) | 0 | **0 CU** |
 
 **The audio budget is the risk** (the slice-plan §2.13–§2.15 envelopes are the spend caps: P0 SFX ≈ 378 CU in 54 grouped jobs, P0 VO 251
 lines ≈ 379 CU, P0 music 200 CU; this table is the full content plan, reconciled at synthesis on 2026-10-19): after the 2D work about **670 CU** remain for SFX, voice and music, and P0 SFX alone need ≈ 660 CU

@@ -1,18 +1,29 @@
 #!/usr/bin/env python3
-"""Kingdom 2, "Boards and Thunder" (assets/audio/music/kingdom_2.ogg). G Dorian, 100 BPM, 4/4, about 3:30.
+"""Kingdom 2, "Boards and Thunder" (assets/audio/music/kingdom_2.ogg). G Dorian, 100 BPM, 4/4, about 3:22.
 
 Composer's note. Form (bars, 1-based): intro 1-6 | A 7-30 (three 8-bar periods) | B 31-46 | drum bridge 47-54 |
-A' 55-78 | final cadence 79-84. The metre feel is 3+3+2 throughout: two field snares interlock in that grouping
-and the deep frame drum and the pizzicato bass mark it, so the bar drives forward instead of marching. The Wheel
-is re-cut to the same grouping (G-A-Bb, C dotted, D: bar 7) and answered by the falling fourth C-G; bars 9-10
-sequence it a third up onto the Dorian E natural and stop on a half cadence on D, bars 11-14 close on G. The second
-period adds fiddle double-stops and a viola counter-line; the third inverts the Wheel and sequences it down
-(D, C, Bb, A) to a horn signal. In B (on Bb) the bagpipe rests: two far horns give two-note signals and the
-dulcimer answers each with a Wheel fragment in tremolo; the fiddle returns on held double-stops. The bridge is
-drums only (two snares, frame drum, timpani on G and D, distant cannon booms) with the accents displaced by a
-sixteenth every bar and a long crescendo. A' brings everything back, ends its last period with the Wheel in
-stretto between fiddle and viola (the viola a fourth below, two beats behind), and the cadence plays the Wheel and its answer in augmentation onto a firm G
-(F to G, with the last boom). Arc: soft intro, A building, B lighter, bridge from pp to ff, A' strongest.
+A' 55-78 | stop-time cadence 79-84. The metre feel is 3+3+2 throughout: two field snares interlock in that
+grouping, the deep frame drum and the pizzicato bass mark it, and the hammered dulcimer plays a tremolo chord on
+the downbeat and chops on the two off-beat accents (beats 2.5 and 4), so the bar drives forward instead of
+marching. The Wheel is re-cut to the same grouping: its three short notes are a sixteenth-note pickup (G-A-Bb)
+and its two long notes fill the bar as 3 + 5 eighths (C, D; bar 7, over the Dorian IV). The answer falls C-G on
+the off-beat accents (bar 8), the third bar hammers D on all three accents, the fourth stops on a half cadence on
+D with the pickup again, and the consequent climbs to G5 and closes IV-i (C-G) on G. A2 varies the rhythm (a
+neighbour-note chop on D, an off-beat E), adds double-stops picked from the chord, a viola counter-line in
+contrary motion and a new consequent: the pickup a step higher (A-Bb-C into D-E) and a v-i close. A3 develops:
+the Wheel inverted falls from the fiddle while the viola answers with it upright from below, a step lower each
+time, then both hammer the build to the first horn signal. In B (on Bb) the bagpipe rests: two far horns give
+signals in fifths and octaves only, voiced an open fifth or octave apart, and the dulcimer answers each with a
+Wheel fragment and a tremolo; the fiddle returns on held double-stops. The bridge is drums only (two snares,
+frame drum, timpani on G and D, distant cannon booms) with the accents displaced by a sixteenth every bar and a
+long crescendo. A' is a set of variations, not a repeat: A'1 puts the theme in the viola and cello an octave down
+under a new fiddle descant in double-stops (a 4-3 suspension at bar 59); A'2 gives the theme back to the fiddle
+with a new consequent that climbs C-D-E-F-G and closes high, D rising to the upper G; A'3 runs the Wheel in 3+3+2
+augmentation (dotted, dotted, quarter) in stretto, the viola a fifth below and a dotted quarter behind, to the
+top A5, then turns it upside down over the viola's counter-line. The cadence is stop-time: the Wheel and its
+answer once more, three band hits on the 3+3+2 accents of bar 81 with the top line falling C-Bb-A, and one struck
+G (an open fifth) with the cannon; the bowed parts cut off together on a beat and the dulcimer, timpani and the
+boom ring into the room. Arc: soft intro, A building, B lighter, bridge from pp to ff, A' strongest.
 """
 import os
 import sys
@@ -20,22 +31,79 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import palette as P  # noqa: E402
 from ext_kingdom import bass_of, chord, dulcimer_bar, mel  # noqa: E402
-from score import Mode, Piece, wheel  # noqa: E402
+from score import Mode, Piece, _contour, n  # noqa: E402
 
 HARMONY = {
-    # A (7-30)
-    7: "Gm", 8: "C", 9: "Bb", 10: "F Dm", 11: "Gm", 12: "F C", 13: "F", 14: "C:1.5 Gm:2.5",
-    15: "Gm", 16: "C", 17: "Bb", 18: "F Dm", 19: "Gm", 20: "F C", 21: "F", 22: "C:1.5 Gm:2.5",
-    23: "Gm", 24: "F", 25: "C", 26: "Dm", 27: "Gm", 28: "F", 29: "C", 30: "Dm",
+    # A1 (7-14): the theme
+    7: "C:1.5 Gm:2.5", 8: "F:1.5 C:1.5 Gm:1", 9: "Bb:1.5 Dm:1.5 F:1", 10: "C:1.5 Dm:2.5",
+    11: "C:1.5 Gm:1.5 F:1", 12: "C:1.5 F:2.5", 13: "Bb:1.5 F:1.5 C:1", 14: "Gm",
+    # A2 (15-22): the antecedent varied, a new consequent
+    15: "C:1.5 Gm:2.5", 16: "F:1.5 C:1.5 Gm:1", 17: "Bb:1.5 Dm:1.5 F:1", 18: "C:1.5 Dm:2.5",
+    19: "Gm:1.5 C:2.5", 20: "C:1.5 Bb:1.5 F:1", 21: "Bb:1.5 Dm:2.5", 22: "Gm",
+    # A3 (23-30): development
+    23: "Gm:1.5 F:2.5", 24: "C:1.5 Gm:2.5", 25: "F:1.5 Bb:2.5", 26: "Bb:1.5 F:2.5",
+    27: "Gm:1.5 F:2.5", 28: "Bb:1.5 C:1.5 Dm:1", 29: "Bb:1.5 C:2.5", 30: "Dm",
     # B (31-46) on Bb
     31: "Bb", 32: "Bb", 33: "F", 34: "F", 35: "Gm", 36: "Gm", 37: "Dm", 38: "Dm",
     39: "Bb", 40: "Bb", 41: "F", 42: "F", 43: "Gm", 44: "C", 45: "Dm", 46: "Dm",
-    # A' (55-78)
-    55: "Gm", 56: "C", 57: "Bb", 58: "F Dm", 59: "Gm", 60: "F C", 61: "F", 62: "C:1.5 Gm:2.5",
-    63: "Gm", 64: "C", 65: "Bb", 66: "F Dm", 67: "Gm", 68: "F C", 69: "F", 70: "C:1.5 Gm:2.5",
-    71: "Gm", 72: "F", 73: "C", 74: "Dm", 75: "Gm", 76: "Bb", 77: "C", 78: "Dm",
-    79: "Gm", 80: "C", 81: "F:2 G5:2", 82: "G5", 83: "G5", 84: "G5",
+    # A'1 (55-62): the theme low under a descant
+    55: "C:1.5 Gm:2.5", 56: "F:1.5 C:1.5 Gm:1", 57: "Bb:1.5 Dm:1.5 F:1", 58: "C:1.5 Dm:2.5",
+    59: "C:1.5 Gm:1.5 F:1", 60: "C:1.5 F:2.5", 61: "Bb:1.5 F:1.5 C:1", 62: "Gm",
+    # A'2 (63-70): the theme and a new, climbing consequent
+    63: "C:1.5 Gm:2.5", 64: "F:1.5 C:1.5 Gm:1", 65: "Bb:1.5 Dm:1.5 F:1", 66: "C:1.5 Dm:2.5",
+    67: "F:1.5 C:2.5", 68: "Dm:1.5 Bb:1.5 C:1", 69: "Bb:1.5 F:1.5 Gm:1", 70: "Gm",
+    # A'3 (71-78): the Wheel in augmentation, in stretto
+    71: "Gm:1.5 C:1.5 F:1", 72: "C7:1.5 F:1.5 Dm:1", 73: "Dm:1.5 C:1.5 F:1", 74: "C:1.5 Dm:2.5",
+    75: "Gm:1.5 Bb:1.5 C:1", 76: "F:1.5 Dm:2.5", 77: "Bb:1.5 C:2.5", 78: "Dm",
+    # stop-time cadence (79-84)
+    79: "C:1.5 Gm:2.5", 80: "F:1.5 C:2.5", 81: "C:1.5 Gm:1.5 F:1", 82: "G5", 83: "G5", 84: "G5",
 }
+
+# ---------------------------------------------------------------------------------------- the lines
+PICKUP = "G4:.25 A4:.25 Bb4:.25"                       # the Wheel's three short notes, before the bar
+THEME_ANT = ("C5:1.5:gu D5:2.5 | "                      # ... and its two long notes as 3 + 5 eighths
+             "F5:.75 E5:.25 D5:.5 C5:1.5 G4:1 | "        # the answer: C falls to G on the off-beat accents
+             "D5:1.5:^ D5:1.5:^ F5:1 | "                 # D hammered on the three accents
+             "E5:1.5 D5:1.75")                           # half cadence on D (+ the pickup)
+THEME_CON = ("C5:1.5 D5:1.5 F5:1 | "                    # the Wheel lands and keeps climbing
+             "G5:1.5:m F5:.75 E5:.25 F5:1.5 | "          # F tied across the "2"
+             "D5:.75 C5:.25 Bb4:.5 A4:1.5 C5:1 | "       # C on the last accent ...
+             "G4:2.5")                                   # ... falls the fourth to G: IV-i
+A2_ANT = ("C5:1.5:gu D5:1 C5:.5 D5:1 | "               # D chopped around its neighbour
+          "F5:1 E5:.5 C5:1.5:m G4:1 | "
+          "D5:1.5 F5:1 E5:.5 F5:1 | "
+          "E5:1.5 D5:1.75 A4:.25 Bb4:.25 C5:.25")       # the pickup a step higher ...
+A2_CON = ("D5:1.5 E5:2.5:m | "                          # ... the Wheel on A, onto the Dorian E
+          "G5:.75 F5:.25 E5:.5 D5:1.5 C5:1 | "
+          "F5:1.5 D5:.5 E5:.5 C5:.5 A4:1 | "             # v-i: A to G
+          "G4:1.5 D5:1.75 G5:.25 F5:.25 E5:.25")         # pickup: the Wheel upside down
+A3_FID = ("D5:1.5 C5:2.5 | r:3.25 F5:.25 E5:.25 D5:.25 | "   # falling from G, then from F, then from E
+          "C5:.75 D5:.25 C5:.5 Bb4:2.5 | r:3.25 E5:.25 D5:.25 C5:.25 | "
+          "Bb4:1.5 A4:2.5 | "
+          "D5:.75 D5:.25 D5:.5 E5:1.5 F5:1 | "               # the build
+          "F5:1.5 G5:1 F5:.5 E5:1 | D5:2.5:m")
+A3_VLA = ("r:3.25 G3:.25 A3:.25 Bb3:.25 | C4:1.5 D4:2.5 | "  # ... the viola answers it upright from below
+          "r:3.25 F3:.25 G3:.25 A3:.25 | Bb3:1.5 C4:2.5 | "
+          "G3:1.5 F3:1.75 A3:.25 Bb3:.25 C4:.25")
+B_FID = "F5:4 | F5:1.5 D5:2.5 | C5:4 | C5:2 A4:2 | D5:4 | E5:1.5 C5:2.5 | D5:4 | D5:3 A4:1"
+B_FDS = "Bb4:4 | Bb4:1.5 F4:2.5 | A4:4 | F4:2 F4:2 | G4:4 | G4:1.5 E4:2.5 | F4:4 | F4:3 D4:1"
+DESCANT = ("E5:1.5 D5:2.5 | r:.5 C5:1 E5:1.5 D5:1 | F5:2.5 E5:.5 F5:1 | "      # over the low theme (A'1)
+           "G5:1.5 F5:3 E5:1 D5:1.5 C5:1 | "                                     # F over C: a 4-3 suspension
+           "E5:1 G5:.5 F5:2.5 | F5:1.5 C5:1.5 E5:1 | D5:2.5")
+R2_CON = ("F5:1.5 G5:2.5:m | "                          # the Wheel on C, to G5
+          "F5:.75 E5:.25 D5:.5 Bb4:1.5 C5:1 | "
+          "D5:1.5 C5:1 A4:.5 Bb4:1 | "
+          "D5:1.5 G5:2.5:gd")                            # closes high: D rises to the upper G
+R3_FID = ("D5:1.5 E5:1.5 F5:1 | G5:1.5 A5:2.5:m | "      # the Wheel in 3+3+2 augmentation, to the top A
+          "A5:1.5 G5:1.5 F5:1 | E5:1.5 D5:1 C5:.5 D5:1 | "   # ... and upside down
+          "G5:1.5:gd D5:1 F5:.5 E5:1 | F5:.75 E5:.25 C5:.5 D5:2.5 | "
+          "D5:1.5 E5:1 G5:.5 E5:1 | D5:2.5:m")
+R3_VLA = ("r:1.5 G4:1.5 A4:1.5 Bb4:1 C5:1.5 D5:2.5 C5:1.5 A4:1 G4:1.5 A4:2.5 | "   # stretto, a 5th below
+          "Bb4:1.5 F4:1.5 G4:1 | A4:1.5 F4:2.5 | F4:1.5 G4:2.5 | A4:2.5 F4:1.5")
+A2_VLA = ("E4:1.5 D4:2.5 | F4:1.5 E4:1.5 D4:1 | D4:3 C4:1 | E4:1.5 F4:2.5 | "      # contrary motion, held
+          "G4:1.5 E4:2.5 | E4:1.5 F4:1.5 A4:1 | D4:1.5 F4:2.5 | D4:1.5 G4:2.5")
+R2_VLA = ("E4:1.5 D4:2.5 | F4:1.5 E4:1.5 D4:1 | D4:3 C4:1 | E4:1.5 F4:2.5 | "
+          "A4:1.5 G4:2.5 | A4:1.5 F4:1.5 G4:1 | F4:1.5 A4:1.5 G4:1 | G4:1.5 Bb4:2.5")
 
 
 def segs(bar):
@@ -49,20 +117,39 @@ def segs(bar):
     return out
 
 
+def sym_at(bar, off):
+    for o, sym, d in segs(bar):
+        if o <= off + 1e-6 < o + d:
+            return sym
+    return segs(bar)[-1][1]
+
+
+def voicing(sym, lo=50):
+    """A close triad with every note at or above `lo` (the dulcimer's low D3 by default)."""
+    return sorted(p if p >= lo else p + 12 for p in chord(sym, 3))
+
+
 def build():
     p = Piece("kingdom_2", seed=2202, bpm=100, meter=(4, 4), key="G", mode="dorian")
     p.mix = P.MIX_KINGDOM
-    p.kind, p.tail_s, p.length_range = "track", 3.5, (200.0, 220.0)
+    p.kind, p.tail_s, p.length_range = "track", 2.0, (200.0, 220.0)
     p.out = "assets/audio/music/kingdom_2.ogg"
     m = Mode("G", "dorian", octave=4)            # degree 0 = G4
+    SC = m.scale(28, 62)
 
     def B(bar, beat=0.0):
         return p.at(bar - 1, beat)
 
-    pipe = p.track("bagpipe", P.BAGPIPE.variant(gain_db=-10.0, eq=[("hp", 120), ("peak", 880, -3.0, 2.0),     # flatten the reed's
-                                                                ("peak", 1200, -6.0, 1.2),   # formant: the drone
-                                                                ("peak", 2600, -4.0, 1.0),   # must not sit in
-                                                                ("lp", 5000)]))             # the voice band
+    def bar_beat(beat):
+        bi = p.bar_index(beat + 1e-6)
+        return bi + 1, beat - p.bar(bi)
+
+    pipe = p.track("bagpipe", P.BAGPIPE.variant(gain_db=-10.0, eq=[("hp", 120), ("peak", 880, -3.0, 2.0),
+                                                                ("peak", 1174, -10.0, 8.0),  # the G3/D4 partial
+                                                                ("peak", 1174, -10.0, 8.0),  # (6th / 4th harmonic)
+                                                                ("peak", 1200, -3.0, 1.2),   # the reed formant
+                                                                ("peak", 2600, -4.0, 1.0),
+                                                                ("lp", 5000)]))
     cb = p.track("contrabass", P.CONTRABASS)
     fid = p.track("fiddle", P.FIDDLE)
     fds = p.track("fiddle_ds", P.FIDDLE.variant(name="fiddle_ds", pan=0.08, gain_db=-6.0, color=(200, 150, 50)))
@@ -80,38 +167,74 @@ def build():
                                              eq=[("hp", 28), ("lp", 700)], color=(120, 120, 140)))
     timp = p.track("timpani", P.TIMPANI.variant(gain_db=-8.0))
 
-    intro = p.section("intro", 6)
-    a1 = p.section("A1", 8)
-    a2 = p.section("A2 double-stops", 8)
-    a3 = p.section("A3 inverted", 8)
-    b1 = p.section("B horns + dulcimer", 8)
-    b2 = p.section("B2", 8)
-    br = p.section("drum bridge", 8)
-    r1 = p.section("A'1", 8)
-    r2 = p.section("A'2", 8)
-    r3 = p.section("A'3 stretto", 8)
-    cad = p.section("cadence", 6)
-    del intro, a1, a2, a3, b1, b2, br, r1, r2, r3, cad
+    for name, bars in (("intro", 6), ("A1", 8), ("A2 double-stops", 8), ("A3 development", 8),
+                       ("B horns + dulcimer", 8), ("B2", 8), ("drum bridge", 8), ("A'1 theme low + descant", 8),
+                       ("A'2 new consequent", 8), ("A'3 stretto", 8), ("stop-time cadence", 6)):
+        p.section(name, bars)
 
     for bar in (7, 15, 23, 31, 39, 55, 63, 71, 79):
         p.breathe(B(bar), beats=0.75, depth=0.03)
     p.breathe(B(47), beats=1.5, depth=0.05)
-    p.rit(B(80), B(81, 2), to=0.84)
+    p.rit(B(80), B(82), to=0.88)
+
+    # ---------------------------------------------------------------- helpers
+    def horn(bar, a, b, durs=(1.5, 2.5), beat=0.0, vel=74):
+        """A signal: two notes per horn, melodic fifths or octaves only, the horns a fifth or octave apart."""
+        h1.notes_seq(B(bar, beat), a, list(durs), vel=vel, art="legato")
+        h2.notes_seq(B(bar, beat), b, list(durs), vel=vel * 0.92, art="legato")
+
+    def double_stops(b0, b1, min_dur=1.0, vel=0.85):
+        """Under each long fiddle note a chord tone a third or sixth below (else the open A or D string)."""
+        for x in [x for x in fid.notes if b0 <= x.beat < b1 and x.dur >= min_dur]:
+            bar, off = bar_beat(x.beat)
+            pcs = {q % 12 for q in chord(sym_at(bar, off), 3)}
+            if x.pitch % 12 not in pcs:
+                continue
+            low = None
+            for k in (3, 4, 8, 9):
+                if (x.pitch - k) % 12 in pcs and x.pitch - k >= 57:
+                    low = x.pitch - k
+                    break
+            if low is None:
+                for s in (69, 62):                      # open A, open D
+                    if s < x.pitch - 2 and s % 12 in pcs:
+                        low = s
+                        break
+            if low is not None:
+                fds.note(x.beat, low, x.dur, vel=x.vel * vel, art="legato")
+
+    def trem(beat, dur, lo, hi, vel, dyn=None, rate=0.125):
+        """Hammered tremolo on two strings, the hands alternating."""
+        cnt = max(2, int(round(dur / rate)))
+        con = _contour(dyn, cnt)
+        for i in range(cnt):
+            dul.note(beat + i * rate, lo if i % 2 == 0 else hi, rate * 2.2, vel * con[i] * (1.0 if i % 2 else 0.9),
+                     "hit")
+
+    def chop(beat, sym, vel, lo=50):
+        dul.chord(beat, voicing(sym, lo=lo), 0.3, vel=vel, strum=0.008, art="staccato")
+
+    def dul_drive(bar, vel, ghost=False, high=False, trem_len=1.25):
+        """The A-section dulcimer: a tremolo chord on the downbeat, chops on the off-beat accents (2.5, 4)."""
+        lo = 55 if high else 50
+        v = voicing(sym_at(bar, 0), lo=lo)
+        trem(B(bar), trem_len, v[0], v[-1], vel * 0.8, dyn="dim")
+        for off in (1.5, 3.0):
+            chop(B(bar, off), sym_at(bar, off), vel * (1.1 if off == 1.5 else 1.0), lo=lo)
+        if ghost:
+            dul.note(B(bar, 2.5), voicing(sym_at(bar, 2.5), lo=lo)[1], 0.25, vel=vel * 0.55, art="staccato")
 
     # ================================================================ drones: bagpipe and arco contrabass
-    for s, e, notes in ((1, 31, ["G3", "D4"]), (43, 47, ["G3", "D4"]), (55, 84, ["G3", "D4"])):
+    for s, e, notes in ((1, 31, ["G3", "D4"]), (43, 47, ["G3", "D4"]), (55, 81, ["G3", "D4"])):
         pipe.drone(B(s), B(e), notes, vel=84)
     pipe.curve(B(1), B(3), 60, 96)
     pipe.curve(B(7), B(30), 92, 104)
     pipe.curve(B(30), B(31), 104, 50)
     pipe.curve(B(43), B(47), 30, 96)
     pipe.curve(B(55), B(78), 100, 112)
-    pipe.curve(B(81, 3), B(83, 3), 112, 0, "lin")
     cb.drone(B(1), B(31), ["G1"], vel=70, art="legato")
-    cb.drone(B(55), B(81, 2), ["G1"], vel=74, art="legato")
-    cb.note(B(81, 2), "G1", 8, vel=80, art="legato")
+    cb.drone(B(55), B(81), ["G1"], vel=74, art="legato")
     cb.curve(B(1), B(6), 30, 90)
-    cb.curve(B(81, 3), B(83, 4), 100, 20, "lin")
 
     # ================================================================ drums: the 3+3+2 engine
     S1 = "X..g.gx..g..X.g.|X..g.gx..g.gX.gg"            # snare 1: accents on 1, the "and" of 2, 4
@@ -135,67 +258,54 @@ def build():
         boom.hit(B(bar), "boom", vel=64 + (bar - 11))
 
     # ================================================================ A (7-30): the theme
-    THEME = ("G4:.5 A4:.5 Bb4:.5 C5:1.5 D5:1 | C5:1.5 G4:1.5 F4:.5 G4:.5 | "      # Wheel 3+3+2, answer C-G
-             "Bb4:.5 C5:.5 D5:.5 E5:1.5:m F5:1 | E5:.5 D5:.5 C5:.5 D5:2.5 | "      # a third up, Dorian E: on D
-             "G4:.5 A4:.5 Bb4:.5 C5:1.5 D5:1 | F5:.5 E5:.5 D5:.5 C5:1.5 Bb4:1 | "
-             "A4:.5 Bb4:.5 C5:.5 A4:1.5 F4:1 | C5:1.5:! G4:2.5")                   # the answer closes on G
-    mel(fid, B(7), THEME, vel=82, art="legato", dyn="arch")
+    mel(fid, B(6, 3.25), PICKUP, vel=74, art="legato", dyn=(0.85, 1.0))
+    e = mel(fid, B(7), THEME_ANT, vel=82, art="legato", dyn="arch")
+    e = mel(fid, e, PICKUP, vel=80, art="legato")
+    mel(fid, e, THEME_CON, vel=84, art="legato", dyn="arch")
     for s in (7, 9, 11, 13):
         fid.swell(B(s), B(s + 2), 84, 110, peak=0.5)
-    # A2: double-stops (open D or the diatonic third below) and ornaments
-    THEME2 = THEME.replace("C5:1.5 D5:1 | C5:1.5", "C5:1.5:gu D5:1 | C5:1.5:m").replace("A4:1.5 F4:1", "A4:1.5:t F4:1")
-    mel(fid, B(15), THEME2, vel=88, art="legato", dyn="arch")
+    # A2: a rhythmic variation, double-stops from the chord, a viola counter-line, a new consequent
+    mel(fid, B(14, 3.25), PICKUP, vel=80, art="legato")
+    mel(fid, B(15), A2_ANT + " | " + A2_CON, vel=88, art="legato", dyn="arch")
     for s in (15, 17, 19, 21):
         fid.swell(B(s), B(s + 2), 90, 116, peak=0.5)
-    for x in [x for x in fid.notes if B(15) <= x.beat < B(23) and x.dur >= 1.0]:
-        d, _ = m.degree_of(x.pitch)
-        low = m.pitch(d - 2)                                   # a third below; under G4 the open D string
-        fds.note(x.beat, low if low >= 60 else 62, x.dur, vel=x.vel * 0.85, art="legato")
+    double_stops(B(15), B(22))
     fds.curve(B(15), B(23), 80, 100)
-    mel(vla, B(15), "D4:3 E4:1 | E4:2 D4:2 | D4:2 F4:2 | A4:2 F4:2 | D4:3 E4:1 | A4:2 G4:2 | "
-                    "F4:1.5 E4:1.5 D4:1 | E4:1.5 D4:2.5", vel=74, dyn="arch")     # contrary motion, held
+    mel(vla, B(15), A2_VLA, vel=74, dyn="arch")
     vla.curve(B(15), B(23), 80, 104)
-    # A3: the Wheel inverted, sequenced down (D, C, Bb, A), then the build to the horn signal
-    seq_start = B(23)
-    for k, top in enumerate((4, 3, 2, 1)):                     # degrees: D5, C5, Bb4, A4
-        mot = wheel().invert(0).transpose(top).rhythm([0.5, 0.5, 0.5, 1.5, 1.0])
-        fid.play(mot.ornament(3, "mordent" if k % 2 else "grace_up"), seq_start + 4 * k, mode=m, vel=86 + 2 * k,
-                 art="legato")
-    mel(vla, B(23), "G3:4 | F3:4 | E3:4 | D3:4", vel=72)
-    mel(fid, B(27), "D5:.5 D5:.5 D5:.5 C5:1.5 Bb4:1 | A4:.5 A4:.5 A4:.5 Bb4:1.5 C5:1 | "
-                    "D5:.5 D5:.5 F5:.5 E5:1.5 D5:1 | C5:.5 D5:.5 E5:.5 D5:2.5", vel=90, art="normal", dyn="cresc")
-    fid.curve(B(23), B(27), 96, 108)
-    fid.curve(B(27), B(31), 104, 120)
-    vla.double(fid, B(27), B(31), interval=-12, vel=0.82)
-    vla.curve(B(27), B(31), 90, 112)
-    h1.notes_seq(B(30), ["A3", "D4"], [1.5, 2.5], vel=72, art="legato")       # the first horn signal: a rising
-    h2.notes_seq(B(30), ["F3", "A3"], [1.5, 2.5], vel=68, art="legato")       # fourth, opening B
+    # A3: the Wheel inverted from the fiddle, upright from the viola, a step lower each time; the build
+    mel(fid, B(23), A3_FID, vel=86, art="legato", dyn="cresc")
+    mel(vla, B(23), A3_VLA, vel=78, art="legato")
+    fid.curve(B(23), B(28), 96, 108)
+    fid.curve(B(28), B(31), 104, 120)
+    vla.curve(B(23), B(28), 96, 106)
+    vla.double(fid, B(28), B(31), interval=-12, vel=0.82)
+    vla.curve(B(28), B(31), 96, 114)
+    horn(22, ["G3", "D4"], ["G2", "G3"], vel=70)                    # rising fifth / octave
+    horn(30, ["A3", "A4"], ["D3", "D4"], vel=72)                    # rising octaves: open B
 
     # ================================================================ B (31-46): horn signals, dulcimer answers
-    calls = [  # (bar, horn1, horn2): two notes each, never more
-        (31, ["F3", "D3"], ["D3", "Bb2"]),        # falling minor third
-        (33, ["C4", "F3"], ["A3", "C3"]),         # falling fifth
-        (35, ["G3", "D3"], ["D3", "Bb2"]),        # the falling fourth (the Wheel's answer)
-        (37, ["A3", "D4"], ["F3", "A3"]),         # rising fourth: half cadence
-        (39, ["F3", "D3"], ["D3", "Bb2"]),
-        (41, ["C4", "F3"], ["A3", "C3"]),
-        (43, ["D4", "G3"], ["Bb3", "D3"]),
-        (45, ["A3", "D3"], ["F3", "A2"]),
+    calls = [  # (bar, horn1, horn2): fifths and octaves only, the horns an open fifth or octave apart
+        (31, ["F3", "F4"], ["Bb2", "Bb3"]),       # rising octave
+        (33, ["C4", "F3"], ["F3", "F2"]),         # falling fifth / octave
+        (35, ["D4", "G3"], ["G3", "G2"]),
+        (37, ["A3", "A4"], ["D3", "D4"]),         # rising octave: half cadence
+        (39, ["Bb3", "F4"], ["Bb2", "Bb3"]),      # rising fifth
+        (41, ["F3", "C4"], ["F2", "F3"]),
+        (43, ["G3", "D4"], ["G2", "G3"]),
+        (45, ["A4", "D4"], ["A3", "D3"]),         # falling fifth
     ]
     for bar, a, b in calls:
-        v = 74 if bar < 39 else 80
-        h1.notes_seq(B(bar), a, [1.5, 3.5], vel=v, art="legato")
-        h2.notes_seq(B(bar), b, [1.5, 3.5], vel=v * 0.92, art="legato")
+        horn(bar, a, b, durs=(1.5, 3.5), vel=74 if bar < 39 else 80)
     answers = {  # the dulcimer answers each call with a Wheel fragment and a tremolo on its held note
-        32: ("Bb4:.5 C5:.5 D5:.5", "D5"), 34: ("F4:.5 G4:.5 A4:.5", "A4"),
-        36: ("G4:.5 A4:.5 Bb4:.5", "Bb4"), 38: ("D5:.5 C5:.5 A4:.5", "A4"),
-        40: ("Bb4:.5 C5:.5 D5:.5", "F5"), 42: ("A4:.5 C5:.5 F5:.5", "E5"),
-        44: ("G4:.5 Bb4:.5 C5:.5", "E5"), 46: ("F5:.5 E5:.5 D5:.5", "A4"),
+        32: ("Bb4:.25 C5:.25 D5:.5", "D5"), 34: ("F4:.25 G4:.25 A4:.5", "A4"),
+        36: ("G4:.25 A4:.25 Bb4:.5", "Bb4"), 38: ("D5:.25 C5:.25 A4:.5", "A4"),
+        40: ("Bb4:.25 C5:.25 D5:.5", "F5"), 42: ("A4:.25 C5:.25 E5:.5", "F5"),
+        44: ("G4:.25 Bb4:.25 C5:.5", "E5"), 46: ("F5:.25 E5:.25 D5:.5", "A4"),
     }
     for bar, (frag, held) in answers.items():
-        e = mel(dul, B(bar), frag, vel=70, art="normal")
+        e = mel(dul, B(bar), frag, vel=72, art="normal")
         dul.tremolo(e, B(bar + 1) - e - 0.25, held, rate=0.125, vel=60, dyn="arch")
-    # under the dialogue: dulcimer low broken chords in the call bars, pizz bass, cello holds
     for bar in range(31, 47):
         sym = segs(bar)[0][1]
         if bar % 2 == 1:
@@ -208,8 +318,8 @@ def build():
     vc.curve(B(31), B(39), 70, 88)
     vc.curve(B(39), B(47), 88, 104)
     # the fiddle comes back on held double-stops (bars 39-46)
-    mel(fid, B(39), "F5:4 | F5:2 D5:2 | C5:4 | C5:2 A4:2 | D5:4 | E5:2 C5:2 | D5:4 | D5:3 A4:1", vel=78)
-    mel(fds, B(39), "Bb4:4 | A4:2 F4:2 | A4:4 | F4:2 F4:2 | G4:4 | G4:2 E4:2 | F4:4 | F4:3 D4:1", vel=70)
+    mel(fid, B(39), B_FID, vel=78)
+    mel(fds, B(39), B_FDS, vel=70)
     for s in range(39, 47, 2):
         fid.swell(B(s), B(s + 2), 72, 104, peak=0.45)
         fds.swell(B(s), B(s + 2), 66, 96, peak=0.45)
@@ -238,73 +348,76 @@ def build():
     sn2.roll(B(54, 2), 1.75, "snare2", vel0=40, vel1=88, rate=0.0625)
     timp.roll(B(54), 3.5, "D2", vel0=40, vel1=88, rate=0.125)
 
-    # ================================================================ A' (55-78): everything back, fuller
-    mel(fid, B(55), THEME2, vel=94, art="legato", dyn="arch")
-    mel(fid, B(63), THEME.replace("E5:1.5:m F5:1", "E5:1.5:t F5:1").replace("C5:1.5:! G4:2.5", "C5:1.5:! G4:2.5:s"),
-        tr=0, vel=96, art="legato", dyn="arch")
-    for s in range(55, 71, 2):
-        fid.swell(B(s), B(s + 2), 94, 122, peak=0.5)
-    for x in [x for x in fid.notes if B(55) <= x.beat < B(71) and x.dur >= 1.0]:
-        d, _ = m.degree_of(x.pitch)
-        low = m.pitch(d - 2)
-        fds.note(x.beat, low if low >= 60 else 62, x.dur, vel=x.vel * 0.85, art="legato")
-    fds.curve(B(55), B(71), 92, 112)
-    mel(vla, B(55), "D4:3 E4:1 | E4:2 D4:2 | D4:2 F4:2 | A4:2 F4:2 | D4:3 E4:1 | A4:2 G4:2 | "
-                    "F4:1.5 E4:1.5 D4:1 | E4:1.5 D4:2.5", vel=82, dyn="arch")
-    mel(vla, B(63), "Bb3:3 C4:1 | C4:2 E4:2 | F4:2 D4:2 | C4:2 A3:2 | Bb3:3 C4:1 | F4:2 E4:2 | "
-                    "C4:1.5 Bb3:1.5 A3:1 | G3:1.5 Bb3:2.5", vel=84, dyn="arch")
-    vla.curve(B(55), B(71), 92, 112)
-    # A'3: the Wheel in stretto: fiddle on G, the viola a bar later a fifth below, then both climb (sequence)
-    for k, deg in enumerate((0, 2, 3, 4)):                      # G, Bb, C, D
-        fid.play(wheel().rhythm([0.5, 0.5, 0.5, 1.5, 1.0]).transpose(deg).ornament(3, "mordent"), B(71 + k),
-                 mode=m, vel=96 + 2 * k, art="legato")
-        vla.play(wheel().rhythm([0.5, 0.5, 0.5, 1.5, 1.0]).transpose(deg - 3), B(71 + k, 2), mode=m, vel=86,
-                 art="legato")
-    mel(fid, B(75), "G5:1.5:gd F5:1.5 E5:1 | F5:1.5 E5:1.5 D5:1 | E5:1.5 D5:1.5 C5:1 | D5:4:m", vel=100,
-        dyn="dim")
-    mel(vla, B(75), "Bb4:1.5 A4:1.5 G4:1 | D4:1.5 E4:1.5 F4:1 | G4:1.5 F4:1.5 E4:1 | F4:2 A4:2", vel=88)
-    fid.curve(B(71), B(75), 108, 127)
-    fid.curve(B(75), B(79), 124, 104)
+    # ================================================================ A' (55-78): variations, fuller
+    # A'1: the theme in viola and cello (unison, an octave down), a fiddle descant in double-stops above
+    low_theme = PICKUP + " | " + THEME_ANT + " " + PICKUP + " | " + THEME_CON
+    mel(vla, B(54, 3.25), low_theme, vel=90, art="legato", dyn="arch", tr=-12)
+    mel(vc, B(54, 3.25), low_theme, vel=84, art="legato", dyn="arch", tr=-12)
+    for s in (55, 57, 59, 61):
+        vla.swell(B(s), B(s + 2), 96, 122, peak=0.5)
+        vc.swell(B(s), B(s + 2), 92, 118, peak=0.5)
+    mel(fid, B(55), DESCANT, vel=84, art="legato", dyn="arch")
+    for s in (55, 57, 59, 61):
+        fid.swell(B(s), B(s + 2), 80, 108, peak=0.55)
+    # A'2: the theme back in the fiddle, a new consequent that climbs to G5 and closes high
+    mel(fid, B(62, 3.25), PICKUP, vel=86, art="legato")
+    mel(fid, B(63), THEME_ANT.replace("C5:1.5:gu D5:2.5", "C5:1.5:gu D5:2.5:m")
+        .replace("C5:1.5 G4:1", "C5:1.5:t G4:1") + " C5:.25 D5:.25 E5:.25 | " + R2_CON,
+        vel=94, art="legato", dyn="arch")
+    for s in range(63, 71, 2):
+        fid.swell(B(s), B(s + 2), 96, 122, peak=0.5)
+    mel(vla, B(63), R2_VLA, vel=82, dyn="arch")
+    vla.curve(B(63), B(71), 92, 112)
+    # A'3: the Wheel in augmentation in stretto (the viola a fifth below, a dotted quarter behind), to A5
+    mel(fid, B(71), R3_FID, vel=98, art="legato", dyn=(1.06, 0.94))
+    mel(vla, B(71), R3_VLA, vel=88, art="legato")
+    fid.curve(B(71), B(73), 108, 127)
+    fid.curve(B(73), B(79), 124, 104)
     vla.curve(B(71), B(79), 104, 118)
-    mel(fds, B(75), "Bb4:1.5 A4:1.5 G4:1 | A4:1.5 G4:1.5 F4:1 | G4:1.5 F4:1.5 E4:1 | F4:4", vel=80)
+    double_stops(B(55), B(63), min_dur=0.9)
+    double_stops(B(63), B(79))
+    fds.curve(B(55), B(63), 82, 100)
+    fds.curve(B(63), B(79), 94, 112)
 
     # horns in A': signals at the period seams only
-    for bar, a, b in ((62, ["D4", "G3"], ["Bb3", "D3"]), (70, ["D4", "G3"], ["Bb3", "D3"]),
-                      (74, ["A3", "D4"], ["F3", "A3"]), (78, ["A3", "D4"], ["F3", "A3"])):
-        h1.notes_seq(B(bar), a, [1.5, 2.5], vel=80, art="legato")
-        h2.notes_seq(B(bar), b, [1.5, 2.5], vel=74, art="legato")
-    # dulcimer tremolos on the long notes, broken chords between
+    horn(62, ["G3", "D4"], ["G2", "G3"], vel=78)                    # rising fifth
+    horn(70, ["D4", "G3"], ["D3", "G2"], vel=80)                    # falling fifths
+    horn(78, ["A3", "A4"], ["D3", "D4"], vel=80)                    # rising octaves, into the cadence
+    # dulcimer: tremolo chords and off-beat chops, a tremolo under the long notes
     for bar in range(55, 79):
+        dul_drive(bar, 56 if bar < 63 else 60, ghost=bar >= 63, high=bar >= 71)
+    for bar, lo_, hi_ in ((60, "F4", "A4"), (67, "A4", "C5"), (72, "A4", "C5"), (76, "A4", "D5")):
+        trem(B(bar, 1.5), 2.25, n(lo_), n(hi_), 54, dyn="cresc")
+    # cello: the floor (A'2, A'3)
+    for bar in range(63, 79):
         for off, sym, d in segs(bar):
-            dulcimer_bar(dul, B(bar, off), sym, "roll2" if bar % 2 else "roll", vel=54, octave=3, beats=d, ring=1.5)
-    for bar, nt in ((56, "D5"), (60, "F5"), (64, "D5"), (68, "F5"), (74, "A5"), (78, "A5")):
-        dul.tremolo(B(bar, 1.5), 2.5, nt, rate=0.125, vel=56, dyn="cresc")
-    for bar in range(55, 79):
-        sg = segs(bar)
-        for off, sym, d in sg:
             vc.note(B(bar, off), bass_of(sym, 2) if bass_of(sym, 2) >= 41 else bass_of(sym, 3), d, vel=72,
                     art="legato")
-    vc.curve(B(55), B(79), 96, 116)
+    vc.curve(B(63), B(79), 100, 116)
     sn1.pattern(B(55), 24, S1, vel=76)
     sn2.pattern(B(55), 24, S2, vel=64)
     sn1.pattern(B(55), 24, {"tambourine": "......x.......x."}, vel=46)
     fd.pattern(B(55), 24, FD, vel=86)
-    for bar in (62, 70, 78):
+    for bar in (62, 70):
         sn1.roll(B(bar, 3), 1.0, "snare", vel0=36, vel1=80, rate=0.0625)
     boom.hit(B(55), "boom", vel=80)
     boom.hit(B(63), "boom", vel=72)
     boom.hit(B(71), "boom", vel=76)
     timp.note(B(55), "G2", 2, vel=72)
+    timp.note(B(71), "G2", 2, vel=74)
     timp.roll(B(78, 2), 2.0, "D2", vel0=40, vel1=84, rate=0.125)
 
-    # ================================================================ bass riff (A sections): 3+3+2, approach notes
+    # ================================================================ bass riff (A sections): 3+3+2, diatonic
     def riff(bar, vel):
         sg = segs(bar)
         nxt = segs(bar + 1)[0][1]
         if len(sg) == 1:
             r = bass_of(sg[0][1], 2)
             tgt = bass_of(nxt, 2)
-            appr = tgt - 2 if abs(tgt - 2 - r) > 0 else tgt + 1
+            below = max(q for q in SC if q < tgt)
+            appr = below if below != r else min(q for q in SC if q > tgt)   # the Dorian neighbour of the target
+            if appr % 12 not in {q % 12 for q in chord(sg[0][1], 3)}:
+                appr = r + 7                                               # ... if it is in the chord, else the 5th
             bass.note(B(bar), r, 1.0, vel=vel)
             bass.note(B(bar, 1.5), r, 1.0, vel=vel * 0.86)
             bass.note(B(bar, 3), r + 7 if bar % 2 else appr, 1.0, vel=vel * 0.8)
@@ -313,64 +426,86 @@ def build():
                 bass.note(B(bar, off), bass_of(sym, 2), min(d, 1.5), vel=vel * (1.0 if off == 0 else 0.88))
                 if d >= 2.5:
                     bass.note(B(bar, off + 1.5), bass_of(sym, 2), 1.0, vel=vel * 0.8)
-    for bar in list(range(7, 31)) + list(range(55, 79)):
+    for bar in list(range(7, 31)) + list(range(55, 81)):
         riff(bar, 80 if bar < 55 else 86)
     bass.note(B(5), "G2", 1.0, vel=66)
     bass.note(B(5, 1.5), "G2", 1.0, vel=58)
     bass.note(B(6), "G2", 1.0, vel=68)
     bass.note(B(6, 1.5), "G2", 1.0, vel=60)
-    bass.note(B(6, 3), "F2", 1.0, vel=60)
+    bass.note(B(6, 3), "D2", 1.0, vel=60)
     for bar in range(7, 31):                     # cello: one held bass note per chord, a floor for the drive
         for off, sym, d in segs(bar):
             vc.note(B(bar, off), bass_of(sym, 2) if bass_of(sym, 2) >= 41 else bass_of(sym, 3), d, vel=64,
                     art="legato")
     vc.curve(B(7), B(31), 76, 96)
-    for bar in range(7, 31):                     # dulcimer: broken chords, quieter in A1
-        for off, sym, d in segs(bar):
-            dulcimer_bar(dul, B(bar, off), sym, "roll" if bar % 2 else "pulse", vel=46 if bar < 15 else 52,
-                         octave=3, beats=d, ring=1.4)
-    for bar, nt in ((16, "D5"), (20, "F5")):
-        dul.tremolo(B(bar, 1.5), 2.5, nt, rate=0.125, vel=50, dyn="cresc")
+    for bar in range(7, 31):                     # dulcimer: tremolo chords and chops, quieter in A1
+        dul_drive(bar, 48 if bar < 15 else 54, ghost=bar >= 15, trem_len=1.0 if bar < 15 else 1.25)
+    for bar, lo_, hi_ in ((10, "F4", "A4"), (14, "G4", "Bb4"), (18, "F4", "A4"), (19, "G4", "C5")):
+        trem(B(bar, 1.5), 1.5, n(lo_), n(hi_), 50, dyn="cresc")
 
-    # ================================================================ cadence (79-84): the Wheel and its answer
-    # in augmentation over F, then G, firm, with the last boom; the drone rings out
-    mel(fid, B(79), "G4:1 A4:1 Bb4:1 C5:3:m D5:2 | C5:2:! G4:8", vel=100, dyn=[1.0, 1.0, 1.02, 1.06, 1.08, 1.1, 1.0])
-    mel(vla, B(79), "D4:2 F4:2 | E4:2 G4:2 | A4:2 G4:8", vel=90)
-    mel(fds, B(79), "D4:3 E4:3 F4:2 | E4:2 D4:8", vel=82)
-    fid.curve(B(79), B(81, 2), 110, 124)
-    fid.curve(B(81, 3), B(83, 4), 124, 24, "lin")
-    vla.curve(B(81, 3), B(83, 4), 112, 22, "lin")
-    fds.curve(B(81, 3), B(83, 4), 104, 20, "lin")
-    vc.note(B(79), "G2", 4, vel=78, art="legato")
-    vc.note(B(80), "C3", 4, vel=78, art="legato")
-    vc.note(B(81), "F2", 2, vel=82, art="legato")
-    vc.note(B(81, 2), "G2", 8, vel=88, art="legato")
-    vc.curve(B(81, 3), B(83, 4), 112, 24, "lin")
-    bass.note(B(79), "G2", 1.0, vel=86)
-    bass.note(B(79, 1.5), "G2", 1.0, vel=74)
-    bass.note(B(80), "C3", 1.0, vel=86)
-    bass.note(B(80, 1.5), "C3", 1.0, vel=74)
-    bass.note(B(81), "F2", 1.5, vel=88)
-    bass.note(B(81, 2), "G1", 3, vel=96)
-    dulcimer_bar(dul, B(79), "Gm", "roll", vel=58, octave=3)
-    dulcimer_bar(dul, B(80), "C", "roll", vel=60, octave=3)
-    dul.chord(B(81), chord("F", 3) + [n + 12 for n in chord("F", 3)], 2, vel=62, strum=0.02, art="ring")
-    dul.chord(B(81, 2), ["G3", "D4", "G4", "Bb4", "D5", "G5"], 8, vel=70, strum=0.03, art="ring")
-    h1.notes_seq(B(80, 2), ["C4", "G3"], [2.5, 7], vel=82, art="legato")      # the answer, last signal
-    h2.notes_seq(B(80, 2), ["E3", "D3"], [2.5, 7], vel=76, art="legato")
+    # ================================================================ stop-time cadence (79-84)
+    mel(fid, B(78, 3.25), PICKUP, vel=96, art="legato")
+    mel(fid, B(79), "C5:1.5:gu D5:2.5 | F5:.75 E5:.25 D5:.5 C5:2.5", vel=100, art="legato",
+        dyn=[1.0, 1.02, 1.04, 1.02, 1.0, 1.04])
+    fid.curve(B(79), B(81), 112, 124)
+    mel(vla, B(79), "E4:1.5 D4:2.5 | A4:1.5 G4:2.5", vel=90)
+    mel(fds, B(79), "E4:1.5 Bb4:2.5 | A4:1.5 E4:2.5", vel=84)
+    vla.curve(B(79), B(81), 110, 118)
+    fds.curve(B(79), B(81), 104, 112)
+    for off, sym, d in ((0, "C", 1.5), (1.5, "Gm", 2.5)):
+        vc.note(B(79, off), bass_of(sym, 2) if bass_of(sym, 2) >= 41 else bass_of(sym, 3), d, vel=78,
+                art="legato")
+    vc.note(B(80), "F2", 1.5, vel=80, art="legato")
+    vc.note(B(80, 1.5), "C3", 2.5, vel=80, art="legato")
+    vc.curve(B(79), B(81), 108, 118)
+    dul_drive(79, 62)
+    dul_drive(80, 64)
     sn1.pattern(B(79), 1, S1.split("|")[0], vel=80)
     sn2.pattern(B(79), 1, S2.split("|")[0], vel=68)
-    sn1.roll(B(80), 3.5, "snare", vel0=40, vel1=90, rate=0.0625)
-    sn1.flam(B(81, 2), "snare", vel=96)
-    sn2.flam(B(81, 2), "snare2", vel=86)
+    sn1.pattern(B(80), 1, "X..g.gx..g..", vel=82, steps=16)
+    sn1.roll(B(80, 3), 1.0, "snare", vel0=40, vel1=96, rate=0.0625, accent_end=False)
+    sn2.pattern(B(80), 1, "..o..o..o.o.", vel=70, steps=16)
     fd.pattern(B(79), 2, FD, vel=88)
-    fd.hit(B(81), "doum", vel=96)
-    fd.hit(B(81, 2), "doum", vel=110)
-    timp.roll(B(80, 2), 1.5, "D2", vel0=50, vel1=90, rate=0.125)
-    timp.note(B(81, 2), "G2", 4, vel=96)
-    boom.hit(B(81, 2), "boom", vel=92)
-    boom.hit(B(83, 1), "boom2", vel=56)                         # one far answer from the hills
-    p.set_end(B(84, 1))                     # the chord has decayed by here; the tail is the room
+    # bar 81: three band hits on the 3+3+2 accents, the top line falling C-Bb-A; the drones stop for them
+    hits = [(0.0, "C", "C5", "E4", "G4", "C3", "C3", "C2"), (1.5, "Gm", "Bb4", "D4", "G4", "G2", "Bb2", "Bb1"),
+            (3.0, "F", "A4", "C4", "F4", "F2", "F2", "F1")]
+    for off, sym, top, ds, va, cl, bs, cbn in hits:
+        b = B(81, off)
+        fid.note(b, top, 0.6, vel=108, art="marcato")
+        fds.note(b, ds, 0.6, vel=96, art="marcato")
+        vla.note(b, va, 0.6, vel=100, art="marcato")
+        vc.note(b, cl, 0.6, vel=100, art="marcato")
+        bass.note(b, bs, 0.6, vel=104)
+        cb.note(b, cbn, 0.6, vel=92, art="marcato")
+        vo = voicing(sym, lo=55)
+        dul.chord(b, vo + [vo[0] + 12], 0.5, vel=80, strum=0.01, art="staccato")
+        sn1.hit(b, "snare", vel=104)
+        sn2.hit(b, "snare2", vel=86)
+        fd.hit(b, "dum", vel=104)
+        timp.note(b, {"C": "C3", "Gm": "G2", "F": "F2"}[sym], 0.6, vel=88)
+    for t in (fid, fds, vla, vc, cb):
+        t.expr(B(81), 118)
+    # bar 82: one struck G (an open fifth) with the cannon; the bowed parts hold, then stop together on bar 84
+    hold = 8.0
+    g = B(82)
+    fid.note(g, "D5", hold, vel=110, art="tenuto")
+    fds.note(g, "G4", hold, vel=100, art="tenuto")
+    vla.note(g, "D4", hold, vel=104, art="tenuto")
+    vc.note(g, "G2", hold, vel=106, art="tenuto")
+    cb.note(g, "G1", hold, vel=90, art="tenuto")
+    pipe.drone(g, g + hold, ["G3", "D4"], vel=86)
+    for t, v in ((fid, 118), (fds, 110), (vla, 114), (vc, 116), (cb, 108), (pipe, 108)):
+        t.curve(g, g + hold, v, v - 8, "lin")
+    bass.note(g, "G2", 2.0, vel=100)
+    horn(82, ["G3", "D4"], ["G2", "G3"], durs=(1.5, 6.5), vel=86)  # the last signal over the struck G
+    dul.chord(g, ["G3", "D4", "G4", "D5", "G5"], 12.0, vel=92, strum=0.025, art="ring")
+    sn1.flam(g, "snare", vel=108)
+    sn2.flam(g, "snare2", vel=92)
+    fd.hit(g, "doum", vel=116)
+    timp.note(g, "G2", 10.0, vel=96)
+    boom.hit(g, "boom", vel=96)
+    boom.hit(B(84, 1), "boom2", vel=54)                         # one far answer from the hills
+    p.set_end(B(84, 1))                     # the strike has rung into the room by here; the tail is the room
     return p
 
 

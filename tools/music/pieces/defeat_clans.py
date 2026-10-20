@@ -5,7 +5,8 @@ Composer's note. A bowed gong swells out of nothing on D and the overtone drone 
 u-o-u, one far whistle on the octave), with a little real wind above. At 2 s a single low bronze horn plays the
 Gong-Ring slowly and falls (A-G-D), lifts to the held second E... and stops short: the E is cut off after a beat and
 never resolves to D. One soft frame-drum beat answers the silence where the D should have been; the gong rings
-on, the drone thins to breath and fades into silence, so the score bed can come in under the decay.
+on, the drone thins to breath and fades into silence, so the score bed can come in under the decay. The fall is
+dotted, long-short-long (A held, G a short passing note, D held), never three even steps.
 """
 import os
 import sys
@@ -16,6 +17,7 @@ import palette as P  # noqa: E402
 from score import Piece  # noqa: E402
 
 LENGTH_S = 12.0
+LEAD_S = 0.22
 
 
 def build():
@@ -41,8 +43,8 @@ def build():
     chant.curve(8.0, 8.6, 82, 58)                                                   # let the stop be heard
     chant.curve(8.6, 11.0, 58, 18)
     wind.note(0.5, 60, 10.0, vel=86, fc=420, fc_to=760, whistle=0.3)
-    # the horn: A - G - D, the held second E ... cut short, no D
-    for beat, pitch, dur, v in ((2.0, "A2", 1.5, 84), (3.5, "G2", 1.5, 78), (5.0, "D2", 2.2, 80),
+    # the horn: A (long) - G (a short passing note) - D (long), the held second E ... cut short, no D
+    for beat, pitch, dur, v in ((2.0, "A2", 2.25, 84), (4.25, "G2", 0.5, 70), (4.75, "D2", 2.45, 80),
                                 (7.2, "E2", 1.15, 76)):
         horn.note(beat, pitch, dur, vel=v, art="legato" if pitch != "E2" else "tenuto",
                   orn="slide" if pitch == "E2" else None)
@@ -52,7 +54,9 @@ def build():
     horn.curve(7.6, 8.35, 100, 84)
     drum.hit(8.5, "doum", 66)
     p.set_end(10.5)
-    p.tail_s = round(LENGTH_S - p.seconds(10.5), 3)
+    # + LEAD_S: the gong's first 0.22 s lie below -60 dB and render.py cuts them (no dead air before the swell),
+    # so the tail runs that much longer and the stinger keeps its 12 s like the other three
+    p.tail_s = round(LENGTH_S - p.seconds(10.5) + LEAD_S, 3)
     p.length_range = (LENGTH_S - 0.2, LENGTH_S + 0.2)
     return p
 

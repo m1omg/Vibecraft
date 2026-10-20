@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Victory, kingdom (assets/audio/music/victory_kingdom.ogg). D major, 96 BPM, 12.0 s end-screen stinger.
 
-Composer's note. Beats 0-2: a field-snare roll swells to an accent. Beats 2-6: the fiddle plays the Wheel in D
-major (D-E-F#-G-A, the last two held) with the viola a third below; beats 6-7 it keeps climbing (B-C#) to the
-high D, where the band lands on the tonic chord together: two low horns give their single two-note signal (the
-rising fourth A-D) into the arrival, the dulcimer strums the chord and runs a sparkle up to F#6, a second snare roll
-ends on a flam, and the bagpipe drone (A-D) swells under the held chord. Beats 7-16 are the held D major chord
+Composer's note. Beats 0-2: a field-snare roll swells to an accent. Beats 2-7: the fiddle plays the Wheel in D
+major intact (D-E-F# short, G and A held) with the viola a third below, a breath on the held A; on beat 7 it leaps
+the rising fourth A-D with a grace note, where the band lands on the tonic chord together, and the two far horns
+answer the leap a beat later with their own A-D signal; the fiddle turns D-C#-D on the held tonic. The dulcimer
+strums the chord and runs a sparkle up to F#6, a second snare roll ends on a flam, and the bagpipe drone (A-D)
+swells under the held chord. Beats 7-16 are the held D major chord
 with a natural decay (the bowed parts and the drone fade with CC11; the dulcimer and the room ring out), so the
 score bed can cross-fade in under it.
 """
@@ -39,7 +40,7 @@ def build():
     p.section("roll + rising phrase", 2)          # bars of 4/4: the phrase lands on beat 7
     p.section("tonic chord", 2)
     p.mark(7.0, "arrival")
-    p.fermata(6.0, 1.0, stretch=1.25)             # a breath on the C# before the arrival
+    p.fermata(6.0, 1.0, stretch=1.25)             # a breath on the held A before the leap
     p.rit(5.0, 7.0, to=0.92)
 
     # snare: roll into the phrase, a second roll into the chord, a flam on the arrival
@@ -50,18 +51,19 @@ def build():
     sn.flam(7.0, "snare", vel=104)
     sn.hit(7.0, "tambourine", vel=60)
 
-    # the Wheel in D major, climbing on to the octave; the viola a third below
-    mel(fid, 2.0, "D4:.5 E4:.5 F#4:.5 G4:1 A4:1.5:m | B4:.5 C#5:.5 D5:8:gd", vel=96, dyn="cresc")
-    mel(vla, 2.0, "B3:.5 C#4:.5 D4:.5 E4:1 F#4:1.5 | G4:.5 A4:.5 F#4:8", vel=86, dyn="cresc")
+    # the Wheel in D major, intact; the leap of a fourth to the tonic; the viola a third below
+    mel(fid, 2.0, "D4:.5 E4:.5 F#4:.5 G4:1.5 A4:2:m | D5:2:gu C#5:.25 D5:5.75", vel=96,
+        dyn=[0.86, 0.9, 0.94, 0.98, 1.0, 1.08, 1.0, 1.02])
+    mel(vla, 2.0, "B3:.5 C#4:.5 D4:.5 E4:1.5 F#4:2 | A4:8", vel=86, dyn="cresc")
     fid.curve(2.0, 7.0, 96, 124)
     fid.curve(7.0, 9.0, 124, 112)
     fid.curve(9.0, 15.0, 112, 30, "lin")
     vla.curve(2.0, 7.0, 90, 112)
     vla.curve(9.0, 15.0, 108, 26, "lin")
 
-    # horns: one two-note signal into the arrival (rising fourth)
-    h1.notes_seq(6.0, ["A3", "D4"], [1.0, 7.0], vel=84, art="legato")
-    h2.notes_seq(6.0, ["F#3", "A3"], [1.0, 7.0], vel=80, art="legato")
+    # horns: one two-note signal answering the fiddle's leap (the rising fourth A-D), a beat later, from afar
+    h1.notes_seq(7.0, ["A3", "D4"], [1.0, 7.0], vel=84, art="legato")
+    h2.notes_seq(7.0, ["F#3", "A3"], [1.0, 7.0], vel=80, art="legato")
     h1.curve(7.5, 14.0, 110, 30, "lin")
     h2.curve(7.5, 14.0, 110, 30, "lin")
 

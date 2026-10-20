@@ -12,7 +12,10 @@ deterministic: the same source and seed give byte-identical MIDI, stems and Ogg 
 | `palette.py` | the tuned band per faction (programs, calibration, balance, pan, EQ, room sends) and the mix presets |
 | `render.py` | piece → stems → mix → glue → form (track / loop / cue) → master → Ogg, plus checks, PNGs and a JSON report |
 | `analyze.py` | loudness, true peak, band balance, K-weighted arc, section loudness, quiet spans, loop seam; spectrogram and piano roll |
-| `pieces/` | piece modules: `style_kingdom.py`, `style_clans.py` (the 40 s style tests), `example_minimal.py` |
+| `pieces/` | piece modules: the 13 game pieces (`kingdom_1..3`, `clans_1..3`, `menu`, `score_bed` (writes `score.ogg`), `victory_*`, `defeat_*`, `opening_clans`), `style_kingdom.py`, `style_clans.py` (the 40 s style tests), `example_minimal.py` |
+| `ext_shared.py`, `ext_kingdom.py`, `ext_clans.py` | shared phrases and instrument variants used by several pieces |
+| `melody_overlap.py` | compares the melodies of two pieces (scale-degree intervals, rhythm and register ignored) and reports the longest shared run |
+| `manifest.py` | writes `assets/audio/music/manifest.json` (every piece: id, file, faction, kind, loop, duration, source, hashes, loudness); `--check` compares |
 | `test_determinism.sh` | renders the style tests twice from scratch and compares the hashes |
 
 Requirements: python3 with numpy, mido and Pillow; fluidsynth 2.3; `/usr/share/sounds/sf2/FluidR3_GM.sf2`; ffmpeg 6.1
@@ -184,16 +187,36 @@ lift 4.8 kHz (+2 / +3 dB) and 8.5 kHz (+1.5 dB) so the mix is not muffled, and m
 3. mix (ffmpeg): trim → drive → EQ → gain → width/pan, and a send to one shared room (an IR generated with numpy: early
    reflections plus a noise tail whose highs die faster, convolved with `afir`);
 4. glue: the bus is set to -20 LUFS, EQ'd (unit-voice dip, presence, shelves) and compressed 2:1;
-5. form: `track` = the music plus `tail_s` with a short end fade; `loop` = the music after the loop point (the piece's
+5. form: a `track` or `cue` whose first sound (above -60 dB re the peak) comes later than 50 ms loses that lead-in (cut
+   10 ms before the sound, 10 ms fade-in: a bowed gong swelling from nothing must not leave dead air before it);
+   `track` = the music plus `tail_s` with a short end fade; `loop` = the music after the loop point (the piece's
    end) crossfaded equal-power into its start over `--xfade` s, so the file is exactly the musical length; `cue` = the
-   first `--trim` s with a cosine `--trim-fade`;
+   first `--trim` s with a cosine `--trim-fade`. A loop's first samples therefore carry the crossfaded tail (drone,
+   gong ring, the last bowed note), not silence: the player fades a loop in when it starts cold (the menu at boot:
+   0.5-1.0 s, juice MUS-01). Never bake that fade into the file, or it recurs on every pass;
 6. master: loudnorm two-pass in linear mode to -16 LUFS with a -1.6 dBTP aim (a lookahead limiter runs first only when
    the peak-to-loudness ratio would push loudnorm into dynamic mode), then Ogg Vorbis `-q:a 6`, 48 kHz stereo,
    bit-exact; if the encoded file misses -16 ±0.5 LUFS or -1 dBTP, a small gain fix is applied and it is re-encoded.
 
 **File names** (bible §10.4): `assets/audio/music/<faction>_<n>.ogg`, `menu.ogg`, `score.ogg`, `victory_<faction>.ogg`,
 `defeat_<faction>.ogg`, `opening_<faction>.ogg`. Commit the `.ogg` and the piece source; the MIDI, stems and PNGs
-regenerate.
+regenerate. After a render, run `python3 tools/music/manifest.py` and commit `manifest.json` with the Ogg.
+
+## In the game
+
+`assets/audio/music/manifest.json` lists every piece with its `faction` (kingdom, clans, shared), `kind` and `loop`; the
+music director (juice MUS-01) builds its lists from it:
+
+| kind | pieces | how it plays |
+|---|---|---|
+| `ingame` | `kingdom_1..3`, `clans_1..3` (3:21-3:37) | the local faction's three in a shuffle bag (no repeat until all have played), 20-40 s of silence between tracks (ambience carries the gap), first track 6 s after the opening cue with a 2 s fade-in; never looped, never switched for battle; the night filter sweeps the playing track at dusk |
+| `opening` | `opening_kingdom`, `opening_clans` (2.4 s) | once at match start (SEQ-01, 250 ms in), 2D on the Alerts bus at -4 dB |
+| `menu` | `menu` (104.9 s, loop) | main menu, lobby and loading; imported with loop on; faded in over 0.5-1.0 s on a cold start, faded out over 1.5 s into a match |
+| `victory`, `defeat` | `victory_<faction>`, `defeat_<faction>` (about 12 s) | the local player's faction and result at END (SEQ-02), after a 1.2 s fade of the game music |
+| `score` | `score` (76.2 s, loop) | enters under the stinger's natural decay with a 2 s crossfade starting at the stinger's `xfade_to_score_s` (9.0-10.0 s), and loops until the player leaves |
+
+All files are -16 LUFS integrated (±0.1) with the true peak at or below -1.98 dBTP (the AI opening cue -5.9), so the
+director plays them at one level on the Music bus (-12 dB, Voice side-chain duck).
 
 ## Checks (you cannot listen: measure and LOOK)
 

@@ -5,7 +5,7 @@
 
   track    trim leading silence and the tail (last sound above -50 dB of the peak, + 0.4 s, 1.5 s fade-out),
            loudness-normalise to about -16 LUFS integrated (two-pass ffmpeg loudnorm, true peak -1.5 dBTP),
-           Ogg Vorbis stereo 44.1 kHz -q:a 6.
+           Ogg Vorbis stereo 48 kHz -q:a 6 (the game's music format; the raw generation is resampled).
   loop     as track, then the last --xfade-s seconds are crossfaded into the start so the file loops
            seamlessly (the menu and score beds).
   opening  trim leading silence, keep the first --cue-s seconds (2.4 s), --cue-fade-ms fade-out (300 ms),
@@ -22,7 +22,7 @@ import tempfile
 
 import numpy as np
 
-SR = 44100
+SR = 48000
 
 
 def decode_stereo(path):
@@ -61,7 +61,7 @@ def main():
     x = decode_stereo(a.src)
     mono = np.abs(x).max(axis=1)
     peak = mono.max()
-    hop = 441
+    hop = SR // 100
     n = len(mono) // hop
     env = mono[: n * hop].reshape(n, hop).max(axis=1)
     on = np.flatnonzero(env > peak * 10 ** (-60 / 20))

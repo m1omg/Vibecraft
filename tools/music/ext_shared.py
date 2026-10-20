@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """ext_shared.py: writing helpers for the shared pieces (the menu theme "Two Roads" and its score-screen bed),
-kept out of the shared toolkit files. Additive: it only imports score.py and never changes it.
+kept out of the shared toolkit files. Additive: it only imports score.py and palette.py and never changes them.
 
   mel(track, at, "r:1 D4:.5 E4:.5 F4:.5 G4:1.5:m | A4:2:gu", vel=80)   a melody as text; returns the end beat
   mel_len("D4:.5 E4:1.5")                                             its length in beats
   arp(track, at, beats, ["D3", "A3", "F4"], "0 1 2 1", step=.5)        a broken-chord figure (dulcimer, lute)
   line(track, at, [("D2", 4), ("F2", 2), (None, 2)], vel=70)           a plain line of (pitch | None, beats)
+  two_string(pan=-0.26, gain_db=-1.0)                                  the two-string as both shared pieces voice it
 
 Melody tokens are PITCH:DUR[:FLAGS], separated by spaces; "|" bar lines are for the reader and ignored.
   PITCH  a note name (D4, F#3, Bb4), or r / - for a rest
@@ -23,7 +24,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
+import palette as P  # noqa: E402
 from score import _contour, n  # noqa: E402
+
+# The two-string in the shared pieces sits in the tenor (D3-A3), where the GM cello patch under it is heavy in its
+# fundamental (130-180 Hz). A real two-string fiddle is nasal there: cut the patch's low body, lift the 800 Hz nose.
+TWO_STRING_SHARED_EQ = list(P.TWO_STRING.eq) + [("peak", 155, -7.0, 1.2), ("peak", 800, 2.5, 1.0)]
+
+
+def two_string(**kw):
+    """The shared pieces' two-string (palette TWO_STRING with the tenor EQ above); keywords as Instrument.variant."""
+    return P.TWO_STRING.variant(eq=TWO_STRING_SHARED_EQ, **kw)
 
 _ORN = {"gu": "grace_up", "gd": "grace_down", "lm": "lmordent", "m": "mordent", "tr": "trill", "t": "turn",
         "sd": "slide_down", "s": "slide", "ro": "roll"}
