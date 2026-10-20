@@ -56,6 +56,8 @@ func _run() -> void:
 		await _sm01(field)
 	if only.is_empty() or only.has("sm05"):
 		await _sm05(field + Vector3(0, 0, -6))
+	if only.is_empty() or only.has("miss"):
+		await _missiles(field + Vector3(0, 0, -6))
 	print("juice_moments: fx stats ", vfx.get("particles").get("stats"), " marks live ",
 		vfx.get("marks").get("live"), " clashes ", vfx.get("combat").get("clashes"))
 	print("juice_moments: audio ", root.get_node("Audio").get("stats"))
@@ -159,6 +161,41 @@ func _sm05(centre: Vector3) -> void:
 	await _capture("sm05_b2_body_contact_600ms")
 	await _frames(54)
 	await _capture("sm05_b3_flag_lowered_1500ms")
+
+
+# --- missiles (CMB-24/25/26): release tells, trails, sticking ------------------------------------
+
+func _missiles(centre: Vector3) -> void:
+	for u: Object in (world.get("unit_list") as Array).duplicate():
+		if u.get("player_id") in [0, 1]:
+			world.call("remove_unit", u)
+	await _frames(2)
+	var hold: Array = []
+	for i in 3:
+		hold.append(world.spawn_unit("kingdom_pavisier", 0, centre + Vector3(-4.0, 0, (i - 1) * 1.6), -PI * 0.5).id)
+	for i in 2:
+		hold.append(world.spawn_unit("kingdom_hookgunner", 0, centre + Vector3(-6.0, 0, (i - 0.5) * 2.0), -PI * 0.5).id)
+	var jav: Array = []
+	for i in 3:
+		jav.append(world.spawn_unit("clans_javelineer", 1, centre + Vector3(4.5, 0, (i - 1) * 1.8), PI * 0.5).id)
+	world.issue({"type": "hold", "player": 0, "units": hold})
+	world.issue({"type": "hold", "player": 1, "units": jav})
+	_look(centre + Vector3(0.0, 0, 1.6), 18.75)
+	var root3: Node = world.get("projectile_root")
+	for f in 900:
+		await _frames(1)
+		if root3.get_child_count() > 0:
+			break
+	await _capture_now("miss_0_release")
+	await _frames(8)
+	await _capture("miss_1_flight_150ms")
+	for f in 240:
+		await _frames(1)
+		if int(vfx.get("missiles").get("stuck_count")) >= 2:
+			break
+	await _capture("miss_2_stuck")
+	await _frames(60)
+	await _capture("miss_3_volleys_1s")
 
 
 func Events_connect() -> void:
