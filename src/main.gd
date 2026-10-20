@@ -46,6 +46,7 @@ var losses: Dictionary = {}
 ## Replaces the current scene with a fresh match of `scenario_name` (unpauses the tree). The
 ## old scene is freed by the SceneTree at the end of the frame.
 static func start_match(tree: SceneTree, scenario_name: String) -> Node:
+	Audio.match_loading()   # the menu theme or the score bed fades out (MUS-01)
 	var m: Node = (load(MAIN_SCENE) as PackedScene).instantiate()
 	m.set("scenario", scenario_name)
 	tree.paused = false
@@ -53,9 +54,9 @@ static func start_match(tree: SceneTree, scenario_name: String) -> Node:
 	return m
 
 
-## Back to the main menu (unpauses the tree).
+## Back to the main menu (unpauses the tree; the menu crossfades its theme in).
 static func quit_to_menu(tree: SceneTree) -> void:
-	Audio.stop_music(0.5)
+	Audio.set_paused(false)
 	tree.paused = false
 	tree.change_scene_to_file(MENU_SCENE)
 
@@ -239,6 +240,7 @@ func _toggle_pause() -> void:
 		return
 	get_tree().paused = not get_tree().paused
 	pause_menu.visible = get_tree().paused
+	Audio.set_paused(get_tree().paused)   # muffled pause (AUD-01)
 	if get_tree().paused:
 		commands.cancel_targeting()
 

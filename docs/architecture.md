@@ -805,14 +805,31 @@ event computed the pitch or the family is `pitch_locked`; voice lines vary ±1 d
 **Aliases** (`sfx_events.json` `aliases`): an unrecorded family plays a recorded stand-in
 (`sw_chop` → `sw_slash`) until its own takes exist. **UI:** `ui_click()` (every `UiStyle.button`,
 the HUD menu button, command-card presses) and `deny(kind)` (error: an untargetable A-click;
-disabled: a command-card press that cannot act) in `ui_faction`'s material. **Music** (MUS-01
-subset): cues from `assets/audio/music/manifest.json`; `match_started(faction, player_id)` (Main,
-after the boot) sets `ui_faction` / `local_player`, lifts the end ducks and plays
-`opening_<faction>`; `play_music(cue)`, `stop_music(fade_s)`. **End (SEQ-02 audio):**
-`Events.match_ended` is only recorded in the tick; `_process` then fades the music over 1.2 s,
-ducks SFX −10 dB and Ambience −6 dB over 1.2 s and plays `victory_` / `defeat_<faction>` at
-600 ms when recorded. `manifest_paths()` lists every take (`tests/unit/test_audio.gd` loads them
-all). In-game music rotation and ambience beds: later.
+disabled: a command-card press that cannot act) in `ui_faction`'s material.
+**Bus levels** (juice ui-camera-audio §5.1, `BUS_DEFAULT_DB`): Music −12, Ambience −16, UI −8,
+Combat −5, World −9, Sub −6, Alerts +1 (→ Voice) dB; ducks are added on top and written every
+frame only on a change, so a ramp's final value lands at any frame rate. **Filter arbiter**
+(AUD-01): Music and Ambience carry an always-on low-pass resting at 20.5 kHz; `filter(key, bus,
+hz, ramp_ms)` / `unfilter(key)`, the lowest request wins, ramped in log-frequency on `now()`.
+**Pause** (`set_paused`, from `Main._toggle_pause`): Music −6 dB, Ambience −10 dB and a 1.2 kHz
+low-pass over 300 ms; the 3D one-shot players are PAUSABLE so world sounds pause with the tree.
+**Music** (MUS-01 P0, `MusicDirector`, `src/audio/music_director.gd`, a child of Audio driven by
+`Audio._process` → `update()`): pieces from `assets/audio/music/manifest.json` (`kind`,
+`faction`, `loop`, `xfade_to_score_s`), two decks with equal-power fades on `now()`, its own RNG.
+`menu_entered()` (MainMenu) loops `menu` (0.75 s fade-in from silence, else a 1 s crossfade);
+`match_loading()` (`Main.start_match`) fades everything out over 1.5 s; `match_started(faction,
+player_id)` (Main, after the boot) sets `ui_faction` / `local_player`, lifts the end and pause
+ducks, plays `opening_<faction>` on the Alerts bus at −4 dB and starts the rotation: the
+faction's `ingame` tracks from a shuffle bag (all play before any repeats, never the same twice
+in a row), the first 6 s after the match starts with a 2 s fade-in, then 20–40 s of silence
+after each track ends (tracks never loop or switch for battle). `play_music(cue)` /
+`stop_music(fade_s)` / `music_id` / `is_music_playing()` stay for scripts and tests. **End
+(SEQ-02 audio):** `Events.match_ended` is only recorded in the tick; `_process` then fades the
+music over 1.2 s, ducks SFX −10 dB and Ambience −6 dB over 1.2 s, plays `victory_` /
+`defeat_<faction>` at 600 ms, and at the stinger's `xfade_to_score_s` the `score` bed enters
+with a 2 s crossfade and loops until the player leaves (the menu crossfades it out).
+`manifest_paths()` lists every take (`tests/unit/test_audio.gd` loads them all). Night pool,
+night filter, hero motifs, rally stems and ambience beds: later.
 
 ## 13. Testing
 

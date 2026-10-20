@@ -3,7 +3,7 @@ extends Control
 ## The game's first screen (project main scene): title over a painted downland at dusk (drawn
 ## procedurally), and the modes available in this build: "Battlefield Sandbox" (Playtest 1) and
 ## "Quit". Later milestones add more modes. Starting a mode shows a loading line for two frames,
-## then Main.start_match swaps in the match. UI only.
+## then Main.start_match swaps in the match. UI only. The menu theme plays while it is up.
 
 const SCENARIO := "battlefield"
 
@@ -15,6 +15,7 @@ var _starting: bool = false
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	get_tree().paused = false
+	Audio.menu_entered()   # the menu theme loops (MUS-01)
 	var backdrop := MenuBackdrop.new()
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE

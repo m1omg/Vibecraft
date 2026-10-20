@@ -28,19 +28,32 @@ extends Node
 ##     `pitch_locked`; voice lines vary in volume only (±1 dB, pitch 1.0);
 ##   - aliases (data/sfx_events.json `aliases`): a family with no recording yet borrows a
 ##     recorded one (sw_chop -> sw_slash) until its own takes exist;
-##   - music (MUS-01 subset, assets/audio/music/manifest.json): `match_started(faction)` plays
-##     the faction's opening cue on the Music bus; no in-game rotation yet (no tracks exist);
-##     `match_ended` (SEQ-02 audio) fades the music over 1.2 s, ducks SFX −10 dB and Ambience
-##     −6 dB over 1.2 s, and plays a victory / defeat stinger at 600 ms when one exists;
+##   - music (MUS-01 P0, the `MusicDirector` child, src/audio/music_director.gd): the menu theme
+##     (`menu_entered`), the fade-out while a match loads (`match_loading`), the faction's opening
+##     cue and in-game rotation (`match_started`), and the end (`match_ended`, SEQ-02 audio: the
+##     music fades over 1.2 s, SFX duck −10 dB and Ambience −6 dB over 1.2 s, the victory / defeat
+##     stinger at 600 ms, then the score bed);
+##   - bus levels (juice §5.1 defaults: Music −12, Ambience −16, UI −8, Combat −5, World −9,
+##     Sub −6, Alerts +1 dB); pause (AUD-01): Music −6 dB and Ambience −10 dB with a 1.2 kHz
+##     low-pass in 300 ms, the 3D one-shots pause with the tree;
 ##   - UI: `ui_click()` (buttons, command card), `deny(kind)` (error / disabled, the Deny
 ##     player, never dropped by the UI pool) in the local faction's material.
 ## Timing uses `now()` (wall clock, or `clock_override` in tests). Audio never touches sim state.
 
 signal voice_started(unit: Node, category: String, length: float)
 
-## [bus, send]. The original five stay top-level; Combat / World / Sub feed SFX, Acks feeds Voice.
+## [bus, send]. The original five stay top-level; Combat / World / Sub feed SFX, Acks and Alerts
+## feed Voice.
 const BUSES: Array = [["Music", "Master"], ["SFX", "Master"], ["Voice", "Master"], ["UI", "Master"],
-	["Ambience", "Master"], ["Combat", "SFX"], ["World", "SFX"], ["Sub", "SFX"], ["Acks", "Voice"]]
+	["Ambience", "Master"], ["Combat", "SFX"], ["World", "SFX"], ["Sub", "SFX"], ["Acks", "Voice"],
+	["Alerts", "Voice"]]
+## Resting bus levels (juice ui-camera-audio §5.1); ducks are applied on top.
+const BUS_DEFAULT_DB: Dictionary = {"Music": -12.0, "Ambience": -16.0, "UI": -8.0, "Combat": -5.0,
+	"World": -9.0, "Sub": -6.0, "Alerts": 1.0}
+## Buses with an always-on low-pass for the filter arbiter (rests open at 20.5 kHz).
+const FILTER_BUSES: Array[String] = ["Music", "Ambience"]
+const FILTER_OPEN_HZ := 20500.0
+const PAUSE_FILTER_HZ := 1200.0
 const SEARCH_DIRS: Dictionary = {
 	"ui": "res://assets/audio/sfx/ui/",
 	"sfx": "res://assets/audio/sfx/",
@@ -64,8 +77,12 @@ var last_ack_category: String = ""
 ## menus use its material. Set by match_started().
 var ui_faction: String = "kingdom"
 var local_player: int = 0
-## The music cue now playing ("" = none).
-var music_id: String = ""
+## The music cue now playing ("" = none): the opening cue, a track, a stinger, the menu...
+var music_id: String:
+	get:
+		return music.current if music != null else ""
+## The MUS-01 director (child node).
+var music: MusicDirector
 
 var _families: Dictionary = {}           ## family -> PackedStringArray of paths
 var _meta: Dictionary = {}               ## family -> {onset_ms, peak_ms, bus, cap, spacing_ms}
@@ -93,12 +110,12 @@ var _selection: Array = []
 var _input_frame: int = -100
 var _ducks: Dictionary = {}              ## key -> [bus, db, t0, attack_s]
 var _aliases: Dictionary = {}            ## family -> stand-in family (data/sfx_events.json)
-var _music_tracks: Dictionary = {}       ## cue id -> PackedStringArray of takes
-var _music: AudioStreamPlayer
-var _music_fade: Vector4 = Vector4(0, 0, -100, 0)   ## from_db, to_db, t0, length_s
+var _music_tracks: Dictionary = {}       ## cue id -> PackedStringArray of takes (manifest_paths)
 var _deny: AudioStreamPlayer
-var _pending_cue: Array = []             ## [cue id, now() to start]
 var _end_winner: int = NO_END            ## match_ended seen in the tick, handled in _process
+var _filters: Dictionary = {}            ## key -> [bus, cutoff_hz, ramp_s]
+var _filter_state: Dictionary = {}       ## bus -> [from_hz, to_hz, t0, ramp_s]
+var _paused: bool = false
 var _warned: Dictionary = {}
 
 
@@ -132,13 +149,13 @@ func _ready() -> void:
 	_deny = AudioStreamPlayer.new()
 	_deny.bus = "UI"
 	add_child(_deny)
-	_music = AudioStreamPlayer.new()
-	_music.name = "Music"
-	_music.bus = "Music"
-	add_child(_music)
+	music = MusicDirector.new()
+	music.name = "MusicDirector"
+	add_child(music)
 	for i in fc.one_shot_pool:
 		var v := Voice.new()
 		v.player = AudioStreamPlayer3D.new()
+		v.player.process_mode = Node.PROCESS_MODE_PAUSABLE   # world SFX pause with the tree
 		v.player.bus = "Combat"
 		v.player.max_distance = 80.0
 		v.player.unit_size = 14.0
@@ -182,11 +199,14 @@ func reset_state() -> void:
 	if _ack != null:
 		_ack.stop()
 	_ack_end = -100.0
-	_pending_cue = []
 	_end_winner = NO_END
 	stop_music(0.0)
 	_ducks.clear()
 	_apply_ducks()
+	_filters.clear()
+	_filter_state.clear()
+	_apply_filters(true)
+	_paused = false
 	reset_stats()
 
 
@@ -341,6 +361,16 @@ func _load(path: String) -> AudioStream:
 		s = load(path) as AudioStream
 	_stream_cache[path] = s
 	return s
+
+
+## A cached stream load (null when the file is missing).
+func load_stream(path: String) -> AudioStream:
+	return _load(path)
+
+
+## Counts a missing asset and warns once (verbose) per id.
+func note_missing(id: String) -> void:
+	_missing(id)
 
 
 func _missing(family: String) -> void:
@@ -817,63 +847,162 @@ func _apply_ducks() -> void:
 	for b: Array in BUSES:
 		var idx := AudioServer.get_bus_index(str(b[0]))
 		if idx >= 0:
-			AudioServer.set_bus_volume_db(idx, duck_db(str(b[0])))
+			var db := bus_default_db(str(b[0])) + duck_db(str(b[0]))
+			if absf(AudioServer.get_bus_volume_db(idx) - db) > 0.001:
+				AudioServer.set_bus_volume_db(idx, db)
+
+
+## The resting level of a bus (juice §5.1), before ducks.
+static func bus_default_db(bus: String) -> float:
+	return float(BUS_DEFAULT_DB.get(bus, 0.0))
+
+
+## AUD-01 filter arbiter: a keyed low-pass request on a FILTER_BUSES bus. The effective cutoff is
+## the lowest active request, ramped exponentially in log-frequency over `ramp_ms` on now().
+func filter(key: StringName, bus: String, cutoff_hz: float, ramp_ms: float = 300.0) -> void:
+	_filters[key] = [bus, clampf(cutoff_hz, 20.0, FILTER_OPEN_HZ), maxf(ramp_ms, 0.0) / 1000.0]
+	_retarget_filters()
+
+
+func unfilter(key: StringName, ramp_ms: float = 300.0) -> void:
+	if _filters.erase(key):
+		_retarget_filters(maxf(ramp_ms, 0.0) / 1000.0)
+
+
+## The cutoff a filtered bus is heading for (FILTER_OPEN_HZ when nothing asks).
+func filter_target_hz(bus: String) -> float:
+	var hz := FILTER_OPEN_HZ
+	for k: StringName in _filters:
+		var f: Array = _filters[k]
+		if str(f[0]) == bus:
+			hz = minf(hz, float(f[1]))
+	return hz
+
+
+## The cutoff a filtered bus has now (on its ramp).
+func filter_hz(bus: String) -> float:
+	var st: Array = _filter_state.get(bus, [])
+	if st.is_empty():
+		return FILTER_OPEN_HZ
+	var ramp := float(st[3])
+	var k := 1.0 if ramp <= 0.0 else clampf((now() - float(st[2])) / ramp, 0.0, 1.0)
+	return exp(lerpf(log(float(st[0])), log(float(st[1])), k))
+
+
+func _retarget_filters(release_s: float = -1.0) -> void:
+	var t := now()
+	for bus in FILTER_BUSES:
+		var to := filter_target_hz(bus)
+		var st: Array = _filter_state.get(bus, [])
+		var cur := filter_hz(bus)
+		if not st.is_empty() and is_equal_approx(float(st[1]), to):
+			continue
+		var ramp := release_s
+		for k: StringName in _filters:
+			var f: Array = _filters[k]
+			if str(f[0]) == bus and is_equal_approx(float(f[1]), to):
+				ramp = float(f[2])
+		_filter_state[bus] = [cur, to, t, maxf(ramp, 0.0)]
+	_apply_filters()
+
+
+func _apply_filters(force: bool = false) -> void:
+	for bus in FILTER_BUSES:
+		var lp := _bus_lowpass(bus)
+		if lp == null:
+			continue
+		var hz := filter_hz(bus)
+		if force or absf(lp.cutoff_hz - hz) > 1.0:
+			lp.cutoff_hz = hz
+
+
+func _bus_lowpass(bus: String) -> AudioEffectLowPassFilter:
+	var idx := AudioServer.get_bus_index(bus)
+	if idx < 0:
+		return null
+	for i in AudioServer.get_bus_effect_count(idx):
+		var e := AudioServer.get_bus_effect(idx, i)
+		if e is AudioEffectLowPassFilter:
+			return e
+	return null
+
+
+## Pause (AUD-01): Music −6 dB and Ambience −10 dB with a 1.2 kHz low-pass over 300 ms; audio
+## returns over 300 ms on unpause. The 3D one-shots pause with the tree (PAUSABLE players).
+func set_paused(paused: bool) -> void:
+	if paused == _paused:
+		return
+	_paused = paused
+	if paused:
+		duck(&"pause_music", "Music", 6.0, 300.0)
+		duck(&"pause_ambience", "Ambience", 10.0, 300.0)
+		filter(&"pause", "Music", PAUSE_FILTER_HZ, 300.0)
+		filter(&"pause_amb", "Ambience", PAUSE_FILTER_HZ, 300.0)
+	else:
+		release(&"pause_music")
+		release(&"pause_ambience")
+		unfilter(&"pause", 300.0)
+		unfilter(&"pause_amb", 300.0)
+
+
+func is_paused() -> bool:
+	return _paused
 
 
 # --- music (MUS-01 subset) and the end sequence's audio (SEQ-02) -------------------------------
 
 ## A match begins for the local player (Main, after the boot): the UI material follows the
-## local faction, end-sequence ducks are lifted and the faction's opening cue plays
-## (`opening_<faction>`; silent when that faction has none yet).
+## local faction, end-sequence and pause ducks are lifted, the faction's opening cue plays
+## (`opening_<faction>`; silent when that faction has none yet) and its in-game rotation starts.
 func match_started(faction: String, player_id: int = 0) -> void:
 	ui_faction = faction if faction == "clans" else "kingdom"
 	local_player = player_id
-	_pending_cue = []
 	_end_winner = NO_END
 	for k: StringName in [&"end_sfx", &"end_ambience"]:
 		_ducks.erase(k)
+	set_paused(false)
 	_apply_ducks()
-	play_music("opening_%s" % faction)
+	if music != null:
+		music.enter_game(faction)
+
+
+## The main menu is shown: the menu theme loops (fading in from silence or crossfading).
+func menu_entered() -> void:
+	set_paused(false)
+	for k: StringName in [&"end_sfx", &"end_ambience"]:
+		_ducks.erase(k)
+	_apply_ducks()
+	if music != null:
+		music.enter_menu()
+
+
+## A match is about to load (menu Start, Restart, Play again): the music fades out over 1.5 s.
+func match_loading() -> void:
+	if music != null:
+		music.enter_loading()
 
 
 func has_music(cue: String) -> bool:
 	return not (_music_tracks.get(cue, PackedStringArray()) as PackedStringArray).is_empty()
 
 
-## Starts a music cue (a take picked like a family) on the Music bus. Returns false when the
-## cue has no recording (silent).
-func play_music(cue: String, volume_db: float = -2.0) -> bool:
-	var takes: PackedStringArray = _music_tracks.get(cue, PackedStringArray())
-	if takes.is_empty() or _music == null:
+## Starts a music cue now on the Music bus, cutting what plays (tests, scripted moments). Returns
+## false when the cue has no recording (silent).
+func play_music(cue: String, volume_db: float = 0.0) -> bool:
+	if music == null or not music.play_now(cue, volume_db):
 		_missing("music:" + cue)
 		return false
-	var s := _load(takes[_pick_index("mu:" + cue, takes.size(), 13)])
-	if s == null:
-		_missing("music:" + cue)
-		return false
-	_music.stop()
-	_music.stream = s
-	_music.volume_db = volume_db
-	_music_fade = Vector4(volume_db, volume_db, -100.0, 0.0)
-	_music.play()
-	music_id = cue
-	stats["played"] += 1
 	return true
 
 
-## Fades the music out over `fade_s` (0 = stop now).
+## Fades the music out over `fade_s` (0 = stop now) and ends the rotation.
 func stop_music(fade_s: float = 1.2) -> void:
-	if _music == null:
-		return
-	if fade_s <= 0.0 or not _music.playing:
-		_music.stop()
-		music_id = ""
-		return
-	_music_fade = Vector4(_music.volume_db, -60.0, now(), fade_s)
+	if music != null:
+		music.stop(fade_s)
 
 
 func is_music_playing() -> bool:
-	return _music != null and _music.playing and not music_id.is_empty()
+	return music != null and music.is_playing() and not music_id.is_empty()
 
 
 ## SEQ-02 (audio, P0): music out over 1.2 s, SFX −10 dB and Ambience −6 dB over 1.2 s, the
@@ -884,37 +1013,23 @@ func _on_match_ended(winner: int, _reason: String) -> void:
 
 
 func _begin_end_sequence(winner: int) -> void:
-	stop_music(1.2)
 	duck(&"end_sfx", "SFX", 10.0, 1200.0)
 	duck(&"end_ambience", "Ambience", 6.0, 1200.0)
-	var won := winner == local_player
-	_pending_cue = [("victory_" if won else "defeat_") + ui_faction, now() + 0.6]
+	if music != null:
+		music.enter_end(winner == local_player, ui_faction)
 
 
 func _process(_delta: float) -> void:
-	var t := now()
 	if _end_winner != NO_END:
 		var w := _end_winner
 		_end_winner = NO_END
 		_begin_end_sequence(w)
-	if _music_fade.w > 0.0 and _music != null:
-		var k := clampf((t - _music_fade.z) / _music_fade.w, 0.0, 1.0)
-		_music.volume_db = lerpf(_music_fade.x, _music_fade.y, Juice.in_quad(k))
-		if k >= 1.0:
-			_music.stop()
-			music_id = ""
-			_music_fade.w = 0.0
-	if not _pending_cue.is_empty() and t >= float(_pending_cue[1]):
-		var cue := str(_pending_cue[0])
-		_pending_cue = []
-		if has_music(cue):
-			_music_fade.w = 0.0
-			play_music(cue, 0.0)
-	for k: StringName in _ducks:
-		var d: Array = _ducks[k]
-		if d.size() > 3 and float(d[3]) > 0.0 and t - float(d[2]) <= float(d[3]) + 0.1:
-			_apply_ducks()
-			break
+	if music != null:
+		music.update()
+	# ramps are closed-form in now(); writing every frame (only on a change) lands the final
+	# value whatever the frame rate
+	_apply_filters()
+	_apply_ducks()
 
 
 # --- legacy file lookup ---------------------------------------------------------------------------
@@ -949,3 +1064,10 @@ func _ensure_buses() -> void:
 		var lp := AudioEffectLowPassFilter.new()
 		lp.cutoff_hz = 140.0
 		AudioServer.add_bus_effect(sub, lp)
+	for bus in FILTER_BUSES:
+		var idx := AudioServer.get_bus_index(bus)
+		if idx > 0 and _bus_lowpass(bus) == null:
+			var f := AudioEffectLowPassFilter.new()
+			f.cutoff_hz = FILTER_OPEN_HZ
+			AudioServer.add_bus_effect(idx, f)
+	_apply_ducks()
