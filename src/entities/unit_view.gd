@@ -132,8 +132,8 @@ func flash(strength: float = 1.0, tint: Color = FLASH_END, duration: float = -1.
 	var dur := duration if duration > 0.0 else (0.1 if unit != null and unit.is_hero else 0.08)
 	var cur: Vector4 = _params.get(&"flash", Vector4(-100.0, 0.0, 0.08, 0.0))
 	var now := RenderAtmos.now()
-	# a re-hit inside the window takes the max strength
-	if now - cur.x < cur.z and now >= cur.x:
+	# a re-hit inside the window takes the max strength (the stored t0 is float32: allow 10 ms)
+	if now - cur.x < cur.z and now - cur.x > -0.01:
 		strength = maxf(strength, cur.y)
 	_set_param(&"flash", Vector4(now, clampf(strength, 0.0, 1.0), dur, maxf(hold, 0.0)))
 	_set_param(&"flash_tint", tint)

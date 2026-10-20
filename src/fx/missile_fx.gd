@@ -178,7 +178,12 @@ func _process(_delta: float) -> void:
 
 
 func _release_tell(t: Track) -> void:
-	if t.model != "bullet" or not vfx.allow(t.start):
+	if not vfx.allow(t.start):
+		return
+	var launch := str(FxDefs.missile(t.model).get("launch_sfx", ""))
+	if not launch.is_empty():
+		Audio.event("missile_release", t.start, {"launch_sfx": launch, "seed": t.node.source_id * 13 + world.tick_count})
+	if t.model != "bullet":
 		return
 	var dir := (t.node.pos - t.node.prev_pos)
 	if dir.length_squared() < 1e-6:
@@ -258,20 +263,21 @@ func _land(t: Track) -> void:
 			var cj := CameraJuice.current
 			if cj != null:
 				cj.add_trauma(&"combat", 0.35 if t.model == "bombard_ball" else 0.25, g)
-			Audio.event("siege_impact", g, {"seed": p.source_id})
+			Audio.event("siege_impact", g, {"hit_sfx": str(spec.get("hit_sfx", "")), "seed": p.source_id})
 			return
 		"bolt", "coal":
 			vfx.particles.burst("bolt_burst" if ranged == "bolt" else "spark", pos, -dir, 0.8, 1)
 			if ranged == "coal":
 				vfx.particles.burst("soot_puff", pos, Vector3.UP, 1.0, 1)
-			Audio.event("bolt_impact", pos, {"seed": p.source_id})
+			Audio.event("bolt_impact", pos, {"hit_sfx": str(spec.get("hit_sfx", "")), "seed": p.source_id})
 			return
 	if hit:
 		var vs := FxDefs.sheet(target)
 		var mat := FxDefs.hit_material(vs, target.facing, target.display_pos(), t.start)
 		vfx.combat.impact_burst(mat, pos, (-dir + Vector3.UP * 0.4).normalized(),
 			float(FxDefs.data().get("ranged", {}).get(ranged, {}).get("count", 0.7)) * vfx.tier_mult(), 1)
-		Audio.event("missile_hit", pos, {"material": FxDefs.material_sound(mat), "model": t.model, "seed": p.source_id})
+		Audio.event("missile_hit", pos, {"material": FxDefs.material_sound(mat), "hit_sfx": str(spec.get("hit_sfx", "")),
+			"kill": not target.alive, "seed": p.source_id * 17 + world.tick_count})
 		if sticks:
 			_stick_in_unit(target, pos, dir, t.model)
 	else:
@@ -281,7 +287,7 @@ func _land(t: Track) -> void:
 		vfx.particles.burst("dust_step", g2 + Vector3(0, 0.05, 0), Vector3.UP, 0.8, 0)
 		if sticks:
 			_stick_in_ground(g2, dir, t.model)
-			Audio.event("missile_stick", g2, {"seed": p.source_id})
+			Audio.event("missile_stick", g2, {"hit_sfx": str(spec.get("hit_sfx", "")), "seed": p.source_id})
 
 
 func _stick_slot() -> Stuck:

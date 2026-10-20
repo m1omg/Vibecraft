@@ -154,10 +154,10 @@ func _on_income(player_id: int, kind: String, amount: int, pos: Vector3) -> void
 	_enqueue([Ev.INCOME, player_id, kind, amount, pos])
 
 
-func _on_voice(unit: Node, category: String, _length: float) -> void:
+func _on_voice(unit: Node, category: String, length: float) -> void:
 	var u := unit as Unit
 	if u != null and u.world == world:
-		_enqueue([Ev.VOICE, u, category])
+		_enqueue([Ev.VOICE, u, category, length])
 
 
 func _on_selection(units: Array) -> void:
@@ -199,17 +199,17 @@ func _drain() -> void:
 			Ev.INCOME:
 				text.on_income(int(rec[1]), str(rec[2]), int(rec[3]), rec[4])
 			Ev.VOICE:
-				_voice(rec[1], str(rec[2]))
+				_voice(rec[1], str(rec[2]), float(rec[3]))
 
 
-func _voice(u: Unit, category: String) -> void:
+func _voice(u: Unit, category: String, length: float) -> void:
 	if not is_instance_valid(u):
 		return
 	var v := u.view as UnitView
 	if v != null and v.juice != null:
-		v.juice.ack(0 if category == "what" else 1)
+		v.juice.ack(0 if category in ["what", "annoyed"] else 1)
 	if circles != null:
-		circles.shimmer(u)
+		circles.shimmer(u, length)
 	trace("CMB-13.ack", u.id)
 
 

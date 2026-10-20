@@ -363,8 +363,8 @@ func _update_swing() -> void:
 	if s * total >= start and (prev * total < start or start <= 0.0):
 		_whoosh_done = true
 		if view.on_screen():
-			Audio.play_3d(family, unit.display_pos() + Vector3(0, 1.0, 0), {"priority": 50,
-				"volume_db": -10.0, "from": maxf(-start, 0.0), "pitch": clampf(1.08 - 0.06 * mass(), 0.85, 1.08)})
+			Audio.event("whoosh", unit.display_pos() + Vector3(0, 1.0, 0), {"family": family,
+				"mass": mass(), "from": maxf(-start, 0.0), "seed": unit.id * 7 + unit.world.tick_count})
 			whooshes += 1
 
 
