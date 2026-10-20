@@ -24,8 +24,7 @@ original (`docs/research/ip-safety.md`).
   `https://github.com/m1omg/Vibecraft/archive/refs/heads/claude/clever-heisenberg-i8649y.zip`, then Godot 4.7.2 → Import →
   `project.godot` → F5. They are not a git user.
 - **Software must not depend on the display refresh rate** (hard requirement).
-- **Usage is the constraint now.** The user runs sessions at **max effort** but NOT ultracode: multi-agent workflows ("swarms")
-  used 1–3 million tokens each.
+- **Usage is the constraint now.** The user is NOT using ultracode any more: multi-agent workflows used 1–3 million tokens each.
   Work directly in the session by default. Use a single subagent or a small workflow (2–3 agents, no critic/judge loops) only for
   big, clearly parallel chunks, and only when the user agrees. The scripts used so far are in `docs/workflows/` for reference.
 - Pause and resume times are given in **Bratislava time** (CET/CEST). Use `send_later` to schedule a resume when asked to pause.
