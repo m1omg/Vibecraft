@@ -250,6 +250,7 @@ func _make_icon(i: int) -> void:
 	b.name = "Icon%d" % i
 	b.custom_minimum_size = ICON_SIZE
 	b.focus_mode = Control.FOCUS_NONE
+	b.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS   # like the card: acts on the press
 	b.add_theme_font_size_override("font_size", 15)
 	var sb := StyleBoxFlat.new()
 	sb.border_color = Color(0, 0, 0, 0.8)

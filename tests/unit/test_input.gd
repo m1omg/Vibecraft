@@ -457,3 +457,20 @@ func test_hero_hall_and_zoom_keys() -> void:
 	_key(KEY_PAGEDOWN)
 	_key(KEY_PAGEDOWN)
 	assert_lt(d0, camera.target_distance, "PgDn zooms out")
+
+
+## Juice bible §1.2 rule 1: the command card (and the selection icons) act on the mouse press,
+## not on the release.
+func test_card_acts_on_press() -> void:
+	sel.select_units(_army())
+	var commands: CommandInput = main.commands
+	var card: CommandCard = main.hud.card
+	for b in card.buttons:
+		assert_eq(b.action_mode, BaseButton.ACTION_MODE_BUTTON_PRESS, "%s acts on press" % b.name)
+	var attack := card.buttons[3]
+	var c := attack.get_global_rect().get_center()
+	_mouse(MOUSE_BUTTON_LEFT, c, true)
+	assert_eq(commands.targeting, "attack_move", "Attack is armed on the press, before the release")
+	_mouse(MOUSE_BUTTON_LEFT, c, false)
+	assert_eq(commands.targeting, "attack_move", "the release changes nothing")
+	commands.cancel_targeting()

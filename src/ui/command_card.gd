@@ -2,7 +2,8 @@ class_name CommandCard
 extends GridContainer
 ## 4x3 command buttons laid out like the grid hotkeys (Q W E R / A S D F / Z X C V). A button
 ## calls CommandInput.activate_card exactly like its hotkey, so targeted commands enter the same
-## targeting mode; the button of the active targeting mode is shown pressed.
+## targeting mode; the button of the active targeting mode is shown pressed. Buttons act on the
+## mouse press, not the release (juice bible §1.2 rule 1: input-frame responsiveness).
 
 const SLOTS := 12
 const BUTTON_SIZE := Vector2(66, 54)
@@ -22,6 +23,7 @@ func _ready() -> void:
 		b.custom_minimum_size = BUTTON_SIZE
 		b.focus_mode = Control.FOCUS_NONE
 		b.toggle_mode = true
+		b.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS   # acts on the down-stroke (juice §1.2 rule 1)
 		b.clip_text = true
 		b.add_theme_font_size_override("font_size", 13)
 		b.pressed.connect(_on_pressed.bind(i))
