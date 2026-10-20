@@ -308,3 +308,70 @@ func test_camera_arrows_wheel_and_middle_drag() -> void:
 	var f1 := camera.focus
 	_motion(centre, Vector2(120, 0))
 	assert_eq(camera.focus, f1, "releasing the middle button ends the drag")
+
+
+## Rules §18.1 (test_minimap_orders): with an order armed (A / M / P), a minimap left-click
+## issues that order at the matching world point, without a camera jump, and disarms it; Shift
+## queues it and keeps it armed. A right-click on the minimap cancels an armed order. With no
+## order armed, a left-click still jumps the camera.
+func test_minimap_orders() -> void:
+	var army := _army()
+	var commands: CommandInput = main.commands
+	var mm: Minimap = main.hud.minimap
+	assert_lt(10.0, mm.size.x, "the minimap is laid out")
+	var origin := mm.get_global_rect().position
+	var k := mm._scale()
+	var start := world.map.start_locations[0]
+	var cases: Array = [[KEY_A, "attack_move", Order.Type.ATTACK_MOVE, Vector3(10, 0, -16)],
+		[KEY_M, "move", Order.Type.MOVE, Vector3(-6, 0, -14)],
+		[KEY_P, "patrol", Order.Type.PATROL, Vector3(14, 0, -6)]]
+	for c: Array in cases:
+		sel.select_units(army)
+		camera.jump_to(start)
+		var f0 := camera.focus
+		_key(c[0])
+		assert_eq(commands.targeting, c[1], "%s armed" % c[1])
+		var p: Vector3 = start + c[3]
+		var at := origin + Vector2(p.x * k.x, p.z * k.y)
+		_mouse(MOUSE_BUTTON_LEFT, at, true)
+		_mouse(MOUSE_BUTTON_LEFT, at, false)
+		assert_eq(commands.targeting, "", "%s: the minimap click confirms and disarms" % c[1])
+		assert_lt(Grid.flat_dist(camera.focus, f0), 0.01, "%s: no camera jump" % c[1])
+		world.step()
+		var centre := Vector3.ZERO
+		for u in army:
+			assert_true(u.current != null and u.current.type == c[2], "%s: %s ordered" % [c[1], u.name])
+			centre += u.current.target_pos if u.current != null else Vector3.ZERO
+		centre /= army.size()
+		assert_lt(Grid.flat_dist(centre, p), 3.0, "%s: issued at the minimap point" % c[1])
+		_key(KEY_S)
+		world.step()
+	# Shift queues and keeps the order armed
+	sel.select_units(army)
+	_key(KEY_M)
+	var p1 := start + Vector3(6, 0, -10)
+	var p2 := start + Vector3(-8, 0, -16)
+	for p in [p1, p2]:
+		var at := origin + Vector2(p.x * k.x, p.z * k.y)
+		_mouse(MOUSE_BUTTON_LEFT, at, true, {"shift": true})
+		_mouse(MOUSE_BUTTON_LEFT, at, false, {"shift": true})
+		assert_eq(commands.targeting, "move", "Shift keeps the move armed")
+	world.step()
+	for u in army:
+		assert_true(u.current != null and u.current.type == Order.Type.MOVE, "%s moving" % u.name)
+		assert_eq(u.orders.size(), 1, "%s has the second point queued" % u.name)
+	# right-click on the minimap cancels the armed order and issues nothing
+	var far := origin + Vector2((start.x + 20.0) * k.x, (start.z - 20.0) * k.y)
+	_mouse(MOUSE_BUTTON_RIGHT, far, true)
+	_mouse(MOUSE_BUTTON_RIGHT, far, false)
+	assert_eq(commands.targeting, "", "right-click cancels the armed order")
+	world.step()
+	for u in army:
+		assert_eq(u.orders.size(), 1, "%s: nothing new queued by the cancelling right-click" % u.name)
+	# nothing armed: a left-click jumps the camera
+	camera.jump_to(start)
+	var q := start + Vector3(20, 0, -20)
+	var at_q := origin + Vector2(q.x * k.x, q.z * k.y)
+	_mouse(MOUSE_BUTTON_LEFT, at_q, true)
+	_mouse(MOUSE_BUTTON_LEFT, at_q, false)
+	assert_lt(Grid.flat_dist(camera.focus, q), 2.0, "a plain minimap left-click jumps the camera")

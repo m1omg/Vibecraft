@@ -732,7 +732,9 @@ requirements, ability unlocks. Each file's header documents the full contract.
   always): top bar (gold, lumber, food used/cap, upkeep label, day/night clock, menu button →
   `menu_requested`) bound to the local `PlayerState`; bottom console (206 px of the 900 px
   reference height): `Minimap` (`minimap.gd`; placeholder: unit dots, camera box, left-click
-  jumps, right-click = smart command), portrait panel (placeholder: type colour + initials;
+  jumps, right-click = smart command; with an order armed, left-click issues it at that point
+  through `CommandInput.command_ground` (Shift queues and keeps it armed) and right-click
+  cancels it, rules §18.1, `test_minimap_orders`), portrait panel (placeholder: type colour + initials;
   later a 3D SubViewport), selected-unit name + HP/mana/damage/range/cooldown/armor/speed text,
   multi-selection grid (coloured squares with initials + HP strip; click selects that unit,
   shift-click removes it) and `CommandCard` (`command_card.gd`, 4×3 buttons with label +

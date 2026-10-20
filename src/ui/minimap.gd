@@ -2,6 +2,8 @@ class_name Minimap
 extends Control
 ## Placeholder minimap: map backdrop, unit dots in player colours and the camera focus box.
 ## Left click/drag jumps the camera; right click issues a smart command at that ground point.
+## With an order armed (A / M / P), a left click issues that order at the map point instead
+## (Shift queues it and keeps the order armed) and a right click cancels it (rules §18.1).
 ## The terrain image and fog layer arrive with the fog-of-war milestone. Visual only.
 
 const BACKDROP := Color(0.13, 0.19, 0.12)
@@ -65,11 +67,21 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT:
+			if mb.pressed and commands != null and commands.targeting != "":
+				# an armed order (A / M / P) lands on that map point; Shift queues it and keeps
+				# the targeting armed (rules §18.1). No camera jump, no drag.
+				commands.command_ground(_to_world(mb.position), mb.shift_pressed)
+				_dragging = false
+				accept_event()
+				return
 			_dragging = mb.pressed
 			if mb.pressed and camera != null:
 				camera.jump_to(_to_world(mb.position))
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed and commands != null:
-			commands.command_ground(_to_world(mb.position), mb.shift_pressed)
+			if commands.targeting != "":
+				commands.cancel_targeting()     # as in the 3D view: right-click cancels targeting
+			else:
+				commands.command_ground(_to_world(mb.position), mb.shift_pressed)
 		accept_event()
 	elif event is InputEventMouseMotion and _dragging and camera != null:
 		camera.jump_to(_to_world((event as InputEventMouseMotion).position))
