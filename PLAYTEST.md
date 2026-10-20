@@ -41,8 +41,8 @@ then press F5 again. From a terminal you can also run
   - a **war-band** waiting in the field on their side of the map. **At 1:30 it marches on your
     hall.** The objective line (top right) counts down, and a warning appears when it sets out.
 - **Neutral creeps** sit at three camps: just north of your base below the cliff, south-east of
-  your ramp, and in the west of the map. They leave you alone unless you get close or attack them.
-  If you hit one, the whole camp fights back.
+  your ramp, and in the north-west (top left) of the map. They leave you alone unless you get
+  close or attack them. If you hit one, or walk up to one, the whole camp fights back together.
 - **Goal:** destroy **every Tormai unit and building**. You lose if you lose everything. After a
   win or a loss, a banner offers **Play again** or **Main Menu**.
 
@@ -51,10 +51,12 @@ then press F5 again. From a terminal you can also run
 | Action | Input |
 |---|---|
 | Select a unit | Left click |
-| Box select | Left drag (your units are preferred over your buildings) |
+| Box select | Left drag (your units are preferred over your buildings). Heroes come first in the selection, then the units that cost the most food |
 | Add / remove from selection | Shift + left click (Shift + drag adds a box) |
 | Select all of that type on screen | Ctrl + left click, or double-click |
-| Cycle the selected type (the portrait and stats panel) | Tab |
+| Cycle the selected type (the portrait and stats panel) | Tab (Shift + Tab goes back) |
+| Select a hero | **F1** (Wheel Marshal), **F2** (Firewright); press twice quickly to centre the camera |
+| Select your hall | **Backspace** (centres the camera on it) |
 | Control groups | Ctrl + 1–0 sets, Shift + 1–0 adds, 1–0 recalls, double-tap centres the camera |
 | Smart order | Right click: ground = move, enemy = attack, own or allied unit = follow |
 | Queue orders | Hold Shift while ordering |
@@ -66,12 +68,13 @@ then press F5 again. From a terminal you can also run
 | Cancel targeting | Right click or Esc |
 | Command card | The buttons in the bottom right do the same as the keys |
 | Pan the camera | Arrow keys, move the mouse to a screen edge, or hold the middle mouse button and drag |
-| Zoom | Mouse wheel |
+| Zoom | Mouse wheel, or PgUp / PgDn |
 | Jump to the last alert | **Space** ("under attack", "the war-band is marching") |
-| Minimap | Left click jumps the camera; right click orders the selection there |
+| Minimap | Left click jumps the camera; right click orders the selection there. With an order armed (**A**, **M** or **P**), a left click gives that order at that point (Shift queues it), so A + minimap click sends the army across the map |
 | Game menu / pause | **F10** (or the Menu button): Resume, Restart, Quit to Main Menu, Quit to Desktop. Esc also resumes |
 
 A selection holds at most 12 units (genre standard). Use control groups for the whole army.
+A group that is close together moves at the pace of its slowest unit, so it arrives together.
 
 ## Sound and game feel
 
@@ -116,7 +119,8 @@ A selection holds at most 12 units (genre standard). Use control groups for the 
   fight the war-band with the melee units in front.
 - Use **H** (hold) to make a line at the top of your ramp and let the war-band come to you.
 - Use **Space** when the war-band warning appears.
-- Clear a creep camp with only your two heroes. Then try the camp in the west.
+- Clear a creep camp with only your two heroes. Then try the camp in the north-west.
+- Press **A** and click the minimap near the Tormai base to send an army across the map.
 - Siege the Tormai base with the Bombard Wagon behind your army. Watch how their guard reacts.
 - Pause with **F10**, then use **Restart**. Play a second game with a different plan.
 - Try to lose on purpose (send units in one at a time) and check that the defeat banner appears.
@@ -125,12 +129,17 @@ A selection holds at most 12 units (genre standard). Use control groups for the 
 
 - **No economy, construction, training or upgrades** (Playtest 2+). Ordering workers to a Gold
   Seam or a tree does nothing useful yet.
-- **Heroes** are level-3 stat blocks: no abilities, items, XP or hero portraits yet.
+- **Heroes** are level-3 stat blocks: no abilities, items, XP or hero portraits yet. **Heroes
+  cannot be revived in this build** (there is no altar yet): a hero that dies stays dead.
 - **Unit abilities** are not in (Linden Sisters do not heal, no Pavise, no Shove...). The siege
   splash and minimum range are not in either.
 - **No fog of war:** the whole map is visible. The minimap is a placeholder (coloured dots).
 - **Placeholder models:** the Bombard Wagon, the Sling-Cart, every creep and the Coaching Inn are
   simple stand-in shapes.
+- **Team colour on the Brennmark units is too small.** Their green areas (hat bands, the Wheel
+  Marshal's cloak) cover only 1-5 % of most models, so from a distance they can read as
+  burgundy. Until the models are repainted, they get a stronger green outline. Tell us if you can
+  still mix them up with the blue Tormai.
 - **Audio:** **no in-game music yet** (only the 2-second kingdom opening cue), and no ambience.
   Several units are not voiced yet (see "Sound and game feel"), and there are no "annoyed" lines
   for clicking a unit many times. Some sounds borrow another sound for now: the Wheel Marshal's
