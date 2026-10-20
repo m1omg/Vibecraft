@@ -1,0 +1,142 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/kingdom/pavisier/yes_a479d3ac.mp3",
+ "raw_s": 4.48,
+ "expect": 3,
+ "found": 3,
+ "pauses": [
+  [
+   0.12,
+   0.05
+  ],
+  [
+   0.63,
+   0.05
+  ],
+  [
+   0.69,
+   0.02
+  ],
+  [
+   0.76,
+   0.32
+  ],
+  [
+   1.26,
+   0.08
+  ],
+  [
+   1.35,
+   0.01
+  ],
+  [
+   1.51,
+   0.04
+  ],
+  [
+   1.56,
+   0.02
+  ],
+  [
+   1.59,
+   0.02
+  ],
+  [
+   1.62,
+   0.04
+  ],
+  [
+   1.67,
+   0.38
+  ],
+  [
+   2.19,
+   0.05
+  ],
+  [
+   2.37,
+   0.22
+  ],
+  [
+   2.7,
+   0.05
+  ],
+  [
+   2.8,
+   0.07
+  ],
+  [
+   3.01,
+   0.13
+  ],
+  [
+   3.19,
+   0.43
+  ],
+  [
+   3.96,
+   0.01
+  ],
+  [
+   3.98,
+   0.02
+  ],
+  [
+   4.01,
+   0.02
+  ],
+  [
+   4.19,
+   0.01
+  ],
+  [
+   4.21,
+   0.07
+  ]
+ ],
+ "shortest_pause_used_s": 0.38,
+ "longest_pause_left_s": 0.32,
+ "lines": [
+  {
+   "n": 1,
+   "name": "yes_01",
+   "start": 0.05,
+   "raw_s": 1.69,
+   "tight_s": 1.51,
+   "tempo": 1.095,
+   "final_s": 1.389,
+   "lufs_in": -20.5,
+   "peak_dbfs": -3.4,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/pavisier/yes_01.ogg",
+   "ogg_s": 1.389,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "yes_02",
+   "start": 1.86,
+   "raw_s": 1.25,
+   "tight_s": 1.17,
+   "tempo": 1.0,
+   "final_s": 1.15,
+   "lufs_in": -22.4,
+   "peak_dbfs": -0.8,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/pavisier/yes_02.ogg",
+   "ogg_s": 1.15,
+   "status": "ok"
+  },
+  {
+   "n": 3,
+   "name": "yes_04",
+   "start": 3.4,
+   "raw_s": 0.72,
+   "tight_s": 0.72,
+   "tempo": 1.0,
+   "final_s": 0.72,
+   "lufs_in": -19.8,
+   "peak_dbfs": -3.0,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/pavisier/yes_04.ogg",
+   "ogg_s": 0.72,
+   "status": "ok"
+  }
+ ]
+}

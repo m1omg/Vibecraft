@@ -1,0 +1,73 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/clans/grappler/attack_f14ef8b2.mp3",
+ "raw_s": 3.28,
+ "expect": 2,
+ "found": 2,
+ "pauses": [
+  [
+   0.3,
+   0.02
+  ],
+  [
+   0.47,
+   0.07
+  ],
+  [
+   1.55,
+   0.04
+  ],
+  [
+   1.63,
+   0.09
+  ],
+  [
+   1.82,
+   0.01
+  ],
+  [
+   1.87,
+   0.23
+  ],
+  [
+   2.29,
+   0.02
+  ],
+  [
+   3.0,
+   0.08
+  ]
+ ],
+ "shortest_pause_used_s": 0.23,
+ "longest_pause_left_s": 0.09,
+ "cuts": null,
+ "lines": [
+  {
+   "n": 1,
+   "name": "attack_01",
+   "start": 0.19,
+   "raw_s": 1.75,
+   "tight_s": 1.75,
+   "tempo": 1.11,
+   "final_s": 1.584,
+   "lufs_in": -23.7,
+   "peak_dbfs": -3.7,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/grappler/attack_01.ogg",
+   "ogg_s": 1.584,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "attack_02",
+   "start": 1.98,
+   "raw_s": 1.05,
+   "tight_s": 1.05,
+   "tempo": 1.0,
+   "final_s": 1.01,
+   "lufs_in": -24.0,
+   "peak_dbfs": -2.8,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/grappler/attack_02.ogg",
+   "ogg_s": 1.01,
+   "status": "ok"
+  }
+ ]
+}

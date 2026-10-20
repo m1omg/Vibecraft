@@ -1,0 +1,2125 @@
+{
+ "_doc": "Recipes for tools/audio/build_layered_sfx.py: CC0 (Kenney, assets_src/audio/cc0/kenney, licence files beside them) and procedural placeholder takes. A take with a 'name' is a kit item: it is written as <id>_<name>_<nn>.wav.",
+ "recipes": [
+  {
+   "id": "fall_light",
+   "group": "combat",
+   "source": "cc0",
+   "note": "Kenney Impact Sounds + RPG Audio (CC0), layered",
+   "takes": [
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_000.ogg",
+       "pitch": 1.0
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_000.ogg",
+       "gain_db": -4,
+       "lp": 2200,
+       "pitch": 0.85,
+       "offset_ms": 5
+      },
+      {
+       "src": "kenney/rpg-audio/cloth1.ogg",
+       "gain_db": -8,
+       "hp": 400,
+       "offset_ms": 12
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_001.ogg",
+       "pitch": 0.94
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_001.ogg",
+       "gain_db": -4,
+       "lp": 2200,
+       "pitch": 0.85,
+       "offset_ms": 5
+      },
+      {
+       "src": "kenney/rpg-audio/cloth3.ogg",
+       "gain_db": -8,
+       "hp": 400,
+       "offset_ms": 12
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_002.ogg",
+       "pitch": 1.06
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_004.ogg",
+       "gain_db": -4,
+       "lp": 2200,
+       "pitch": 0.85,
+       "offset_ms": 5
+      },
+      {
+       "src": "kenney/rpg-audio/cloth2.ogg",
+       "gain_db": -8,
+       "hp": 400,
+       "offset_ms": 12
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fall_armoured",
+   "group": "combat",
+   "source": "cc0",
+   "note": "Kenney Impact Sounds (CC0), layered",
+   "takes": [
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_003.ogg",
+       "pitch": 0.9
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_heavy_003.ogg",
+       "pitch": 0.85,
+       "lp": 2500,
+       "gain_db": -4
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlate_medium_000.ogg",
+       "gain_db": -5,
+       "offset_ms": 25
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlate_light_001.ogg",
+       "gain_db": -11,
+       "offset_ms": 150
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_000.ogg",
+       "gain_db": -13,
+       "pitch": 0.8,
+       "offset_ms": 60
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_004.ogg",
+       "pitch": 0.9
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_heavy_004.ogg",
+       "pitch": 0.85,
+       "lp": 2500,
+       "gain_db": -4
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlate_medium_002.ogg",
+       "gain_db": -5,
+       "offset_ms": 25
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlate_light_003.ogg",
+       "gain_db": -11,
+       "offset_ms": 150
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_002.ogg",
+       "gain_db": -13,
+       "pitch": 0.8,
+       "offset_ms": 60
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_000.ogg",
+       "pitch": 0.9
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_heavy_000.ogg",
+       "pitch": 0.85,
+       "lp": 2500,
+       "gain_db": -4
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlate_medium_004.ogg",
+       "gain_db": -5,
+       "offset_ms": 25
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlate_light_004.ogg",
+       "gain_db": -11,
+       "offset_ms": 150
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_004.ogg",
+       "gain_db": -13,
+       "pitch": 0.8,
+       "offset_ms": 60
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fall_huge",
+   "group": "combat",
+   "source": "cc0",
+   "note": "Kenney Impact Sounds (CC0) + procedural rumble",
+   "takes": [
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_001.ogg",
+       "pitch": 0.7,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_heavy_001.ogg",
+       "pitch": 0.65,
+       "lp": 2000,
+       "gain_db": 0
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_heavy_000.ogg",
+       "pitch": 0.6,
+       "gain_db": -8
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlank_medium_001.ogg",
+       "pitch": 0.75,
+       "gain_db": -7,
+       "lp": 1800,
+       "offset_ms": 30
+      },
+      {
+       "synth": "rumble",
+       "dur": 1.0,
+       "lp": 160,
+       "decay": 0.35,
+       "gain_db": -8
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_002.ogg",
+       "pitch": 0.7,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_heavy_002.ogg",
+       "pitch": 0.65,
+       "lp": 2000,
+       "gain_db": 0
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_heavy_002.ogg",
+       "pitch": 0.6,
+       "gain_db": -8
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlank_medium_002.ogg",
+       "pitch": 0.75,
+       "gain_db": -7,
+       "lp": 1800,
+       "offset_ms": 30
+      },
+      {
+       "synth": "rumble",
+       "dur": 1.0,
+       "lp": 160,
+       "decay": 0.35,
+       "gain_db": -8
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_003.ogg",
+       "pitch": 0.7,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_heavy_003.ogg",
+       "pitch": 0.65,
+       "lp": 2000,
+       "gain_db": 0
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_heavy_004.ogg",
+       "pitch": 0.6,
+       "gain_db": -8
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlank_medium_003.ogg",
+       "pitch": 0.75,
+       "gain_db": -7,
+       "lp": 1800,
+       "offset_ms": 30
+      },
+      {
+       "synth": "rumble",
+       "dur": 1.0,
+       "lp": 160,
+       "decay": 0.35,
+       "gain_db": -8
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hit_sub",
+   "group": "combat",
+   "source": "procedural",
+   "note": "procedural sine thump",
+   "takes": [
+    {
+     "lp": 160,
+     "layers": [
+      {
+       "synth": "thump",
+       "f0": 62,
+       "f1": 36,
+       "decay": 0.1,
+       "dur": 0.3
+      }
+     ]
+    },
+    {
+     "lp": 160,
+     "layers": [
+      {
+       "synth": "thump",
+       "f0": 58,
+       "f1": 34,
+       "decay": 0.12,
+       "dur": 0.3
+      }
+     ]
+    },
+    {
+     "lp": 160,
+     "layers": [
+      {
+       "synth": "thump",
+       "f0": 66,
+       "f1": 38,
+       "decay": 0.09,
+       "dur": 0.3
+      }
+     ]
+    },
+    {
+     "lp": 160,
+     "layers": [
+      {
+       "synth": "thump",
+       "f0": 54,
+       "f1": 32,
+       "decay": 0.13,
+       "dur": 0.3
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ui_click_kingdom",
+   "group": "ui",
+   "source": "cc0",
+   "note": "oak knock (Kenney CC0) + procedural latch tick",
+   "takes": [
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 1.3,
+       "len_ms": 120
+      },
+      {
+       "synth": "tick",
+       "f": 4200,
+       "decay": 0.003,
+       "gain_db": -11,
+       "hp": 2500,
+       "offset_ms": 4
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 1.25,
+       "len_ms": 120
+      },
+      {
+       "synth": "tick",
+       "f": 4500,
+       "decay": 0.003,
+       "gain_db": -11,
+       "hp": 2500,
+       "offset_ms": 4
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 1.35,
+       "len_ms": 120
+      },
+      {
+       "synth": "tick",
+       "f": 4000,
+       "decay": 0.003,
+       "gain_db": -11,
+       "hp": 2500,
+       "offset_ms": 4
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 1.3,
+       "len_ms": 120
+      },
+      {
+       "synth": "tick",
+       "f": 4700,
+       "decay": 0.003,
+       "gain_db": -11,
+       "hp": 2500,
+       "offset_ms": 4
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_004.ogg",
+       "pitch": 1.4,
+       "len_ms": 120
+      },
+      {
+       "synth": "tick",
+       "f": 4300,
+       "decay": 0.003,
+       "gain_db": -11,
+       "hp": 2500,
+       "offset_ms": 4
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 1.2,
+       "len_ms": 120
+      },
+      {
+       "synth": "tick",
+       "f": 3900,
+       "decay": 0.003,
+       "gain_db": -11,
+       "hp": 2500,
+       "offset_ms": 4
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ui_click_clans",
+   "group": "ui",
+   "source": "cc0",
+   "note": "felt thump + damped bronze tick (Kenney CC0)",
+   "takes": [
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_000.ogg",
+       "pitch": 1.6,
+       "len_ms": 120
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_000.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "len_ms": 120,
+       "gain_db": -5
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_000.ogg",
+       "pitch": 1.3,
+       "len_ms": 60,
+       "hp": 1500,
+       "gain_db": -12,
+       "fade_ms": 30
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_001.ogg",
+       "pitch": 1.6,
+       "len_ms": 120
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_001.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "len_ms": 120,
+       "gain_db": -5
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_001.ogg",
+       "pitch": 1.35,
+       "len_ms": 60,
+       "hp": 1500,
+       "gain_db": -12,
+       "fade_ms": 30
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_002.ogg",
+       "pitch": 1.6,
+       "len_ms": 120
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_002.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "len_ms": 120,
+       "gain_db": -5
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_002.ogg",
+       "pitch": 1.25,
+       "len_ms": 60,
+       "hp": 1500,
+       "gain_db": -12,
+       "fade_ms": 30
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_003.ogg",
+       "pitch": 1.6,
+       "len_ms": 120
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_003.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "len_ms": 120,
+       "gain_db": -5
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_003.ogg",
+       "pitch": 1.3,
+       "len_ms": 60,
+       "hp": 1500,
+       "gain_db": -12,
+       "fade_ms": 30
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_004.ogg",
+       "pitch": 1.6,
+       "len_ms": 120
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_004.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "len_ms": 120,
+       "gain_db": -5
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_004.ogg",
+       "pitch": 1.4,
+       "len_ms": 60,
+       "hp": 1500,
+       "gain_db": -12,
+       "fade_ms": 30
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_002.ogg",
+       "pitch": 1.6,
+       "len_ms": 120
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_002.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "len_ms": 120,
+       "gain_db": -5
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_001.ogg",
+       "pitch": 1.2,
+       "len_ms": 60,
+       "hp": 1500,
+       "gain_db": -12,
+       "fade_ms": 30
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ui_disabled_kingdom",
+   "group": "ui",
+   "source": "cc0",
+   "note": "muffled board knock (Kenney CC0)",
+   "takes": [
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_000.ogg",
+       "pitch": 0.9,
+       "lp": 900,
+       "len_ms": 220
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_002.ogg",
+       "pitch": 0.88,
+       "lp": 900,
+       "len_ms": 220
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_004.ogg",
+       "pitch": 0.92,
+       "lp": 900,
+       "len_ms": 220
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ui_disabled_clans",
+   "group": "ui",
+   "source": "cc0",
+   "note": "felt thud (Kenney CC0)",
+   "takes": [
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_001.ogg",
+       "pitch": 1.0,
+       "lp": 700
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_001.ogg",
+       "pitch": 0.9,
+       "lp": 900,
+       "gain_db": -6
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_003.ogg",
+       "pitch": 0.95,
+       "lp": 700
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_003.ogg",
+       "pitch": 0.9,
+       "lp": 900,
+       "gain_db": -6
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_004.ogg",
+       "pitch": 1.05,
+       "lp": 700
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_004.ogg",
+       "pitch": 0.9,
+       "lp": 900,
+       "gain_db": -6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ui_error_kingdom",
+   "group": "ui",
+   "source": "cc0",
+   "note": "dull double knock (Kenney CC0)",
+   "takes": [
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_000.ogg",
+       "pitch": 0.8,
+       "lp": 1200
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_001.ogg",
+       "pitch": 0.776,
+       "lp": 1100,
+       "offset_ms": 120,
+       "gain_db": -2
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_002.ogg",
+       "pitch": 0.78,
+       "lp": 1200
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_003.ogg",
+       "pitch": 0.7566,
+       "lp": 1100,
+       "offset_ms": 115,
+       "gain_db": -2
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_004.ogg",
+       "pitch": 0.82,
+       "lp": 1200
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_000.ogg",
+       "pitch": 0.7953999999999999,
+       "lp": 1100,
+       "offset_ms": 125,
+       "gain_db": -2
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_001.ogg",
+       "pitch": 0.79,
+       "lp": 1200
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_004.ogg",
+       "pitch": 0.7663,
+       "lp": 1100,
+       "offset_ms": 118,
+       "gain_db": -2
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ui_error_clans",
+   "group": "ui",
+   "source": "cc0",
+   "note": "felt thud (Kenney CC0) + procedural choked bronze bowl tone",
+   "takes": [
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_000.ogg",
+       "pitch": 1.2,
+       "len_ms": 220,
+       "lp": 800
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_000.ogg",
+       "pitch": 0.9,
+       "lp": 1000,
+       "len_ms": 220,
+       "gain_db": -6
+      },
+      {
+       "synth": "bowl",
+       "f0": 110,
+       "decay": 0.6,
+       "choke_ms": 210,
+       "dur": 0.35,
+       "gain_db": -7,
+       "lp": 1600,
+       "offset_ms": 40
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_001.ogg",
+       "pitch": 1.2,
+       "len_ms": 220,
+       "lp": 800
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_001.ogg",
+       "pitch": 0.9,
+       "lp": 1000,
+       "len_ms": 220,
+       "gain_db": -6
+      },
+      {
+       "synth": "bowl",
+       "f0": 117,
+       "decay": 0.6,
+       "choke_ms": 210,
+       "dur": 0.35,
+       "gain_db": -7,
+       "lp": 1600,
+       "offset_ms": 40
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_002.ogg",
+       "pitch": 1.2,
+       "len_ms": 220,
+       "lp": 800
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_002.ogg",
+       "pitch": 0.9,
+       "lp": 1000,
+       "len_ms": 220,
+       "gain_db": -6
+      },
+      {
+       "synth": "bowl",
+       "f0": 104,
+       "decay": 0.6,
+       "choke_ms": 210,
+       "dur": 0.35,
+       "gain_db": -7,
+       "lp": 1600,
+       "offset_ms": 40
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_003.ogg",
+       "pitch": 1.2,
+       "len_ms": 220,
+       "lp": 800
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_003.ogg",
+       "pitch": 0.9,
+       "lp": 1000,
+       "len_ms": 220,
+       "gain_db": -6
+      },
+      {
+       "synth": "bowl",
+       "f0": 123,
+       "decay": 0.6,
+       "choke_ms": 210,
+       "dur": 0.35,
+       "gain_db": -7,
+       "lp": 1600,
+       "offset_ms": 40
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ui_order_kingdom",
+   "group": "ui",
+   "source": "cc0",
+   "note": "order ticks: wood tuk, tsk-tak with iron click, tuk-tuk, page flick (Kenney CC0 + procedural)",
+   "takes": [
+    {
+     "name": "move",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 1.5,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 100
+      }
+     ]
+    },
+    {
+     "name": "move",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 1.6,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 100
+      }
+     ]
+    },
+    {
+     "name": "attack",
+     "layers": [
+      {
+       "synth": "noise",
+       "dur": 0.04,
+       "hp": 3500,
+       "decay": 0.012,
+       "gain_db": -6,
+       "offset_ms": 0
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 1.6,
+       "offset_ms": 45,
+       "gain_db": 0,
+       "len_ms": 100
+      },
+      {
+       "synth": "tick",
+       "f": 3800,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -9,
+       "offset_ms": 45
+      }
+     ]
+    },
+    {
+     "name": "attack",
+     "layers": [
+      {
+       "synth": "noise",
+       "dur": 0.04,
+       "hp": 3500,
+       "decay": 0.012,
+       "gain_db": -6,
+       "offset_ms": 0
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 1.7,
+       "offset_ms": 45,
+       "gain_db": 0,
+       "len_ms": 100
+      },
+      {
+       "synth": "tick",
+       "f": 4100,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -9,
+       "offset_ms": 45
+      }
+     ]
+    },
+    {
+     "name": "patrol",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 1.5,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 1.59,
+       "offset_ms": 85,
+       "gain_db": -1,
+       "len_ms": 100
+      }
+     ]
+    },
+    {
+     "name": "patrol",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 1.55,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_004.ogg",
+       "pitch": 1.6430000000000002,
+       "offset_ms": 85,
+       "gain_db": -1,
+       "len_ms": 100
+      }
+     ]
+    },
+    {
+     "name": "ability",
+     "layers": [
+      {
+       "src": "kenney/rpg-audio/bookFlip3.ogg",
+       "len_ms": 160,
+       "hp": 1500,
+       "pitch": 1.15
+      }
+     ]
+    },
+    {
+     "name": "ability",
+     "layers": [
+      {
+       "src": "kenney/rpg-audio/bookFlip2.ogg",
+       "len_ms": 160,
+       "hp": 1500,
+       "pitch": 1.25
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ui_order_clans",
+   "group": "ui",
+   "source": "cc0",
+   "note": "order ticks: felt puk, tsk-tak with bronze click, puk-puk, bead run (Kenney CC0 + procedural)",
+   "takes": [
+    {
+     "name": "move",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_000.ogg",
+       "pitch": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_000.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "offset_ms": 0,
+       "gain_db": -5,
+       "len_ms": 100
+      }
+     ]
+    },
+    {
+     "name": "move",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_002.ogg",
+       "pitch": 1.9,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_002.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "offset_ms": 0,
+       "gain_db": -5,
+       "len_ms": 100
+      }
+     ]
+    },
+    {
+     "name": "attack",
+     "layers": [
+      {
+       "synth": "noise",
+       "dur": 0.04,
+       "hp": 3500,
+       "decay": 0.012,
+       "gain_db": -6,
+       "offset_ms": 0
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_001.ogg",
+       "pitch": 1.8,
+       "offset_ms": 45,
+       "gain_db": 0,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_001.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "offset_ms": 45,
+       "gain_db": -5,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_001.ogg",
+       "pitch": 1.5,
+       "len_ms": 50,
+       "hp": 1500,
+       "gain_db": -9,
+       "offset_ms": 45,
+       "fade_ms": 25
+      }
+     ]
+    },
+    {
+     "name": "attack",
+     "layers": [
+      {
+       "synth": "noise",
+       "dur": 0.04,
+       "hp": 3500,
+       "decay": 0.012,
+       "gain_db": -6,
+       "offset_ms": 0
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_003.ogg",
+       "pitch": 1.8,
+       "offset_ms": 45,
+       "gain_db": 0,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_003.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "offset_ms": 45,
+       "gain_db": -5,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_003.ogg",
+       "pitch": 1.5,
+       "len_ms": 50,
+       "hp": 1500,
+       "gain_db": -9,
+       "offset_ms": 45,
+       "fade_ms": 25
+      }
+     ]
+    },
+    {
+     "name": "patrol",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_000.ogg",
+       "pitch": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_000.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "offset_ms": 0,
+       "gain_db": -5,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_002.ogg",
+       "pitch": 1.9,
+       "offset_ms": 85,
+       "gain_db": -1,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_002.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "offset_ms": 85,
+       "gain_db": -6,
+       "len_ms": 100
+      }
+     ]
+    },
+    {
+     "name": "patrol",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_001.ogg",
+       "pitch": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_001.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "offset_ms": 0,
+       "gain_db": -5,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_004.ogg",
+       "pitch": 1.9,
+       "offset_ms": 85,
+       "gain_db": -1,
+       "len_ms": 100
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_004.ogg",
+       "pitch": 1.3,
+       "lp": 1800,
+       "offset_ms": 85,
+       "gain_db": -6,
+       "len_ms": 100
+      }
+     ]
+    },
+    {
+     "name": "ability",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 2.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 60
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 2.5,
+       "offset_ms": 35,
+       "gain_db": -3,
+       "len_ms": 60
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 2.6,
+       "offset_ms": 62,
+       "gain_db": -6,
+       "len_ms": 60
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 2.7,
+       "offset_ms": 85,
+       "gain_db": -9,
+       "len_ms": 60
+      }
+     ]
+    },
+    {
+     "name": "ability",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 2.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 60
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 2.5,
+       "offset_ms": 35,
+       "gain_db": -3,
+       "len_ms": 60
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 2.6,
+       "offset_ms": 62,
+       "gain_db": -6,
+       "len_ms": 60
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_004.ogg",
+       "pitch": 2.7,
+       "offset_ms": 85,
+       "gain_db": -9,
+       "len_ms": 60
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ui_select_kingdom",
+   "group": "ui",
+   "source": "cc0",
+   "note": "tally-stick ticks: single, double, bundle clack, higher wave tick (Kenney CC0)",
+   "takes": [
+    {
+     "name": "single",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 1.9,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 70
+      }
+     ]
+    },
+    {
+     "name": "single",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 2.0,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 70
+      }
+     ]
+    },
+    {
+     "name": "double",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 1.9,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 70
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 1.976,
+       "offset_ms": 70,
+       "gain_db": -1,
+       "len_ms": 70
+      }
+     ]
+    },
+    {
+     "name": "double",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_004.ogg",
+       "pitch": 2.0,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 70
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 2.08,
+       "offset_ms": 70,
+       "gain_db": -1,
+       "len_ms": 70
+      }
+     ]
+    },
+    {
+     "name": "bundle",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 2.1635057524263446,
+       "offset_ms": 0,
+       "gain_db": -2.368940978539041,
+       "len_ms": 80
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 1.55070540066728,
+       "offset_ms": 64,
+       "gain_db": -2.1941335014755134,
+       "len_ms": 80
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 2.136792844200172,
+       "offset_ms": 25,
+       "gain_db": -0.5156834021350301,
+       "len_ms": 80
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 1.5488987965022332,
+       "offset_ms": 10,
+       "gain_db": -2.547115134855084,
+       "len_ms": 80
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_004.ogg",
+       "pitch": 1.5866613728047518,
+       "offset_ms": 26,
+       "gain_db": -3.7645993344335356,
+       "len_ms": 80
+      }
+     ]
+    },
+    {
+     "name": "bundle",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 1.9039720640322493,
+       "offset_ms": 0,
+       "gain_db": -2.380082847904681,
+       "len_ms": 80
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 1.5326078764324294,
+       "offset_ms": 103,
+       "gain_db": -1.7376557179900576,
+       "len_ms": 80
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 1.8784801198724999,
+       "offset_ms": 68,
+       "gain_db": -3.361543662076876,
+       "len_ms": 80
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 1.5721389987105139,
+       "offset_ms": 68,
+       "gain_db": -1.127226160722861,
+       "len_ms": 80
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 1.8834211259966906,
+       "offset_ms": 7,
+       "gain_db": -0.35760701979739595,
+       "len_ms": 80
+      }
+     ]
+    },
+    {
+     "name": "wave",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 2.3,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 70
+      }
+     ]
+    },
+    {
+     "name": "wave",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 2.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 70
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ui_select_clans",
+   "group": "ui",
+   "source": "cc0",
+   "note": "wooden bead ticks: single, double, bead-string rattle, higher wave tick (Kenney CC0)",
+   "takes": [
+    {
+     "name": "single",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 2.7,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 50
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -14,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "single",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 2.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 50
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -14,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "double",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 2.7,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 2.8080000000000003,
+       "offset_ms": 60,
+       "gain_db": -1,
+       "len_ms": 50
+      }
+     ]
+    },
+    {
+     "name": "double",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_004.ogg",
+       "pitch": 2.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 2.912,
+       "offset_ms": 60,
+       "gain_db": -1,
+       "len_ms": 50
+      }
+     ]
+    },
+    {
+     "name": "bundle",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 2.797848697068095,
+       "offset_ms": 5,
+       "gain_db": -5.440601424865649,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 2.8513371181045835,
+       "offset_ms": 32,
+       "gain_db": -2.0983689780457766,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 2.9193966602377426,
+       "offset_ms": 58,
+       "gain_db": -4.020965971810697,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_004.ogg",
+       "pitch": 2.7970698157331535,
+       "offset_ms": 87,
+       "gain_db": -3.141839332994553,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_004.ogg",
+       "pitch": 3.0881049084955494,
+       "offset_ms": 113,
+       "gain_db": -2.9268597524965903,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 2.5911907207963027,
+       "offset_ms": 144,
+       "gain_db": -0.2744507993320636,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 2.958742519727688,
+       "offset_ms": 173,
+       "gain_db": -6.128344682816218,
+       "len_ms": 50
+      }
+     ]
+    },
+    {
+     "name": "bundle",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 2.704073417314717,
+       "offset_ms": 3,
+       "gain_db": -3.4767235670929133,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 2.5412577696441163,
+       "offset_ms": 28,
+       "gain_db": -1.889574939896824,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 2.536401656558332,
+       "offset_ms": 63,
+       "gain_db": -4.529901981693682,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 2.6707573192564897,
+       "offset_ms": 87,
+       "gain_db": -4.680569011189317,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 3.0643891399876564,
+       "offset_ms": 115,
+       "gain_db": -4.276436804381538,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 2.535372651598786,
+       "offset_ms": 147,
+       "gain_db": -0.9053815541307896,
+       "len_ms": 50
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_light_001.ogg",
+       "pitch": 2.7387386071277398,
+       "offset_ms": 177,
+       "gain_db": -3.4755468932097333,
+       "len_ms": 50
+      }
+     ]
+    },
+    {
+     "name": "wave",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 3.2,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 50
+      }
+     ]
+    },
+    {
+     "name": "wave",
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_003.ogg",
+       "pitch": 3.3,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "len_ms": 50
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "bullet_hit",
+   "group": "ranged",
+   "source": "derived",
+   "note": "lead-ball hits by material, derived from our hit_* takes (Seed Audio) and Kenney CC0",
+   "takes": [
+    {
+     "name": "flesh",
+     "max_ms": 300,
+     "layers": [
+      {
+       "own": "combat/hit_flesh_l_02.wav",
+       "pitch": 1.25
+      }
+     ]
+    },
+    {
+     "name": "wood",
+     "max_ms": 300,
+     "layers": [
+      {
+       "own": "combat/hit_wood_l_03.wav",
+       "pitch": 1.3
+      }
+     ]
+    },
+    {
+     "name": "metal",
+     "max_ms": 300,
+     "layers": [
+      {
+       "own": "combat/hit_metal_l_01.wav",
+       "pitch": 1.5
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -6,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "earth",
+     "max_ms": 300,
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_medium_002.ogg",
+       "pitch": 1.4
+      },
+      {
+       "synth": "noise",
+       "dur": 0.25,
+       "lp": 3500,
+       "hp": 200,
+       "decay": 0.06,
+       "attack": 0.004,
+       "gain_db": -4,
+       "offset_ms": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "javelin_hit",
+   "group": "ranged",
+   "source": "derived",
+   "note": "javelin hits by material, derived from our hit_* takes (Seed Audio) and Kenney CC0",
+   "takes": [
+    {
+     "name": "wood",
+     "max_ms": 450,
+     "layers": [
+      {
+       "own": "combat/hit_wood_l_01.wav",
+       "pitch": 0.95
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_medium_001.ogg",
+       "gain_db": -6
+      }
+     ]
+    },
+    {
+     "name": "flesh",
+     "max_ms": 450,
+     "layers": [
+      {
+       "own": "combat/hit_flesh_l_03.wav",
+       "pitch": 0.9
+      }
+     ]
+    },
+    {
+     "name": "metal",
+     "max_ms": 450,
+     "layers": [
+      {
+       "own": "combat/hit_metal_l_02.wav",
+       "pitch": 1.1
+      },
+      {
+       "own": "combat/hit_wood_l_02.wav",
+       "pitch": 1.2,
+       "gain_db": -10
+      }
+     ]
+    },
+    {
+     "name": "earth",
+     "max_ms": 450,
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_001.ogg",
+       "pitch": 1.1
+      },
+      {
+       "src": "kenney/impact-sounds/impactPunch_medium_002.ogg",
+       "lp": 1500,
+       "gain_db": -6
+      },
+      {
+       "synth": "noise",
+       "dur": 0.25,
+       "lp": 3500,
+       "hp": 200,
+       "decay": 0.06,
+       "attack": 0.004,
+       "gain_db": -6,
+       "offset_ms": 5
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hit_wood_h",
+   "group": "combat",
+   "source": "derived",
+   "note": "heavy blow on planks: our hit_wood_l (Seed Audio) pitched down + Kenney CC0 plank crack",
+   "takes": [
+    {
+     "max_ms": 650,
+     "fade_out_ms": 80,
+     "layers": [
+      {
+       "own": "combat/hit_wood_l_01.wav",
+       "pitch": 0.8
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlank_medium_000.ogg",
+       "gain_db": -3,
+       "offset_ms": 5
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_heavy_000.ogg",
+       "pitch": 0.9,
+       "gain_db": -5
+      }
+     ]
+    },
+    {
+     "max_ms": 650,
+     "fade_out_ms": 80,
+     "layers": [
+      {
+       "own": "combat/hit_wood_l_02.wav",
+       "pitch": 0.78
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlank_medium_003.ogg",
+       "gain_db": -3,
+       "offset_ms": 5
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_heavy_002.ogg",
+       "pitch": 0.9,
+       "gain_db": -5
+      }
+     ]
+    },
+    {
+     "max_ms": 650,
+     "fade_out_ms": 80,
+     "layers": [
+      {
+       "own": "combat/hit_wood_l_03.wav",
+       "pitch": 0.82
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlank_medium_004.ogg",
+       "gain_db": -3,
+       "offset_ms": 5
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_heavy_004.ogg",
+       "pitch": 0.9,
+       "gain_db": -5
+      }
+     ]
+    },
+    {
+     "max_ms": 650,
+     "fade_out_ms": 80,
+     "layers": [
+      {
+       "own": "combat/hit_wood_l_01.wav",
+       "pitch": 0.75
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlank_medium_002.ogg",
+       "gain_db": -3,
+       "offset_ms": 5
+      },
+      {
+       "src": "kenney/impact-sounds/impactWood_heavy_001.ogg",
+       "pitch": 0.9,
+       "gain_db": -5
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "claypot_hit",
+   "group": "ranged",
+   "source": "derived",
+   "note": "clay pot smash: our bombard_hit debris (Seed Audio) pitched up + Kenney CC0 crack and thump + procedural dust",
+   "takes": [
+    {
+     "max_ms": 800,
+     "fade_out_ms": 150,
+     "layers": [
+      {
+       "own": "ranged/bombard_hit_01.wav",
+       "pitch": 1.5,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactGlass_heavy_000.ogg",
+       "pitch": 0.7,
+       "lp": 5000,
+       "gain_db": -7
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_000.ogg",
+       "pitch": 1.1,
+       "gain_db": -3
+      },
+      {
+       "synth": "noise",
+       "dur": 0.6,
+       "lp": 2500,
+       "hp": 150,
+       "decay": 0.15,
+       "attack": 0.01,
+       "gain_db": -11,
+       "offset_ms": 20
+      }
+     ]
+    },
+    {
+     "max_ms": 800,
+     "fade_out_ms": 150,
+     "layers": [
+      {
+       "own": "ranged/bombard_hit_03.wav",
+       "pitch": 1.5,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactGlass_heavy_002.ogg",
+       "pitch": 0.7,
+       "lp": 5000,
+       "gain_db": -7
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_002.ogg",
+       "pitch": 1.1,
+       "gain_db": -3
+      },
+      {
+       "synth": "noise",
+       "dur": 0.6,
+       "lp": 2500,
+       "hp": 150,
+       "decay": 0.15,
+       "attack": 0.01,
+       "gain_db": -11,
+       "offset_ms": 20
+      }
+     ]
+    },
+    {
+     "max_ms": 800,
+     "fade_out_ms": 150,
+     "layers": [
+      {
+       "own": "ranged/bombard_hit_04.wav",
+       "pitch": 1.5,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactGlass_heavy_004.ogg",
+       "pitch": 0.7,
+       "lp": 5000,
+       "gain_db": -7
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_003.ogg",
+       "pitch": 1.1,
+       "gain_db": -3
+      },
+      {
+       "synth": "noise",
+       "dur": 0.6,
+       "lp": 2500,
+       "hp": 150,
+       "decay": 0.15,
+       "attack": 0.01,
+       "gain_db": -11,
+       "offset_ms": 20
+      }
+     ]
+    },
+    {
+     "max_ms": 800,
+     "fade_out_ms": 150,
+     "layers": [
+      {
+       "own": "ranged/bombard_hit_05.wav",
+       "pitch": 1.5,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactGlass_heavy_001.ogg",
+       "pitch": 0.7,
+       "lp": 5000,
+       "gain_db": -7
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_004.ogg",
+       "pitch": 1.1,
+       "gain_db": -3
+      },
+      {
+       "synth": "noise",
+       "dur": 0.6,
+       "lp": 2500,
+       "hp": 150,
+       "decay": 0.15,
+       "attack": 0.01,
+       "gain_db": -11,
+       "offset_ms": 20
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sw_pierce",
+   "group": "combat",
+   "source": "derived",
+   "note": "placeholder: short sharp air cuts derived from our sw_slash takes (Seed Audio), pitched up and shortened",
+   "takes": [
+    {
+     "max_ms": 260,
+     "fade_out_ms": 70,
+     "layers": [
+      {
+       "own": "combat/sw_slash_01.wav",
+       "pitch": 1.25,
+       "start_ms": 60
+      }
+     ]
+    },
+    {
+     "max_ms": 260,
+     "fade_out_ms": 70,
+     "layers": [
+      {
+       "own": "combat/sw_slash_03.wav",
+       "pitch": 1.3,
+       "start_ms": 50
+      }
+     ]
+    },
+    {
+     "max_ms": 260,
+     "fade_out_ms": 70,
+     "layers": [
+      {
+       "own": "combat/sw_slash_04.wav",
+       "pitch": 1.2,
+       "start_ms": 70
+      }
+     ]
+    },
+    {
+     "max_ms": 260,
+     "fade_out_ms": 70,
+     "layers": [
+      {
+       "own": "combat/sw_slash_01.wav",
+       "pitch": 1.35,
+       "start_ms": 40
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "vox_death_clans",
+   "group": "combat",
+   "source": "derived",
+   "note": "placeholder until generated: our vox_death_kingdom takes (Seed Audio) pitched down to a deep-chested register",
+   "takes": [
+    {
+     "layers": [
+      {
+       "own": "combat/vox_death_kingdom_01.wav",
+       "pitch": 0.72
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "own": "combat/vox_death_kingdom_02.wav",
+       "pitch": 0.7
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "own": "combat/vox_death_kingdom_03.wav",
+       "pitch": 0.74
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

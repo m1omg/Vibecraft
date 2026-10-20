@@ -1,0 +1,113 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/kingdom/hookgunner/yes_b885f560.mp3",
+ "raw_s": 6.32,
+ "expect": 3,
+ "found": 3,
+ "pauses": [
+  [
+   0.32,
+   0.05
+  ],
+  [
+   0.8,
+   0.02
+  ],
+  [
+   0.92,
+   0.5
+  ],
+  [
+   1.72,
+   0.1
+  ],
+  [
+   1.85,
+   0.42
+  ],
+  [
+   2.54,
+   0.05
+  ],
+  [
+   2.67,
+   0.41
+  ],
+  [
+   3.31,
+   0.04
+  ],
+  [
+   3.43,
+   0.4
+  ],
+  [
+   4.13,
+   0.61
+  ],
+  [
+   4.87,
+   0.02
+  ],
+  [
+   5.0,
+   0.02
+  ],
+  [
+   5.27,
+   0.05
+  ],
+  [
+   5.4,
+   0.38
+  ],
+  [
+   6.11,
+   0.03
+  ]
+ ],
+ "shortest_pause_used_s": 0.5,
+ "longest_pause_left_s": 0.42,
+ "cuts": null,
+ "lines": [
+  {
+   "n": 1,
+   "name": "yes_01",
+   "start": 0.09,
+   "raw_s": 0.9,
+   "tight_s": 0.9,
+   "tempo": 1.0,
+   "final_s": 0.9,
+   "lufs_in": -23.5,
+   "peak_dbfs": -6.1,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hookgunner/yes_01.ogg",
+   "ogg_s": 0.9,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "yes_02",
+   "start": 1.17,
+   "raw_s": 2.82,
+   "tight_s": 2.01,
+   "tempo": 1.15,
+   "final_s": 1.74,
+   "lufs_in": -25.4,
+   "peak_dbfs": -3.6,
+   "status": "REJECTED (over 1.4 s at atempo 1.15)"
+  },
+  {
+   "n": 3,
+   "name": "yes_03",
+   "start": 4.43,
+   "raw_s": 1.48,
+   "tight_s": 1.24,
+   "tempo": 1.0,
+   "final_s": 1.2,
+   "lufs_in": -24.6,
+   "peak_dbfs": -4.0,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hookgunner/yes_03.ogg",
+   "ogg_s": 1.2,
+   "status": "ok"
+  }
+ ]
+}

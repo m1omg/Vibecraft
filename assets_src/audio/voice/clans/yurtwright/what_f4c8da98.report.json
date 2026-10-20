@@ -1,0 +1,70 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/clans/yurtwright/what_f4c8da98.mp3",
+ "raw_s": 4.8,
+ "expect": 3,
+ "found": 3,
+ "pauses": [
+  [
+   0.49,
+   0.01
+  ],
+  [
+   1.15,
+   0.51
+  ],
+  [
+   2.65,
+   0.56
+  ],
+  [
+   3.6,
+   0.21
+  ]
+ ],
+ "shortest_pause_used_s": 0.51,
+ "longest_pause_left_s": 0.21,
+ "lines": [
+  {
+   "n": 1,
+   "name": "what_01",
+   "start": 0.13,
+   "raw_s": 1.09,
+   "tight_s": 1.09,
+   "tempo": 1.0,
+   "final_s": 1.08,
+   "lufs_in": -21.2,
+   "peak_dbfs": -0.9,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/yurtwright/what_01.ogg",
+   "ogg_s": 1.08,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "what_02",
+   "start": 1.4,
+   "raw_s": 1.1,
+   "tight_s": 1.1,
+   "tempo": 1.0,
+   "final_s": 1.06,
+   "lufs_in": -21.6,
+   "peak_dbfs": -6.2,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/yurtwright/what_02.ogg",
+   "ogg_s": 1.06,
+   "status": "ok"
+  },
+  {
+   "n": 3,
+   "name": "what_03",
+   "start": 2.93,
+   "raw_s": 1.38,
+   "tight_s": 1.31,
+   "tempo": 1.0,
+   "final_s": 1.27,
+   "lufs_in": -22.4,
+   "peak_dbfs": -6.1,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/yurtwright/what_03.ogg",
+   "ogg_s": 1.27,
+   "status": "ok"
+  }
+ ]
+}

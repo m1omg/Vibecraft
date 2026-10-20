@@ -1,0 +1,128 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/clans/grappler/what_4aa0d813.mp3",
+ "raw_s": 6.0,
+ "expect": 3,
+ "found": 3,
+ "pauses": [
+  [
+   0.4,
+   0.06
+  ],
+  [
+   0.7,
+   0.04
+  ],
+  [
+   1.02,
+   0.01
+  ],
+  [
+   1.04,
+   0.01
+  ],
+  [
+   1.07,
+   0.01
+  ],
+  [
+   1.09,
+   0.01
+  ],
+  [
+   1.28,
+   0.33
+  ],
+  [
+   2.52,
+   0.14
+  ],
+  [
+   2.78,
+   0.02
+  ],
+  [
+   3.02,
+   0.04
+  ],
+  [
+   3.37,
+   0.01
+  ],
+  [
+   3.39,
+   0.01
+  ],
+  [
+   3.41,
+   0.05
+  ],
+  [
+   3.62,
+   0.43
+  ],
+  [
+   4.38,
+   0.53
+  ],
+  [
+   4.92,
+   0.01
+  ],
+  [
+   5.37,
+   0.03
+  ],
+  [
+   5.54,
+   0.02
+  ]
+ ],
+ "shortest_pause_used_s": null,
+ "longest_pause_left_s": 0.0,
+ "cuts": [
+  1.44,
+  3.83
+ ],
+ "lines": [
+  {
+   "n": 1,
+   "name": "what_01",
+   "start": 0.05,
+   "raw_s": 1.3,
+   "tight_s": 1.3,
+   "tempo": 1.0,
+   "final_s": 1.3,
+   "lufs_in": -26.0,
+   "peak_dbfs": -1.2,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/grappler/what_01.ogg",
+   "ogg_s": 1.3,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "what_02",
+   "start": 1.44,
+   "raw_s": 2.12,
+   "tight_s": 2.12,
+   "tempo": 1.15,
+   "final_s": 1.813,
+   "lufs_in": -24.8,
+   "peak_dbfs": -4.9,
+   "status": "REJECTED (over 1.4 s at atempo 1.15)"
+  },
+  {
+   "n": 3,
+   "name": "what_03",
+   "start": 3.83,
+   "raw_s": 1.74,
+   "tight_s": 1.35,
+   "tempo": 1.0,
+   "final_s": 1.3,
+   "lufs_in": -24.6,
+   "peak_dbfs": -3.1,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/grappler/what_03.ogg",
+   "ogg_s": 1.3,
+   "status": "ok"
+  }
+ ]
+}

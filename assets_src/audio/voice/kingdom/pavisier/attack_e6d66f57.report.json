@@ -1,0 +1,68 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/kingdom/pavisier/attack_e6d66f57.mp3",
+ "raw_s": 3.68,
+ "expect": 2,
+ "found": 2,
+ "pauses": [
+  [
+   0.44,
+   0.07
+  ],
+  [
+   0.8,
+   0.04
+  ],
+  [
+   0.87,
+   0.13
+  ],
+  [
+   1.35,
+   0.03
+  ],
+  [
+   1.61,
+   0.04
+  ],
+  [
+   1.74,
+   0.48
+  ],
+  [
+   2.58,
+   0.29
+  ]
+ ],
+ "shortest_pause_used_s": 0.48,
+ "longest_pause_left_s": 0.29,
+ "lines": [
+  {
+   "n": 1,
+   "name": "attack_01",
+   "start": 0.06,
+   "raw_s": 1.75,
+   "tight_s": 1.75,
+   "tempo": 1.11,
+   "final_s": 1.58,
+   "lufs_in": -17.3,
+   "peak_dbfs": -3.4,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/pavisier/attack_01.ogg",
+   "ogg_s": 1.58,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "attack_02",
+   "start": 1.98,
+   "raw_s": 1.09,
+   "tight_s": 0.94,
+   "tempo": 1.0,
+   "final_s": 0.91,
+   "lufs_in": -16.2,
+   "peak_dbfs": -7.0,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/pavisier/attack_02.ogg",
+   "ogg_s": 0.91,
+   "status": "ok"
+  }
+ ]
+}
