@@ -3,7 +3,10 @@ extends Node3D
 ## Visual representation of a Unit (visual only: reads sim state, never writes it).
 ## Model: AssetLibrary.model_path(def) — the def's `model`, a manifest alias or
 ## assets/models/{units,buildings,neutral}/<def_id>.glb — else a procedural placeholder from the
-## def's `shape` hint (humanoid / building / mine). Structures are scaled to their data footprint.
+## def's `shape` hint (humanoid / building / mine). Structures are scaled to their data footprint
+## (`model_fit`: "footprint", the default, or "none" = the def's `model_scale` / `scale`), draw their
+## `model_addons` (upgraded halls: the T1 hall model plus the T2/T3 add-on, in the hall's model
+## space) and swap to `model_depleted` when Events.mine_depleted names them (Gold Seam collapse).
 ## Animation (rigged GLBs): clips idle / walk / attack / death / cast / work with fallbacks, driven
 ## manually every frame with real delta (refresh-rate independent):
 ##   - 0.15 s crossfades between states;
@@ -105,6 +108,8 @@ func setup(u: Unit) -> void:
 		model_path = ""
 		_add_placeholder(d)
 	_init_instance_params()
+	if not str(d.get("model_depleted", "")).is_empty():
+		Events.mine_depleted.connect(_on_mine_depleted)
 
 
 # --- public hooks --------------------------------------------------------------------------
@@ -430,6 +435,13 @@ func _load_model(path: String) -> bool:
 			if base != null:
 				base.name = "Base"
 				model.add_child(base)
+		# data add-ons (SCHEMA `model_addons`): drawn in the base model's space, so they share its scale
+		for a: Variant in unit.def.get("model_addons", []):
+			var ap := AssetLibrary.model_path({"model": str(a)}, "")
+			var add := AssetLibrary.instantiate(ap, "structure") if not ap.is_empty() else null
+			if add != null:
+				add.name = "Addon"
+				model.add_child(add)
 	else:
 		_entry = AssetLibrary.unit_entry(path)
 		model_scale = float(unit.def.get("model_scale", unit.def.get("scale", 1.0)))
@@ -456,8 +468,8 @@ func _load_model(path: String) -> bool:
 func _structure_scale(path: String) -> float:
 	var fp: Array = unit.def.get("footprint", [0, 0])
 	var fp_m := maxf(float(fp[0]), float(fp[1])) * Grid.CELL
-	if fp_m <= 0.0:
-		return float(unit.def.get("scale", 1.0))
+	if fp_m <= 0.0 or str(unit.def.get("model_fit", "footprint")) == "none":
+		return float(unit.def.get("model_scale", unit.def.get("scale", 1.0)))
 	var entry := AssetLibrary.building_entry(path)
 	var model_fp := 0.0
 	if entry.has("footprint_m"):
@@ -488,6 +500,31 @@ func _configure_structure_materials(path: String) -> void:
 			m.set_shader_parameter("use_uv2_height", has_uv2)
 			m.set_shader_parameter("two_pass_reveal", has_uv2 and unit.def_id.begins_with("clans"))
 			m.set_shader_parameter("model_height", h)
+
+
+## A depleted Gold Seam collapses: its view swaps to the def's `model_depleted` (visual only).
+func _on_mine_depleted(mine: Node) -> void:
+	if mine != unit:
+		return
+	var p := AssetLibrary.model_path({"model": str(unit.def.get("model_depleted", ""))}, "")
+	if p.is_empty() or p == model_path:
+		return
+	for c in body.get_children():
+		body.remove_child(c)
+		c.queue_free()
+	model = null
+	_mesh = null
+	_anim = null
+	_clips.clear()
+	_clip = ""
+	_geoms.clear()
+	model_path = p
+	if not _load_model(p):
+		model_path = ""
+		_add_placeholder(unit.def)
+	_init_instance_params()
+	for k: StringName in _params.keys():
+		_set_param(k, _params[k], true)
 
 
 # --- placeholder builders ------------------------------------------------------------------

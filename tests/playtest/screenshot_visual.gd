@@ -1,8 +1,9 @@
 extends SceneTree
-## Visual integration screenshots: the slice scene (main.tscn on the generated test map) with both
-## factions' real models placed near each start — kingdom (Emerald) at the south-west start, clans
-## (Royal Blue) at the north-east — at default and close zoom, by day and by night, plus a clash in
-## the middle. Saves tests/output/visual_*.png.
+## Visual integration screenshots: the slice scene (main.tscn, scenario "slice": Wether Downs with
+## its Gold Seams and neutral buildings, no start bases or camps) with both factions' real models
+## placed near each start — kingdom (Emerald) at the south-west start, clans (Royal Blue) at the
+## north-east — at default and close zoom, by day and by night, a ramp facing the camera, plus a
+## clash in the middle. Saves tests/output/visual_*.png.
 ## Run (software Vulkan):
 ##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1600x900x24" \
 ##     godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution 1280x720 \
@@ -67,8 +68,12 @@ func _run() -> void:
 	await _shot("dusk_default", 17.6, k_start + inward0 * 4.0, 25.8)
 	await _shot("night_default", 22.0, k_start + inward0 * 4.0, 25.8)
 	await _shot("night_close", 22.5, c_start + _inward(c_start, m) * 8.5, 18.75)
-	# cliffs, a ramp and the lake shore (south ramp of the north-west plateau faces the camera)
-	var ramp: Dictionary = m.ramps[6]
+	# cliffs and a ramp that climbs away from the camera (ascending towards -Z)
+	var ramp: Dictionary = m.ramps[0]
+	for r: Dictionary in m.ramps:
+		if r["dir"] == Vector2i(0, -1):
+			ramp = r
+			break
 	var rect: Rect2i = ramp["rect"]
 	await _shot("day_cliffs", 14.0, Vector3((rect.position.x + rect.size.x * 0.5) * 2.0, 0,
 		(rect.position.y + rect.size.y * 0.5) * 2.0 + 3.0), 25.8)
@@ -117,8 +122,6 @@ func _spawn_kingdom(start: Vector3, mine: Vector3, m: Object) -> void:
 	var inward := _inward(start, m)
 	var side := Vector3(-inward.z, 0, inward.x)
 	var face := atan2(-inward.x, -inward.z)
-	var to_hall := start - mine
-	world.spawn_unit("gold_mine", 13, mine, atan2(-to_hall.x, -to_hall.z))
 	world.spawn_unit("kingdom_moot_hall", 0, start, face)
 	world.spawn_unit("kingdom_drill_yard", 0, start + inward * 9.0 + side * 9.0, face)
 	world.spawn_unit("kingdom_croft", 0, start - inward * 4.0 + side * 9.0, face)
@@ -132,8 +135,6 @@ func _spawn_clans(start: Vector3, mine: Vector3, m: Object) -> void:
 	var inward := _inward(start, m)
 	var side := Vector3(-inward.z, 0, inward.x)
 	var face := atan2(-inward.x, -inward.z)
-	var to_hall := start - mine
-	world.spawn_unit("gold_mine", 13, mine, atan2(-to_hall.x, -to_hall.z))
 	world.spawn_unit("clans_shell_hall", 1, start, face)
 	world.spawn_unit("clans_grapple_yard", 1, start + inward * 9.0 + side * 9.0, face)
 	world.spawn_unit("clans_home_yurt", 1, start - inward * 4.0 + side * 9.0, face)

@@ -220,6 +220,32 @@ func test_structures_scale_to_data_footprint() -> void:
 	assert_eq((v.instance_param(&"variant_a") as Vector4).x, 1.0, "complete structures are fully revealed")
 
 
+## Data model hooks (data/SCHEMA.md): an upgraded hall draws its T1 model plus `model_addons` in
+## the hall's model space; `model_fit: none` keeps the def scale; a Gold Seam swaps to
+## `model_depleted` when Events.mine_depleted names it.
+func test_structure_addons_fit_and_depleted_model() -> void:
+	var w := _visual_world()
+	w.add_player(PlayerState.NEUTRAL_PASSIVE, PlayerState.NEUTRAL_PASSIVE)
+	var burg := w.spawn_unit("kingdom_walled_burg", 0, Vector3(20, 0, 20))
+	var bv := burg.view as UnitView
+	assert_true(bv.model_path.ends_with("kingdom_moot_hall.glb"), "upgraded hall keeps the hall model")
+	var addon := bv.model.get_node_or_null("Addon") if bv.model != null else null
+	assert_true(addon != null, "and draws its add-on as a child (shares the hall's scale)")
+	var hall := w.spawn_unit("kingdom_moot_hall", 0, Vector3(40, 0, 20))
+	assert_near(bv.model_scale, (hall.view as UnitView).model_scale, 0.0001, "same fit as the T1 hall")
+	Defs.units["test_glb_croft"]["model_fit"] = "none"
+	Defs.units["test_glb_croft"]["model_scale"] = 1.5
+	var raw := w.spawn_unit("test_glb_croft", 0, Vector3(20, 0, 40))
+	assert_near((raw.view as UnitView).model_scale, 1.5, 0.0001, "model_fit none keeps the def scale")
+	var mine := w.spawn_unit("gold_mine", PlayerState.NEUTRAL_PASSIVE, Vector3(40, 0, 40))
+	var mv := mine.view as UnitView
+	assert_true(mv.model_path.ends_with("gold_mine.glb"), "full seam model")
+	Events.mine_depleted.emit(mine)
+	assert_true(mv.model_path.ends_with("gold_mine_collapsed.glb"), "collapsed once depleted")
+	assert_true(mv.model != null and mv.model.is_inside_tree(), "the collapsed model is shown")
+	assert_eq(mv.instance_param(&"team_color"), Color.WHITE, "instance uniforms re-applied")
+
+
 # --- terrain, trees, lighting --------------------------------------------------------------
 
 func test_terrain_tile_data_and_connectivity() -> void:
