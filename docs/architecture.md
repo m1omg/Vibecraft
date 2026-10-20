@@ -769,11 +769,27 @@ selection tick when debounced, annoyed after 5 clicks in 2.5 s), `order_tick(uni
 `signal voice_started(unit, category, length)` (length 0 when the line is missing),
 `peak_s(family)`, `onset_s(family)`, `follow_camera(cam, focus, distance)` (listener; also the
 cull centre: beyond `cull_distance_m` × distance / 28 nothing starts), `duck(key, bus, db)` /
-`release(key)` (deepest duck per bus wins; Music ≤ 8 dB down). Pools: `one_shot_pool` 3D voices
-(steal the lowest priority, oldest first, never inside a no-cut window), `ui_pool` 2D voices.
-Voice accounting runs on `now()` (wall clock; tests set `clock_override`). The selection "What"
-plays on `Events.selection_changed` when the local player picked new units or re-clicked the
-same ones (never when a death prunes the selection). Music playlists and ambience beds: later.
+`release(key)` (deepest duck per bus wins; Music ≤ 8 dB down; `duck(key, bus, db, attack_ms)`
+ramps in linearly on `now()`). Pools: `one_shot_pool` 3D voices
+(steal the lowest priority, oldest first, never inside a no-cut window), `ui_pool` 2D voices, a
+`Deny` player. Voice accounting runs on `now()` (wall clock; tests set `clock_override`). The
+selection "What" plays on `Events.selection_changed` when the local player picked new units or
+re-clicked the same ones (never when a death prunes the selection); orders ask
+`CommandInput.ack_category(cmd)` (Attack for attack, attack-move and a right-click on an enemy,
+else Yes). **Variation:** every SFX start gets a hashed volume (±`vol_var_db`, 1.5 dB) and pitch
+(±`pitch_var`, 3 %) offset (`variation(family, seq, pitch_given)`), no pitch offset when the
+event computed the pitch or the family is `pitch_locked`; voice lines vary ±1 dB, pitch 1.0.
+**Aliases** (`sfx_events.json` `aliases`): an unrecorded family plays a recorded stand-in
+(`sw_chop` → `sw_slash`) until its own takes exist. **UI:** `ui_click()` (every `UiStyle.button`,
+the HUD menu button, command-card presses) and `deny(kind)` (error: an untargetable A-click;
+disabled: a command-card press that cannot act) in `ui_faction`'s material. **Music** (MUS-01
+subset): cues from `assets/audio/music/manifest.json`; `match_started(faction, player_id)` (Main,
+after the boot) sets `ui_faction` / `local_player`, lifts the end ducks and plays
+`opening_<faction>`; `play_music(cue)`, `stop_music(fade_s)`. **End (SEQ-02 audio):**
+`Events.match_ended` is only recorded in the tick; `_process` then fades the music over 1.2 s,
+ducks SFX −10 dB and Ambience −6 dB over 1.2 s and plays `victory_` / `defeat_<faction>` at
+600 ms when recorded. `manifest_paths()` lists every take (`tests/unit/test_audio.gd` loads them
+all). In-game music rotation and ambience beds: later.
 
 ## 13. Testing
 
