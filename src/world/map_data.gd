@@ -15,13 +15,19 @@ var height: int = 0            ## tiles
 var tex: PackedByteArray       ## 0..7 texture layer per tile
 var cliff: PackedByteArray     ## cliff level 0..3 per tile
 var water: PackedByteArray     ## 1 = water tile
+var boundary: PackedByteArray  ## 1 = unpathable, unbuildable map edge tile (slice maps: the outer 2 tiles)
 var ramp: PackedByteArray      ## 0 = none, else index + 1 into `ramps`
 var ramps: Array[Dictionary] = []   ## {rect: Rect2i (tiles), dir: Vector2i (ascending), low: int}
 var water_level: float = -0.45
 var start_locations: Array[Vector3] = []
 var gold_mines: Array[Vector3] = []
-var creep_camps: Array[Dictionary] = []      ## {pos: Vector3, creeps: Array[String]}
-var neutral_buildings: Array[Dictionary] = [] ## {def: String, pos: Vector3}
+## {pos: Vector3, creeps: Array[String]} plus optional authored keys kept verbatim: id, template, side,
+## facing, layout (data/SCHEMA.md "maps").
+var creep_camps: Array[Dictionary] = []
+var neutral_buildings: Array[Dictionary] = [] ## {def: String, pos: Vector3, facing?: degrees}
+## Authored extras round-tripped verbatim (data/SCHEMA.md "maps" → meta): starts, expansions,
+## gold_amounts, creep_route, lanes, critters, landmarks, neutral_flags, tileset ...
+var meta: Dictionary = {}
 var trees: Array[Vector2i] = []   ## tree grid coords (1 m); a tree covers cells 2x..2x+1, 2y..2y+1
 var tree_types: PackedByteArray   ## index into TREE_TYPES per tree
 var corner_h: PackedFloat32Array  ## 4 per tile: (x0,z0) (x1,z0) (x0,z1) (x1,z1)
@@ -41,6 +47,8 @@ func init_empty(w: int, h: int, level: int = 1, tex_index: int = 0) -> void:
 	cliff.fill(level)
 	water = PackedByteArray()
 	water.resize(n)
+	boundary = PackedByteArray()
+	boundary.resize(n)
 	ramp = PackedByteArray()
 	ramp.resize(n)
 	ramps.clear()
@@ -75,6 +83,18 @@ func level_at_tile(x: int, y: int) -> int:
 
 func is_water_tile(x: int, y: int) -> bool:
 	return in_bounds(x, y) and water[idx(x, y)] == 1
+
+
+func is_boundary_tile(x: int, y: int) -> bool:
+	return in_bounds(x, y) and boundary.size() == width * height and boundary[idx(x, y)] == 1
+
+
+## Gold in mine `i` (meta.gold_amounts, else rules.economy: the first two are main mines).
+func mine_gold(i: int) -> int:
+	var amounts: Array = meta.get("gold_amounts", [])
+	if i >= 0 and i < amounts.size():
+		return int(amounts[i])
+	return 12000 if i < start_locations.size() else 8000
 
 
 ## Registers a ramp covering `rect` tiles that ascends from level `low` to `low + 1` along `dir`.
@@ -184,9 +204,10 @@ func compute_blocked_cells() -> PackedByteArray:
 	var out := PackedByteArray()
 	out.resize(cw * ch)
 	var k := Grid.CELLS_PER_TILE
+	var has_boundary := boundary.size() == width * height
 	for ty in height:
 		for tx in width:
-			if water[idx(tx, ty)] == 1:
+			if water[idx(tx, ty)] == 1 or (has_boundary and boundary[idx(tx, ty)] == 1):
 				for cy in range(ty * k, ty * k + k):
 					for cx in range(tx * k, tx * k + k):
 						out[cy * cw + cx] = 1
@@ -261,11 +282,15 @@ func to_dict() -> Dictionary:
 		tree_list.append([trees[i].x, trees[i].y, tree_types[i]])
 	var camps: Array = []
 	for c in creep_camps:
-		camps.append({"pos": _v3_to_arr(c["pos"]), "creeps": c["creeps"]})
+		var cd := c.duplicate()
+		cd["pos"] = _v3_to_arr(c["pos"])
+		camps.append(cd)
 	var neutrals: Array = []
 	for nb in neutral_buildings:
-		neutrals.append({"def": nb["def"], "pos": _v3_to_arr(nb["pos"])})
-	return {
+		var nd := nb.duplicate()
+		nd["pos"] = _v3_to_arr(nb["pos"])
+		neutrals.append(nd)
+	var out := {
 		"version": FORMAT_VERSION, "name": name, "width": width, "height": height,
 		"water_level": water_level,
 		"tex": _layer_to_rows(tex), "cliff": _layer_to_rows(cliff), "water": _layer_to_rows(water),
@@ -274,6 +299,11 @@ func to_dict() -> Dictionary:
 		"gold_mines": _v3_list(gold_mines),
 		"creep_camps": camps, "neutral_buildings": neutrals, "trees": tree_list,
 	}
+	if boundary.count(1) > 0:
+		out["boundary"] = _layer_to_rows(boundary)
+	if not meta.is_empty():
+		out["meta"] = meta.duplicate(true)
+	return out
 
 
 static func from_dict(d: Dictionary) -> MapData:
@@ -284,6 +314,8 @@ static func from_dict(d: Dictionary) -> MapData:
 	m.tex = _rows_to_layer(d["tex"], m.width, m.height)
 	m.cliff = _rows_to_layer(d["cliff"], m.width, m.height)
 	m.water = _rows_to_layer(d.get("water", []), m.width, m.height)
+	m.boundary = _rows_to_layer(d.get("boundary", []), m.width, m.height)
+	m.meta = (d.get("meta", {}) as Dictionary).duplicate(true)
 	for r: Dictionary in d.get("ramps", []):
 		var a: Array = r["rect"]
 		m.add_ramp(Rect2i(int(a[0]), int(a[1]), int(a[2]), int(a[3])),
@@ -293,9 +325,15 @@ static func from_dict(d: Dictionary) -> MapData:
 	for p: Array in d.get("gold_mines", []):
 		m.gold_mines.append(_arr_to_v3(p))
 	for c: Dictionary in d.get("creep_camps", []):
-		m.creep_camps.append({"pos": _arr_to_v3(c["pos"]), "creeps": c.get("creeps", [])})
+		var cd := c.duplicate(true)
+		cd["pos"] = _arr_to_v3(c["pos"])
+		if not cd.has("creeps"):
+			cd["creeps"] = []
+		m.creep_camps.append(cd)
 	for nb: Dictionary in d.get("neutral_buildings", []):
-		m.neutral_buildings.append({"def": nb["def"], "pos": _arr_to_v3(nb["pos"])})
+		var nd := nb.duplicate(true)
+		nd["pos"] = _arr_to_v3(nb["pos"])
+		m.neutral_buildings.append(nd)
 	for t: Array in d.get("trees", []):
 		m.trees.append(Vector2i(int(t[0]), int(t[1])))
 		m.tree_types.append(int(t[2]) if t.size() > 2 else 0)
