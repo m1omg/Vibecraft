@@ -281,3 +281,16 @@ func test_audio_ack_debounce_and_order_ticks() -> void:
 	assert_eq(lengths.size(), 2, "voice_started fires for each line that starts")
 	assert_true(float(lengths[0]) > 0.0, "with the line's length")
 	assert_true(int(Audio.stats["debounced"]) >= 2, "debounced requests are counted")
+
+
+func test_smear_pool_is_capped_per_frame() -> void:
+	var sm := Smears.new()
+	tree.root.add_child(sm)
+	track(sm)
+	for i in sm.capacity() + 5:
+		sm.submit(Transform3D.IDENTITY, 10.0, 0.0, 0.8, 0)
+	assert_eq(sm.dropped, 5, "smears beyond the pool are dropped")
+	sm._process(0.0)
+	assert_eq(sm.multimesh.visible_instance_count, sm.capacity(), "one draw holds the pool")
+	sm._process(0.0)
+	assert_eq(sm.multimesh.visible_instance_count, 0, "the list is rebuilt every frame")

@@ -32,6 +32,7 @@ var text: CombatText
 var combat: CombatFx
 var orders: OrderMarkers
 var missiles: MissileFx
+var smears: Smears
 var circles: SelectionCircles
 var bars: HealthBars
 var selected: Array = []                 ## the local selection (Events.selection_changed)
@@ -73,6 +74,9 @@ func _ready() -> void:
 	missiles.name = "MissileFx"
 	missiles.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(missiles)
+	smears = Smears.new()
+	smears.name = "Smears"
+	add_child(smears)
 
 
 func setup(w: World) -> void:
@@ -87,6 +91,7 @@ func setup(w: World) -> void:
 	bars = get_node_or_null("../HealthBars") as HealthBars
 	orders.setup(w, self)
 	missiles.setup(w, self)
+	smears.setup(w)
 	_connect(Events.unit_damaged, _on_unit_damaged)
 	_connect(Events.unit_died, _on_unit_died)
 	_connect(Events.command_issued, _on_command)

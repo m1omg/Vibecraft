@@ -260,3 +260,17 @@ func test_ground_marks_follow_the_clock_not_the_frames() -> void:
 		runs[name] = _drive(SEQUENCES[name], 20, script, frame, sample)
 		w.free()
 	_assert_same(runs, 1e-5, "ripple radius / alpha")
+
+
+func test_smear_reaches_the_tip_on_contact() -> void:
+	# CMB-20: hidden before 85 % of the wind-up, the head on the end of the arc at the damage
+	# point, then a fade of 80 + 20·mass ms that never outlives 140 ms
+	var dp := 0.5
+	assert_true(Smears.look(0.40, dp, -1.0, 120.0, -15.0, 0.1).z <= 0.0, "no smear early in the wind-up")
+	var mid := Smears.look(0.45, dp, -1.0, 120.0, -15.0, 0.1)
+	assert_true(mid.z > 0.0 and mid.x < 120.0 and mid.x > -15.0, "revealing during the snap")
+	assert_near(Smears.look(0.4999, dp, -1.0, 120.0, -15.0, 0.1).x, -15.0, 0.5, "the head reaches the tip at contact")
+	var after := Smears.look(0.6, dp, 0.05, 120.0, -15.0, 0.1)
+	assert_near(after.x, -15.0, 1e-4, "after contact the head stays on the tip")
+	assert_true(after.y < 120.0 and after.z < 0.85, "the tail catches up and fades")
+	assert_true(Smears.look(0.7, dp, 0.1, 120.0, -15.0, 0.1).z <= 0.0, "gone after the fade")

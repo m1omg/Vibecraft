@@ -57,6 +57,10 @@ var _last_pos := Vector3.INF
 # swing
 var _swing_prev: float = -1.0
 var _whoosh_done: bool = false
+# smear (CMB-20)
+var _smear_contact: float = -100.0
+var _smear_prev: float = -1.0
+var smears: int = 0
 # death
 var _death_dust: bool = false
 
@@ -162,6 +166,7 @@ func compose(dt: float) -> void:
 	view.rig.transform = Transform3D(b, off)
 	_update_stride()
 	_update_swing()
+	_update_smear(now)
 
 
 # --- closed-form layers ------------------------------------------------------------------------
@@ -387,6 +392,59 @@ func _update_swing() -> void:
 			Audio.event("whoosh", unit.display_pos() + Vector3(0, 1.0, 0), {"family": family,
 				"mass": mass(), "from": maxf(-start, 0.0), "seed": unit.id * 7 + unit.world.tick_count})
 			whooshes += 1
+
+
+## CMB-20: the painted smear of a melee swing (Smears.look: reveal over the last 15 % of the
+## wind-up, the head on the weapon tip at the damage tick, fade 80 + 20·mass ms). The contact is
+## anchored to the damage tick (back-dated), the plane to the unit's facing.
+func _update_smear(now: float) -> void:
+	var shape := str(sheet.get("smear", ""))
+	if shape.is_empty() or not unit.projectile.is_empty() or Vfx.instance == null or Vfx.instance.smears == null:
+		return
+	var s := unit.swing_progress()
+	var dp := unit.damage_point_ratio()
+	if s >= dp and _smear_prev < dp and s >= 0.0:
+		_smear_contact = minf(FxClock.tick_time(), now)
+	_smear_prev = s
+	var fade := minf((80.0 + 20.0 * mass()) / 1000.0, 0.14)
+	var age := now - _smear_contact
+	if (s >= 0.0 and s < dp) or age > fade:
+		age = -1.0
+	if age < 0.0 and (s < 0.0 or s < dp * 0.85):
+		return
+	if not view.on_screen():
+		return
+	var p := unit.display_pos()
+	var h := unit.top_height()
+	var f := unit.facing
+	var fwd := Vector3(-sin(f), 0.0, -cos(f))
+	var right := Vector3(cos(f), 0.0, -sin(f))
+	var reach := unit.radius + float(sheet.get("reach_m", 1.1))
+	var x := fwd
+	var y := Vector3.UP
+	var pivot := p + Vector3.UP * (0.62 * h)
+	var a0 := 120.0
+	var a1 := -15.0
+	var kind := 0
+	match shape:
+		"side":
+			x = right
+			y = (fwd * cos(deg_to_rad(20.0)) + Vector3.UP * sin(deg_to_rad(20.0))).normalized()
+			pivot = p + Vector3.UP * (0.55 * h)
+			a0 = 10.0
+			a1 = 150.0
+		"thrust":
+			kind = 1
+			pivot = p + Vector3.UP * (0.55 * h)
+			a0 = 0.25
+			a1 = 1.0
+	var lk := Smears.look(maxf(s, 0.0), dp, age, a0, a1, fade)
+	if lk.z <= 0.0:
+		return
+	var z := x.cross(y).normalized()
+	var xf := Transform3D(Basis(x * reach, y * reach, z * reach), pivot)
+	if Vfx.instance.smears.submit(xf, lk.x, lk.y, lk.z, kind):
+		smears += 1
 
 
 # --- swing remap (hit-stop) -----------------------------------------------------------------

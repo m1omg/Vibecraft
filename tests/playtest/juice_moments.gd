@@ -172,17 +172,17 @@ func _missiles(centre: Vector3) -> void:
 	await _frames(2)
 	var hold: Array = []
 	for i in 3:
-		hold.append(world.spawn_unit("kingdom_pavisier", 0, centre + Vector3(-4.0, 0, (i - 1) * 1.6), -PI * 0.5).id)
+		hold.append(world.spawn_unit("kingdom_pavisier", 0, centre + Vector3(-2.5, 0, (i - 1) * 1.6), -PI * 0.5).id)
 	for i in 2:
-		hold.append(world.spawn_unit("kingdom_hookgunner", 0, centre + Vector3(-6.0, 0, (i - 0.5) * 2.0), -PI * 0.5).id)
+		hold.append(world.spawn_unit("kingdom_hookgunner", 0, centre + Vector3(-4.3, 0, (i - 0.5) * 2.0), -PI * 0.5).id)
 	var jav: Array = []
 	for i in 3:
-		jav.append(world.spawn_unit("clans_javelineer", 1, centre + Vector3(4.5, 0, (i - 1) * 1.8), PI * 0.5).id)
+		jav.append(world.spawn_unit("clans_javelineer", 1, centre + Vector3(2.6, 0, (i - 1) * 1.8), PI * 0.5).id)
 	world.issue({"type": "hold", "player": 0, "units": hold})
 	world.issue({"type": "hold", "player": 1, "units": jav})
 	_look(centre + Vector3(0.0, 0, 1.6), 18.75)
 	var root3: Node = world.get("projectile_root")
-	for f in 900:
+	for f in 240:
 		await _frames(1)
 		if root3.get_child_count() > 0:
 			break
