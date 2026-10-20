@@ -98,6 +98,12 @@ func _on_selection_changed(sel: Array) -> void:
 		next[u] = now + delay
 	_sel_t0 = next
 	units = sel.duplicate()
+	for k: Variant in _pulses.keys():
+		if not sel.has(k):
+			_pulses.erase(k)
+	for k2: Variant in _shimmer.keys():
+		if not sel.has(k2):
+			_shimmer.erase(k2)
 
 
 ## Ui time when a unit's ring starts its pop-in (tests, QA traces); -1 when not selected.
