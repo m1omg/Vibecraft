@@ -1,0 +1,41 @@
+export const meta = {
+  name: 'free-autorig',
+  description: 'Build a free Blender auto-rigger that fits the library 24-bone skeleton to new AI meshes and transfers animation clips; QA against the paid rig; fix',
+  phases: [
+    { title: 'Build', detail: 'tools/autorig.py + tests' },
+    { title: 'QA', detail: 'independent adversarial QA vs paid rig ground truth' },
+    { title: 'Fix', detail: 'apply QA findings' },
+  ],
+}
+const R = '/home/user/Vibecraft'
+const S = `${R}/assets_src/characters/kingdom_infantry`
+const ENV = `
+CONTEXT: Vibecraft, a Godot 4.7.2 RTS (repo ${R}). Characters are AI-generated static GLBs (Tripo H3.1 via Higgsfield: ~11k tris, one 2048 basecolor texture, A-pose-ish, raw files face +X). The user asked to use the CHEAPEST options: paid auto-rigging (Higgsfield 3d_rigging, 8 credits per rig) should be replaced by a FREE local Blender auto-rigger. Do NOT call any paid API (Krea/Higgsfield).
+TOOLS AVAILABLE: Blender as Python module: /opt/bpyenv/v313/bin/python (bpy 5.2.2 LTS, numpy, Pillow). Existing pipeline tools in ${R}/tools/ (read ${R}/tools/README.md first): process_model.py (normalise/decimate/team mask; output faces -Z in Godot), merge_anims.py, retarget_anims.py (rotation-only retarget by bone name, hips scaled by leg ratio), render_preview.py (Godot contact sheet incl. animation frames — use it and LOOK at the PNGs with the Read tool), vc_bpy.py helpers. Research notes on CPU auto-rigging: ${R}/docs/research/ai-asset-pipeline.md (search for "bone heat", "voxel", "Data Transfer").
+LIBRARY RIG (ground truth, paid): ${S}/rig_walk.glb, rig_idle.glb, rig_attack_sword.glb, rig_death.glb — Meshy 24-bone humanoid: Hips, Spine02, Spine01, Spine, neck, Head, head_end, headfront, LeftShoulder, LeftArm, LeftForeArm, LeftHand, RightShoulder, RightArm, RightForeArm, RightHand, LeftUpLeg, LeftLeg, LeftFoot, LeftToeBase, RightUpLeg, RightLeg, RightFoot, RightToeBase. NOTE: rig files contain a stray 'Icosphere' helper mesh — ignore/strip it. The static source mesh of that same character: ${S}/model_tripo_h31.glb (raw, faces +X) and ${S}/rig_source_facing_pz.glb (re-oriented to face +Z, 1.75 m, the exact mesh Meshy rigged). Other test meshes (same character, different generators): ${S}/bakeoff_trellis_4k.glb, ${S}/bakeoff_tripo_legacy_4k.glb (these are processed: face -Z, 4k tris). Also create at least one DIFFERENT-proportion test body (e.g. scale the source mesh non-uniformly: 1.3x wider + 0.85x shorter legs, a hunched brute; and a slim tall robed caster made by tapering) to test robustness, since upcoming characters include huge grey-skinned brutes, robed casters, a small worker and heroes ~2.1 m tall.
+Scratch dir for outputs: /tmp/claude-0/-home-user-Vibecraft/8059aa00-c746-5237-9c2e-26087ac69bd5/scratchpad/autorig/ (not the repo). Do NOT commit or push.
+`
+
+phase('Build')
+const build = await agent(`${ENV}
+TASK: Write ${R}/tools/autorig.py (run with the bpy python; argparse --help; prints a JSON summary; deterministic). Usage target:
+  $PY tools/autorig.py INPUT.glb -o OUT.glb --template ${S}/rig_walk.glb [--facing +x|+z|-z|-x] [--height 1.75] [--clip idle=${S}/rig_idle.glb --clip walk=${S}/rig_walk.glb --clip attack=${S}/rig_attack_sword.glb --clip death=${S}/rig_death.glb ...] [--target-tris 4500 --team-mask 300:45:0.3 --name unit_id]
+Pipeline:
+1. Import target static mesh, normalise orientation to face +Z (glTF front) with feet at 0 and the given height (reuse vc_bpy helpers/process_model logic where possible).
+2. LANDMARKS: detect joint positions from the mesh geometry robustly: e.g. horizontal cross-section analysis along height for crotch (legs split into 2 islands), hips, waist, chest, shoulders (widest torso band / arm separation), neck (narrowest above shoulders), head top; arms: find the arm chains by following the left/right extremes (A-pose arms angled down), elbows ~ arm midpoint with bend detection, wrists/hands near extreme ends; legs: knee ~ midpoint hip-ankle, ankle near the bottom, toe forward. Handle props (shields, weapons, capes, robes): robes hide leg separation -> fall back to proportions from the template scaled to the mesh height; big shields/weapons extend the bounding box -> use density/medial-axis-ish heuristics, not just bbox extremes. Always fall back gracefully to template proportions scaled per region, and print which landmarks were detected vs fallback.
+3. Build an armature with EXACTLY the template's bone names, hierarchy, and rest-pose bone ROLLS/orientation convention (copy from the template so retarget_anims maps 1:1), with heads/tails moved to the fitted landmarks.
+4. SKIN WEIGHTS for free: voxel-remesh a watertight proxy (~0.8% of height voxel size), Armature-deform with automatic weights (bone heat) on the proxy, then Data Transfer vertex groups to the real mesh (nearest face interpolated), normalise, limit to 4 influences, clean tiny weights; fallback to envelope/nearest-bone-segment weights if bone heat fails. Weapons/shields held in hands should follow the hand (detect geometry near the hand that is disconnected from the body island -> weight 100% to the hand bone).
+5. Transfer animation clips from the clip GLBs via the same logic as tools/retarget_anims.py (import it or call it), normalise each clip's root so the body faces the unit forward (+Z) on average over the clip (fixes the known issue: the library idle/attack clips twist the body ~60 deg away from facing — remove that constant yaw offset of Hips), keep walk in place, then name actions idle/walk/attack/death/etc.
+6. Optionally chain into process_model.py (decimate, team mask, facing -Z for Godot) so one command produces the game-ready GLB.
+7. QA METRICS printed in JSON: landmark source per joint, unweighted vertex count, max influences, for each clip the max vertex displacement ratio vs rest and a 'stretch' metric (max edge length ratio deformed/rest, flag > 2.0), and a joint-position error vs the template rig when run on the template's own mesh.
+TESTS: put a test script in ${R}/tools/tests/test_autorig.sh that runs autorig on (a) rig_source_facing_pz.glb and compares joint positions to the paid Meshy rig (report mean/max joint error in cm; target mean < 4 cm, max < 8 cm), (b) the two bakeoff meshes, (c) your synthetic brute + caster bodies. Render contact sheets with tools/render_preview.py for each output and LOOK at them (idle/walk/attack/death frames): no exploding limbs, weapon follows hand, feet planted, body faces forward.
+Iterate until results are good. Update ${R}/tools/README.md with a section "Free auto-rig". Final reply: commands, metrics table per test mesh, known limitations, sheet paths.`, { label: 'build:autorig', phase: 'Build' })
+
+phase('QA')
+const QA = { type: 'object', properties: { findings: { type: 'array', items: { type: 'object', properties: { severity: { type: 'string', enum: ['blocker','major','minor'] }, problem: { type: 'string' }, evidence: { type: 'string' }, fix: { type: 'string' } }, required: ['severity','problem','evidence','fix'] } }, verdict: { type: 'string' } }, required: ['findings','verdict'] }
+const qa = await agent(`${ENV}
+You are an independent, adversarial QA engineer. Another engineer built ${R}/tools/autorig.py (summary below). Try to BREAK it: run it yourself on all test meshes plus at least two new variants you construct (e.g. a mesh rotated 90 degrees with --facing given, a mesh with a long two-handed weapon/staff held diagonally, a mesh with a wide robe/cape skirt, a very short squat worker at 1.2 m). Render contact sheets and LOOK at every animation frame. Check the JSON metrics, Godot import (render_preview --info-only), determinism (run twice, compare bytes), and whether clips face forward and feet don't slide in walk. Report only verified problems with evidence.\nBuilder summary:\n${build}`, { label: 'qa:autorig', phase: 'QA', schema: QA })
+
+phase('Fix')
+const fixed = qa && qa.findings.length ? await agent(`${ENV}\nFix these verified QA findings in ${R}/tools/autorig.py (and tests/README as needed). Re-run tools/tests/test_autorig.sh and look at the sheets.\nFINDINGS:\n${JSON.stringify(qa.findings, null, 1)}\nFinal reply: what was fixed, final metrics table, remaining limitations.`, { label: 'fix:autorig', phase: 'Fix' }) : 'no findings'
+return { build, qa, fixed }
