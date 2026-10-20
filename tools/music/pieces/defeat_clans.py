@@ -17,6 +17,7 @@ import palette as P  # noqa: E402
 from score import Piece  # noqa: E402
 
 LENGTH_S = 12.0
+LEAD_S = 0.22
 
 
 def build():
@@ -53,7 +54,9 @@ def build():
     horn.curve(7.6, 8.35, 100, 84)
     drum.hit(8.5, "doum", 66)
     p.set_end(10.5)
-    p.tail_s = round(LENGTH_S - p.seconds(10.5), 3)
+    # + LEAD_S: the gong's first 0.22 s lie below -60 dB and render.py cuts them (no dead air before the swell),
+    # so the tail runs that much longer and the stinger keeps its 12 s like the other three
+    p.tail_s = round(LENGTH_S - p.seconds(10.5) + LEAD_S, 3)
     p.length_range = (LENGTH_S - 0.2, LENGTH_S + 0.2)
     return p
 
