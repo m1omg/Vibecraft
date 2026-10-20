@@ -12,7 +12,8 @@ the held second B resolving to A. Dialogue II swaps the roads: the two-string cl
 with the Gong-Ring in stretto over its held A, and the two lines meet on one D (bar 23, a held unison: the clans
 slide into it, the kingdom steps into it); they close in parallel sixths, the two-string's E a suspension over the
 fiddle's last D. The settle is drone, a last gong and the dulcimer's E-D, ringing across the loop seam.
-Render: python3 tools/music/render.py tools/music/pieces/score.py --length-check
+Render: python3 tools/music/render.py tools/music/pieces/score_bed.py --length-check
+(The module is score_bed.py so it never shadows the toolkit's score.py; the piece is still named "score".)
 """
 import os
 import sys
