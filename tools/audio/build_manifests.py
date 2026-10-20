@@ -7,6 +7,7 @@ key holding all their children (material variants a caller may pick at random).
 
 Music: assets/audio/music/*.ogg, with the metadata in tools/audio/music_jobs.json ("result" entries written by the
 post step): {"<piece id>": {"file": "res://...", "length_s": ..., "prompt_id": ..., "job_id": ..., "music_length_ms": ...}}.
+Entries of composed pieces (a "source" under tools/music/pieces/) already in the music manifest are kept as they are.
 """
 import json
 import os
@@ -70,6 +71,12 @@ def music():
             "music_length_ms_bible": j["music_length_ms"],
             "kind": j["kind"],
         }
+    # composed pieces (tools/music/pieces/*.py) are not jobs: keep their entries as the composers wrote them
+    mpath = os.path.join(root, "manifest.json")
+    if os.path.exists(mpath):
+        for k, v in json.load(open(mpath)).items():
+            if k not in out and str(v.get("source", "")).startswith("tools/music/pieces/"):
+                out[k] = v
     with open(os.path.join(root, "manifest.json"), "w") as f:
         json.dump(out, f, indent=1, ensure_ascii=False)
         f.write("\n")
