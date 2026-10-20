@@ -185,25 +185,40 @@ func test_unreachable_query_is_cheap() -> void:
 
 
 func test_relabel_only_when_a_split_is_possible() -> void:
-	var m := MapGenerator.test_map()
-	var w := make_world(m)
-	var p := w.pathing
-	var r := Grid.footprint_rect(m.start_locations[0] + Vector3(12, 0, -12), Vector2i(8, 8))
-	assert_true(p.is_rect_free(r), "test site is free")
-	p.set_footprint_rect(r, true)
-	assert_false(p._labels_dirty, "building in the open cannot split a region: no relabel")
-	# force a full background relabel and measure its per-tick cost
-	p._labels_dirty = true
+	var m: MapData
+	var p: Pathing
+	# Force a full background relabel and measure its per-tick cost. The job is deterministic, so
+	# (like test_perf's best_tick_samples) it runs 3 times on fresh worlds and each tick keeps its
+	# fastest run scaled to the reference machine: host noise on a shared VM no longer fails the
+	# bound, while a real spike (a step doing too much work) shows in every run.
+	var best := PackedFloat64Array()
 	var ticks := 0
+	for rep in 3:
+		m = MapGenerator.test_map()
+		var w := make_world(m)
+		p = w.pathing
+		var r := Grid.footprint_rect(m.start_locations[0] + Vector3(12, 0, -12), Vector2i(8, 8))
+		assert_true(p.is_rect_free(r), "test site is free")
+		p.set_footprint_rect(r, true)
+		assert_false(p._labels_dirty, "building in the open cannot split a region: no relabel")
+		p._labels_dirty = true
+		var k := machine_slowdown()
+		ticks = 0
+		while ticks < 300:
+			var t := Time.get_ticks_usec()
+			p.begin_tick()
+			var ms := (Time.get_ticks_usec() - t) / 1000.0 / k
+			if ticks < best.size():
+				best[ticks] = minf(best[ticks], ms)
+			else:
+				best.append(ms)
+			ticks += 1
+			if p._job.is_empty() and not p._labels_dirty:
+				break
 	var worst := 0.0
-	while ticks < 300:
-		var t := Time.get_ticks_usec()
-		p.begin_tick()
-		worst = maxf(worst, (Time.get_ticks_usec() - t) / 1000.0)
-		ticks += 1
-		if p._job.is_empty() and not p._labels_dirty:
-			break
-	print("     full relabel: %d ticks, worst %.2f ms/tick" % [ticks, worst])
+	for v in best:
+		worst = maxf(worst, v)
+	print("     full relabel: %d ticks, worst %.2f ms/tick (best of 3)" % [ticks, worst])
 	assert_lt(float(ticks), 150.0, "relabel finishes within ~5 s of sim time")
 	assert_lt(worst, 8.0, "relabel step stays bounded")
 	var s0 := Grid.world_to_cell(m.start_locations[0] + Vector3(0, 0, -8))
