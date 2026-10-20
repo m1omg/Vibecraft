@@ -20,6 +20,7 @@ Helpers:
   plain(motif)                           the motif without ornaments (for a doubling voice)
   jaw(track, piece, bar0, bars, ks, grid, vel, fade)  jaw-harp pulses on a 12-step bar grid
   gallop_fifths(track, beat, root, vel, shape)  the lute's open-fifth gallop figure for one 4/4 bar
+  riff(track, beat, chord, vel, density)  the lute's running sixteenth riff over a drone string (A Dorian table)
 """
 from __future__ import annotations
 
@@ -145,17 +146,22 @@ def plain(m: Motif) -> Motif:
     return out
 
 
-def jaw(track, piece, start_bar, bars, ks, grid="x.xx.xx.xx.x", vel=80, fade=None):
-    """Jaw-harp pulses: `grid` is a 12-step bar (X accent, x hit, o soft, g ghost); ks cycles the harmonic
-    numbers per hit. fade=(v0, v1) scales velocity across the bars."""
+def jaw(track, piece, start_bar, bars, ks, grid="x.xx.xx.xx.x", vel=80, fade=None, pitch="D3"):
+    """Jaw-harp pulses: `grid` is one bar of steps (12 in 4/4 = the triplet gallop, 16 = sixteenths; any
+    length divides the bar; X accent, x hit, o soft, g ghost); ks cycles the harmonic numbers per hit.
+    fade=(v0, v1) scales velocity across the bars. pitch only labels the note (the synth's fundamental is a
+    parameter; k picks the harmonic)."""
     f = {"X": 1.2, "x": 1.0, "o": 0.72, "g": 0.5}
+    g = grid.replace(" ", "")
     i = 0
     for b in range(bars):
         b0 = piece.bar(start_bar + b)
+        step = 1 / 3.0 if len(g) == 12 and piece.bar_len(start_bar + b) == 4.0 else \
+            piece.bar_len(start_bar + b) / len(g)
         sc = 1.0 if fade is None else fade[0] + (fade[1] - fade[0]) * (b / max(1, bars - 1))
-        for j, ch in enumerate(grid.replace(" ", "")):
+        for j, ch in enumerate(g):
             if ch in f:
-                track.note(b0 + j / 3.0, "D3", 1 / 3.0, vel=vel * f[ch] * sc, k=ks[i % len(ks)])
+                track.note(b0 + j * step, pitch, step, vel=vel * f[ch] * sc, k=ks[i % len(ks)])
                 i += 1
 
 
@@ -173,6 +179,34 @@ def gallop_fifths(track, beat, root, vel=80, shape="canter"):
     }
     for step, pc, vf, ln in figs[shape]:
         track.note(beat + step / 3.0, pc, ln, vel=vel * vf)
+
+
+# the long-necked lute's running riff: a drone string (A3) on the galloping sixteenths, the bass fifth on the
+# downbeat, two melodic peaks and a falling turn; per chord: (bass, fifth, peak1, peak2, turn of three)
+RIFF_A = {
+    "Am": (45, 52, 64, 62, (60, 59, 57)), "D": (50, 57, 66, 64, (66, 64, 62)), "G": (55, 62, 62, 59, (60, 59, 57)),
+    "Em": (52, 59, 67, 64, (62, 60, 59)), "C": (48, 55, 64, 67, (64, 62, 60)), "Bm": (47, 54, 62, 66, (64, 62, 59)),
+}
+
+
+def riff(track, beat, chord, vel=78, density="full", drone=57, table=None):
+    """One 4/4 bar of the lute riff on the 16th grid. density: full (gallop: x.xx per beat), sparse (bass and
+    peaks only), eighths (the slowed outro form)."""
+    bass, fifth, p1, p2, turn = (table or RIFF_A)[chord]
+    ev = {"full": [(0, "B"), (2, "d"), (3, "d"), (4, "p1"), (6, "d"), (7, "d"), (8, "p2"), (10, "d"), (11, "d"),
+                   (12, "t0"), (13, "t1"), (14, "t2")],
+          "sparse": [(0, "B"), (4, "p1"), (8, "p2"), (12, "t0"), (14, "t2")],
+          "eighths": [(0, "B"), (2, "d"), (4, "p1"), (6, "d"), (8, "p2"), (10, "d"), (12, "t0"), (14, "t2")]}[density]
+    for step, kind in ev:
+        t = beat + step / 4.0
+        if kind == "B":
+            track.chord(t, [bass, fifth], 0.9 if density != "full" else 0.5, vel=vel, strum=0.012)
+        elif kind == "d":
+            track.note(t, drone, 0.3, vel=vel * (0.5 if step % 4 == 3 else 0.58))
+        elif kind in ("p1", "p2"):
+            track.note(t, p1 if kind == "p1" else p2, 0.6 if density == "full" else 1.0, vel=vel * 0.9)
+        else:
+            track.note(t, turn[int(kind[1])], 0.35 if kind != "t2" else 0.6, vel=vel * (0.8 if kind != "t2" else 0.85))
 
 
 def bars_of(piece, bar0, chords):
