@@ -12,12 +12,24 @@ No stock sound is used for a signature cue (bible §11 decision 2: level-up, ala
 reveal cues, building select sounds); the CC0 layers cover body falls and UI clicks and ticks only, plus layers inside derived
 placeholders.
 
+## Third-party (MIT): the soundfont that renders the composed music
+
+| Asset | Author | Licence | Source | Use |
+|---|---|---|---|---|
+| FluidR3_GM.sf2 (Fluid R3 General MIDI SoundFont) | Frank Wen, with the contributors listed in its README; Copyright © 2000-2002, 2008 Frank Wen, © 2008 Toby Smithe | MIT ("I hereby release Fluid under the MIT license", upstream README, quoted in the Debian/Ubuntu package's copyright file) | Ubuntu package `fluid-soundfont-gm` 3.1, `/usr/share/sounds/sf2/FluidR3_GM.sf2` (sha256 74594e8f4250680adf590507a306655a299935343583256f3b722c48a1bc1cb0) | The sampled instruments (fiddles, viola, cello, contrabass, dulcimer, plucked lutes, bagpipe, shanai, horns, timpani, percussion) of the composed music, rendered offline by FluidSynth 2.3 (LGPL, a tool only). The soundfont itself is not shipped |
+
 ## Generated (ours)
 
 All other SFX are generated with Krea `bytedance/seed-audio-1.0` (prompts: `tools/audio/sfx_jobs.json` via
 `tools/audio/sfx_prompts.py`, job ids in `docs/ledger-pending/audio-sfx.md`), then split, trimmed, faded and normalised by
-`tools/audio/split_takes.py`. Music: Krea `elevenlabs/music-v2.5` (prompts verbatim from the art-and-audio bible §10.3,
-`tools/audio/music_jobs.json`), post-processed by `tools/audio/post_music.py`.
+`tools/audio/split_takes.py`. Music: **composed by the project** in Python with `tools/music` (13 pieces: Kingdom 1-3, Clans 1-3, the menu theme,
+the end-screen bed, both victory and both defeat stingers and the clans opening cue). Each piece is a source file in
+`tools/music/pieces/` that regenerates its MIDI and stems byte for byte from a fixed seed; the instruments are the
+FluidR3_GM soundfont above plus numpy synths of our own (gongs, hurdy-gurdy, jaw harp, overtone chant, frame drums,
+claps). Melodies are built from our own motifs (bible §10.2). The list, sources and hashes are in
+`assets/audio/music/manifest.json`. The one exception is the kingdom opening cue (`opening_kingdom.ogg`), generated
+with Krea `elevenlabs/music-v2.5` (prompt verbatim from the art-and-audio bible §10.3, `tools/audio/music_jobs.json`)
+and post-processed by `tools/audio/post_music.py`; paid music generation is banned since that probe.
 
 ## Layered, procedural and derived files
 

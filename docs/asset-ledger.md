@@ -64,6 +64,7 @@ Budget policy (agreed with the user):
 | 23 | 2026-10-17 | Krea | Hall image-to-3D, 2 × TRELLIS v1 tex 2048: moot hall f94c3854-3da3-4dc1-9111-e18142779ce2 (seed 1180), shell hall af8d88a7-0e47-466e-a7c1-259003f3973b (seed 1280) | 29.63 CU | Fronts good, sides/back black → rejected for buildings (kept in assets_src/buildings/*/model_trellis.glb). TRELLIS only for small one-sided props from now on |
 
 | 24 | 2026-10-17 | Higgsfield | Hall image-to-3D redo, 2 × tripo_h3_1_image_to_3d face_limit 20000: moot hall 30c30deb-665f-44b3-99d0-0d7a97a0f8fb, shell hall 18634ede-cb91-4aa3-a6ef-6b58c290c8cb | 18 cr | Approved: textured all round; moot hall needs --yaw 90 (door to camera) → assets/models/buildings/ |
+| 25 | 2026-10-20 | none (in-house) | Composed music, branch music/p0: Kingdom 1-3, Clans 1-3, menu theme, end-screen bed, victory and defeat stingers for both factions, clans opening cue (13 pieces, ≈ 24.5 min) composed in Python with `tools/music` and rendered offline (FluidSynth 2.3 + the MIT FluidR3_GM soundfont + numpy synths) | **0 CU** | All 13 at −16 LUFS, true peak ≤ −1.98 dBTP, 48 kHz stereo Ogg; sources, seeds and hashes in `assets/audio/music/manifest.json`. Replaces the banned ElevenLabs Music plan (≈ 444 CU per 10 s). Only the kingdom opening cue stays from that probe |
 
 **Bake-off conclusion (2026-10-16):** characters and anything that turns → Higgsfield Tripo H3.1 (9 cr) + Higgsfield
 rigging (8 cr). Static buildings/props → Krea TRELLIS v1 (~15 CU) is acceptable when the back is never seen; otherwise
@@ -73,7 +74,7 @@ Higgsfield Tripo H3.1. All other Krea 3D models cost 148–222 CU each — banne
 
 ## 2026-10-20 audio pass (branch audio/p0)
 
-Krea 1419.61 CU before → **719.98 CU after** (verified with get_balance). Spent ≈ 699.6 CU: SFX ≈ 162 CU (15 Seed Audio jobs), voice ≈ 93 CU (20 TTS jobs, 5 speakers), music **≈ 444 CU for one 10 s probe** (ElevenLabs Music v2.5 — far above the 130 CU cap the agent was given, because the price was unknown and preflight returned no quote). **Music through Krea is banned from now on**; music will come from CC0/procedural sources or a cheaper service. The voice agent was stopped by a usage limit after tier a for the hodman, yurtwright, pavisier, grappler and hookgunner (the rest of the cast is scripted in docs/design/voice-lines.md, not yet generated). Generic SFX also use Kenney CC0 packs (assets/audio/CREDITS.md).
+Krea 1419.61 CU before → **719.98 CU after** (verified with get_balance). Spent ≈ 699.6 CU: SFX ≈ 162 CU (15 Seed Audio jobs), voice ≈ 93 CU (20 TTS jobs, 5 speakers), music **≈ 444 CU for one 10 s probe** (ElevenLabs Music v2.5 — far above the 130 CU cap the agent was given, because the price was unknown and preflight returned no quote). **Music through Krea is banned from now on**; music will come from CC0/procedural sources or a cheaper service. **Done at 0 CU:** the music is composed in-house with `tools/music` (spend log #25). The voice agent was stopped by a usage limit after tier a for the hodman, yurtwright, pavisier, grappler and hookgunner (the rest of the cast is scripted in docs/design/voice-lines.md, not yet generated). Generic SFX also use Kenney CC0 packs (assets/audio/CREDITS.md).
 
 Higgsfield: 77.35 cr (verified 2026-10-20).
 
