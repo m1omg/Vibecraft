@@ -186,7 +186,9 @@ lift 4.8 kHz (+2 / +3 dB) and 8.5 kHz (+1.5 dB) so the mix is not muffled, and m
 4. glue: the bus is set to -20 LUFS, EQ'd (unit-voice dip, presence, shelves) and compressed 2:1;
 5. form: `track` = the music plus `tail_s` with a short end fade; `loop` = the music after the loop point (the piece's
    end) crossfaded equal-power into its start over `--xfade` s, so the file is exactly the musical length; `cue` = the
-   first `--trim` s with a cosine `--trim-fade`;
+   first `--trim` s with a cosine `--trim-fade`. A loop's first samples therefore carry the crossfaded tail (drone,
+   gong ring, the last bowed note), not silence: the player fades a loop in when it starts cold (the menu at boot:
+   0.5-1.0 s, juice MUS-01). Never bake that fade into the file, or it recurs on every pass;
 6. master: loudnorm two-pass in linear mode to -16 LUFS with a -1.6 dBTP aim (a lookahead limiter runs first only when
    the peak-to-loudness ratio would push loudnorm into dynamic mode), then Ogg Vorbis `-q:a 6`, 48 kHz stereo,
    bit-exact; if the encoded file misses -16 ±0.5 LUFS or -1 dBTP, a small gain fix is applied and it is re-encoded.
