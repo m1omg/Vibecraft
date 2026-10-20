@@ -1,0 +1,62 @@
+{
+ "src": "/tmp/vc_audio/assets_src/audio/sfx/combat/hit_flesh_h__6a0b8a42.mp3",
+ "id": "hit_flesh_h",
+ "raw_dur": 5.042,
+ "raw_peak_db": 1.79,
+ "detected": 3,
+ "expected": 4,
+ "exported": 3,
+ "takes": [
+  {
+   "dur": 0.801,
+   "peak_db": 1.79,
+   "clip": 0,
+   "rms_db": -9.97,
+   "crest_db": 11.76,
+   "centroid_hz": 2216,
+   "flatness": 0.0243,
+   "silence": 0.144,
+   "periodic": 0.0,
+   "take": 1,
+   "start": 0.132,
+   "end": 0.933,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/combat/hit_flesh_h_01.wav"
+  },
+  {
+   "dur": 0.826,
+   "peak_db": 0.14,
+   "clip": 0,
+   "rms_db": -12.87,
+   "crest_db": 13.01,
+   "centroid_hz": 2641,
+   "flatness": 0.0276,
+   "silence": 0.115,
+   "periodic": 0.0,
+   "take": 2,
+   "start": 1.878,
+   "end": 2.704,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/combat/hit_flesh_h_02.wav"
+  },
+  {
+   "dur": 1.126,
+   "peak_db": -0.36,
+   "clip": 0,
+   "rms_db": -12.33,
+   "crest_db": 11.97,
+   "centroid_hz": 2567,
+   "flatness": 0.0257,
+   "silence": 0.191,
+   "periodic": 0.0,
+   "take": 3,
+   "start": 3.554,
+   "end": 4.679,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/combat/hit_flesh_h_03.wav"
+  }
+ ]
+}
