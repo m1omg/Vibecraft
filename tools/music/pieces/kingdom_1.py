@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kingdom 1, "Market-Day Muster" (assets/audio/music/kingdom_1.ogg). D Mixolydian, 92 BPM, 4/4, about 3:27.
+"""Kingdom 1, "Market-Day Muster" (assets/audio/music/kingdom_1.ogg). D Mixolydian, 92 BPM, 4/4, about 3:21.
 
 Composer's note. Form (bars, 1-based): intro 1-8 | A 9-24 (two 8-bar periods) | B "muster" 25-40 | interlude 41-48 |
 retransition 49-52 | A' 53-68 | outro 69-76. The fiddle's theme is the Wheel (D-E-F#, G, A) answered by the falling
