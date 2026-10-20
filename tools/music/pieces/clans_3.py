@@ -14,7 +14,7 @@ half-bar exchanges (39-42, breathless), then both together in octave runs to a h
 Break 47-54: drums, stamps and claps alone in 7/8 + 4/4 (2+2+3 against the gallop), lute chops, bright small
 gongs. A' 55-72: the theme at full power, the raspy low fiddle an octave under the high one, the lute riff,
 claps on the backbeat, a burst of overtone chant and the big gong at the climax (67-70), a two-bar run to the
-arrival. Outro 73-82: a ritardando from 100 to 70 BPM, the riff in eighths, the drums thin to a heartbeat, the
+arrival. Outro 73-82: a ritardando from 100 to 72 BPM, the riff in eighths, the drums thin to a heartbeat, the
 motif augmented x2 on the fiddle, the held B resolving to A over the last gong.
 Render: python3 tools/music/render.py tools/music/pieces/clans_3.py --out assets/audio/music/clans_3.ogg --length-check
 """
