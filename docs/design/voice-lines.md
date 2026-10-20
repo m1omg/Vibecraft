@@ -38,7 +38,7 @@ speech recognition); **rejected** = generated but over the cap after `atempo` 1.
 - Budget: the full slice script (371 lines) costs about 1,200 CU at this price; the 300 CU cap of this pass buys the P0
   acknowledgement set first (task tier a), then annoyed runs (tier b), then advisor alerts (tier c).
 
-**Totals:** 363 lines written; 10 shipped, 1 rejected and waiting for a retake, 352 not generated.
+**Totals:** 363 lines written; 24 shipped, 2 rejected and waiting for a retake, 337 not generated.
 
 ## Casting
 
@@ -97,15 +97,15 @@ Notes: mech: 01 = Plant Pavise on; 02 = off.
 
 | Speaker | Category | # | Text | Words | Voice id | File | Status |
 |---|---|---|---|---|---|---|---|
-| pavisier | `ready` | 1 | I brought the big shield. They're all big. | 8 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/ready_01.ogg` | not generated |
-| pavisier | `what` | 1 | Wall here! | 2 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/what_01.ogg` | not generated |
-| pavisier | `what` | 2 | Shield's the tall bit. | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/what_02.ogg` | not generated |
+| pavisier | `ready` | 1 | I brought the big shield. They're all big. | 8 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/ready_01.ogg` | shipped |
+| pavisier | `what` | 1 | Wall here! | 2 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/what_01.ogg` | shipped |
+| pavisier | `what` | 2 | Shield's the tall bit. | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/what_02.ogg` | shipped |
 | pavisier | `what` | 3 | Point me somewhere. | 3 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/what_03.ogg` | not generated |
-| pavisier | `what` | 4 | Mind the wet paint. | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/what_04.ogg` | not generated |
-| pavisier | `yes` | 1 | Boards up, feet forward. | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/yes_01.ogg` | not generated |
-| pavisier | `yes` | 2 | Step and plant. | 3 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/yes_02.ogg` | not generated |
+| pavisier | `what` | 4 | Mind the wet paint. | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/what_04.ogg` | shipped |
+| pavisier | `yes` | 1 | Boards up, feet forward. | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/yes_01.ogg` | shipped |
+| pavisier | `yes` | 2 | Step and plant. | 3 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/yes_02.ogg` | shipped |
 | pavisier | `yes` | 3 | Carrying the wall over. | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/yes_03.ogg` | not generated |
-| pavisier | `yes` | 4 | Where you point. | 3 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/yes_04.ogg` | not generated |
+| pavisier | `yes` | 4 | Where you point. | 3 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/yes_04.ogg` | shipped |
 | pavisier | `attack` | 1 | Shield first, sharp second! | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/attack_01.ogg` | not generated |
 | pavisier | `attack` | 2 | Wall, forward! | 2 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/attack_02.ogg` | not generated |
 | pavisier | `attack` | 3 | Square into them! | 3 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/attack_03.ogg` | not generated |
@@ -314,16 +314,16 @@ Notes: mech: 01 = arm (Sound the Gong / Roll the Felt); 02 = release (All Clear)
 | Speaker | Category | # | Text | Words | Voice id | File | Status |
 |---|---|---|---|---|---|---|---|
 | yurtwright | `ready` | 1 | Hm-hm. Twelve poles, one roof. Ready. | 6 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/ready_01.ogg` | shipped |
-| yurtwright | `what` | 1 | Mallet in hand. | 3 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/what_01.ogg` | not generated |
-| yurtwright | `what` | 2 | The wright hears you. | 4 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/what_02.ogg` | not generated |
-| yurtwright | `what` | 3 | Roof, or mending? | 3 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/what_03.ogg` | not generated |
+| yurtwright | `what` | 1 | Mallet in hand. | 3 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/what_01.ogg` | shipped |
+| yurtwright | `what` | 2 | The wright hears you. | 4 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/what_02.ogg` | shipped |
+| yurtwright | `what` | 3 | Roof, or mending? | 3 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/what_03.ogg` | shipped |
 | yurtwright | `what` | 4 | Between two knots. Yes? | 4 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/what_04.ogg` | not generated |
-| yurtwright | `yes` | 1 | With care. | 2 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/yes_01.ogg` | not generated |
-| yurtwright | `yes` | 2 | Pole by pole. | 3 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/yes_02.ogg` | not generated |
-| yurtwright | `yes` | 3 | I bring the kettle. | 4 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/yes_03.ogg` | not generated |
+| yurtwright | `yes` | 1 | With care. | 2 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/yes_01.ogg` | shipped |
+| yurtwright | `yes` | 2 | Pole by pole. | 3 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/yes_02.ogg` | shipped |
+| yurtwright | `yes` | 3 | I bring the kettle. | 4 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/yes_03.ogg` | shipped |
 | yurtwright | `yes` | 4 | Sensible. | 1 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/yes_04.ogg` | not generated |
-| yurtwright | `attack` | 1 | Forgive me. Firmly. | 3 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/attack_01.ogg` | not generated |
-| yurtwright | `attack` | 2 | Mallet first. Apology after. | 4 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/attack_02.ogg` | not generated |
+| yurtwright | `attack` | 1 | Forgive me. Firmly. | 3 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/attack_01.ogg` | shipped |
+| yurtwright | `attack` | 2 | Mallet first. Apology after. | 4 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/attack_02.ogg` | rejected (regenerate) |
 | yurtwright | `attack` | 3 | Please hold still, guest. | 4 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/attack_03.ogg` | not generated |
 | yurtwright | `warcry` | 1 | NOT ON MY FELT! | 4 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/warcry_01.ogg` | not generated |
 | yurtwright | `annoyed` | 1 | Hm. One click is a greeting. | 6 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/annoyed_01.ogg` | not generated |

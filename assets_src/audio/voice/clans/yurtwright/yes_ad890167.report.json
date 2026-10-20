@@ -1,0 +1,78 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/clans/yurtwright/yes_ad890167.mp3",
+ "raw_s": 4.16,
+ "expect": 3,
+ "found": 3,
+ "pauses": [
+  [
+   0.32,
+   0.06
+  ],
+  [
+   0.8,
+   0.57
+  ],
+  [
+   1.38,
+   0.02
+  ],
+  [
+   1.98,
+   0.08
+  ],
+  [
+   2.45,
+   0.57
+  ],
+  [
+   3.5,
+   0.03
+  ]
+ ],
+ "shortest_pause_used_s": 0.57,
+ "longest_pause_left_s": 0.08,
+ "lines": [
+  {
+   "n": 1,
+   "name": "yes_01",
+   "start": 0.13,
+   "raw_s": 0.74,
+   "tight_s": 0.74,
+   "tempo": 1.0,
+   "final_s": 0.74,
+   "lufs_in": -23.8,
+   "peak_dbfs": -4.3,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/yurtwright/yes_01.ogg",
+   "ogg_s": 0.74,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "yes_02",
+   "start": 1.08,
+   "raw_s": 1.19,
+   "tight_s": 1.19,
+   "tempo": 1.0,
+   "final_s": 1.15,
+   "lufs_in": -23.5,
+   "peak_dbfs": -3.7,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/yurtwright/yes_02.ogg",
+   "ogg_s": 1.15,
+   "status": "ok"
+  },
+  {
+   "n": 3,
+   "name": "yes_03",
+   "start": 2.73,
+   "raw_s": 0.9,
+   "tight_s": 0.9,
+   "tempo": 1.0,
+   "final_s": 0.86,
+   "lufs_in": -21.2,
+   "peak_dbfs": -2.3,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/yurtwright/yes_03.ogg",
+   "ogg_s": 0.86,
+   "status": "ok"
+  }
+ ]
+}

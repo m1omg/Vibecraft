@@ -36,7 +36,21 @@
     "kingdom_pavisier"
    ],
    "voice_id": "TX3LPaxmHKxFdv7VOQHJ",
-   "categories": {}
+   "categories": {
+    "ready": [
+     "res://assets/audio/voice/kingdom/pavisier/ready_01.ogg"
+    ],
+    "what": [
+     "res://assets/audio/voice/kingdom/pavisier/what_01.ogg",
+     "res://assets/audio/voice/kingdom/pavisier/what_02.ogg",
+     "res://assets/audio/voice/kingdom/pavisier/what_04.ogg"
+    ],
+    "yes": [
+     "res://assets/audio/voice/kingdom/pavisier/yes_01.ogg",
+     "res://assets/audio/voice/kingdom/pavisier/yes_02.ogg",
+     "res://assets/audio/voice/kingdom/pavisier/yes_04.ogg"
+    ]
+   }
   },
   "hookgunner": {
    "faction": "kingdom",
@@ -100,6 +114,19 @@
    "categories": {
     "ready": [
      "res://assets/audio/voice/clans/yurtwright/ready_01.ogg"
+    ],
+    "what": [
+     "res://assets/audio/voice/clans/yurtwright/what_01.ogg",
+     "res://assets/audio/voice/clans/yurtwright/what_02.ogg",
+     "res://assets/audio/voice/clans/yurtwright/what_03.ogg"
+    ],
+    "yes": [
+     "res://assets/audio/voice/clans/yurtwright/yes_01.ogg",
+     "res://assets/audio/voice/clans/yurtwright/yes_02.ogg",
+     "res://assets/audio/voice/clans/yurtwright/yes_03.ogg"
+    ],
+    "attack": [
+     "res://assets/audio/voice/clans/yurtwright/attack_01.ogg"
     ]
    }
   },

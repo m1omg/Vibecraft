@@ -1,0 +1,102 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/kingdom/pavisier/what_102d1a07.mp3",
+ "raw_s": 3.76,
+ "expect": 3,
+ "found": 3,
+ "pauses": [
+  [
+   0.72,
+   0.01
+  ],
+  [
+   0.76,
+   0.02
+  ],
+  [
+   0.79,
+   0.36
+  ],
+  [
+   1.53,
+   0.06
+  ],
+  [
+   1.66,
+   0.03
+  ],
+  [
+   1.98,
+   0.03
+  ],
+  [
+   2.09,
+   0.01
+  ],
+  [
+   2.12,
+   0.06
+  ],
+  [
+   2.24,
+   0.44
+  ],
+  [
+   3.13,
+   0.02
+  ],
+  [
+   3.17,
+   0.04
+  ],
+  [
+   3.23,
+   0.01
+  ]
+ ],
+ "shortest_pause_used_s": 0.36,
+ "longest_pause_left_s": 0.06,
+ "lines": [
+  {
+   "n": 1,
+   "name": "what_01",
+   "start": 0.11,
+   "raw_s": 0.75,
+   "tight_s": 0.75,
+   "tempo": 1.0,
+   "final_s": 0.75,
+   "lufs_in": -16.3,
+   "peak_dbfs": -8.6,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/pavisier/what_01.ogg",
+   "ogg_s": 0.75,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "what_02",
+   "start": 0.97,
+   "raw_s": 1.2,
+   "tight_s": 1.2,
+   "tempo": 1.0,
+   "final_s": 1.17,
+   "lufs_in": -21.1,
+   "peak_dbfs": -4.3,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/pavisier/what_02.ogg",
+   "ogg_s": 1.17,
+   "status": "ok"
+  },
+  {
+   "n": 3,
+   "name": "what_04",
+   "start": 2.46,
+   "raw_s": 0.9,
+   "tight_s": 0.9,
+   "tempo": 1.0,
+   "final_s": 0.86,
+   "lufs_in": -18.4,
+   "peak_dbfs": -4.9,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/pavisier/what_04.ogg",
+   "ogg_s": 0.86,
+   "status": "ok"
+  }
+ ]
+}

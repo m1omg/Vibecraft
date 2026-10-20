@@ -125,5 +125,179 @@
   "note": "",
   "url": "https://app-uploads.krea.ai/audio/63f89106-2cb1-43f2-8f30-ef2fa218406a.mp3",
   "result": "ready_01: ok 3.25s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "f4c8da98-261d-4b63-9e7d-415421fe35a6",
+  "tier": "a",
+  "speaker": "yurtwright",
+  "category": "what",
+  "items": [
+   [
+    "what",
+    1
+   ],
+   [
+    "what",
+    2
+   ],
+   [
+    "what",
+    3
+   ]
+  ],
+  "voice_id": "pqHfZKP75CvOlQylNhV4",
+  "model_id": "eleven_v4",
+  "prompt": "[polite] Mallet in hand.\n\nThe wright hears you.\n\nRoof, or mending?",
+  "chars": 66,
+  "cost": 4.8889,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/clans/yurtwright/what_f4c8da98.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/397652a3-785f-415d-a5b2-94329c5b7da7.mp3",
+  "result": "what_01: ok 1.08s; what_02: ok 1.06s; what_03: ok 1.27s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "ad890167-5fa9-4bb5-9894-939146e0b62c",
+  "tier": "a",
+  "speaker": "yurtwright",
+  "category": "yes",
+  "items": [
+   [
+    "yes",
+    1
+   ],
+   [
+    "yes",
+    2
+   ],
+   [
+    "yes",
+    3
+   ]
+  ],
+  "voice_id": "pqHfZKP75CvOlQylNhV4",
+  "model_id": "eleven_v4",
+  "prompt": "[polite] With care.\n\nPole by pole.\n\nI bring the kettle.",
+  "chars": 55,
+  "cost": 4.0741,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/clans/yurtwright/yes_ad890167.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/8186d4ab-0f07-4bb1-8609-afd09e2744bc.mp3",
+  "result": "yes_01: ok 0.74s; yes_02: ok 1.15s; yes_03: ok 0.86s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "6a490962-db4f-4f15-b7d9-598ef845a1ca",
+  "tier": "a",
+  "speaker": "yurtwright",
+  "category": "attack",
+  "items": [
+   [
+    "attack",
+    1
+   ],
+   [
+    "attack",
+    2
+   ]
+  ],
+  "voice_id": "pqHfZKP75CvOlQylNhV4",
+  "model_id": "eleven_v4",
+  "prompt": "[polite] Forgive me. Firmly.\n\nMallet first. Apology after.",
+  "chars": 58,
+  "cost": 4.2963,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/clans/yurtwright/attack_6a490962.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/507e6a9c-f65c-4ede-83ea-e27b0055e9a8.mp3",
+  "result": "attack_01: ok 1.42s; attack_02: REJECTED 2.003s atempo 1.15"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "74175336-c9ca-483b-9f22-7cde578e9b79",
+  "tier": "a",
+  "speaker": "pavisier",
+  "category": "ready",
+  "items": [
+   [
+    "ready",
+    1
+   ]
+  ],
+  "voice_id": "TX3LPaxmHKxFdv7VOQHJ",
+  "model_id": "eleven_v4",
+  "prompt": "[proud] I brought the big shield. They're all big.",
+  "chars": 50,
+  "cost": 3.7037,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/pavisier/ready_74175336.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/70aaa962-48ad-4342-9453-c407b3ffb42a.mp3",
+  "result": "ready_01: ok 2.72s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "102d1a07-d580-41f8-816c-f32b6bd96fbd",
+  "tier": "a",
+  "speaker": "pavisier",
+  "category": "what",
+  "items": [
+   [
+    "what",
+    1
+   ],
+   [
+    "what",
+    2
+   ],
+   [
+    "what",
+    4
+   ]
+  ],
+  "voice_id": "TX3LPaxmHKxFdv7VOQHJ",
+  "model_id": "eleven_v4",
+  "prompt": "[earnest] Wall here!\n\nShield's the tall bit.\n\nMind the wet paint.",
+  "chars": 65,
+  "cost": 4.8148,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/pavisier/what_102d1a07.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/430700c1-5fb7-4546-ae10-c8a66a1b541d.mp3",
+  "result": "what_01: ok 0.75s; what_02: ok 1.17s; what_04: ok 0.86s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "a479d3ac-7474-4b0c-81c7-fd9e3b90de9f",
+  "tier": "a",
+  "speaker": "pavisier",
+  "category": "yes",
+  "items": [
+   [
+    "yes",
+    1
+   ],
+   [
+    "yes",
+    2
+   ],
+   [
+    "yes",
+    4
+   ]
+  ],
+  "voice_id": "TX3LPaxmHKxFdv7VOQHJ",
+  "model_id": "eleven_v4",
+  "prompt": "[earnest] Boards up, feet forward.\n\nStep and plant.\n\nWhere you point.",
+  "chars": 69,
+  "cost": 5.1111,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/pavisier/yes_a479d3ac.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/6829caa7-0c1d-4d65-b2e8-d3978be65aa5.mp3",
+  "result": "yes_01: ok 1.389s atempo 1.095; yes_02: ok 1.15s; yes_04: ok 0.72s"
  }
 ]
