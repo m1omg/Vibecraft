@@ -38,7 +38,7 @@ speech recognition); **rejected** = generated but over the cap after `atempo` 1.
 - Budget: the full slice script (371 lines) costs about 1,200 CU at this price; the 300 CU cap of this pass buys the P0
   acknowledgement set first (task tier a), then annoyed runs (tier b), then advisor alerts (tier c).
 
-**Totals:** 363 lines written; 3 shipped, 1 rejected and waiting for a retake, 359 not generated.
+**Totals:** 363 lines written; 10 shipped, 1 rejected and waiting for a retake, 352 not generated.
 
 ## Casting
 
@@ -68,17 +68,17 @@ Notes: attack: spoken as the Flail Levy; mech: 01 = arm (Levy Horn, Take Up the 
 
 | Speaker | Category | # | Text | Words | Voice id | File | Status |
 |---|---|---|---|---|---|---|---|
-| hodman | `ready` | 1 | Hodman, on the ledger. Agnes, say hello. | 7 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/ready_01.ogg` | not generated |
+| hodman | `ready` | 1 | Hodman, on the ledger. Agnes, say hello. | 7 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/ready_01.ogg` | shipped |
 | hodman | `what` | 1 | Mm? Mind the mortar. | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/what_01.ogg` | shipped |
 | hodman | `what` | 2 | Thirty years. One Agnes. | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/what_02.ogg` | rejected (regenerate) |
 | hodman | `what` | 3 | Lime in my ears. | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/what_03.ogg` | shipped |
 | hodman | `what` | 4 | Wanting a wall, then? | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/what_04.ogg` | shipped |
-| hodman | `yes` | 1 | On the ledger. | 3 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/yes_01.ogg` | not generated |
-| hodman | `yes` | 2 | Lifting with the knees. | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/yes_02.ogg` | not generated |
-| hodman | `yes` | 3 | Slow and square. | 3 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/yes_03.ogg` | not generated |
+| hodman | `yes` | 1 | On the ledger. | 3 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/yes_01.ogg` | shipped |
+| hodman | `yes` | 2 | Lifting with the knees. | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/yes_02.ogg` | shipped |
+| hodman | `yes` | 3 | Slow and square. | 3 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/yes_03.ogg` | shipped |
 | hodman | `yes` | 4 | Your coin, your wall. | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/yes_04.ogg` | not generated |
-| hodman | `attack` | 1 | This is extra, mind. | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/attack_01.ogg` | not generated |
-| hodman | `attack` | 2 | Flail's out, heads down! | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/attack_02.ogg` | not generated |
+| hodman | `attack` | 1 | This is extra, mind. | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/attack_01.ogg` | shipped |
+| hodman | `attack` | 2 | Flail's out, heads down! | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/attack_02.ogg` | shipped |
 | hodman | `attack` | 3 | Right. Overtime it is. | 4 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/attack_03.ogg` | not generated |
 | hodman | `warcry` | 1 | OFF OUR BOARDS! | 3 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/warcry_01.ogg` | not generated |
 | hodman | `annoyed` | 1 | That's a click. I'm writing it down. | 7 | `N2lVS1w4EtoT3dr4eOWO` | `assets/audio/voice/kingdom/hodman/annoyed_01.ogg` | not generated |
@@ -313,7 +313,7 @@ Notes: mech: 01 = arm (Sound the Gong / Roll the Felt); 02 = release (All Clear)
 
 | Speaker | Category | # | Text | Words | Voice id | File | Status |
 |---|---|---|---|---|---|---|---|
-| yurtwright | `ready` | 1 | Hm-hm. Twelve poles, one roof. Ready. | 6 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/ready_01.ogg` | not generated |
+| yurtwright | `ready` | 1 | Hm-hm. Twelve poles, one roof. Ready. | 6 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/ready_01.ogg` | shipped |
 | yurtwright | `what` | 1 | Mallet in hand. | 3 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/what_01.ogg` | not generated |
 | yurtwright | `what` | 2 | The wright hears you. | 4 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/what_02.ogg` | not generated |
 | yurtwright | `what` | 3 | Roof, or mending? | 3 | `pqHfZKP75CvOlQylNhV4` | `assets/audio/voice/clans/yurtwright/what_03.ogg` | not generated |

@@ -21,5 +21,109 @@
   "url": "https://app-uploads.krea.ai/audio/dc0cf5b7-ef44-4e01-b2c0-7521954954e1.mp3",
   "tier": "probe",
   "result": "split 4/4 correct (ASR-checked); what_01 1.39 s, what_03 1.38 s, what_04 1.11 s shipped; what_02 \"Thirty years. One Agnes.\" 2.4 s REJECTED (over 1.4 s at atempo 1.15)"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "d6370497-b848-4e5a-a331-4d2a6e91c154",
+  "tier": "a",
+  "speaker": "hodman",
+  "category": "ready",
+  "items": [
+   [
+    "ready",
+    1
+   ]
+  ],
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "model_id": "eleven_v4",
+  "prompt": "[wry] Hodman, on the ledger. Agnes, say hello.",
+  "chars": 46,
+  "cost": 3.4074,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/hodman/ready_d6370497.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/79ecf2ad-0af2-4a00-97e7-a273c6c6aff4.mp3",
+  "result": "ready_01: ok 3.27s atempo 1.073"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "b168f192-e1ea-41bc-bdf8-6b2944db9788",
+  "tier": "a",
+  "speaker": "hodman",
+  "category": "yes",
+  "items": [
+   [
+    "yes",
+    1
+   ],
+   [
+    "yes",
+    2
+   ],
+   [
+    "yes",
+    3
+   ]
+  ],
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "model_id": "eleven_v4",
+  "prompt": "[wry] On the ledger.\n\nLifting with the knees.\n\nSlow and square.",
+  "chars": 63,
+  "cost": 4.6667,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/hodman/yes_b168f192.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/55d2b350-905e-453e-83b9-09f1df588468.mp3",
+  "result": "yes_01: ok 1.17s; yes_02: ok 1.388s atempo 1.08; yes_03: ok 1.376s atempo 1.095"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "0331ca24-9cc0-49bf-97e0-cae7bbb518e0",
+  "tier": "a",
+  "speaker": "hodman",
+  "category": "attack",
+  "items": [
+   [
+    "attack",
+    1
+   ],
+   [
+    "attack",
+    2
+   ]
+  ],
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "model_id": "eleven_v4",
+  "prompt": "[shouts] This is extra, mind.\n\nFlail's out, heads down!",
+  "chars": 55,
+  "cost": 4.0741,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/hodman/attack_0331ca24.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/0a4c04ad-4e03-43f3-8db3-fe3e8ada929c.mp3",
+  "result": "attack_01: ok 1.44s; attack_02: ok 1.46s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "1e67798d-77b7-42d5-bfb6-65b0cd369094",
+  "tier": "a",
+  "speaker": "yurtwright",
+  "category": "ready",
+  "items": [
+   [
+    "ready",
+    1
+   ]
+  ],
+  "voice_id": "pqHfZKP75CvOlQylNhV4",
+  "model_id": "eleven_v4",
+  "prompt": "[courteous] Hm-hm. Twelve poles, one roof. Ready.",
+  "chars": 49,
+  "cost": 3.6296,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/clans/yurtwright/ready_1e67798d.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/63f89106-2cb1-43f2-8f30-ef2fa218406a.mp3",
+  "result": "ready_01: ok 3.25s"
  }
 ]
