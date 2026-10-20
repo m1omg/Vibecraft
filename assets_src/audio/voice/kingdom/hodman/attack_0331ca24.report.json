@@ -1,0 +1,64 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/kingdom/hodman/attack_0331ca24.mp3",
+ "raw_s": 3.76,
+ "expect": 2,
+ "found": 2,
+ "pauses": [
+  [
+   0.48,
+   0.06
+  ],
+  [
+   0.84,
+   0.01
+  ],
+  [
+   1.47,
+   0.34
+  ],
+  [
+   2.36,
+   0.06
+  ],
+  [
+   2.46,
+   0.21
+  ],
+  [
+   2.94,
+   0.05
+  ]
+ ],
+ "shortest_pause_used_s": 0.34,
+ "longest_pause_left_s": 0.21,
+ "lines": [
+  {
+   "n": 1,
+   "name": "attack_01",
+   "start": 0.09,
+   "raw_s": 1.45,
+   "tight_s": 1.45,
+   "tempo": 1.0,
+   "final_s": 1.44,
+   "lufs_in": -21.5,
+   "peak_dbfs": -2.4,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hodman/attack_01.ogg",
+   "ogg_s": 1.44,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "attack_02",
+   "start": 1.64,
+   "raw_s": 1.55,
+   "tight_s": 1.48,
+   "tempo": 1.0,
+   "final_s": 1.46,
+   "lufs_in": -22.5,
+   "peak_dbfs": -3.0,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hodman/attack_02.ogg",
+   "ogg_s": 1.46,
+   "status": "ok"
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "src": "/tmp/vc_audio/assets_src/audio/sfx/ranged/gust_bolt__d0698ba7.mp3",
+ "id": "gust_bolt",
+ "raw_dur": 4.937,
+ "raw_peak_db": -34.63,
+ "detected": 3,
+ "expected": 4,
+ "exported": 3,
+ "takes": [
+  {
+   "dur": 0.701,
+   "peak_db": -36.29,
+   "clip": 0,
+   "rms_db": -51.7,
+   "crest_db": 15.41,
+   "centroid_hz": 4296,
+   "flatness": 0.0528,
+   "silence": 0.0,
+   "periodic": 0.0,
+   "take": 1,
+   "start": 0.132,
+   "end": 0.833,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/gust_bolt_01.wav"
+  },
+  {
+   "dur": 0.682,
+   "peak_db": -34.82,
+   "clip": 0,
+   "rms_db": -50.37,
+   "crest_db": 15.55,
+   "centroid_hz": 4210,
+   "flatness": 0.053,
+   "silence": 0.0,
+   "periodic": 0.0,
+   "take": 2,
+   "start": 1.908,
+   "end": 2.589,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/gust_bolt_02.wav"
+  },
+  {
+   "dur": 0.771,
+   "peak_db": -34.63,
+   "clip": 0,
+   "rms_db": -50.1,
+   "crest_db": 15.48,
+   "centroid_hz": 4106,
+   "flatness": 0.0521,
+   "silence": 0.0,
+   "periodic": 0.0,
+   "take": 3,
+   "start": 3.923,
+   "end": 4.694,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/gust_bolt_03.wav"
+  }
+ ]
+}

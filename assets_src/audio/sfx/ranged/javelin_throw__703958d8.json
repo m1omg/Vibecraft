@@ -1,0 +1,62 @@
+{
+ "src": "/tmp/vc_audio/assets_src/audio/sfx/ranged/javelin_throw__703958d8.mp3",
+ "id": "javelin_throw",
+ "raw_dur": 4.545,
+ "raw_peak_db": 0.98,
+ "detected": 3,
+ "expected": 4,
+ "exported": 3,
+ "takes": [
+  {
+   "dur": 0.462,
+   "peak_db": 0.98,
+   "clip": 0,
+   "rms_db": -19.0,
+   "crest_db": 19.99,
+   "centroid_hz": 6387,
+   "flatness": 0.0668,
+   "silence": 0.522,
+   "periodic": 0.0,
+   "take": 1,
+   "start": 0.127,
+   "end": 0.589,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/javelin_throw_01.wav"
+  },
+  {
+   "dur": 0.462,
+   "peak_db": 0.38,
+   "clip": 0,
+   "rms_db": -18.84,
+   "crest_db": 19.22,
+   "centroid_hz": 5546,
+   "flatness": 0.063,
+   "silence": 0.565,
+   "periodic": 0.0,
+   "take": 2,
+   "start": 2.197,
+   "end": 2.659,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/javelin_throw_02.wav"
+  },
+  {
+   "dur": 0.282,
+   "peak_db": 0.12,
+   "clip": 0,
+   "rms_db": -18.04,
+   "crest_db": 18.16,
+   "centroid_hz": 6074,
+   "flatness": 0.0576,
+   "silence": 0.339,
+   "periodic": 0.0,
+   "take": 3,
+   "start": 4.018,
+   "end": 4.3,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/javelin_throw_03.wav"
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "src": "assets_src/audio/sfx/combat/hit_metal_l__bfdff9a3.mp3",
+ "id": "hit_metal_l",
+ "raw_dur": 5.042,
+ "raw_peak_db": -0.37,
+ "detected": 3,
+ "expected": 4,
+ "exported": 3,
+ "takes": [
+  {
+   "dur": 0.602,
+   "peak_db": -1.91,
+   "clip": 0,
+   "rms_db": -19.99,
+   "crest_db": 18.08,
+   "centroid_hz": 6927,
+   "flatness": 0.0573,
+   "silence": 0.217,
+   "periodic": 0.25,
+   "take": 1,
+   "start": 0.112,
+   "end": 0.713,
+   "flags": [],
+   "export": true,
+   "file": "assets/audio/sfx/combat/hit_metal_l_01.wav"
+  },
+  {
+   "dur": 0.627,
+   "peak_db": -0.37,
+   "clip": 0,
+   "rms_db": -19.66,
+   "crest_db": 19.3,
+   "centroid_hz": 7269,
+   "flatness": 0.0588,
+   "silence": 0.264,
+   "periodic": 0.233,
+   "take": 2,
+   "start": 1.978,
+   "end": 2.604,
+   "flags": [],
+   "export": true,
+   "file": "assets/audio/sfx/combat/hit_metal_l_02.wav"
+  },
+  {
+   "dur": 0.637,
+   "peak_db": -0.9,
+   "clip": 0,
+   "rms_db": -18.96,
+   "crest_db": 18.06,
+   "centroid_hz": 6889,
+   "flatness": 0.0589,
+   "silence": 0.244,
+   "periodic": 0.4,
+   "take": 3,
+   "start": 3.763,
+   "end": 4.4,
+   "flags": [],
+   "export": true,
+   "file": "assets/audio/sfx/combat/hit_metal_l_03.wav"
+  }
+ ]
+}

@@ -9,6 +9,8 @@ const MAX_ICONS := 24
 const ICON_SIZE := Vector2(46, 46)
 const HP_GOOD := Color(0.25, 0.85, 0.3)
 const HP_LOW := Color(0.95, 0.25, 0.2)
+const NOTICE_S := 4.5                ## how long a notification line stays (real time)
+const NOTICE_FADE_S := 0.8
 
 var world: World
 var selection: Selection
@@ -20,6 +22,10 @@ var _units: Array = []
 var _icons: Array[Button] = []
 var _icon_styles: Array[StyleBoxFlat] = []
 var _icon_bars: Array[ColorRect] = []
+var _notice_t: float = -1.0
+## Notification line above the console (Events.notification for the local player: "under attack",
+## the war-band marching...). Placeholder for juice NTF-*.
+var notice: Label
 
 @onready var gold_label: Label = %Gold
 @onready var lumber_label: Label = %Lumber
@@ -42,6 +48,22 @@ func _ready() -> void:
 	for i in MAX_ICONS:
 		_make_icon(i)
 	_show_selection([])
+	notice = Label.new()
+	notice.name = "Notice"
+	notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	notice.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	notice.anchor_left = 0.0
+	notice.anchor_right = 1.0
+	notice.offset_top = -250.0
+	notice.offset_bottom = -220.0
+	notice.add_theme_font_size_override("font_size", 20)
+	notice.add_theme_color_override("font_color", Color(1.0, 0.82, 0.5))
+	notice.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	notice.add_theme_constant_override("shadow_offset_x", 2)
+	notice.add_theme_constant_override("shadow_offset_y", 2)
+	notice.visible = false
+	$Root.add_child(notice)
 
 
 func setup(w: World, sel: Selection, cmd: CommandInput, cam: RtsCamera, pid: int) -> void:
@@ -54,6 +76,7 @@ func setup(w: World, sel: Selection, cmd: CommandInput, cam: RtsCamera, pid: int
 	card.setup(cmd, sel)
 	menu_button.pressed.connect(_on_menu_pressed)
 	Events.selection_changed.connect(_on_selection_changed)
+	Events.notification.connect(_on_notification)
 	_refresh_top()
 
 
@@ -62,11 +85,27 @@ func covers(screen_pos: Vector2) -> bool:
 	return top_bar.get_global_rect().has_point(screen_pos) or console.get_global_rect().has_point(screen_pos)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if world == null:
 		return
 	_refresh_top()
 	_refresh_info()
+	if _notice_t >= 0.0:
+		_notice_t += delta
+		notice.modulate.a = clampf((NOTICE_S - _notice_t) / NOTICE_FADE_S, 0.0, 1.0)
+		if _notice_t >= NOTICE_S:
+			_notice_t = -1.0
+			notice.visible = false
+
+
+## Shows a notification for the local player (latest wins).
+func _on_notification(pid: int, _kind: String, text: String) -> void:
+	if pid != player_id or text.is_empty():
+		return
+	notice.text = text
+	notice.visible = true
+	notice.modulate.a = 1.0
+	_notice_t = 0.0
 
 
 # --- top bar -------------------------------------------------------------------------------
@@ -151,6 +190,8 @@ func _refresh_info() -> void:
 
 func _title(u: Unit) -> String:
 	var t := str(u.def.get("name", u.def_id))
+	if u.is_hero:
+		t += "  -  Level %d hero" % u.level
 	if world != null and u.player_id != player_id:
 		if u.player_id == PlayerState.NEUTRAL_HOSTILE:
 			t += "  (hostile)"

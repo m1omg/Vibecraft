@@ -23,6 +23,7 @@ func before_each() -> void:
 
 func after_each() -> void:
 	Settings.edge_pan_enabled = true
+	Settings.hotkey_preset = ""
 	tree.paused = false
 	cleanup()
 
@@ -135,11 +136,11 @@ func test_patrol_hotkey_and_cancel() -> void:
 	var army := _army()
 	sel.select_units(army)
 	var commands: CommandInput = main.commands
-	_key(KEY_A)
-	assert_eq(commands.targeting, "patrol", "A enters patrol targeting")
+	_key(KEY_P)
+	assert_eq(commands.targeting, "patrol", "P enters patrol targeting (Classic)")
 	_key(KEY_ESCAPE)
 	assert_eq(commands.targeting, "", "Esc cancels targeting")
-	_key(KEY_A)
+	_key(KEY_P)
 	var p := world.map.start_locations[0] + Vector3(8, 0, -12)
 	p.y = world.map.height_at(p.x, p.z)
 	_mouse(MOUSE_BUTTON_LEFT, camera.unproject_position(p), true)
@@ -176,17 +177,62 @@ func test_enemy_click_selects_but_cannot_command() -> void:
 func test_f10_toggles_pause_and_cancels_targeting() -> void:
 	var commands: CommandInput = main.commands
 	sel.select_units(_army())
-	_key(KEY_R)
+	_key(KEY_A)
 	assert_eq(commands.targeting, "attack_move", "targeting before the pause")
 	assert_false(sel.enabled, "selection off while targeting")
 	_key(KEY_F10)
 	assert_true(tree.paused, "F10 pauses")
+	assert_true(main.pause_menu.visible, "the pause menu shows")
 	assert_eq(commands.targeting, "", "pausing cancelled targeting")
 	assert_true(sel.enabled, "selection enabled again")
 	assert_false(commands.activate_card(3), "the command card does nothing while paused")
 	assert_eq(commands.targeting, "", "no targeting entered while paused")
 	_key(KEY_F10)
 	assert_false(tree.paused, "F10 again unpauses")
-	assert_true(main.pause_label.visible == false, "pause label hidden")
+	assert_false(main.pause_menu.visible, "pause menu hidden")
 	assert_true(commands.activate_card(3), "commands work again")
 	commands.cancel_targeting()
+
+
+## Classic preset (rules §18.4, the default): M move, S stop, H hold, A attack(-move), P patrol.
+## A-click on the ground is an attack-move, on an enemy an attack; S stops, H holds.
+func test_classic_hotkeys_issue_orders() -> void:
+	var army := _army()
+	sel.select_units(army)
+	var commands: CommandInput = main.commands
+	assert_eq(Settings.active_hotkey_preset(), "classic", "data default")
+	_key(KEY_M)
+	assert_eq(commands.targeting, "move", "M enters move targeting")
+	_key(KEY_ESCAPE)
+	_key(KEY_A)
+	assert_eq(commands.targeting, "attack_move", "A enters attack targeting")
+	var p := world.map.start_locations[0] + Vector3(8, 0, -12)
+	p.y = world.map.height_at(p.x, p.z)
+	_mouse(MOUSE_BUTTON_LEFT, camera.unproject_position(p), true)
+	_mouse(MOUSE_BUTTON_LEFT, camera.unproject_position(p), false)
+	world.step()
+	for u in army:
+		assert_true(u.current != null and u.current.type == Order.Type.ATTACK_MOVE, "%s attack-moving" % u.name)
+	_key(KEY_H)
+	world.step()
+	for u in army:
+		assert_true(u.current != null and u.current.type == Order.Type.HOLD, "%s holding" % u.name)
+	_key(KEY_S)
+	world.step()
+	for u in army:
+		assert_true(u.current == null, "%s stopped" % u.name)
+	assert_eq(CommandCard.hotkey_label(3), "A", "card shows the Classic key")
+
+
+## The Grid preset maps the card by position (Q W E R / A S D F): A is patrol there.
+func test_grid_preset_hotkeys() -> void:
+	Settings.hotkey_preset = "grid"
+	sel.select_units(_army())
+	var commands: CommandInput = main.commands
+	_key(KEY_R)
+	assert_eq(commands.targeting, "attack_move", "R = slot 3 (Attack) in the Grid preset")
+	_key(KEY_ESCAPE)
+	_key(KEY_A)
+	assert_eq(commands.targeting, "patrol", "A = slot 4 (Patrol) in the Grid preset")
+	commands.cancel_targeting()
+	assert_eq(CommandCard.hotkey_label(3), "R", "card shows the Grid key")

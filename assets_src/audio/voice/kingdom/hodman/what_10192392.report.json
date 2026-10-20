@@ -1,0 +1,102 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/kingdom/hodman/what_10192392.mp3",
+ "raw_s": 9.36,
+ "expect": 4,
+ "found": 4,
+ "pauses": [
+  [
+   0.36,
+   0.39
+  ],
+  [
+   0.76,
+   0.01
+  ],
+  [
+   1.71,
+   0.99
+  ],
+  [
+   3.78,
+   0.46
+  ],
+  [
+   4.26,
+   0.03
+  ],
+  [
+   5.31,
+   0.63
+  ],
+  [
+   5.96,
+   0.02
+  ],
+  [
+   7.3,
+   0.6
+  ],
+  [
+   7.91,
+   0.02
+  ]
+ ],
+ "shortest_pause_used_s": 0.6,
+ "longest_pause_left_s": 0.46,
+ "lines": [
+  {
+   "n": 1,
+   "name": "what_01",
+   "start": 0.04,
+   "raw_s": 1.74,
+   "tight_s": 1.49,
+   "tempo": 1.08,
+   "final_s": 1.386,
+   "lufs_in": -20.2,
+   "peak_dbfs": -3.9,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hodman/what_01.ogg",
+   "ogg_s": 1.386,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "what_02",
+   "start": 2.2,
+   "raw_s": 2.72,
+   "tight_s": 2.4,
+   "tempo": 1.15,
+   "final_s": 2.088,
+   "lufs_in": -24.2,
+   "peak_dbfs": 0.3,
+   "status": "REJECTED (over 1.4 s at atempo 1.15)"
+  },
+  {
+   "n": 3,
+   "name": "what_03",
+   "start": 5.62,
+   "raw_s": 1.47,
+   "tight_s": 1.47,
+   "tempo": 1.061,
+   "final_s": 1.376,
+   "lufs_in": -22.7,
+   "peak_dbfs": -3.2,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hodman/what_03.ogg",
+   "ogg_s": 1.376,
+   "status": "ok"
+  },
+  {
+   "n": 4,
+   "name": "what_04",
+   "start": 7.6,
+   "raw_s": 1.15,
+   "tight_s": 1.15,
+   "tempo": 1.0,
+   "final_s": 1.11,
+   "lufs_in": -18.8,
+   "peak_dbfs": -5.6,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hodman/what_04.ogg",
+   "ogg_s": 1.11,
+   "status": "ok"
+  }
+ ]
+}

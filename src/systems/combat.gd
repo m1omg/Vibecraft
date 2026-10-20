@@ -95,7 +95,7 @@ func _maybe_alert(target: Unit, src: Unit) -> void:
 		return
 	_last_alert[pid] = world.time
 	Events.alert_raised.emit(pid, target.pos)
-	Events.notification.emit(pid, "under_attack", "Steel is drawn against us!")
+	Events.notification.emit(pid, "under_attack", Defs.text("notify_under_attack"))
 
 
 ## Attack Ground (rules §7.9; owner: agent B): fire an artillery shell at a point (splash only,

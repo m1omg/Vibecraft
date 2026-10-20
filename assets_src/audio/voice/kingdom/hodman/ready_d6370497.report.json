@@ -1,0 +1,54 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/kingdom/hodman/ready_d6370497.mp3",
+ "raw_s": 4.24,
+ "expect": 1,
+ "found": 1,
+ "pauses": [
+  [
+   0.42,
+   0.08
+  ],
+  [
+   0.86,
+   0.01
+  ],
+  [
+   0.88,
+   0.24
+  ],
+  [
+   1.14,
+   0.01
+  ],
+  [
+   1.97,
+   0.57
+  ],
+  [
+   3.09,
+   0.27
+  ],
+  [
+   3.43,
+   0.01
+  ]
+ ],
+ "shortest_pause_used_s": null,
+ "longest_pause_left_s": 0.57,
+ "lines": [
+  {
+   "n": 1,
+   "name": "ready_01",
+   "start": 0.14,
+   "raw_s": 3.77,
+   "tight_s": 3.49,
+   "tempo": 1.073,
+   "final_s": 3.27,
+   "lufs_in": -24.8,
+   "peak_dbfs": 1.7,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hodman/ready_01.ogg",
+   "ogg_s": 3.27,
+   "status": "ok"
+  }
+ ]
+}

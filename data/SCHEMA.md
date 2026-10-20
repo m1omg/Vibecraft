@@ -51,6 +51,7 @@ and prefixed by owner: `kingdom_*`, `clans_*`, `creep_*`, `critter_*`, `neutral_
 | `doodads` | `doodads.json` | `Defs.doodad(id)` |
 | `rules` | every file's `rules` block | `Defs.rule(path, fb)` |
 | `strings` | `strings/en.json` | `Defs.text(key)` (returns the key when missing) |
+| `scenarios` | `scenarios.json → scenarios` (scripted match set-ups, §15) | `Defs.scenario(id)` |
 
 Derived helpers: `trained_at(unit_id)` (buildings whose card trains it), `xp_for_level`,
 `level_for_xp`, `prd_c(p)` (pseudo-random-distribution constant, rules §2.3), `effect_ids()`
@@ -388,10 +389,37 @@ Written by `tools/maps/build_slice_map.py` from `data/maps/wether_downs_sketch.t
 ## 13. `strings/en.json`
 
 Flat `{key: text}` for UI text that is not an entity name: faction names, advisor lines,
-upkeep labels, map names, notifications. `Defs.text(key)`.
+upkeep labels, map names, notifications, menu / pause / end-banner text (`menu_*`, `pause_*`,
+`end_*`, `objective_*`, `notify_*`). `Defs.text(key)`.
 
 ## 14. `test_defs.json` (tests only)
 
 `units`, `abilities`, `items`, `upgrades`, `factions` sections with `dummy_*` /
 `placeholder_*` ids, same schema as the real tables. Loaded only by `Defs.load_test_defs()`
 (test runner, sandbox scenario). Gameplay data and `main.gd`'s slice scenario never use them.
+
+## 15. `scenarios.json`
+
+Scripted match set-ups, `{"scenarios": {id: scenario}}`, served by `Defs.scenario(id)` and run
+by `BattlefieldScenario` (`src/scenarios/battlefield.gd`; Main's `scenario = "<id>"`). Today:
+`battlefield`, Playtest 1 (the Battlefield sandbox). Positions are world metres `[x, z]` on the
+scenario's map.
+
+| Field | Meaning |
+|---|---|
+| `name` | display name (English; the menu label is the string key `menu_<id>`) |
+| `map` | map file name under `data/maps/` (`slice`) |
+| `victory` | `annihilation`: a player with no living unit or structure is defeated; the match ends when at most one player stands (also the `reason` of `Events.match_ended`) |
+| `hero_level` | level every scenario hero starts at (XP, skill points and stats as if earned; abilities unlearned) |
+| `think_interval` | s between the scripted opponent's decisions (sim time) |
+| `defend_radius` | m: a `guard` group answers enemy units this close to its post or to an own structure |
+| `assist_radius` | m: idle group mates within this distance join a member that is fighting |
+| `regroup_after` | s without a threat before idle guards walk back to their slots |
+| `snap_radius` | m: how far a structure may move from its `pos` to the nearest legal, free spot (`Construction.can_place` + a free 1-cell ring) |
+| `formation_spacing` | m between units of a group (default; a group's `spacing` overrides) |
+| `camps` | creep camp instance ids of the map to spawn (`CreepSystem.spawn_camps(map, only)`); empty = none |
+| `players` | `[{slot, faction, control, structures, groups}]`; `slot` = player id = team; `control`: `human` (the local player, slot 0) or `scenario_ai` (played by the scenario: `PlayerState.is_ai`, no `AiPlayer`) |
+| `players[].structures` | `[{def, pos, facing?}]` finished buildings (facing in degrees; default towards the map centre). Validated: `def` is a building |
+| `players[].groups` | `[{id, role, pos, face, row, spacing?, units, attack_after?, target?}]`: `units` = `[[def, count], ...]` front row first, laid out in rows of `row` facing the point `face`; validated: mobile unit defs, counts > 0 |
+| `role` | `army` (no script), `workers` (idle), `guard` (holds `pos`, defends, assists, regroups), `wave` (waits like a guard, then after `attack_after` s attack-moves at `target` — `hall` = the first enemy structure listed — and keeps hunting the nearest enemy entity) |
+

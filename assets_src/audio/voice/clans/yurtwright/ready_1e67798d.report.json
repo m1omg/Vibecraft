@@ -1,0 +1,54 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/clans/yurtwright/ready_1e67798d.mp3",
+ "raw_s": 3.76,
+ "expect": 1,
+ "found": 1,
+ "pauses": [
+  [
+   0.23,
+   0.04
+  ],
+  [
+   0.57,
+   0.47
+  ],
+  [
+   1.09,
+   0.02
+  ],
+  [
+   1.35,
+   0.11
+  ],
+  [
+   1.98,
+   0.2
+  ],
+  [
+   2.85,
+   0.4
+  ],
+  [
+   3.57,
+   0.18
+  ]
+ ],
+ "shortest_pause_used_s": null,
+ "longest_pause_left_s": 0.47,
+ "lines": [
+  {
+   "n": 1,
+   "name": "ready_01",
+   "start": 0.1,
+   "raw_s": 3.66,
+   "tight_s": 3.37,
+   "tempo": 1.0,
+   "final_s": 3.25,
+   "lufs_in": -23.4,
+   "peak_dbfs": -4.0,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/yurtwright/ready_01.ogg",
+   "ogg_s": 3.25,
+   "status": "ok"
+  }
+ ]
+}

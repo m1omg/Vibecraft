@@ -43,7 +43,8 @@ affected stub headers in the same commit and keep the existing tests green.
 | `src/autoload/events.gd` | Append signals under your domain's block; never change an existing signature. |
 | `src/autoload/defs.gd` | Add validation in your own `_validate_<domain>` and accessors at the end of the accessor block. Keep `Defs.errors` empty. |
 | `src/systems/sim_system.gd` | Frozen. |
-| `src/main.gd` | Match boot (slice + sandbox). D owns map/creep boot, H the AI seat, F the HUD wiring; small edits only. |
+| `src/main.gd` | Match boot (slice, sandbox, battlefield) and scene switching (`start_match`, `quit_to_menu`). D owns map/creep boot, H the AI seat, F the HUD wiring; small edits only. |
+| `src/scenarios/*`, `data/scenarios.json`, `src/ui/{main_menu,menu_backdrop,pause_menu,end_banner,ui_style}.gd` | Playtest scenarios and the menus around them (PT1 Battlefield sandbox). The scripted opponent there is not the AI (agent H): it only issues player commands; juice HUD-11 / SEQ-02 replace the placeholder pause menu and end banner. |
 | `data/*.json` | Each agent edits the entries of its domain (table above). Shared tables (`factions.json`, `units.json`, `buildings.json`) are edited entry by entry; cite the source doc section for a changed number. |
 | `docs/architecture.md`, `data/SCHEMA.md`, this file | Update the section of your system when its contract changes. |
 

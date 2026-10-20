@@ -21,14 +21,18 @@ var drag_threshold_px: float = 6.0
 
 # UI
 var always_show_health_bars: bool = true
+## Command hotkeys (rules §18.4): "classic" (Move M, Stop S, Hold H, Attack A, Patrol P) or
+## "grid" (the 4 x 3 card on Q W E R / A S D F / Z X C V); "" = rules.controls.hotkey_preset.
+var hotkey_preset: String = ""
 
 const _PERSISTED: Array[String] = [
 	"edge_pan_enabled", "edge_pan_margin_px", "edge_pan_speed", "key_pan_speed",
-	"drag_pan_speed", "zoom_step", "double_click_ms", "always_show_health_bars",
+	"drag_pan_speed", "zoom_step", "double_click_ms", "always_show_health_bars", "hotkey_preset",
 ]
 
 ## action name -> Array of input descriptors. Descriptor: {"key": Key} or {"mouse": MouseButton}.
 ## Control groups use plain digit keys; ctrl/shift are read from the event modifiers.
+## `cmd_*` are the Classic preset's mnemonic order keys, `card_*` the Grid preset's slots.
 static func default_actions() -> Dictionary:
 	var a: Dictionary = {
 		"cam_left": [{"key": KEY_LEFT}],
@@ -52,7 +56,18 @@ static func default_actions() -> Dictionary:
 		KEY_Z, KEY_X, KEY_C, KEY_V]
 	for i in grid.size():
 		a["card_%d" % i] = [{"key": grid[i]}]
+	var classic: Dictionary = {"cmd_move": KEY_M, "cmd_stop": KEY_S, "cmd_hold": KEY_H,
+		"cmd_attack": KEY_A, "cmd_patrol": KEY_P}
+	for action: String in classic:
+		a[action] = [{"key": classic[action]}]
 	return a
+
+
+## The active hotkey preset: the user's choice, else the data default (rules §18.4).
+func active_hotkey_preset() -> String:
+	if hotkey_preset == "classic" or hotkey_preset == "grid":
+		return hotkey_preset
+	return str(Defs.rule("controls.hotkey_preset", "classic"))
 
 
 static func make_event(desc: Dictionary) -> InputEvent:

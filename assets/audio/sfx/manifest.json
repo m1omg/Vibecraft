@@ -1,0 +1,265 @@
+{
+ "atk_herb_mote": [
+  "res://assets/audio/sfx/ranged/atk_herb_mote_01.wav",
+  "res://assets/audio/sfx/ranged/atk_herb_mote_02.wav",
+  "res://assets/audio/sfx/ranged/atk_herb_mote_03.wav"
+ ],
+ "bombard_fire": [
+  "res://assets/audio/sfx/ranged/bombard_fire_01.wav",
+  "res://assets/audio/sfx/ranged/bombard_fire_02.wav",
+  "res://assets/audio/sfx/ranged/bombard_fire_03.wav"
+ ],
+ "bombard_hit": [
+  "res://assets/audio/sfx/ranged/bombard_hit_01.wav",
+  "res://assets/audio/sfx/ranged/bombard_hit_02.wav",
+  "res://assets/audio/sfx/ranged/bombard_hit_03.wav",
+  "res://assets/audio/sfx/ranged/bombard_hit_04.wav",
+  "res://assets/audio/sfx/ranged/bombard_hit_05.wav"
+ ],
+ "bullet_hit": [
+  "res://assets/audio/sfx/ranged/bullet_hit_earth_01.wav",
+  "res://assets/audio/sfx/ranged/bullet_hit_flesh_01.wav",
+  "res://assets/audio/sfx/ranged/bullet_hit_metal_01.wav",
+  "res://assets/audio/sfx/ranged/bullet_hit_wood_01.wav"
+ ],
+ "bullet_hit_earth": [
+  "res://assets/audio/sfx/ranged/bullet_hit_earth_01.wav"
+ ],
+ "bullet_hit_flesh": [
+  "res://assets/audio/sfx/ranged/bullet_hit_flesh_01.wav"
+ ],
+ "bullet_hit_metal": [
+  "res://assets/audio/sfx/ranged/bullet_hit_metal_01.wav"
+ ],
+ "bullet_hit_wood": [
+  "res://assets/audio/sfx/ranged/bullet_hit_wood_01.wav"
+ ],
+ "claypot_hit": [
+  "res://assets/audio/sfx/ranged/claypot_hit_01.wav",
+  "res://assets/audio/sfx/ranged/claypot_hit_02.wav",
+  "res://assets/audio/sfx/ranged/claypot_hit_03.wav",
+  "res://assets/audio/sfx/ranged/claypot_hit_04.wav"
+ ],
+ "fall_armoured": [
+  "res://assets/audio/sfx/combat/fall_armoured_01.wav",
+  "res://assets/audio/sfx/combat/fall_armoured_02.wav",
+  "res://assets/audio/sfx/combat/fall_armoured_03.wav"
+ ],
+ "fall_huge": [
+  "res://assets/audio/sfx/combat/fall_huge_01.wav",
+  "res://assets/audio/sfx/combat/fall_huge_02.wav",
+  "res://assets/audio/sfx/combat/fall_huge_03.wav"
+ ],
+ "fall_light": [
+  "res://assets/audio/sfx/combat/fall_light_01.wav",
+  "res://assets/audio/sfx/combat/fall_light_02.wav",
+  "res://assets/audio/sfx/combat/fall_light_03.wav"
+ ],
+ "gust_bolt": [
+  "res://assets/audio/sfx/ranged/gust_bolt_01.wav",
+  "res://assets/audio/sfx/ranged/gust_bolt_02.wav",
+  "res://assets/audio/sfx/ranged/gust_bolt_03.wav"
+ ],
+ "hit_flesh_h": [
+  "res://assets/audio/sfx/combat/hit_flesh_h_01.wav",
+  "res://assets/audio/sfx/combat/hit_flesh_h_02.wav",
+  "res://assets/audio/sfx/combat/hit_flesh_h_03.wav"
+ ],
+ "hit_flesh_l": [
+  "res://assets/audio/sfx/combat/hit_flesh_l_01.wav",
+  "res://assets/audio/sfx/combat/hit_flesh_l_02.wav",
+  "res://assets/audio/sfx/combat/hit_flesh_l_03.wav",
+  "res://assets/audio/sfx/combat/hit_flesh_l_04.wav"
+ ],
+ "hit_metal_h": [
+  "res://assets/audio/sfx/combat/hit_metal_h_01.wav",
+  "res://assets/audio/sfx/combat/hit_metal_h_02.wav",
+  "res://assets/audio/sfx/combat/hit_metal_h_03.wav"
+ ],
+ "hit_metal_l": [
+  "res://assets/audio/sfx/combat/hit_metal_l_01.wav",
+  "res://assets/audio/sfx/combat/hit_metal_l_02.wav",
+  "res://assets/audio/sfx/combat/hit_metal_l_03.wav"
+ ],
+ "hit_sub": [
+  "res://assets/audio/sfx/combat/hit_sub_01.wav",
+  "res://assets/audio/sfx/combat/hit_sub_02.wav",
+  "res://assets/audio/sfx/combat/hit_sub_03.wav",
+  "res://assets/audio/sfx/combat/hit_sub_04.wav"
+ ],
+ "hit_wood_h": [
+  "res://assets/audio/sfx/combat/hit_wood_h_01.wav",
+  "res://assets/audio/sfx/combat/hit_wood_h_02.wav",
+  "res://assets/audio/sfx/combat/hit_wood_h_03.wav",
+  "res://assets/audio/sfx/combat/hit_wood_h_04.wav"
+ ],
+ "hit_wood_l": [
+  "res://assets/audio/sfx/combat/hit_wood_l_01.wav",
+  "res://assets/audio/sfx/combat/hit_wood_l_02.wav",
+  "res://assets/audio/sfx/combat/hit_wood_l_03.wav"
+ ],
+ "hookgun_fire": [
+  "res://assets/audio/sfx/ranged/hookgun_fire_01.wav",
+  "res://assets/audio/sfx/ranged/hookgun_fire_02.wav",
+  "res://assets/audio/sfx/ranged/hookgun_fire_03.wav",
+  "res://assets/audio/sfx/ranged/hookgun_fire_04.wav"
+ ],
+ "javelin_hit": [
+  "res://assets/audio/sfx/ranged/javelin_hit_earth_01.wav",
+  "res://assets/audio/sfx/ranged/javelin_hit_flesh_01.wav",
+  "res://assets/audio/sfx/ranged/javelin_hit_metal_01.wav",
+  "res://assets/audio/sfx/ranged/javelin_hit_wood_01.wav"
+ ],
+ "javelin_hit_earth": [
+  "res://assets/audio/sfx/ranged/javelin_hit_earth_01.wav"
+ ],
+ "javelin_hit_flesh": [
+  "res://assets/audio/sfx/ranged/javelin_hit_flesh_01.wav"
+ ],
+ "javelin_hit_metal": [
+  "res://assets/audio/sfx/ranged/javelin_hit_metal_01.wav"
+ ],
+ "javelin_hit_wood": [
+  "res://assets/audio/sfx/ranged/javelin_hit_wood_01.wav"
+ ],
+ "javelin_throw": [
+  "res://assets/audio/sfx/ranged/javelin_throw_01.wav",
+  "res://assets/audio/sfx/ranged/javelin_throw_02.wav",
+  "res://assets/audio/sfx/ranged/javelin_throw_03.wav"
+ ],
+ "slingcart_throw": [
+  "res://assets/audio/sfx/ranged/slingcart_throw_01.wav",
+  "res://assets/audio/sfx/ranged/slingcart_throw_02.wav",
+  "res://assets/audio/sfx/ranged/slingcart_throw_03.wav"
+ ],
+ "sw_blunt": [
+  "res://assets/audio/sfx/combat/sw_blunt_01.wav",
+  "res://assets/audio/sfx/combat/sw_blunt_02.wav",
+  "res://assets/audio/sfx/combat/sw_blunt_03.wav",
+  "res://assets/audio/sfx/combat/sw_blunt_04.wav"
+ ],
+ "sw_pierce": [
+  "res://assets/audio/sfx/combat/sw_pierce_01.wav",
+  "res://assets/audio/sfx/combat/sw_pierce_02.wav",
+  "res://assets/audio/sfx/combat/sw_pierce_03.wav",
+  "res://assets/audio/sfx/combat/sw_pierce_04.wav"
+ ],
+ "sw_slash": [
+  "res://assets/audio/sfx/combat/sw_slash_01.wav",
+  "res://assets/audio/sfx/combat/sw_slash_02.wav",
+  "res://assets/audio/sfx/combat/sw_slash_03.wav",
+  "res://assets/audio/sfx/combat/sw_slash_04.wav"
+ ],
+ "ui_click_clans": [
+  "res://assets/audio/sfx/ui/ui_click_clans_01.wav",
+  "res://assets/audio/sfx/ui/ui_click_clans_02.wav",
+  "res://assets/audio/sfx/ui/ui_click_clans_03.wav",
+  "res://assets/audio/sfx/ui/ui_click_clans_04.wav",
+  "res://assets/audio/sfx/ui/ui_click_clans_05.wav",
+  "res://assets/audio/sfx/ui/ui_click_clans_06.wav"
+ ],
+ "ui_click_kingdom": [
+  "res://assets/audio/sfx/ui/ui_click_kingdom_01.wav",
+  "res://assets/audio/sfx/ui/ui_click_kingdom_02.wav",
+  "res://assets/audio/sfx/ui/ui_click_kingdom_03.wav",
+  "res://assets/audio/sfx/ui/ui_click_kingdom_04.wav",
+  "res://assets/audio/sfx/ui/ui_click_kingdom_05.wav",
+  "res://assets/audio/sfx/ui/ui_click_kingdom_06.wav"
+ ],
+ "ui_disabled_clans": [
+  "res://assets/audio/sfx/ui/ui_disabled_clans_01.wav",
+  "res://assets/audio/sfx/ui/ui_disabled_clans_02.wav",
+  "res://assets/audio/sfx/ui/ui_disabled_clans_03.wav"
+ ],
+ "ui_disabled_kingdom": [
+  "res://assets/audio/sfx/ui/ui_disabled_kingdom_01.wav",
+  "res://assets/audio/sfx/ui/ui_disabled_kingdom_02.wav",
+  "res://assets/audio/sfx/ui/ui_disabled_kingdom_03.wav"
+ ],
+ "ui_error_clans": [
+  "res://assets/audio/sfx/ui/ui_error_clans_01.wav",
+  "res://assets/audio/sfx/ui/ui_error_clans_02.wav",
+  "res://assets/audio/sfx/ui/ui_error_clans_03.wav",
+  "res://assets/audio/sfx/ui/ui_error_clans_04.wav"
+ ],
+ "ui_error_kingdom": [
+  "res://assets/audio/sfx/ui/ui_error_kingdom_01.wav",
+  "res://assets/audio/sfx/ui/ui_error_kingdom_02.wav",
+  "res://assets/audio/sfx/ui/ui_error_kingdom_03.wav",
+  "res://assets/audio/sfx/ui/ui_error_kingdom_04.wav"
+ ],
+ "ui_order_clans_ability": [
+  "res://assets/audio/sfx/ui/ui_order_clans_ability_01.wav",
+  "res://assets/audio/sfx/ui/ui_order_clans_ability_02.wav"
+ ],
+ "ui_order_clans_attack": [
+  "res://assets/audio/sfx/ui/ui_order_clans_attack_01.wav",
+  "res://assets/audio/sfx/ui/ui_order_clans_attack_02.wav"
+ ],
+ "ui_order_clans_move": [
+  "res://assets/audio/sfx/ui/ui_order_clans_move_01.wav",
+  "res://assets/audio/sfx/ui/ui_order_clans_move_02.wav"
+ ],
+ "ui_order_clans_patrol": [
+  "res://assets/audio/sfx/ui/ui_order_clans_patrol_01.wav",
+  "res://assets/audio/sfx/ui/ui_order_clans_patrol_02.wav"
+ ],
+ "ui_order_kingdom_ability": [
+  "res://assets/audio/sfx/ui/ui_order_kingdom_ability_01.wav",
+  "res://assets/audio/sfx/ui/ui_order_kingdom_ability_02.wav"
+ ],
+ "ui_order_kingdom_attack": [
+  "res://assets/audio/sfx/ui/ui_order_kingdom_attack_01.wav",
+  "res://assets/audio/sfx/ui/ui_order_kingdom_attack_02.wav"
+ ],
+ "ui_order_kingdom_move": [
+  "res://assets/audio/sfx/ui/ui_order_kingdom_move_01.wav",
+  "res://assets/audio/sfx/ui/ui_order_kingdom_move_02.wav"
+ ],
+ "ui_order_kingdom_patrol": [
+  "res://assets/audio/sfx/ui/ui_order_kingdom_patrol_01.wav",
+  "res://assets/audio/sfx/ui/ui_order_kingdom_patrol_02.wav"
+ ],
+ "ui_select_clans_bundle": [
+  "res://assets/audio/sfx/ui/ui_select_clans_bundle_01.wav",
+  "res://assets/audio/sfx/ui/ui_select_clans_bundle_02.wav"
+ ],
+ "ui_select_clans_double": [
+  "res://assets/audio/sfx/ui/ui_select_clans_double_01.wav",
+  "res://assets/audio/sfx/ui/ui_select_clans_double_02.wav"
+ ],
+ "ui_select_clans_single": [
+  "res://assets/audio/sfx/ui/ui_select_clans_single_01.wav",
+  "res://assets/audio/sfx/ui/ui_select_clans_single_02.wav"
+ ],
+ "ui_select_clans_wave": [
+  "res://assets/audio/sfx/ui/ui_select_clans_wave_01.wav",
+  "res://assets/audio/sfx/ui/ui_select_clans_wave_02.wav"
+ ],
+ "ui_select_kingdom_bundle": [
+  "res://assets/audio/sfx/ui/ui_select_kingdom_bundle_01.wav",
+  "res://assets/audio/sfx/ui/ui_select_kingdom_bundle_02.wav"
+ ],
+ "ui_select_kingdom_double": [
+  "res://assets/audio/sfx/ui/ui_select_kingdom_double_01.wav",
+  "res://assets/audio/sfx/ui/ui_select_kingdom_double_02.wav"
+ ],
+ "ui_select_kingdom_single": [
+  "res://assets/audio/sfx/ui/ui_select_kingdom_single_01.wav",
+  "res://assets/audio/sfx/ui/ui_select_kingdom_single_02.wav"
+ ],
+ "ui_select_kingdom_wave": [
+  "res://assets/audio/sfx/ui/ui_select_kingdom_wave_01.wav",
+  "res://assets/audio/sfx/ui/ui_select_kingdom_wave_02.wav"
+ ],
+ "vox_death_clans": [
+  "res://assets/audio/sfx/combat/vox_death_clans_01.wav",
+  "res://assets/audio/sfx/combat/vox_death_clans_02.wav",
+  "res://assets/audio/sfx/combat/vox_death_clans_03.wav"
+ ],
+ "vox_death_kingdom": [
+  "res://assets/audio/sfx/combat/vox_death_kingdom_01.wav",
+  "res://assets/audio/sfx/combat/vox_death_kingdom_02.wav",
+  "res://assets/audio/sfx/combat/vox_death_kingdom_03.wav"
+ ]
+}

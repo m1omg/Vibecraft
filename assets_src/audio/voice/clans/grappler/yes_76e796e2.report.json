@@ -1,0 +1,118 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/clans/grappler/yes_76e796e2.mp3",
+ "raw_s": 5.12,
+ "expect": 3,
+ "found": 3,
+ "pauses": [
+  [
+   0.72,
+   0.53
+  ],
+  [
+   1.68,
+   0.01
+  ],
+  [
+   1.75,
+   0.01
+  ],
+  [
+   1.77,
+   0.55
+  ],
+  [
+   2.5,
+   0.05
+  ],
+  [
+   2.66,
+   0.07
+  ],
+  [
+   3.02,
+   0.01
+  ],
+  [
+   3.04,
+   0.02
+  ],
+  [
+   3.07,
+   0.15
+  ],
+  [
+   3.71,
+   0.34
+  ],
+  [
+   4.79,
+   0.01
+  ],
+  [
+   4.81,
+   0.01
+  ],
+  [
+   4.83,
+   0.01
+  ],
+  [
+   4.85,
+   0.01
+  ],
+  [
+   4.87,
+   0.05
+  ]
+ ],
+ "shortest_pause_used_s": null,
+ "longest_pause_left_s": 0.0,
+ "cuts": [
+  2.04,
+  3.87
+ ],
+ "lines": [
+  {
+   "n": 1,
+   "name": "yes_01",
+   "start": 0.13,
+   "raw_s": 1.71,
+   "tight_s": 1.32,
+   "tempo": 1.0,
+   "final_s": 1.31,
+   "lufs_in": -25.6,
+   "peak_dbfs": -2.7,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/grappler/yes_01.ogg",
+   "ogg_s": 1.31,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "yes_02",
+   "start": 2.04,
+   "raw_s": 1.5,
+   "tight_s": 1.5,
+   "tempo": 1.066,
+   "final_s": 1.396,
+   "lufs_in": -26.3,
+   "peak_dbfs": -2.4,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/grappler/yes_02.ogg",
+   "ogg_s": 1.396,
+   "status": "ok"
+  },
+  {
+   "n": 3,
+   "name": "yes_03",
+   "start": 3.87,
+   "raw_s": 0.93,
+   "tight_s": 0.93,
+   "tempo": 1.0,
+   "final_s": 0.89,
+   "lufs_in": -25.1,
+   "peak_dbfs": -1.5,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/grappler/yes_03.ogg",
+   "ogg_s": 0.89,
+   "status": "ok"
+  }
+ ]
+}

@@ -79,11 +79,17 @@ Player ids: humans/AI 0..11, `PlayerState.NEUTRAL_HOSTILE = 12` (creeps, enemy o
 project.godot
 src/
   autoload/     defs.gd (Defs), audio.gd (Audio), settings.gd (Settings), events.gd (Events)
-  main.tscn + main.gd   boots a match: scenario "slice" (data/maps/slice.json, both factions,
-                start halls + workers, mines, neutral buildings, creep camps, AI seat) or
-                "sandbox" (generated test map with dummy defs; engine playtests). Both paths
-                apply the view setup (RenderProfile camera + ViewHooks); `spawn_skirmish =
-                false` skips start bases and creep camps (screenshot / showcase scripts)
+  main.tscn + main.gd   (class `Main`) boots a match: scenario "slice" (data/maps/slice.json,
+                both factions, start halls + workers, mines, neutral buildings, creep camps, AI
+                seat), "battlefield" (Playtest 1: data/scenarios.json run by
+                scenarios/battlefield.gd, see §4 "Scenarios") or "sandbox" (generated test map
+                with dummy defs; engine playtests). Every path applies the view setup
+                (RenderProfile camera + ViewHooks); `spawn_skirmish = false` skips start bases and
+                creep camps (screenshot / showcase scripts). The project's main scene is
+                `ui/main_menu.tscn`; `Main.start_match(tree, scenario)` swaps the current scene
+                for a fresh match (menu, Restart, Play again), `Main.quit_to_menu(tree)` goes back
+                to the menu
+  scenarios/    battlefield.gd (BattlefieldScenario: scripted set-up, opponent and victory check)
   world/        world.gd + world.tscn (match root), grid.gd, map_data.gd, map_generator.gd,
                 terrain_builder.gd, terrain.gdshader, water.gdshader, tree.gdshader (legacy
                 card-tree shader, unused since the kit trees: they use render/foliage.gdshader),
@@ -95,7 +101,9 @@ src/
                 (+ abilities/: effect.gd, cast_context.gd, registry.gd, effects/*.gd), buffs.gd,
                 items.gd (+ items/effects/*.gd), shops.gd, creeps.gd, ai/ai_player.gd
   input/        rts_camera.gd, selection.gd, command_input.gd
-  ui/           hud.tscn + hud.gd, command_card.gd, minimap.gd, tooltip.gd, theme/
+  ui/           hud.tscn + hud.gd, command_card.gd, minimap.gd, tooltip.gd, theme/,
+                main_menu.tscn + main_menu.gd + menu_backdrop.gd (title screen), pause_menu.gd
+                (F10), end_banner.gd (victory / defeat), ui_style.gd (shared panel / button look)
   render/       visual-only rendering layer: asset_library.gd (model resolution, shared painterly
                 materials, manifests), unit.gdshader / structure.gdshader / foliage.gdshader +
                 unit_uniforms.gdshaderinc (fixed instance-uniform slots) + render_common.gdshaderinc,
@@ -107,8 +115,8 @@ src/
                 selection_circles.gd + ring.gdshader,
                 health_bars.gd + health_bar.gdshader, proc_mesh.gd (placeholder mesh helpers)
 data/           see data/SCHEMA.md: factions, units, buildings, heroes, abilities, buffs, items,
-                upgrades, shops, creep_camps, doodads (.json), strings/en.json, maps/*.json,
-                test_defs.json (tests only)
+                upgrades, shops, creep_camps, doodads, scenarios (.json), strings/en.json,
+                maps/*.json, test_defs.json (tests only)
 assets/         models/ textures/ icons/ audio/{sfx,voice,music,ambience}/ ui/
 tools/          python asset tooling (bpy, image processing), asset manifest,
                 maps/build_slice_map.py (writes data/maps/slice.json from the sketch + brief),
@@ -221,6 +229,23 @@ Group moves keep a compact group's formation (offsets from the group centre when
 move / attack-move / patrol given to 2+ units carries one `GroupPath` (`Order.group_path`) so
 the group shares its path searches (§6).
 
+### Scenarios
+
+A scripted match set-up is data (`data/scenarios.json`, `Defs.scenario(id)`, SCHEMA §15) run by
+a `SimSystem` in `src/scenarios/`. `BattlefieldScenario` (Playtest 1, Main scenario
+"battlefield"): `add_players(world, id)` (static: players with colours and start resources,
+the two neutral players, local player 0), then Main spawns the map's Gold Seams and neutral
+buildings, then `setup_match(world, id)` places every finished structure (nearest legal free
+spot), the unit groups in rows, heroes at `hero_level`, the listed creep camps, and registers
+the scenario for the `ai` stage. Each think (`think_interval`) it checks the annihilation
+victory (`result`, `PlayerState.defeated`, `ended(winner)` + `Events.match_ended`) and plays
+every `scenario_ai` player's groups: guards hold, defend (`defend_radius`), assist and regroup;
+the wave attack-moves at the enemy hall after `attack_after` s (with a notification and an
+alert, so Space jumps to it) and then hunts; when the enemy has no fighting unit left every
+group hunts. It issues only command dictionaries and uses no clock or RNG (deterministic).
+Queries: `group(id, pid)`, `members(g)`, `wave_eta()`, `wave_marching()`, `camera_start(pid)`,
+`entity_count(pid)`, `is_over()`.
+
 ## 5. Entities
 
 `Unit` (`src/entities/unit.gd`, `class_name Unit extends Node3D`) represents **every** game object
@@ -319,7 +344,9 @@ Signals via `Events` autoload: `unit_spawned(u)`, `unit_died(u, killer)`, `unit_
 `selection_changed(units)`, `notification(player_id, kind, text)`, plus `alert_raised(player_id,
 pos)` (space bar jumps the camera to the latest; `Combat` raises it, with an "under_attack"
 notification, when a player's unit is hit by an enemy, at most every `alert_interval` 8 s),
-`tree_felled(pos)`, `command_issued(command)` and `menu_requested` (F10), plus one block of
+`tree_felled(pos)`, `command_issued(command)`, `menu_requested` (F10) and
+`match_ended(winner, reason)` (the match is decided: winning player id or -1, e.g.
+"annihilation"; juice SEQ-02 listens), plus one block of
 signals per M2 system (economy, construction, production, tech, heroes, abilities, buffs,
 items, shops, creeps, fog; listed by owner in `docs/m2-ownership.md` §6 and documented in each
 system's header). Signals are emitted immediately; deaths are deferred to `cleanup`.
@@ -574,7 +601,7 @@ requirements, ability unlocks. Each file's header documents the full contract.
   armor/attack speed, INT → mana/regen; primary attr → damage) through `Defs.hero_stats`, the
   derived level-1 unit def, 6-slot inventory (`ItemSystem`), revive at altar or inn.
 - Items (`ItemSystem`), shops (`ShopSystem`, per-player stock, `buy` / `sell` / `service`
-  commands) and creeps (`CreepSystem.spawn_camps(map)`: camp templates from
+  commands) and creeps (`CreepSystem.spawn_camps(map, only = [])`: camp templates from
   `creep_camps.json`, ring layout, guard positions, bounty) follow the same pattern; their
   headers document the API.
 - `AiPlayer` (`src/systems/ai/ai_player.gd`): one per AI seat, throttled `think()`, tuning from
@@ -605,16 +632,25 @@ requirements, ability unlocks. Each file's header documents the full contract.
   The press must land in the world (HUD panels stop it); once pressing, drag motion and the
   release are read in `_input`, before the GUI, so a box that ends over the HUD still completes.
 - Pause: F10 (`menu`) is handled by the HUD, which keeps processing while the tree is paused
-  (Main and World do not), so the same key unpauses; `Main._toggle_pause` also cancels a
-  pending targeting mode. `CommandInput` is pausable: no orders are given while paused
+  (Main and World do not), so the same key unpauses; `Main._toggle_pause` pauses the tree, shows
+  the `PauseMenu` (`src/ui/pause_menu.gd`, process ALWAYS: Resume (F10 / Esc), Restart, Quit to
+  Main Menu, Quit to Desktop; placeholder for juice HUD-11) and cancels a pending targeting mode.
+  No pause over the end banner. `CommandInput` is pausable: no orders are given while paused
   (`activate_card`/`command_ground` refuse).
 - `CommandInput` (`Node`, placed after `Selection` so it sees input first): right-click smart
-  command (ground → move, unit → smart target), shift-queue, default card hotkeys Q move,
-  W stop, E hold, R attack-move, A patrol; targeted commands enter targeting mode (cross cursor,
-  left-click confirms, right-click/Esc cancels; attack-move confirmed on an enemy becomes an
-  attack); shows a short order marker ring. `activate_card(slot, shift)` is shared by hotkeys and
-  HUD buttons; `command_ground(pos, shift)` serves the minimap. Later: ability targeting and the
-  build placement ghost (green/red footprint).
+  command (ground → move, unit → smart target), shift-queue. Card (rules §18.4): slot 0 Move,
+  1 Stop, 2 Hold, 3 Attack (attack-move on the ground, attack on an enemy), 4 Patrol, shown only
+  when an own mobile unit is selected (`has_orderable()`). **Hotkey presets**
+  (`Settings.active_hotkey_preset()`: `Settings.hotkey_preset`, else
+  `rules.controls.hotkey_preset`): **Classic** (default) uses the mnemonic actions `cmd_move` M,
+  `cmd_stop` S, `cmd_hold` H, `cmd_attack` A, `cmd_patrol` P ("A-click" attack-move); **Grid**
+  uses `card_0..11` by position (Q W E R / A S D F / Z X C V). `CommandInput.hotkey_action(slot)`
+  names the action of a slot under the active preset (the card's hotkey label reads it).
+  Targeted commands enter targeting mode (cross cursor, left-click confirms, right-click/Esc
+  cancels; attack-move confirmed on an enemy becomes an attack); shows a short order marker
+  ring. `activate_card(slot, shift)` is shared by hotkeys and HUD buttons; `command_ground(pos,
+  shift)` serves the minimap. Later: ability targeting and the build placement ghost
+  (green/red footprint).
 - Fx: `SelectionCircles` (one MultiMesh of flat rings tilted to the terrain normal; green own,
   red enemy/hostile, yellow neutral/allied) and `HealthBars` (one MultiMesh of camera-facing bars,
   billboarding + fill in the shader, custom data = hp ratio / size), both rebuilt each render
@@ -632,8 +668,15 @@ requirements, ability unlocks. Each file's header documents the full contract.
   shift-click removes it) and `CommandCard` (`command_card.gd`, 4×3 buttons with label +
   hotkey, active targeting mode shown pressed). The bar and console have mouse filter STOP so
   HUD clicks never reach world selection/commands; buttons never take keyboard focus.
-  `Hud.covers(screen_pos)` reports HUD areas. Still to come: hero portraits (left edge), idle
-  worker button, notifications & chat area, tooltips, real art (original, no WC3 UI art).
+  `Hud.covers(screen_pos)` reports HUD areas. A notification line above the console shows the
+  local player's `Events.notification` text for 4.5 s (under attack, the war-band marching;
+  placeholder for juice NTF-*). The selected hero's title carries its level. Still to come: hero
+  portraits (left edge), idle worker button, chat area, tooltips, real art (original, no WC3 UI
+  art).
+- Scenario UI (Main, battlefield only): an objective line under the top bar (goal + war-band
+  countdown) and the `EndBanner` (`src/ui/end_banner.gd`: Victory / Defeat / Stalemate, battle
+  time, losses per side, Play again / Main Menu; fades in 1.2 s after `ended`, blocks world
+  input; placeholder for juice SEQ-02, which will also halt World stepping).
 
 ## 12. Audio
 
@@ -676,6 +719,12 @@ with `.ogg/.wav/.mp3`.
   — spies replace systems — and smart right-click for every target kind), `test_systems.gd`
   (stage registration, hooks, effect registry coverage, AI install, Fog stub, Economy tax and
   refund, the stat pipeline, towers firing in place), `test_slice_map.gd` (map contract).
+- `tests/unit/test_battlefield.gd`: Playtest 1 — set-up from `scenarios.json`, the war-band
+  timer, guards defending and hunting, creeps fighting back, defeat, 3 sim-minutes in the real
+  main scene (wave, combat resolves, Space to the alert, no script errors) then the victory
+  banner, the main menu starting the match and the pause menu's Restart.
+  `tests/playtest/pt1_sandbox.gd` saves `tests/output/pt1_{menu,opening,fight,pause,end}.png`
+  through the real menu path.
 - `tests/playtest/battle.gd`: 8 soldiers + 4 archers attack-move into 10 creeps on an open
   patch of the test map inside the real main scene (`main.scenario = "sandbox"`) (HUD visible); asserts a winner within 90 sim
   s and saves `tests/output/battle_1..3.png`. The same setup (`battle_setup.gd`) runs headless

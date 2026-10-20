@@ -1,0 +1,62 @@
+{
+ "src": "/tmp/vc_audio/assets_src/audio/sfx/combat/hit_wood_l__3942d6cf.mp3",
+ "id": "hit_wood_l",
+ "raw_dur": 4.624,
+ "raw_peak_db": 0.72,
+ "detected": 3,
+ "expected": 4,
+ "exported": 3,
+ "takes": [
+  {
+   "dur": 0.731,
+   "peak_db": 0.72,
+   "clip": 0,
+   "rms_db": -22.49,
+   "crest_db": 23.22,
+   "centroid_hz": 2524,
+   "flatness": 0.023,
+   "silence": 0.301,
+   "periodic": 0.576,
+   "take": 1,
+   "start": 0.122,
+   "end": 0.853,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/combat/hit_wood_l_01.wav"
+  },
+  {
+   "dur": 0.572,
+   "peak_db": -1.37,
+   "clip": 0,
+   "rms_db": -22.96,
+   "crest_db": 21.59,
+   "centroid_hz": 3012,
+   "flatness": 0.0246,
+   "silence": 0.298,
+   "periodic": 0.481,
+   "take": 2,
+   "start": 2.247,
+   "end": 2.819,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/combat/hit_wood_l_02.wav"
+  },
+  {
+   "dur": 0.248,
+   "peak_db": 0.51,
+   "clip": 0,
+   "rms_db": -17.46,
+   "crest_db": 17.97,
+   "centroid_hz": 2676,
+   "flatness": 0.0178,
+   "silence": 0.184,
+   "periodic": 0.0,
+   "take": 3,
+   "start": 4.282,
+   "end": 4.53,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/combat/hit_wood_l_03.wav"
+  }
+ ]
+}

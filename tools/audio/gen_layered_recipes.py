@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""Writes tools/audio/layered_recipes.json (CC0 and procedural placeholder takes). Edit here, run, then run build_layered_sfx.py."""
+import json
+IS='kenney/impact-sounds/'; RP='kenney/rpg-audio/'
+R=[]
+def rec(id,group,source,takes,note=""):
+    R.append({"id":id,"group":group,"source":source,"note":note,"takes":takes})
+# body falls (CC0, bible 11 decision 2b)
+rec("fall_light","combat","cc0",[{"layers":[
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%a,"pitch":p},
+    {"src":IS+"impactPunch_medium_00%d.ogg"%b,"gain_db":-4,"lp":2200,"pitch":0.85,"offset_ms":5},
+    {"src":RP+"cloth%d.ogg"%c,"gain_db":-8,"hp":400,"offset_ms":12}]}
+    for a,b,c,p in ((0,0,1,1.0),(1,1,3,0.94),(2,4,2,1.06))],"Kenney Impact Sounds + RPG Audio (CC0), layered")
+rec("fall_armoured","combat","cc0",[{"layers":[
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%a,"pitch":0.9},
+    {"src":IS+"impactPunch_heavy_00%d.ogg"%a,"pitch":0.85,"lp":2500,"gain_db":-4},
+    {"src":IS+"impactPlate_medium_00%d.ogg"%b,"gain_db":-5,"offset_ms":25},
+    {"src":IS+"impactPlate_light_00%d.ogg"%c,"gain_db":-11,"offset_ms":150},
+    {"src":IS+"impactMetal_light_00%d.ogg"%d,"gain_db":-13,"pitch":0.8,"offset_ms":60}]}
+    for a,b,c,d in ((3,0,1,0),(4,2,3,2),(0,4,4,4))],"Kenney Impact Sounds (CC0), layered")
+rec("fall_huge","combat","cc0",[{"layers":[
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%a,"pitch":0.7,"gain_db":-2},
+    {"src":IS+"impactPunch_heavy_00%d.ogg"%a,"pitch":0.65,"lp":2000,"gain_db":0},
+    {"src":IS+"impactWood_heavy_00%d.ogg"%b,"pitch":0.6,"gain_db":-8},
+    {"src":IS+"impactPlank_medium_00%d.ogg"%c,"pitch":0.75,"gain_db":-7,"lp":1800,"offset_ms":30},
+    {"synth":"rumble","dur":1.0,"lp":160,"decay":0.35,"gain_db":-8}]}
+    for a,b,c in ((1,0,1),(2,2,2),(3,4,3))],"Kenney Impact Sounds (CC0) + procedural rumble")
+# procedural sub-thump (CMB-27 hit_sub)
+rec("hit_sub","combat","procedural",[{"lp":160,"layers":[{"synth":"thump","f0":f0,"f1":f1,"decay":d,"dur":0.3}]}
+    for f0,f1,d in ((62,36,0.10),(58,34,0.12),(66,38,0.09),(54,32,0.13))],"procedural sine thump")
+# UI (bible 11 decision 2b: UI clicks and ticks may be CC0): placeholders until the 9.2 kit sets are generated
+rec("ui_click_kingdom","ui","cc0",[{"layers":[
+    {"src":IS+"impactWood_light_00%d.ogg"%a,"pitch":p,"len_ms":120},
+    {"synth":"tick","f":f,"decay":0.003,"gain_db":-11,"hp":2500,"offset_ms":4}]}
+    for a,p,f in ((0,1.3,4200),(1,1.25,4500),(2,1.35,4000),(3,1.3,4700),(4,1.4,4300),(1,1.2,3900))],"oak knock (Kenney CC0) + procedural latch tick")
+rec("ui_click_clans","ui","cc0",[{"layers":[
+    {"src":IS+"impactSoft_medium_00%d.ogg"%a,"pitch":1.6,"len_ms":120},
+    {"src":IS+"impactPunch_medium_00%d.ogg"%a,"pitch":1.3,"lp":1800,"len_ms":120,"gain_db":-5},
+    {"src":IS+"impactMetal_light_00%d.ogg"%b,"pitch":p,"len_ms":60,"hp":1500,"gain_db":-12,"fade_ms":30}]}
+    for a,b,p in ((0,0,1.3),(1,1,1.35),(2,2,1.25),(3,3,1.3),(4,4,1.4),(2,1,1.2))],"felt thump + damped bronze tick (Kenney CC0)")
+rec("ui_disabled_kingdom","ui","cc0",[{"layers":[{"src":IS+"impactWood_medium_00%d.ogg"%a,"pitch":p,"lp":900,"len_ms":220}]}
+    for a,p in ((0,0.9),(2,0.88),(4,0.92))],"muffled board knock (Kenney CC0)")
+rec("ui_disabled_clans","ui","cc0",[{"layers":[{"src":IS+"impactSoft_medium_00%d.ogg"%a,"pitch":p,"lp":700},{"src":IS+"impactPunch_medium_00%d.ogg"%a,"pitch":0.9,"lp":900,"gain_db":-6}]}
+    for a,p in ((1,1.0),(3,0.95),(4,1.05))],"felt thud (Kenney CC0)")
+rec("ui_error_kingdom","ui","cc0",[{"layers":[
+    {"src":IS+"impactWood_medium_00%d.ogg"%a,"pitch":p,"lp":1200},
+    {"src":IS+"impactWood_medium_00%d.ogg"%b,"pitch":p*0.97,"lp":1100,"offset_ms":gap,"gain_db":-2}]}
+    for a,b,p,gap in ((0,1,0.8,120),(2,3,0.78,115),(4,0,0.82,125),(1,4,0.79,118))],"dull double knock (Kenney CC0)")
+rec("ui_error_clans","ui","cc0",[{"layers":[
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%a,"pitch":1.2,"len_ms":220,"lp":800},
+    {"src":IS+"impactPunch_medium_00%d.ogg"%a,"pitch":0.9,"lp":1000,"len_ms":220,"gain_db":-6},
+    {"synth":"bowl","f0":f0,"decay":0.6,"choke_ms":210,"dur":0.35,"gain_db":-7,"lp":1600,"offset_ms":40}]}
+    for a,f0 in ((0,110),(1,117),(2,104),(3,123))],"felt thud (Kenney CC0) + procedural choked bronze bowl tone")
+# order ticks
+def wood(i,p,off=0,g=0,ln=100): return {"src":IS+"impactWood_light_00%d.ogg"%i,"pitch":p,"offset_ms":off,"gain_db":g,"len_ms":ln}
+def felt(i,p,off=0,g=0,ln=100): return [{"src":IS+"impactSoft_medium_00%d.ogg"%i,"pitch":p,"offset_ms":off,"gain_db":g,"len_ms":ln},{"src":IS+"impactPunch_medium_00%d.ogg"%i,"pitch":1.3,"lp":1800,"offset_ms":off,"gain_db":g-5,"len_ms":ln}]
+def tsk(off=0,g=-6): return {"synth":"noise","dur":0.04,"hp":3500,"decay":0.012,"gain_db":g,"offset_ms":off}
+def tick(f,off=0,g=-9): return {"synth":"tick","f":f,"decay":0.003,"hp":2500,"gain_db":g,"offset_ms":off}
+ok=[]
+for v,(a,b,p) in enumerate(((0,1,1.5),(2,3,1.6))):
+    ok.append(("move",[wood(a,p)]))
+for v,(a,p) in enumerate(((1,1.6),(3,1.7))):
+    ok.append(("attack",[tsk(),wood(a,p,45),tick(3800+300*v,45)]))
+for v,(a,b,p) in enumerate(((0,2,1.5),(1,4,1.55))):
+    ok.append(("patrol",[wood(a,p),wood(b,p*1.06,85,-1)]))
+for v,f in enumerate(("bookFlip3.ogg","bookFlip2.ogg")):
+    ok.append(("ability",[{"src":RP+f,"len_ms":160,"hp":1500,"pitch":1.15+0.1*v}]))
+for name,layers in ok:
+    pass
+def kit(id,items,note):
+    takes=[]; names=[]
+    for name,layers in items:
+        takes.append({"name":name,"layers":layers})
+    rec(id,"ui","cc0",takes,note)
+kit("ui_order_kingdom",ok,"order ticks: wood tuk, tsk-tak with iron click, tuk-tuk, page flick (Kenney CC0 + procedural)")
+oc=[]
+for a,p in ((0,1.8),(2,1.9)): oc.append(("move",felt(a,p)))
+for v,(a,b) in enumerate(((1,1),(3,3))):
+    oc.append(("attack",[tsk()]+felt(a,1.8,45)+[{"src":IS+"impactMetal_light_00%d.ogg"%b,"pitch":1.5,"len_ms":50,"hp":1500,"gain_db":-9,"offset_ms":45,"fade_ms":25}]))
+for a,b in ((0,2),(1,4)): oc.append(("patrol",felt(a,1.8)+felt(b,1.9,85,-1)))
+for v in range(2):
+    oc.append(("ability",[wood((v+i)%5,2.4+0.1*i,[0,35,62,85][i],-3*i,60) for i in range(4)]))
+kit("ui_order_clans",oc,"order ticks: felt puk, tsk-tak with bronze click, puk-puk, bead run (Kenney CC0 + procedural)")
+sk=[]
+for v,(a,p) in enumerate(((0,1.9),(2,2.0))): sk.append(("single",[wood(a,p,0,0,70)]))
+for v,(a,b,p) in enumerate(((1,3,1.9),(4,0,2.0))): sk.append(("double",[wood(a,p,0,0,70),wood(b,p*1.04,70,-1,70)]))
+import random
+rnd=random.Random(7)
+for v in range(2):
+    sk.append(("bundle",[wood(rnd.randrange(5),rnd.uniform(1.5,2.2),int(rnd.uniform(0,120)) if i else 0,-rnd.uniform(0,6),80) for i in range(5)]))
+for v,(a,p) in enumerate(((0,2.3),(3,2.4))): sk.append(("wave",[wood(a,p,0,0,70)]))
+kit("ui_select_kingdom",sk,"tally-stick ticks: single, double, bundle clack, higher wave tick (Kenney CC0)")
+sc=[]
+for v,(a,p) in enumerate(((0,2.7),(2,2.8))): sc.append(("single",[wood(a,p,0,0,50),tick(5200,0,-14)]))
+for v,(a,b,p) in enumerate(((1,3,2.7),(4,0,2.8))): sc.append(("double",[wood(a,p,0,0,50),wood(b,p*1.04,60,-1,50)]))
+for v in range(2):
+    sc.append(("bundle",[wood(rnd.randrange(5),rnd.uniform(2.5,3.1),int(i*28+rnd.uniform(0,10)),-rnd.uniform(0,7),50) for i in range(7)]))
+for v,(a,p) in enumerate(((0,3.2),(3,3.3))): sc.append(("wave",[wood(a,p,0,0,50)]))
+kit("ui_select_clans",sc,"wooden bead ticks: single, double, bead-string rattle, higher wave tick (Kenney CC0)")
+# derived from our own generated takes (Seed Audio) plus CC0 layers: material variants and heavier versions
+def own(f,**k): d={"own":f}; d.update(k); return d
+def dirt(off=0,g=-8): return {"synth":"noise","dur":0.25,"lp":3500,"hp":200,"decay":0.06,"attack":0.004,"gain_db":g,"offset_ms":off}
+rec("bullet_hit","ranged","derived",[
+    {"name":"flesh","max_ms":300,"layers":[own("combat/hit_flesh_l_02.wav",pitch=1.25)]},
+    {"name":"wood","max_ms":300,"layers":[own("combat/hit_wood_l_03.wav",pitch=1.3)]},
+    {"name":"metal","max_ms":300,"layers":[own("combat/hit_metal_l_01.wav",pitch=1.5),tick(5200,0,-6)]},
+    {"name":"earth","max_ms":300,"layers":[{"src":IS+"impactSoft_medium_002.ogg","pitch":1.4},dirt(0,-4)]}],
+    "lead-ball hits by material, derived from our hit_* takes (Seed Audio) and Kenney CC0")
+rec("javelin_hit","ranged","derived",[
+    {"name":"wood","max_ms":450,"layers":[own("combat/hit_wood_l_01.wav",pitch=0.95),{"src":IS+"impactWood_medium_001.ogg","gain_db":-6}]},
+    {"name":"flesh","max_ms":450,"layers":[own("combat/hit_flesh_l_03.wav",pitch=0.9)]},
+    {"name":"metal","max_ms":450,"layers":[own("combat/hit_metal_l_02.wav",pitch=1.1),own("combat/hit_wood_l_02.wav",pitch=1.2,gain_db=-10)]},
+    {"name":"earth","max_ms":450,"layers":[{"src":IS+"impactSoft_heavy_001.ogg","pitch":1.1},{"src":IS+"impactPunch_medium_002.ogg","lp":1500,"gain_db":-6},dirt(5,-6)]}],
+    "javelin hits by material, derived from our hit_* takes (Seed Audio) and Kenney CC0")
+rec("hit_wood_h","combat","derived",[{"max_ms":650,"fade_out_ms":80,"layers":[
+    own("combat/hit_wood_l_%02d.wav"%a,pitch=p),
+    {"src":IS+"impactPlank_medium_00%d.ogg"%b,"gain_db":-3,"offset_ms":5},
+    {"src":IS+"impactWood_heavy_00%d.ogg"%c,"pitch":0.9,"gain_db":-5}]}
+    for a,b,c,p in ((1,0,0,0.8),(2,3,2,0.78),(3,4,4,0.82),(1,2,1,0.75))],
+    "heavy blow on planks: our hit_wood_l (Seed Audio) pitched down + Kenney CC0 plank crack")
+rec("claypot_hit","ranged","derived",[{"max_ms":800,"fade_out_ms":150,"layers":[
+    own("ranged/bombard_hit_%02d.wav"%a,pitch=1.5,gain_db=-2),
+    {"src":IS+"impactGlass_heavy_00%d.ogg"%b,"pitch":0.7,"lp":5000,"gain_db":-7},
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%c,"pitch":1.1,"gain_db":-3},
+    {"synth":"noise","dur":0.6,"lp":2500,"hp":150,"decay":0.15,"attack":0.01,"gain_db":-11,"offset_ms":20}]}
+    for a,b,c in ((1,0,0),(3,2,2),(4,4,3),(5,1,4))],
+    "clay pot smash: our bombard_hit debris (Seed Audio) pitched up + Kenney CC0 crack and thump + procedural dust")
+rec("sw_pierce","combat","derived",[{"max_ms":260,"fade_out_ms":70,"layers":[own("combat/sw_slash_%02d.wav"%a,pitch=p,start_ms=st)]}
+    for a,p,st in ((1,1.25,60),(3,1.3,50),(4,1.2,70),(1,1.35,40))],
+    "placeholder: short sharp air cuts derived from our sw_slash takes (Seed Audio), pitched up and shortened")
+rec("vox_death_clans","combat","derived",[{"layers":[own("combat/vox_death_kingdom_%02d.wav"%a,pitch=p)]}
+    for a,p in ((1,0.72),(2,0.7),(3,0.74))],
+    "placeholder until generated: our vox_death_kingdom takes (Seed Audio) pitched down to a deep-chested register")
+json.dump({"_doc":"Recipes for tools/audio/build_layered_sfx.py: CC0 (Kenney, assets_src/audio/cc0/kenney, licence files beside them) and procedural placeholder takes. A take with a 'name' is a kit item: it is written as <id>_<name>_<nn>.wav.","recipes":R},open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)),'layered_recipes.json'),'w'),indent=1)
+print(len(R))

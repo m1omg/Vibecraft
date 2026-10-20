@@ -1,0 +1,62 @@
+{
+ "src": "/tmp/vc_audio/assets_src/audio/sfx/ranged/atk_herb_mote__9ca5758a.mp3",
+ "id": "atk_herb_mote",
+ "raw_dur": 4.232,
+ "raw_peak_db": -9.09,
+ "detected": 3,
+ "expected": 4,
+ "exported": 3,
+ "takes": [
+  {
+   "dur": 0.597,
+   "peak_db": -9.7,
+   "clip": 0,
+   "rms_db": -25.6,
+   "crest_db": 15.9,
+   "centroid_hz": 1604,
+   "flatness": 0.0063,
+   "silence": 0.21,
+   "periodic": 0.0,
+   "take": 1,
+   "start": 0.306,
+   "end": 0.903,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/atk_herb_mote_01.wav"
+  },
+  {
+   "dur": 0.632,
+   "peak_db": -9.09,
+   "clip": 0,
+   "rms_db": -26.52,
+   "crest_db": 17.43,
+   "centroid_hz": 1772,
+   "flatness": 0.0059,
+   "silence": 0.278,
+   "periodic": 0.0,
+   "take": 2,
+   "start": 1.593,
+   "end": 2.225,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/atk_herb_mote_02.wav"
+  },
+  {
+   "dur": 0.811,
+   "peak_db": -10.15,
+   "clip": 0,
+   "rms_db": -28.01,
+   "crest_db": 17.86,
+   "centroid_hz": 1776,
+   "flatness": 0.008,
+   "silence": 0.235,
+   "periodic": 0.0,
+   "take": 3,
+   "start": 2.92,
+   "end": 3.732,
+   "flags": [],
+   "export": true,
+   "file": "/tmp/vc_audio/assets/audio/sfx/ranged/atk_herb_mote_03.wav"
+  }
+ ]
+}

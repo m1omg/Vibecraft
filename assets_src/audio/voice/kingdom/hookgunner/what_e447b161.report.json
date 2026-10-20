@@ -1,0 +1,87 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/kingdom/hookgunner/what_e447b161.mp3",
+ "raw_s": 5.12,
+ "expect": 3,
+ "found": 3,
+ "pauses": [
+  [
+   0.81,
+   0.58
+  ],
+  [
+   1.83,
+   0.01
+  ],
+  [
+   1.85,
+   0.52
+  ],
+  [
+   2.88,
+   0.04
+  ],
+  [
+   3.25,
+   0.55
+  ],
+  [
+   3.91,
+   0.06
+  ],
+  [
+   4.1,
+   0.01
+  ],
+  [
+   4.65,
+   0.01
+  ]
+ ],
+ "shortest_pause_used_s": 0.55,
+ "longest_pause_left_s": 0.52,
+ "cuts": null,
+ "lines": [
+  {
+   "n": 1,
+   "name": "what_01",
+   "start": 0.04,
+   "raw_s": 0.84,
+   "tight_s": 0.84,
+   "tempo": 1.0,
+   "final_s": 0.84,
+   "lufs_in": -21.7,
+   "peak_dbfs": -4.9,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hookgunner/what_01.ogg",
+   "ogg_s": 0.84,
+   "status": "ok"
+  },
+  {
+   "n": 2,
+   "name": "what_02",
+   "start": 1.1,
+   "raw_s": 1.97,
+   "tight_s": 1.59,
+   "tempo": 1.124,
+   "final_s": 1.391,
+   "lufs_in": -24.9,
+   "peak_dbfs": -3.9,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hookgunner/what_02.ogg",
+   "ogg_s": 1.391,
+   "status": "ok"
+  },
+  {
+   "n": 3,
+   "name": "what_03",
+   "start": 3.52,
+   "raw_s": 1.19,
+   "tight_s": 1.19,
+   "tempo": 1.0,
+   "final_s": 1.16,
+   "lufs_in": -24.0,
+   "peak_dbfs": -5.4,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hookgunner/what_03.ogg",
+   "ogg_s": 1.16,
+   "status": "ok"
+  }
+ ]
+}

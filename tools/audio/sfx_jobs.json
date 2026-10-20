@@ -1,0 +1,470 @@
+{
+ "_doc": "Seed Audio job table (art-and-audio bible 9.2-9.6). One entry per generation job. Prompts are built by tools/audio/sfx_prompts.py from the fixed 9.1 wrappers. Keep clauses verbatim from the bible tables.",
+ "jobs": [
+  {
+   "id": "hit_metal_l",
+   "group": "combat",
+   "w": "O",
+   "n": 4,
+   "d": 0.5,
+   "p": "P0",
+   "clause": "a blade striking blackened iron plate and bronze lamellar, a sharp clang with a short ring"
+  },
+  {
+   "id": "hit_metal_h",
+   "group": "combat",
+   "w": "O",
+   "n": 4,
+   "d": 0.6,
+   "p": "P0",
+   "clause": "a heavy mace slamming into iron plate, a deep metallic crash with a dull ring"
+  },
+  {
+   "id": "hit_flesh_l",
+   "group": "combat",
+   "w": "O",
+   "n": 4,
+   "d": 0.4,
+   "p": "P0",
+   "clause": "a blade hitting a body in quilted linen armour, a thick cloth slap with a muted thud, no gore, no voice"
+  },
+  {
+   "id": "hit_flesh_h",
+   "group": "combat",
+   "w": "O",
+   "n": 4,
+   "d": 0.5,
+   "p": "P0",
+   "clause": "a heavy blunt blow into a big body wrapped in thick felt, a deep meaty thump, no gore, no voice"
+  },
+  {
+   "id": "hit_wood_l",
+   "group": "combat",
+   "w": "O",
+   "n": 4,
+   "d": 0.4,
+   "p": "P0",
+   "clause": "a weapon striking a tall wooden shield, a hollow woody knock"
+  },
+  {
+   "id": "hit_wood_h",
+   "group": "combat",
+   "w": "O",
+   "n": 4,
+   "d": 0.6,
+   "p": "P0",
+   "clause": "a heavy blow on wooden planks and a cart side, a splintery crack"
+  },
+  {
+   "id": "hit_stone",
+   "group": "combat",
+   "w": "O",
+   "n": 4,
+   "d": 0.6,
+   "p": "P0",
+   "clause": "a weapon hitting a stack of flat stone slabs, a rocky crack and a short gravel crumble"
+  },
+  {
+   "id": "hit_straw",
+   "group": "combat",
+   "w": "O",
+   "n": 4,
+   "d": 0.4,
+   "p": "P0",
+   "clause": "a blow into a straw-stuffed scarecrow body, a dry straw crunch and a puff of rustling straw"
+  },
+  {
+   "id": "sw_slash",
+   "group": "combat",
+   "w": "O",
+   "n": 6,
+   "d": 0.3,
+   "p": "P0",
+   "clause": "fast close swings of a single-edged curved blade through the air, a short airy whoosh, no impact"
+  },
+  {
+   "id": "sw_blunt",
+   "group": "combat",
+   "w": "O",
+   "n": 6,
+   "d": 0.35,
+   "p": "P0",
+   "clause": "heavy swings of a flanged bronze mace and of a threshing flail on a chain, a low whoosh with a faint chain rattle on some takes, no impact"
+  },
+  {
+   "id": "sw_pierce",
+   "group": "combat",
+   "w": "O",
+   "n": 4,
+   "d": 0.25,
+   "p": "P0",
+   "clause": "quick thrusts of a war-pick and a pitchfork, a short sharp air cut, no impact"
+  },
+  {
+   "id": "fall_light",
+   "group": "combat",
+   "w": "O",
+   "n": 3,
+   "d": 0.6,
+   "p": "P0",
+   "clause": "a body in cloth armour falling onto grass, a soft thud with a cloth rustle"
+  },
+  {
+   "id": "fall_armoured",
+   "group": "combat",
+   "w": "O",
+   "n": 3,
+   "d": 0.8,
+   "p": "P0",
+   "clause": "an armoured body falling onto earth with an iron and bronze clatter"
+  },
+  {
+   "id": "fall_huge",
+   "group": "combat",
+   "w": "O",
+   "n": 3,
+   "d": 1.0,
+   "p": "P0",
+   "clause": "a huge heavy body falling, a ground-shaking thud with a short rumble"
+  },
+  {
+   "id": "vox_death_kingdom",
+   "group": "combat",
+   "w": "V",
+   "n": 6,
+   "p": "P0",
+   "voice": "ordinary adult townsfolk, men and women",
+   "list": "winded oofs, a sharp intake of breath, two short cut-off cries, a tired sigh, no words"
+  },
+  {
+   "id": "vox_death_clans",
+   "group": "combat",
+   "w": "V",
+   "n": 6,
+   "p": "P0",
+   "voice": "very large deep-chested humanoids with heavy jaws",
+   "list": "deep huffs, a strained bellow, a throat-hum that drops away, a long exhale, no words"
+  },
+  {
+   "id": "hit_sub",
+   "group": "combat",
+   "w": "O",
+   "n": 4,
+   "d": 0.25,
+   "p": "P1 (combat juice CMB-27; asked for in PT1)",
+   "clause": "a very low short thump, felt more than heard"
+  },
+  {
+   "id": "hookgun_fire",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 1.6,
+   "p": "P0",
+   "clause": "an early hand-cannon firing: a deep whump followed by a sharp crack, then a short hissing smoke tail"
+  },
+  {
+   "id": "bullet_hit",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 0.3,
+   "p": "P0",
+   "clause": "a small lead ball hitting: a thud into a body, a knock into wood, a ping off iron, a puff into earth"
+  },
+  {
+   "id": "javelin_throw",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 0.5,
+   "p": "P0",
+   "clause": "a spear-thrower whipping a javelin away: a quick wooden snap and a fast whoosh"
+  },
+  {
+   "id": "javelin_hit",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 0.4,
+   "p": "P0",
+   "clause": "a bronze-tipped javelin hitting: a solid thunk into wood, a thud into a body, a ping off metal, a thud into earth"
+  },
+  {
+   "id": "sling_stones",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 0.8,
+   "p": "P0",
+   "clause": "a leather sling whirling twice and releasing a stone, then the stone cracking against wood"
+  },
+  {
+   "id": "bombard_fire",
+   "group": "ranged",
+   "w": "O",
+   "n": 3,
+   "d": 2.0,
+   "p": "P0",
+   "clause": "a short bronze bombard firing: a big deep boom, a heavy low thump and a rolling smoke hiss"
+  },
+  {
+   "id": "bombard_hit",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 1.0,
+   "p": "P0",
+   "clause": "a cannonball landing: a deep earthy thump, dirt and stones spraying, a short rumble"
+  },
+  {
+   "id": "bowmast_fire",
+   "group": "ranged",
+   "w": "O",
+   "n": 3,
+   "d": 0.8,
+   "p": "P0",
+   "clause": "a big laminated recurve bow on a swivel atop a tall wooden mast: a rope creak, a deep bowstring twang, then a fast arrow whoosh"
+  },
+  {
+   "id": "slingcart_throw",
+   "group": "ranged",
+   "w": "O",
+   "n": 3,
+   "d": 1.2,
+   "p": "P0",
+   "clause": "a two-wheeled throwing-arm cart: a rope creak, the wooden arm whipping forward, a heavy thump against the stop beam"
+  },
+  {
+   "id": "claypot_hit",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 0.8,
+   "p": "P0",
+   "clause": "a heavy clay pot smashing on the ground: a crash of shards, a dull thump, a puff of dust"
+  },
+  {
+   "id": "gust_bolt",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 0.6,
+   "p": "P0",
+   "clause": "a small magical bolt of whirling dust and wind: a short rising swish, then a soft gritty puff on impact"
+  },
+  {
+   "id": "atk_herb_mote",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 0.3,
+   "p": "P0",
+   "clause": "the Linden Sister's attack: a soft papery puff and a dull leafy thud",
+   "note": "table note dropped from the prompt: reused pitched down for the Crowherd's attack"
+  },
+  {
+   "id": "atk_ember_flick",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 0.4,
+   "p": "P0",
+   "clause": "the Firewright's attack: a small clay pellet of embers flicked from a linstock with a hiss, then a soft fiery pop on impact"
+  },
+  {
+   "id": "atk_glint",
+   "group": "ranged",
+   "w": "O",
+   "n": 4,
+   "d": 0.4,
+   "p": "P0",
+   "clause": "the Skymirror's glint bolt: a short bright metallic zip of reflected light ending in a soft glassy tick"
+  },
+  {
+   "id": "ui_order_kingdom",
+   "group": "ui",
+   "w": "K",
+   "t": 2,
+   "p": "P0",
+   "list": "1. a soft wooden \"tuk\" (move), 2. a \"tsk-tak\" of wood and a small iron click (attack), 3. two quick wooden \"tuk-tuk\" taps (patrol), 4. a quick quill flick across paper (ability)"
+  },
+  {
+   "id": "ui_order_clans",
+   "group": "ui",
+   "w": "K",
+   "t": 2,
+   "p": "P0",
+   "list": "1. a soft felt-damped \"puk\" (move), 2. a \"tsk-tak\" with a small bronze click (attack), 3. two quick felt \"puk-puk\" taps (patrol), 4. a quick wooden bead flicked along a cord (ability)"
+  },
+  {
+   "id": "ui_select_kingdom",
+   "group": "ui",
+   "w": "K",
+   "t": 2,
+   "p": "P0",
+   "list": "1. one small tally-stick tick, 2. a double tally tick, 3. a bundle of tally sticks clacking together, 4. a single higher tally tick for a rising wave"
+  },
+  {
+   "id": "ui_select_clans",
+   "group": "ui",
+   "w": "K",
+   "t": 2,
+   "p": "P0",
+   "list": "1. one small wooden bead tick, 2. a double bead tick, 3. a short string of beads rattling, 4. a single higher bead tick for a rising wave"
+  },
+  {
+   "id": "ui_click_kingdom",
+   "group": "ui",
+   "w": "O",
+   "n": 6,
+   "d": 0.12,
+   "p": "P0",
+   "clause": "a tiny button press: a soft dry knock on oak wood with a small iron latch tick, very short"
+  },
+  {
+   "id": "ui_click_clans",
+   "group": "ui",
+   "w": "O",
+   "n": 6,
+   "d": 0.12,
+   "p": "P0",
+   "clause": "a tiny button press: a small tap on a polished bronze plate damped by thick felt, a soft thump with a short bright tick"
+  },
+  {
+   "id": "ui_error_kingdom",
+   "group": "ui",
+   "w": "O",
+   "n": 4,
+   "d": 0.3,
+   "p": "P0",
+   "clause": "a dull double knock on thick wooden boards, low, flat and slightly muffled"
+  },
+  {
+   "id": "ui_error_clans",
+   "group": "ui",
+   "w": "O",
+   "n": 4,
+   "d": 0.35,
+   "p": "P0",
+   "clause": "a muffled thud on a thick felt wall followed by a low bronze bowl tone choked short by a hand"
+  },
+  {
+   "id": "ui_disabled_kingdom",
+   "group": "ui",
+   "w": "O",
+   "n": 3,
+   "d": 0.2,
+   "p": "P0",
+   "clause": "a single muffled knock on a thick wooden board, dull and short"
+  },
+  {
+   "id": "ui_disabled_clans",
+   "group": "ui",
+   "w": "O",
+   "n": 3,
+   "d": 0.2,
+   "p": "P0",
+   "clause": "a single soft thud on a thick felt wall, dull and short"
+  },
+  {
+   "id": "ab_brace_wheel",
+   "group": "abilities",
+   "w": "O",
+   "n": 3,
+   "d": 1.0,
+   "p": "P0",
+   "clause": "a heavy wooden cart wheel slammed upright onto the ground, its iron rim ringing, a deep defiant resonant thud"
+  },
+  {
+   "id": "ab_linden_balm",
+   "group": "abilities",
+   "w": "O",
+   "n": 3,
+   "d": 1.5,
+   "p": "P0",
+   "clause": "a gentle healing spell: a soft breeze of rustling leaves and drifting blossoms, a warm low bell chord swelling gently, no voices"
+  },
+  {
+   "id": "ab_naphtha",
+   "group": "abilities",
+   "w": "O",
+   "n": 3,
+   "d": 1.5,
+   "p": "P0",
+   "clause": "a clay flask flying and shattering, a liquid splash, then a big soft whoomph of ignition and crackling flames"
+  },
+  {
+   "id": "ab_fuse_blast",
+   "group": "abilities",
+   "w": "O",
+   "n": 3,
+   "d": 1.2,
+   "p": "P0",
+   "clause": "a compact gunpowder explosion with a sharp crack and debris patter"
+  },
+  {
+   "id": "ab_braid_lash",
+   "group": "abilities",
+   "w": "O",
+   "n": 3,
+   "d": 1.0,
+   "p": "P0",
+   "clause": "a heavy braided rope whipping out with a crack, a bronze weight hitting with a thunk, a body dragged a short way over grass"
+  },
+  {
+   "id": "ab_clean_cut",
+   "group": "abilities",
+   "w": "O",
+   "n": 3,
+   "d": 0.6,
+   "p": "P0",
+   "clause": "a straight sabre ringing clean and bright after a decisive cut, a shimmering high metallic ring"
+  },
+  {
+   "id": "ab_sunglint",
+   "group": "abilities",
+   "w": "O",
+   "n": 3,
+   "d": 1.0,
+   "p": "P0",
+   "clause": "a blinding flash of sunlight from a polished bronze mirror: a bright shimmering chime swell and a searing high ping"
+  },
+  {
+   "id": "ab_dust_veil",
+   "group": "abilities",
+   "w": "O",
+   "n": 3,
+   "d": 1.4,
+   "p": "P0",
+   "clause": "a low rush of dust rolling outward along dry grass with a soft sand hiss, then a dry \"fwump\" as it settles; nothing whirling or rising"
+  },
+  {
+   "id": "ab_hail_swifts",
+   "group": "abilities",
+   "w": "O",
+   "n": 2,
+   "d": 1.8,
+   "p": "P0",
+   "clause": "hailstones pattering on stone and packing together into small birds, then an ice crackle and a wind snap; cold, no bird cry"
+  },
+  {
+   "id": "ab_bronze_window",
+   "group": "abilities",
+   "w": "O",
+   "n": 2,
+   "d": 1.5,
+   "p": "P0",
+   "clause": "a polished bronze mirror flipped down over the eyes, rippling like water: a small metal flip, a soft shimmering swell and a distant wind"
+  },
+  {
+   "id": "ab_grand_bombard",
+   "group": "abilities",
+   "w": "O",
+   "n": 2,
+   "d": 1.5,
+   "p": "P0",
+   "clause": "a heavy bronze cannon dropped onto a timber platform: wheels thudding, chains settling"
+  }
+ ]
+}

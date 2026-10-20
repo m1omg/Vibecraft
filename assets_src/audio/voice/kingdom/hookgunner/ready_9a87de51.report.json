@@ -1,0 +1,59 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/kingdom/hookgunner/ready_9a87de51.mp3",
+ "raw_s": 3.36,
+ "expect": 1,
+ "found": 1,
+ "pauses": [
+  [
+   0.3,
+   0.01
+  ],
+  [
+   0.63,
+   0.02
+  ],
+  [
+   0.75,
+   0.17
+  ],
+  [
+   0.98,
+   0.02
+  ],
+  [
+   1.3,
+   0.03
+  ],
+  [
+   1.81,
+   0.4
+  ],
+  [
+   2.74,
+   0.06
+  ],
+  [
+   2.98,
+   0.04
+  ]
+ ],
+ "shortest_pause_used_s": null,
+ "longest_pause_left_s": 0.4,
+ "cuts": null,
+ "lines": [
+  {
+   "n": 1,
+   "name": "ready_01",
+   "start": 0.05,
+   "raw_s": 3.05,
+   "tight_s": 2.94,
+   "tempo": 1.0,
+   "final_s": 2.94,
+   "lufs_in": -24.6,
+   "peak_dbfs": -1.7,
+   "file": "/tmp/vc_audio/assets/audio/voice/kingdom/hookgunner/ready_01.ogg",
+   "ogg_s": 2.94,
+   "status": "ok"
+  }
+ ]
+}

@@ -5,6 +5,9 @@ extends Node
 ## right-clicking a unit outside the selection targets it),
 ## shift = queue. Targeting mode (move/attack/patrol hotkeys) waits for a left-click; right-click
 ## or Esc cancels. Must sit after Selection in the tree so it sees input first.
+## Hotkeys follow the active preset (Settings.active_hotkey_preset(), rules §18.4): Classic =
+## the mnemonic `cmd_*` actions (M move, S stop, H hold, A attack, P patrol; "A-click" =
+## attack-move, or attack when the click lands on an enemy), Grid = `card_0..11` by position.
 
 signal targeting_changed(mode: String)
 
@@ -13,6 +16,9 @@ const CARD: Dictionary = {0: "move", 1: "stop", 2: "hold", 3: "attack_move", 4: 
 const LABELS: Dictionary = {"move": "Move", "stop": "Stop", "hold": "Hold",
 	"attack_move": "Attack", "patrol": "Patrol"}
 const TARGETED: Array[String] = ["move", "attack_move", "patrol"]
+## Classic preset: command -> input action (mnemonic letter, Settings.default_actions()).
+const CLASSIC_ACTIONS: Dictionary = {"move": "cmd_move", "stop": "cmd_stop", "hold": "cmd_hold",
+	"attack_move": "cmd_attack", "patrol": "cmd_patrol"}
 const MARKER_SHADER := preload("res://src/fx/ring.gdshader")
 
 var world: World
@@ -51,10 +57,18 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		for slot: int in CARD:
-			if event.is_action_pressed("card_%d" % slot):
+			var action := hotkey_action(slot)
+			if not action.is_empty() and event.is_action_pressed(action):
 				activate_card(slot, (event as InputEventKey).shift_pressed)
 				get_viewport().set_input_as_handled()
 				return
+
+
+## Input action that triggers a card slot under the active preset ("" for an empty slot).
+static func hotkey_action(slot: int) -> String:
+	if Settings.active_hotkey_preset() == "grid":
+		return "card_%d" % slot
+	return str(CLASSIC_ACTIONS.get(CARD.get(slot, ""), ""))
 
 
 ## Command card slot pressed (hotkey or HUD button): targeted commands enter targeting mode,
@@ -62,7 +76,7 @@ func _unhandled_input(event: InputEvent) -> void:
 ## the game is paused (no orders while paused; the HUD stays clickable).
 func activate_card(slot: int, shift: bool = false) -> bool:
 	var cmd: String = CARD.get(slot, "")
-	if cmd.is_empty() or selection.selected_ids().is_empty() or not can_process():
+	if cmd.is_empty() or not has_orderable() or not can_process():
 		return false
 	if TARGETED.has(cmd):
 		_set_targeting(cmd)
@@ -81,6 +95,17 @@ func command_ground(ground: Vector3, shift: bool = false) -> void:
 			_set_targeting("")
 		return
 	_issue({"type": "smart", "pos": ground, "queue": shift})
+
+
+## True when the selection holds an own mobile unit (the unit card applies; structures alone
+## have no Move / Stop / Hold / Attack / Patrol).
+func has_orderable() -> bool:
+	if selection == null:
+		return false
+	for u in selection.selected:
+		if u.alive and u.player_id == player_id and u.is_mobile():
+			return true
+	return false
 
 
 func cancel_targeting() -> void:
