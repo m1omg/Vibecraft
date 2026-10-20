@@ -152,9 +152,11 @@ swatches, terrain textures and foliage cards plus procedurally painted textures.
 gives byte-identical GLBs and manifest.
 
 ```bash
-$PY tools/kits/doodads.py                          # all 42 assets + assets/models/doodads/manifest.json (~25 s)
+$PY tools/kits/doodads.py                          # all 47 assets + assets/models/doodads/manifest.json (~3 min)
 $PY tools/kits/doodads.py --only "tree_*,gold_mine" # subset (prefix* allowed); --list shows the ids
-python3 tools/kits/lineup.py                        # tests/output/doodads_lineup.png (vignette, neutrals, catalogue)
+$PY tools/kits/doodads.py --check                  # rebuild to a temp dir, list stale outputs (exit 1 if any)
+python3 tools/kits/lineup.py                        # tests/output/doodads_lineup.png (vignette, neutrals, forest
+                                                    # lanes, LOD A/B, Gold Seam at 4 yaws, catalogue)
 ```
 
 | File | What |
@@ -169,65 +171,117 @@ Outputs: `assets/models/doodads/<id>.glb` (trees + `_lod1`, rocks, walls, hedge,
 The manifest lists per asset: size, tris, suggested blocked footprint in cells, sight blocking, sway, materials,
 texel density, LODs, animated nodes (with pivots) and extras (smoke / lantern / adit points).
 
-What the game must do with these GLBs (Godot's glTF importer does not do it):
-* **Vertex colours**: every non-foliage material carries painted AO / moss in `COLOR_0` and is tagged with glTF
-  extras `vc_vertex_color: "multiply"` (Godot material meta `extras`). Set `vertex_color_use_as_albedo = true`
-  on those materials, as `render_preview.py` (turntable.gd) and `lineup.gd` do.
-* **Foliage** (`*_SWAY`, extras `vc_vertex_color: "sway"`): `COLOR_0` R = sway weight (0 at the trunk base → 1 at
-  the canopy edge), G = painted AO, B = per-cluster phase; alpha scissor (MASK). Render with
-  `kits/foliage_sway.gdshader` (or the tree MultiMesh shader built from it), never with the imported material.
-* **UV2** on every vertex: x = sway weight (also on bark), y = normalized height 0..1 → build / collapse reveal:
-  `discard` where `UV2.y > progress` (no extra construction meshes).
-* **Emissive tags**: `_GLOW` (Gold Seam stratum: pulse when a worker enters), `_LAMP` (lanterns, night),
-  `_EMBER` (camp vents and fire beds), `_GLYPH` (cup-and-ring marks, night only), `_WATER` (pool / sluice).
+What the game can rely on, and what its loader should do:
+* **Vertex colours** (plain import already correct): every material, foliage included, carries painted AO /
+  base darkening / moss in `COLOR_0` RGB (A = 1), tagged with glTF extras `vc_vertex_color: "multiply"`. Godot
+  4.7's glTF importer sets `vertex_color_use_as_albedo` on every material except the one used by a mesh's first
+  primitive, so every kit mesh starts with a hidden 1 mm dummy triangle (same material as its first real
+  primitive): a plain `GLTFDocument` load shows the AO on every surface (checked on all assets). The game loader
+  should still set `vertex_color_use_as_albedo = true` explicitly on every material whose meta `extras`
+  says `multiply` (as `render_preview.py` / turntable.gd and `lineup.gd` do), so it never depends on that quirk.
+* **Foliage** (`*_SWAY`): alpha scissor (MASK), double sided; sway weight in `TEXCOORD_1.x` (UV2.x: 0 at the
+  trunk base / stem root, 1 at the canopy edge / blade tip, small values on bark), per-cluster phase in
+  `TEXCOORD_2.x` (Godot `CUSTOM0.x`). A plain material renders them right but static; `kits/foliage_sway.gdshader`
+  (or the tree MultiMesh shader built from it) adds the wind.
+* **UV2** on every vertex: x = sway weight (0 on rigid props), y = normalized height 0..1 → build / collapse
+  reveal: `discard` where `UV2.y > progress` (no extra construction meshes).
+* **Atlas materials** (Gold Seam, Weighstall, Hale Spring, collapsed seam, milestone): one texture made of tiled
+  cells (bands, tiles, decals); the writer cuts triangles on each cell's repeat lines and maps every piece into
+  its cell (16 px wrap padding), so tiled swatches keep ~128-160 px/m inside one material. Per-cell densities are
+  in the material extras `cells_px_per_m` and in the manifest.
+* **Emissive tags**: `gold_mine_rock_GLOW` (only the gold seam / vein texels emit, factor 0: pulse when a worker
+  enters), `*_timber_LAMP` (only the lantern glass emits, factor 0: night), `_EMBER` (camp vents and fire beds),
+  `_GLYPH` (cup-and-ring marks, night only).
 * **Facing**: fronts face −Z like units; the default camera sits on +Z, so spawn neutral buildings with
-  facing = PI for the door-toward-camera look. No TEAM materials: neutrals never carry team colour (bible §3.1).
+  facing = PI for the door-toward-camera look. The Gold Seam is finished cliff with the gold band on all four
+  sides (src/main.gd spawns it facing the hall, so any side may face the camera). No TEAM materials: neutrals
+  never carry team colour (bible §3.1).
+* **Footprints**: the manifest's `footprint_cells` is the sim footprint and equals the mesh width (bible §1.3):
+  Gold Seam and Weighstall 12×12 (6 m), Hale Spring 8×8 (4 m, `blocks_pathing: false`: the pool is walkable).
+* **Trees**: crowns ~3-3.6 m across on the 1 m tree grid (map_generator fills every free tree cell), so a 2 m
+  lane cut along the view reads; LOD1 reuses LOD0's cards (switch beyond ~60 m), LOD2 is a Y-billboard impostor.
+
+`$PY tools/kits/doodads.py --check` rebuilds everything into a temp dir and lists every GLB / the manifest that
+differs from the files on disk (exit 1 if any is stale): run it before committing kit outputs. After a rebuild,
+let Godot reimport (`godot --headless --path . --import`) so the tracked `*.import` / extracted textures match.
 
 ## Procedural building kit (`tools/kits/buildings.py`)
 
 Every [SLICE] building of `kingdom` and `clans` except the two AI-modelled halls, built in bpy from shared
-modules (half-timber walls with rubble plinths and jetties, gable / hip / pyramid roofs with ridge-tile team
-bands, crow-stepped gables, onion domes, chimneys, scout-tower frames, doors, shuttered windows, pennants,
-banners, wheels and wagons; felt yurts on stadium or round plans with lattice band, rolled skirt, crown ring and
-smoke-ring glow, tortoise-shell domes, carved masts with felt streamers, standing stones with glyph decals,
-gong frames, ring fences, kilns, urns, sun-mirror posts, a recurve bow on a swivel, lattice galleries). No paid
-API. Deterministic (byte-identical GLBs and manifest on re-run; ~25 s for all 19).
+modules (half-timber walls with rubble plinths and jetties; gable, half-hip, hip, pyramid and mono-pitch roofs
+with 4-8 cm ridge sag, wandering ridges and eaves, oak bargeboards and team ridge tiles; crow-stepped gables,
+smooth ribbed onion domes, chimneys, scout-tower frames, doors, shuttered windows, pennants, banners, wheels
+and wagons; felt yurts on stadium or round plans with lattice band, rolled skirt, crown rings / round smoke
+vents, tortoise-shell domes, carved masts with felt streamers, standing stones with square glyph decals, gong
+frames, ring fences, kilns, urns, sun-mirror posts, a recurve bow on a swivel, lattice galleries) and a ground
+apron under every building. No paid API. Deterministic (byte-identical GLBs, sheets and manifest on re-run;
+~1 min for all 19).
 
 ```bash
-$PY tools/kits/buildings.py                                  # all -> assets/models/buildings/<id>.glb + manifest.json
+$PY tools/kits/buildings.py                                  # all -> assets/models/buildings/<id>.glb + textures/ + manifest.json
 $PY tools/kits/buildings.py --only kingdom_croft,clans_tea_tent
-$PY tools/kits/buildings.py --coverage --sheets tests/output/buildings --lineup tests/output/buildings_lineup.png
-$PY tools/kits/buildings.py --no-build --lineup out.png --hall-scale 1   # line-up with the AI halls at native 8 m
+$PY tools/kits/buildings.py --coverage --silhouettes tests/output/buildings_silhouettes.png \
+    --sheets tests/output/buildings --lineup tests/output/buildings_lineup.png
+$PY tools/kits/buildings.py --no-build --lineup out.png      # re-render the line-ups of the GLBs on disk
+python3 tools/kits/hall_team_desat.py assets/models/buildings/kingdom_moot_hall.glb assets/models/buildings/clans_shell_hall.glb
 ```
+
+`--lineup X.png` writes three images: `X.png` (catalogue of every building beside the AI halls at native 8 m,
+kingdom Emerald / clans Royal Blue, the slice default of art bible 2.4), `X_game.png` (the real game camera:
+pitch 56, FOV 45, 28 m, 1920x1080, over a T2 base of each faction with slice units) and `X_crimson.png` (the
+same catalogue in Crimson, the readability stress test only). `--silhouettes` renders the 128 px flat-black
+silhouettes of bible 4.1 and prints the most similar pair per faction; `--coverage` writes the visible TEAM
+fraction into the manifest (both ignore everything lower than 12 cm: the apron, rugs and kerbs).
 
 | File | What |
 |---|---|
-| `kits/buildings.py` | kit modules, the 19 building generators, manifest, CLI, line-up / coverage drivers |
-| `kits/buildings_lib.py` | swatch tiling (crossfade or pattern-period crop), procedural paint (iron, brick, straw, wattle, stone, glyphs, log rings, leaves, palette, team cloth, windows, embers), parts (prism with gridded CDT caps, lathe incl. stadium plans, sweep, plate, blob), refinement, smooth-noise jitter, ray-cast AO bake, atlas packing with UV cuts on tile lines, deterministic GLB writer |
+| `kits/buildings.py` | kit modules, the 19 building generators, manifest, CLI, line-up / game-camera / coverage / silhouette drivers |
+| `kits/buildings_lib.py` | swatch tiling (crossfade or pattern-period crop), procedural paint (iron, smooth bronze, brick, straw, wattle, stone, glyphs, log rings, leaves, palette, team cloth, windows, embers), parts (prism with gridded CDT caps, lathe incl. stadium plans, sweep, plate, blob), refinement, smooth-noise jitter, ray-cast AO bake, shared sheets with UV cuts on tile lines, deterministic GLB writer |
 | `kits/buildings_lineup.gd` | line-up renderer (meadow ground, RTS pitch, per-faction team colours, label anchors) |
-| `kits/buildings_teammask.gd` | flat TEAM / non-TEAM masks from the RTS pitch for the coverage numbers in the manifest |
+| `kits/buildings_teammask.gd` | flat TEAM / non-TEAM masks from the RTS pitch (coverage numbers, silhouettes) |
+| `kits/build_reveal.gdshader` | the construction reveal (see below) |
+| `kits/hall_team_desat.py` | greys the magenta TEAM texels of an already-processed AI hall GLB in place (geometry untouched) |
 
-Conventions: footprint = faction-doc cells x 0.5 m (Croft / Home Yurt / towers 4x4, Oath Hall / Foundry / Curio
-Cabinet / Naming Stones / Casting Pit / Tea Tent 6x6, the rest 8x8), heights from art bible 1.3 (10-cell column),
-origin at the footprint centre, door on −Z (spawn with facing = PI to show it to the default +Z camera). Each GLB
-has one mesh with up to three materials: `<id>` (opaque atlas of the swatches it uses, 448 px cells with 32 px
-wrap padding, ~128-220 px/m), `<id>_GLOW` (windows, forge / kiln / crown glow; emissive: raise its energy at
-night) and `<id>_TEAM` (light grey cloth for UnitView's albedo multiply). `COLOR_0` = painted AO (tagged
-`vc_vertex_color: "multiply"` like the doodad kit); the primitives are ordered GLOW, atlas, TEAM because Godot
-4.7's glTF import never sets `vertex_color_use_as_albedo` on a mesh's first primitive (buildings without GLOW
-start with a hidden 1 mm dummy triangle), so stock import already shows the AO.
+Conventions:
+* **Size** (art bible 1.3, decided 2026-10-19; footprint = faction-doc cells x 0.5 m = sim footprint): supply
+  8x8 cells (4 m, 3-3.5 m tall: Croft, Home Yurt), production / altar / shop / research 12x12 (6 m, 5-6 m;
+  altar and shops 4.5-5.5 m), towers 4x4 (2 m, 6-8 m), halls 16x16 (8 m; the T2 add-ons live in the AI hall's
+  space). Doors stay ~2 m (kingdom) / ~1.5 m (yurts), props stay at unit scale, swatch periods stay fixed in
+  metres. Ground-level geometry stays inside the footprint; eaves, pennants and the bow may reach ~0.3 m out,
+  streamers further (`outside_footprint_m` in the manifest).
+* **Ground apron**: every building stands on an irregular rounded-square apron covering its footprint, top
+  1.5 cm above y = 0 with a skirt down to -0.2 m (terrain bumps never open a gap; the only geometry below 0):
+  packed earth with a timber kerb and cobbled paths (kingdom), trampled earth with a drystone curb and felt rugs
+  (clans). Props stand on it in clusters; nothing smaller than ~0.3 m stands alone.
+* **Origin and facing**: origin at the footprint centre on the ground, door on -Z like units. The RTS camera
+  sits on +Z, so `UnitView` draws structures at a fixed world yaw of PI whatever the sim facing (the door always
+  faces the camera).
+* **Materials**: one mesh, up to three materials that reference shared external sheets in
+  `assets/models/buildings/textures/` (one texture per faction in VRAM): `<id>` (opaque faction atlas,
+  `<faction>_buildings_atlas.jpg`, tileable swatches at 144 px/m; pattern periods matched to the AI halls: roof
+  courses ~0.3 m, rubble stones 0.4-0.7 m; saturation <= 65 %), `<id>_GLOW` (windows, forge / kiln / crown
+  glow, `buildings_glow.png`; shipped with emissiveFactor 0 so nothing glows at noon, extras `emissive_night`
+  is the value to set at 17:45, bible 1.5) and `<id>_TEAM` (light grey cloth, `buildings_team.png`; UnitView
+  multiplies albedo_color). Team colour sits on pennants (>= 1.2 m), banners, shutters, awnings, felt bands,
+  streamers and the ridge-tile band only (never on hips or roofs), each area with neutral piping cut into the
+  atlas (ivory kingdom, bronze clans). `COLOR_0` = painted AO (tagged `vc_vertex_color: "multiply"` like the
+  doodad kit); the primitives are ordered GLOW, atlas, TEAM because Godot 4.7's glTF import never sets
+  `vertex_color_use_as_albedo` on a mesh's first primitive (buildings without GLOW start with a hidden 1 mm
+  dummy triangle), so stock import already shows the AO.
 
-Construction (no `_construction` meshes): `TEXCOORD_1` (UV2) y = normalized height (0 ground, 1 top), x = build
-layer (0 frame / lattice / masts / walls, 1 covering: roofs, felt, team bands). Kingdom "scaffold-raised": discard
-`UV2.y > progress` (+ a noise band); clans "Raising" in two passes:
-```glsl
-float p = mix(progress / 0.6, (progress - 0.4) / 0.6, step(0.5, UV2.x));   // lattice first, felt over it
-if (UV2.y > clamp(p, 0.0, 1.0) + 0.03 * edge_noise) discard;
-```
-T2 hall upgrades are add-ons in the AI hall's model space (8 m): `kingdom_walled_burg` (ring of team-banded
-wagons, stone buttresses, taller ribbed onion dome enclosing the T1 turret, four banner poles; 11.7 m ≤ +15 %)
-and `clans_banner_shell` (lattice gallery, two shell-domed kiosks, four felt-banner masts, a second gong; 6.5 m).
-Parent them with the same transform as `kingdom_moot_hall.glb` / `clans_shell_hall.glb` and show both.
+Construction (no `_construction` meshes): `kits/build_reveal.gdshader` reveals the finished mesh bottom-up.
+Its height comes from the vertex (`VERTEX.y / model_height`, set `model_height` to the manifest's `height_m`, or
+the AABB height for the AI halls), so it works on every building and on hall upgrades with no extra vertex
+data; a hash value-noise ragged edge glows ember while it rises. Kingdom "scaffold-raised": `two_pass = false`.
+Clans "Raising": `two_pass = true` and `TEXCOORD_1.x` (UV2.x) = build layer: 0 (lattice, masts, stone) rises over
+progress 0..0.6, 1 (felt walls and domes, team bands) over 0.4..1.0. UV2.y also stores the normalized height.
+
+T2 hall upgrades are add-ons in the AI hall's model space (8 m): `kingdom_walled_burg` (a ring of Bombard-sized
+burgundy wagons with team side boards, two flanking the door and one down each side; stone corner buttresses;
+four banner poles; a taller smooth dark-bronze onion with seven ribs and a team ring, lifted on a drum over the
+T1 turret so the stepped gable stays clear; 12.1 m <= +15 %) and `clans_banner_shell` (lattice gallery, two
+shell-domed kiosks, four felt-banner masts, a second gong; 6.5 m). Parent them with the same transform as
+`kingdom_moot_hall.glb` / `clans_shell_hall.glb` and show both.
 
 Known limits: `mathutils.noise.noise_vector()` is clock-seeded per process (use scalar `noise()` or call
 `noise.seed_set()` for deterministic jitter); bmesh `bevel` emits vertices in a run-dependent order (the kit

@@ -4,10 +4,11 @@
   "units": "metres, Y up, origin at footprint centre on the ground",
   "facing": "front (door, adit, counter, open side) faces -Z like units; the default RtsCamera sits on the +Z side, so spawn neutral buildings with facing = PI for the door-toward-camera look",
   "nodes": "animated parts are child nodes whose origin is the pivot (Godot space, relative to the asset root)",
-  "footprint_cells": "suggested blocked pathing cells [x, z] (0.5 m cells); null = walkable decoration",
-  "sway_materials": "name contains SWAY: alpha scissor; COLOR_0 R sway weight (0 trunk base -> 1 canopy edge), G painted AO, B cluster phase; shader tools/kits/foliage_sway.gdshader",
-  "other_materials": "COLOR_0 RGB painted AO / base darkening / moss tint: multiply into the albedo. Godot's glTF importer leaves vertex_color_use_as_albedo off: set it on every material whose meta 'extras'.vc_vertex_color == 'multiply' (see tools/kits/lineup.gd _fix_materials)",
+  "footprint_cells": "footprint [x, z] in 0.5 m cells = the mesh width (bible \u00a71.3: sim footprint and mesh width are the same number); null = walkable decoration. blocks_pathing says whether those cells block (false for the Hale Spring: walkable pool)",
+  "vertex_colour": "COLOR_0 RGB on every material (foliage included) = painted AO / base darkening / moss tint, multiplied into the albedo; A = 1. Every mesh starts with a hidden 1 mm dummy triangle, so a plain GLTFDocument import sets vertex_color_use_as_albedo on every material (Godot 4.7 skips a mesh's first primitive); the game loader should still set it explicitly on every material whose meta 'extras'.vc_vertex_color == 'multiply' (all kit materials)",
+  "sway_materials": "name contains SWAY: alpha scissor, double sided; sway weight in UV2.x (0 base -> 1 tip), cluster phase in TEXCOORD_2.x (Godot CUSTOM0.x); shader tools/kits/foliage_sway.gdshader adds the wind (a plain import renders them static)",
   "uv2": "x sway weight, y normalized height 0..1 (build_progress reveal: discard where UV2.y > progress)",
+  "atlas_materials": "materials with extras.cells_px_per_m are atlases of tiled cells (triangles cut on the repeat lines at export): texel density per cell",
   "emissive": "materials tagged GLOW / LAMP / EMBER / GLYPH are emissive; scale emission energy to pulse",
   "team_colour": "none: neutrals and doodads never carry team colour (art bible \u00a73.1 rule 8)"
  },
@@ -17,16 +18,16 @@
    "path": "assets/models/doodads/tree_hill_oak.glb",
    "category": "tree",
    "size": [
-    6.453,
-    6.316,
-    6.478
+    3.252,
+    6.036,
+    3.368
    ],
    "aabb_min": [
-    -3.442,
+    -1.716,
     0.0,
-    -3.18
+    -1.652
    ],
-   "tris": 1311,
+   "tris": 1158,
    "footprint_cells": [
     2,
     2
@@ -46,23 +47,23 @@
     "tree_hill_oak_lod2"
    ],
    "nodes": [],
-   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Place with \u00b120 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Default tree-wall species."
+   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Crown ~3-3.6 m across (2-3x the 1 m tree cell, so a 2 m lane cut along the view shows ground between crowns at the generator's density; crown top >= 4.5 m). Place with \u00b115-20 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Default tree-wall species."
   },
   {
    "id": "tree_hill_oak_lod1",
    "path": "assets/models/doodads/tree_hill_oak_lod1.glb",
    "category": "tree_lod",
    "size": [
-    6.453,
-    6.316,
-    6.478
+    3.252,
+    6.036,
+    3.368
    ],
    "aabb_min": [
-    -3.442,
+    -1.716,
     0.0,
-    -3.18
+    -1.652
    ],
-   "tris": 275,
+   "tris": 351,
    "footprint_cells": [
     2,
     2
@@ -79,7 +80,7 @@
    },
    "lods": [],
    "nodes": [],
-   "notes": "Low LOD of tree_hill_oak: same atlas, four tilted cards + a top card + a leafy hull per cluster, no thin branches; the canopy is scaled to the LOD0 leaf AABB (size within 5 %, checked by the build). Suggested switch: beyond ~40 m from the camera.",
+   "notes": "Low LOD of tree_hill_oak: LOD0's own leaf cards (same cluster centres, directions, sizes and atlas cells, 3 in 5 kept) as 4-triangle fans through their LOD0 corners and centre, a 20-triangle hull per cluster, no thin branches: same outline and shading, no rescaling. Suggested switch: beyond ~60 m from the camera (the line-up 'lod' shot compares LOD0 and LOD1 at the 46 m maximum zoom-out).",
    "lod_of": "tree_hill_oak"
   },
   {
@@ -87,14 +88,14 @@
    "path": "assets/models/doodads/tree_hill_oak_lod2.glb",
    "category": "tree_impostor",
    "size": [
-    6.84,
-    3.825,
-    5.67
+    4.599,
+    2.572,
+    3.813
    ],
    "aabb_min": [
-    -3.635,
-    2.29,
-    -2.667
+    -2.389,
+    2.669,
+    -1.334
    ],
    "tris": 2,
    "footprint_cells": [
@@ -107,9 +108,7 @@
    "materials": [
     "tree_hill_oak_lod2_impostor"
    ],
-   "texel_density_px_per_m": {
-    "tree_hill_oak_lod2_impostor": 128
-   },
+   "texel_density_px_per_m": {},
    "lods": [],
    "nodes": [],
    "notes": "Impostor of tree_hill_oak: 2 triangles carrying the LOD0 tree rendered from the RTS pitch (56 deg). Material extras billboard=fixed_y: set BaseMaterial3D.billboard_mode = BILLBOARD_FIXED_Y (keeps the authored tilt toward the camera). No sway. Suggested switch: beyond ~70 m (far map edge, minimap renders).",
@@ -120,14 +119,14 @@
    "path": "assets/models/doodads/tree_linden.glb",
    "category": "tree",
    "size": [
-    4.596,
-    6.468,
-    5.027
+    2.919,
+    6.308,
+    3.204
    ],
    "aabb_min": [
-    -2.366,
+    -1.502,
     0.0,
-    -2.54
+    -1.617
    ],
    "tris": 1413,
    "footprint_cells": [
@@ -149,23 +148,23 @@
     "tree_linden_lod2"
    ],
    "nodes": [],
-   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Place with \u00b120 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Taller rounded cone with summer blossom; mix into tree lines near kingdom starts."
+   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Crown ~3-3.6 m across (2-3x the 1 m tree cell, so a 2 m lane cut along the view shows ground between crowns at the generator's density; crown top >= 4.5 m). Place with \u00b115-20 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Taller rounded cone with summer blossom; mix into tree lines near kingdom starts."
   },
   {
    "id": "tree_linden_lod1",
    "path": "assets/models/doodads/tree_linden_lod1.glb",
    "category": "tree_lod",
    "size": [
-    4.596,
-    6.467,
-    5.027
+    2.86,
+    6.3,
+    3.019
    ],
    "aabb_min": [
-    -2.366,
+    -1.443,
     0.001,
-    -2.54
+    -1.617
    ],
-   "tris": 488,
+   "tris": 348,
    "footprint_cells": [
     2,
     2
@@ -182,7 +181,7 @@
    },
    "lods": [],
    "nodes": [],
-   "notes": "Low LOD of tree_linden: same atlas, four tilted cards + a top card + a leafy hull per cluster, no thin branches; the canopy is scaled to the LOD0 leaf AABB (size within 5 %, checked by the build). Suggested switch: beyond ~40 m from the camera.",
+   "notes": "Low LOD of tree_linden: LOD0's own leaf cards (same cluster centres, directions, sizes and atlas cells, 3 in 5 kept) as 4-triangle fans through their LOD0 corners and centre, a 20-triangle hull per cluster, no thin branches: same outline and shading, no rescaling. Suggested switch: beyond ~60 m from the camera (the line-up 'lod' shot compares LOD0 and LOD1 at the 46 m maximum zoom-out).",
    "lod_of": "tree_linden"
   },
   {
@@ -190,14 +189,14 @@
    "path": "assets/models/doodads/tree_linden_lod2.glb",
    "category": "tree_impostor",
    "size": [
-    5.051,
-    2.825,
-    4.188
+    4.473,
+    2.501,
+    3.709
    ],
    "aabb_min": [
-    -2.593,
-    2.384,
-    -1.756
+    -2.279,
+    2.673,
+    -1.286
    ],
    "tris": 2,
    "footprint_cells": [
@@ -210,9 +209,7 @@
    "materials": [
     "tree_linden_lod2_impostor"
    ],
-   "texel_density_px_per_m": {
-    "tree_linden_lod2_impostor": 128
-   },
+   "texel_density_px_per_m": {},
    "lods": [],
    "nodes": [],
    "notes": "Impostor of tree_linden: 2 triangles carrying the LOD0 tree rendered from the RTS pitch (56 deg). Material extras billboard=fixed_y: set BaseMaterial3D.billboard_mode = BILLBOARD_FIXED_Y (keeps the authored tilt toward the camera). No sway. Suggested switch: beyond ~70 m (far map edge, minimap renders).",
@@ -223,16 +220,16 @@
    "path": "assets/models/doodads/tree_hazel.glb",
    "category": "tree",
    "size": [
-    4.338,
-    4.865,
-    4.103
+    2.958,
+    4.67,
+    2.879
    ],
    "aabb_min": [
-    -2.221,
+    -1.551,
     0.0,
-    -1.95
+    -1.354
    ],
-   "tris": 1172,
+   "tris": 1127,
    "footprint_cells": [
     2,
     2
@@ -252,23 +249,23 @@
     "tree_hazel_lod2"
    ],
    "nodes": [],
-   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Place with \u00b120 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Tall coppice (crown top >= 4.5 m, tree-wall rule) that fills gaps inside tree lines (harvestable like the others)."
+   "notes": "Tree-grid doodad: blocks 2x2 cells (1 m) of pathing and sight; harvestable (rules \u00a74.2, 50 lumber); leaves a tree_stump when felled. Crown ~3-3.6 m across (2-3x the 1 m tree cell, so a 2 m lane cut along the view shows ground between crowns at the generator's density; crown top >= 4.5 m). Place with \u00b115-20 % scale, random yaw, \u00b13\u00b0 hue jitter (bible \u00a76.4). Tall coppice (crown top >= 4.5 m, tree-wall rule) that fills gaps inside tree lines (harvestable like the others)."
   },
   {
    "id": "tree_hazel_lod1",
    "path": "assets/models/doodads/tree_hazel_lod1.glb",
    "category": "tree_lod",
    "size": [
-    4.338,
-    4.865,
-    4.103
+    2.625,
+    4.632,
+    2.879
    ],
    "aabb_min": [
-    -2.221,
+    -1.3,
     0.0,
-    -1.95
+    -1.354
    ],
-   "tris": 375,
+   "tris": 465,
    "footprint_cells": [
     2,
     2
@@ -285,7 +282,7 @@
    },
    "lods": [],
    "nodes": [],
-   "notes": "Low LOD of tree_hazel: same atlas, four tilted cards + a top card + a leafy hull per cluster, no thin branches; the canopy is scaled to the LOD0 leaf AABB (size within 5 %, checked by the build). Suggested switch: beyond ~40 m from the camera.",
+   "notes": "Low LOD of tree_hazel: LOD0's own leaf cards (same cluster centres, directions, sizes and atlas cells, 3 in 5 kept) as 4-triangle fans through their LOD0 corners and centre, a 20-triangle hull per cluster, no thin branches: same outline and shading, no rescaling. Suggested switch: beyond ~60 m from the camera (the line-up 'lod' shot compares LOD0 and LOD1 at the 46 m maximum zoom-out).",
    "lod_of": "tree_hazel"
   },
   {
@@ -293,14 +290,14 @@
    "path": "assets/models/doodads/tree_hazel_lod2.glb",
    "category": "tree_impostor",
    "size": [
-    4.606,
-    2.576,
-    3.819
+    3.893,
+    2.177,
+    3.227
    ],
    "aabb_min": [
-    -2.355,
-    2.038,
-    -1.763
+    -2.019,
+    2.081,
+    -1.242
    ],
    "tris": 2,
    "footprint_cells": [
@@ -313,9 +310,7 @@
    "materials": [
     "tree_hazel_lod2_impostor"
    ],
-   "texel_density_px_per_m": {
-    "tree_hazel_lod2_impostor": 128
-   },
+   "texel_density_px_per_m": {},
    "lods": [],
    "nodes": [],
    "notes": "Impostor of tree_hazel: 2 triangles carrying the LOD0 tree rendered from the RTS pitch (56 deg). Material extras billboard=fixed_y: set BaseMaterial3D.billboard_mode = BILLBOARD_FIXED_Y (keeps the authored tilt toward the camera). No sway. Suggested switch: beyond ~70 m (far map edge, minimap renders).",
@@ -582,16 +577,16 @@
    "path": "assets/models/doodads/hedge_hawthorn.glb",
    "category": "hedge",
    "size": [
-    2.61,
-    1.331,
-    1.355
+    2.616,
+    1.935,
+    1.353
    ],
    "aabb_min": [
-    -1.287,
-    -0.052,
-    -0.676
+    -1.291,
+    -0.237,
+    -0.678
    ],
-   "tris": 508,
+   "tris": 776,
    "footprint_cells": [
     4,
     2
@@ -635,7 +630,7 @@
    ],
    "texel_density_px_per_m": {
     "fence_wattle_wattle": 301,
-    "fence_wattle_bark": 213
+    "fence_wattle_bark": 160
    },
    "lods": [],
    "nodes": [],
@@ -964,16 +959,16 @@
    "path": "assets/models/doodads/milestone.glb",
    "category": "prop",
    "size": [
-    0.621,
-    0.933,
-    0.548
+    0.698,
+    0.751,
+    0.56
    ],
    "aabb_min": [
-    -0.217,
-    -0.113,
-    -0.212
+    -0.318,
+    -0.096,
+    -0.269
    ],
-   "tris": 156,
+   "tris": 238,
    "footprint_cells": [
     1,
     1
@@ -982,10 +977,13 @@
    "blocks_sight": false,
    "sway": false,
    "materials": [
-    "milestone_stone"
+    "milestone_stone",
+    "milestone_meadow_SWAY"
    ],
    "texel_density_px_per_m": {
-    "milestone_stone": 160
+    "milestone_stone": {
+     "stone": 128
+    }
    },
    "lods": [],
    "nodes": [],
@@ -1064,19 +1062,19 @@
    "path": "assets/models/doodads/camp_lean_to.glb",
    "category": "camp",
    "size": [
-    3.001,
-    1.89,
-    2.618
+    2.901,
+    2.032,
+    1.955
    ],
    "aabb_min": [
-    -1.5,
-    -0.024,
-    -1.445
+    -1.45,
+    -0.016,
+    -1.195
    ],
-   "tris": 416,
+   "tris": 614,
    "footprint_cells": [
-    6,
-    6
+    5,
+    4
    ],
    "blocks_pathing": true,
    "blocks_sight": false,
@@ -1084,32 +1082,32 @@
    "materials": [
     "camp_lean_to_bark",
     "camp_lean_to_oilcloth",
-    "camp_lean_to_canvas"
+    "camp_lean_to_rock"
    ],
    "texel_density_px_per_m": {
     "camp_lean_to_bark": 128,
     "camp_lean_to_oilcloth": 160,
-    "camp_lean_to_canvas": 160
+    "camp_lean_to_rock": 107
    },
    "lods": [],
    "nodes": [],
-   "notes": "Sootcoat lean-to, open side to the front (-Z)."
+   "notes": "Sootcoat lean-to, 60 deg roof, open side to the front (-Z). Place it sideways in camps (yaw +-90: open side to +-X) so the RTS camera sees the roof slope; tools/kits/lineup.py does."
   },
   {
    "id": "camp_tent",
    "path": "assets/models/doodads/camp_tent.glb",
    "category": "camp",
    "size": [
-    2.815,
-    1.557,
-    2.55
+    2.649,
+    1.606,
+    2.525
    ],
    "aabb_min": [
-    -1.407,
-    -0.007,
-    -1.275
+    -1.325,
+    -0.056,
+    -1.262
    ],
-   "tris": 196,
+   "tris": 348,
    "footprint_cells": [
     4,
     4
@@ -1227,16 +1225,16 @@
    "path": "assets/models/doodads/camp_crates.glb",
    "category": "camp",
    "size": [
-    1.955,
-    1.001,
-    1.289
+    1.985,
+    0.913,
+    1.315
    ],
    "aabb_min": [
-    -0.805,
-    -0.024,
+    -0.835,
+    -0.034,
     -0.437
    ],
-   "tris": 382,
+   "tris": 546,
    "footprint_cells": [
     4,
     3
@@ -1353,7 +1351,7 @@
    ],
    "texel_density_px_per_m": {
     "camp_haystack_straw": 160,
-    "camp_haystack_bark": 213
+    "camp_haystack_bark": 160
    },
    "lods": [],
    "nodes": [],
@@ -1431,37 +1429,40 @@
    "path": "assets/models/neutral/gold_mine.glb",
    "category": "neutral_building",
    "size": [
-    5.93,
-    6.525,
-    5.27
+    5.977,
+    6.637,
+    5.93
    ],
    "aabb_min": [
-    -2.97,
-    -0.06,
-    -2.97
+    -2.987,
+    -0.049,
+    -2.971
    ],
-   "tris": 5999,
+   "tris": 10624,
    "footprint_cells": [
-    8,
-    8
+    12,
+    12
    ],
    "blocks_pathing": true,
    "blocks_sight": true,
    "sway": false,
    "materials": [
-    "gold_mine_turf",
     "gold_mine_rock_GLOW",
-    "gold_mine_timber",
-    "gold_mine_lamp_LAMP",
-    "gold_mine_water_WATER",
-    "gold_mine_meadow_SWAY"
+    "gold_mine_timber_LAMP"
    ],
    "texel_density_px_per_m": {
-    "gold_mine_turf": 128,
-    "gold_mine_rock_GLOW": 160,
-    "gold_mine_timber": 160,
-    "gold_mine_lamp_LAMP": 213,
-    "gold_mine_water_WATER": 128
+    "gold_mine_rock_GLOW": {
+     "band": 144,
+     "turf": 128,
+     "tailings": 142,
+     "ledge": 128
+    },
+    "gold_mine_timber_LAMP": {
+     "timber": 160,
+     "water": 128,
+     "iron": 64,
+     "riffle": 128
+    }
    },
    "lods": [],
    "nodes": [
@@ -1469,51 +1470,52 @@
      "name": "windlass_drum",
      "parent": "gold_mine",
      "pivot": [
-      0.0,
-      5.975,
-      -1.05
+      0.45,
+      5.65,
+      0.12
      ]
     },
     {
      "name": "windlass_bucket",
      "parent": "gold_mine",
      "pivot": [
-      0.0,
-      5.675,
-      -2.26
+      0.66,
+      5.65,
+      0.12
      ]
     }
    ],
-   "notes": "Gold Seam (neutrals \u00a75.2): 8x8 cells, front (adit) faces -Z; spawn with facing PI so it faces the default camera. Materials: rock + timber, seam_GLOW (gold stratum: pulse emission when a worker enters), lamp_LAMP (two lanterns, lit at night), water_WATER (sluice trickle). Node windlass_drum spins about its local X axis while mining. Per the bible's squint test there is no mine cart and no rails (the task brief's 'small cart' is overridden by neutrals \u00a75.2 / \u00a710.2).",
+   "notes": "Gold Seam (neutrals \u00a75.2): 12x12 cells (6 m; the mesh fills x, z -3..3), adit on the -Z face; spawn facing the hall (src/main.gd) - every side is finished cliff with the gold band, so any yaw reads. Materials: gold_mine_rock_GLOW (rock atlas: strata band, turf, tailings, ledge, dark tunnel, soil; emission only on the gold seam / vein texels, factor 0: pulse it when a worker enters) and gold_mine_timber_LAMP (timber atlas: planks, iron, rope, painted water, gold-flecked riffles; emission only on the lantern glass, factor 0: lit at night). Node windlass_drum (wheel + axle, pivot on the axle) spins about its local Z axis (the axle runs front-back); node windlass_bucket moves along Y (scale the rope). No mine cart, no rails, no nugget heaps (neutrals \u00a75.2 / \u00a710.2).",
    "extras": {
     "adit_point": [
      0.0,
      0.0,
-     -0.95
+     -1.75
     ],
     "worker_enter_point": [
      0.0,
      0.0,
-     -3.5
+     -3.4
     ],
     "lantern_points": [
      [
-      -1.12,
+      -1.22,
       1.3,
-      -1.97
+      -2.57
      ],
      [
-      1.12,
+      1.22,
       1.3,
-      -1.97
+      -2.57
      ]
     ],
     "seam_height_m": [
-     2.02,
-     2.14
+     1.88,
+     2.38
     ],
-    "cliff_height_m": 3.6,
-    "silhouette": "flat-black 128 px from the RTS pitch: the two A-frames notch above the hill line"
+    "cliff_height_m": 3.8,
+    "headframe_top_m": 6.57,
+    "silhouette": "flat-black from the RTS pitch (front): a squared, stepped cliff block crowned by the headframe's 1.7 m wheel"
    }
   },
   {
@@ -1521,33 +1523,40 @@
    "path": "assets/models/neutral/neutral_weighstall.glb",
    "category": "neutral_building",
    "size": [
-    6.089,
-    7.105,
-    4.372
+    5.8,
+    7.353,
+    5.86
    ],
    "aabb_min": [
-    -3.045,
-    -0.005,
-    -1.907
+    -2.9,
+    -0.053,
+    -2.87
    ],
-   "tris": 3170,
+   "tris": 8516,
    "footprint_cells": [
-    8,
-    8
+    12,
+    12
    ],
    "blocks_pathing": true,
    "blocks_sight": true,
    "sway": false,
    "materials": [
-    "neutral_weighstall_timber",
+    "neutral_weighstall_timber_LAMP",
     "neutral_weighstall_cloth",
-    "neutral_weighstall_brass",
-    "neutral_weighstall_lamp_LAMP"
+    "neutral_weighstall_brass"
    ],
    "texel_density_px_per_m": {
-    "neutral_weighstall_timber": 160,
-    "neutral_weighstall_brass": 213,
-    "neutral_weighstall_lamp_LAMP": 213
+    "neutral_weighstall_timber_LAMP": {
+     "timber": 160,
+     "water": 128,
+     "iron": 64,
+     "riffle": 128
+    },
+    "neutral_weighstall_cloth": {
+     "stripes": 128,
+     "sacking": 128
+    },
+    "neutral_weighstall_brass": 213
    },
    "lods": [],
    "nodes": [
@@ -1565,30 +1574,30 @@
      "parent": "neutral_weighstall",
      "pivot": [
       0.0,
-      6.42,
-      1.62
+      6.62,
+      1.75
      ]
     },
     {
      "name": "balance_pan_l",
      "parent": "balance_beam",
      "pivot": [
-      -2.2,
-      6.3,
-      1.62
+      -2.07,
+      6.5,
+      1.75
      ]
     },
     {
      "name": "balance_pan_r",
      "parent": "balance_beam",
      "pivot": [
-      2.2,
-      6.3,
-      1.62
+      2.07,
+      6.5,
+      1.75
      ]
     }
    ],
-   "notes": "Weighstall merchant (neutrals \u00a75.3): 8x8 cells, counter faces -Z (spawn with facing PI). Nodes: balance_beam (pivot at the beam centre, rotate about local Z to tip) > balance_pan_l / balance_pan_r (pivots at the hanging points: counter-rotate so the pans hang plumb), shopkeeper (curled Rundling: breathe by scaling, uncurl on purchase is VFX/anim). The balance beam reaches 7 m (exempt from the height ratio). lamp_LAMP lit at night.",
+   "notes": "Weighstall merchant (neutrals \u00a75.3): 12x12 cells (6 m; side tables, the Rundlings' handcart and stores fill x, z -3..3), counter faces -Z (spawn with facing PI). Materials: timber_LAMP (timber atlas; only the lantern glass is emissive, factor 0: lit at night), cloth (atlas: awning stripes and valance at 128 px/m, sacking, Rundling scales, jars) and brass (#B8913A ramp, highlight #D9B868). Nodes: balance_beam (pivot at the beam centre, rotate about local Z to tip) > balance_pan_l / balance_pan_r (pivots at the hanging points: counter-rotate so the pans hang plumb), shopkeeper (curled Rundling: breathe by scaling, uncurl on purchase is VFX/anim). The balance beam reaches ~7 m on a 0.5 m post (exempt from the height ratio).",
    "extras": {
     "counter_point": [
      0.0,
@@ -1597,9 +1606,9 @@
     ],
     "lantern_points": [
      [
-      1.6,
+      1.65,
       1.8,
-      -1.72
+      -1.6
      ]
     ]
    }
@@ -1609,32 +1618,35 @@
    "path": "assets/models/neutral/neutral_hale_spring.glb",
    "category": "neutral_building",
    "size": [
-    3.614,
-    1.502,
-    4.013
+    4.0,
+    1.767,
+    4.0
    ],
    "aabb_min": [
-    -1.697,
-    -0.05,
-    -1.819
+    -2.0,
+    -0.12,
+    -2.0
    ],
-   "tris": 1622,
-   "footprint_cells": null,
+   "tris": 2990,
+   "footprint_cells": [
+    8,
+    8
+   ],
    "blocks_pathing": false,
    "blocks_sight": false,
    "sway": true,
    "materials": [
-    "neutral_hale_spring_moss",
-    "neutral_hale_spring_water_WATER",
-    "neutral_hale_spring_rock",
-    "neutral_hale_spring_bark",
+    "neutral_hale_spring_spring",
     "neutral_hale_spring_meadow_SWAY"
    ],
    "texel_density_px_per_m": {
-    "neutral_hale_spring_moss": 128,
-    "neutral_hale_spring_water_WATER": 128,
-    "neutral_hale_spring_rock": 107,
-    "neutral_hale_spring_bark": 128
+    "neutral_hale_spring_spring": {
+     "moss": 128,
+     "rock": 128,
+     "bark": 128,
+     "water": 128,
+     "timber": 160
+    }
    },
    "lods": [],
    "nodes": [
@@ -1642,16 +1654,23 @@
      "name": "waterwheel",
      "parent": "neutral_hale_spring",
      "pivot": [
-      0.083,
-      0.43,
-      0.003
+      1.42,
+      0.68,
+      0.15
      ]
     }
    ],
-   "notes": "Hale Spring (neutrals \u00a75.8): 6x6 cells, the pool is walkable shallow water (no blocking; the source rock at the back may block 2x2 cells). Front faces -Z. Node waterwheel spins about local X. water_WATER is the pool surface (swap for the game's water shader if wanted); warm sparkles are VFX.",
+   "notes": "Hale Spring (neutrals \u00a75.8): 8x8 cells (4 m; the mesh fills x, z -2..2); the pool and bank are walkable shallow water (blocks_pathing false), only the source rock at the back (extras.blocking_rect_godot) and the wheel posts should block. Front faces -Z. Materials: neutral_hale_spring_spring (atlas: moss, stone, bark, planks, painted water #5AA3A0, no glow) and the meadow_SWAY tufts. Node waterwheel (pivot on the axle) spins about its local Z axis (the axle runs front-back). Warm sparkles are VFX.",
    "extras": {
-    "pool_radius": 1.0,
-    "aura_radius": 7.8
+    "pool_radius": 1.7,
+    "aura_radius": 7.8,
+    "blocking_rect_godot": [
+     -1.4,
+     0.7,
+     2.0,
+     2.0
+    ],
+    "walkable": "the pool and the bank are walkable shallow water; only the source rock at the back (blocking_rect_godot: x0, z0, x1, z1) and the wheel posts should block"
    }
   },
   {
@@ -1659,16 +1678,16 @@
    "path": "assets/models/neutral/gold_mine_collapsed.glb",
    "category": "neutral_building",
    "size": [
-    4.171,
-    0.754,
-    3.727
+    5.98,
+    0.298,
+    5.98
    ],
    "aabb_min": [
-    -2.029,
-    -0.071,
-    -1.723
+    -2.99,
+    -0.064,
+    -2.99
    ],
-   "tris": 1042,
+   "tris": 3234,
    "footprint_cells": null,
    "blocks_pathing": false,
    "blocks_sight": false,
@@ -1678,12 +1697,25 @@
     "gold_mine_collapsed_timber"
    ],
    "texel_density_px_per_m": {
-    "gold_mine_collapsed_rock": 107,
-    "gold_mine_collapsed_timber": 160
+    "gold_mine_collapsed_rock": {
+     "tailings": 128,
+     "ledge": 128,
+     "dirt": 128
+    },
+    "gold_mine_collapsed_timber": {
+     "timber": 160,
+     "water": 128,
+     "iron": 64,
+     "riffle": 128
+    }
    },
    "lods": [],
    "nodes": [],
-   "notes": "Empty Gold Seam (neutrals \u00a75.2 'collapses when empty'): walkable rubble that replaces gold_mine at the same position and facing; play a dust puff when swapping."
+   "notes": "Empty Gold Seam (neutrals \u00a75.2 'collapses when empty'): walkable rubble that replaces gold_mine at the same position and facing; play a dust puff when swapping.",
+   "extras": {
+    "walkable": true,
+    "max_height_m": 0.25
+   }
   }
  ]
 }

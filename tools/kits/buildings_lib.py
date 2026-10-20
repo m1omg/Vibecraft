@@ -499,9 +499,13 @@ def tex_stone(seed=17, n=INNER, base="#7D766A", dark="#5E574E", light="#9A9284")
     return lambda: cached(("stone", seed, n, base), fn)
 
 
-def tex_glyph_stone(seed=19, n=INNER):
+def tex_glyph_stone(seed=19, n=INNER, which="both"):
     """Decal: standing-stone face with carved hail (six-pointed star in a ring) and wind (flowing
-    double curl) glyphs, pale lichen-gold infill so they read from above. No faces."""
+    double curl) glyphs, pale lichen-gold infill so they read from above. No faces. which = "hail" or
+    "wind" paints one glyph centred in a square decal (a square quad on the stone: no stretch)."""
+    if which in ("hail", "wind"):
+        return _glyph_single(seed, n, which)
+
     def fn():
         im = tex_stone(seed, n)().copy().convert("RGBA")
         ss = 3
@@ -536,6 +540,61 @@ def tex_glyph_stone(seed=19, n=INNER):
         im.alpha_composite(lay)
         return im.convert("RGB")
     return lambda: cached(("glyph", seed, n), fn)
+
+
+def _glyph_single(seed, n, which):
+    def fn():
+        im = tex_stone(seed, n)().copy().convert("RGBA")
+        ss = 3
+        N = n * ss
+        lay = Image.new("RGBA", (N, N), (0, 0, 0, 0))
+        d = ImageDraw.Draw(lay)
+        groove = (58, 54, 48, 255)
+        fill = (214, 206, 150, 255)
+        cx = cy = N / 2
+        for w, col in ((int(N * 0.075), groove), (int(N * 0.038), fill)):
+            if which == "hail":
+                R = N * 0.34
+                d.ellipse([cx - R, cy - R, cx + R, cy + R], outline=col, width=w)
+                for k in range(6):
+                    a = k * math.pi / 3 + math.pi / 6
+                    d.line([(cx + math.cos(a) * R * 0.22, cy + math.sin(a) * R * 0.22),
+                            (cx + math.cos(a) * R * 0.76, cy + math.sin(a) * R * 0.76)], fill=col, width=w)
+            else:
+                for dy, sgn in ((0.36, 1), (0.66, -1)):
+                    pts = [(N * (0.14 + 0.66 * t), N * dy + sgn * math.sin(t * math.pi * 2) * N * 0.08)
+                           for t in np.linspace(0, 1, 40)]
+                    d.line(pts, fill=col, width=w, joint="curve")
+                    ex, ey = pts[-1]
+                    r = N * 0.05
+                    d.ellipse([ex - r, ey - r, ex + r, ey + r], outline=col, width=w)
+        im.alpha_composite(lay.resize((n, n), Image.LANCZOS))
+        return im.convert("RGB")
+    return lambda: cached(("glyph1", seed, n, which), fn)
+
+
+def tex_bronze(seed=47, n=INNER, base="#6E4A26", hi="#B07F3E", dark="#3E2A18"):
+    """Smooth hand-painted bronze (domes, cowls, bells): soft vertical value bands and a few broad
+    highlight strokes, no scales or rivets (reads as one smooth bulb from the RTS camera). Tileable."""
+    def fn():
+        rng = np.random.default_rng(seed)
+        nz = periodic_noise(n, seed, 2.8)
+        x = (np.arange(n) + 0.5) / n
+        band = 0.5 + 0.5 * np.sin(x * 2 * math.pi * 2 + 0.7)
+        t = np.clip(0.55 * band[None, :] + 0.45 * nz, 0, 1)[..., None]
+        a = lerp(hexcol(dark)[None, None, :], hexcol(base)[None, None, :], np.clip(t * 1.6, 0, 1))
+        a = lerp(a, hexcol(hi)[None, None, :], np.clip(t * 1.6 - 1.0, 0, 1) * 0.8)
+        im = to_img(a).convert("RGBA")
+        st = []
+        hc = hexcol(hi)
+        for _ in range(16):
+            xx, yy = rng.uniform(0, n), rng.uniform(0, n)
+            L = rng.uniform(n * 0.15, n * 0.4)
+            c = tuple(int(v * 255) for v in np.clip(hc * 1.15, 0, 1)) + (int(rng.uniform(40, 90)),)
+            st.append(([(xx, yy), (xx + rng.normal(0, 3), yy + L)], rng.uniform(n * 0.012, n * 0.03), c))
+        im.alpha_composite(_strokes(n, n, st))
+        return im.convert("RGB").filter(ImageFilter.GaussianBlur(1.2))
+    return lambda: cached(("bronze", seed, n, base, hi, dark), fn)
 
 
 def tex_rings(seed=5, n=INNER):
@@ -868,6 +927,10 @@ class Sheet:
         data, _ = encode(self.image, self.fmt, self.quality)
         with open(path, "wb") as f:
             f.write(data)
+        if not os.path.exists(path + ".import"):
+            # first import as a 3D texture (VRAM-compressed, mipmaps); Godot keeps these params and adds uid / dest
+            with open(path + ".import", "w") as f:
+                f.write(GODOT_TEXTURE_IMPORT)
         return path
 
 
@@ -907,6 +970,9 @@ class Part:
         self.min_shade = 0.0          # floor for the baked shade (e.g. emissive bits)
         self.faceted = False          # flat faces at hard angles (box / member / prism): each face
                                       # direction may get its own UV offset (no visible seam, fewer cuts)
+        self.below = False            # may reach below the ground (apron skirts); everything else is
+                                      # clamped to z >= 0
+        self.base = True              # painted base darkening near the ground (off for ground aprons)
 
     # --- transforms (return self) -------------------------------------------------------------
     def xf(self, m):
@@ -953,7 +1019,7 @@ class Part:
 
     def copy(self):
         p = Part(self.v.copy(), self.t.copy(), self.sw, self.uv.copy(), self.smooth)
-        for k in ("dice", "jit", "occ", "ao", "ao_mul", "layer", "form", "uvrot", "min_shade", "faceted"):
+        for k in ("dice", "jit", "occ", "ao", "ao_mul", "layer", "form", "uvrot", "min_shade", "faceted", "below", "base"):
             setattr(p, k, getattr(self, k))
         p.tint = np.array(self.tint, float).copy()
         return p
@@ -1194,7 +1260,9 @@ def lathe(profile, sides, sw, a0=0.0, cap_bottom=False, cap_top=False, repeat=No
     circ = cum[-1]
     frac = cum / circ
     nrep = circ / rep
-    if int_repeat:
+    if int_repeat and nrep >= 0.75:
+        # whole repeats round the ring (no seam). Thin rings (poles, ropes, finials) keep their true
+        # arc length instead (u = arc length / repeat: no 3-5x stretch, one seam on the +x side)
         nrep = max(1.0, round(nrep))
     verts, rings = [], []
     for r, z in prof:
@@ -1632,7 +1700,7 @@ def bake(parts, H, cfg: Bake):
         else:
             ao = np.ones(n)
         z = p.v[:, 2]
-        base = lerp(cfg.base_dark, 1.0, smoothstep(0.0, cfg.base_h, z))
+        base = lerp(cfg.base_dark, 1.0, smoothstep(0.0, cfg.base_h, z)) if p.base else np.ones(n)
         top = 1.0 - cfg.top_light + cfg.top_light * np.clip(z / H, 0, 1)
         zr = max(z.max() - z.min(), 1e-6)
         form = 1.0 - p.form + 2 * p.form * np.clip((z - z.min()) / zr, 0, 1) * 0.5 if p.form else np.ones(n)
@@ -1793,7 +1861,7 @@ def split_team_border(A, sw, width=PIPING_M):
 # of a mesh (it does on the following ones), and windows / embers must not be darkened anyway. When a
 # building has no GLOW part a 1 mm dummy triangle hidden at the origin takes the first slot.
 GROUP_ORDER = ("glow", "atlas", "team")
-GLOW_DAY = (0.10, 0.06, 0.02)        # emissiveFactor shipped in the GLB (day); the game raises it at night
+GLOW_DAY = (0.0, 0.0, 0.0)           # emissiveFactor shipped in the GLB (day: off); the game raises it at dusk
 GLOW_NIGHT = (1.6, 0.95, 0.4)        # suggested night emissive factor (after 17:45, bible 1.5)
 
 
@@ -1928,8 +1996,9 @@ def _write_glb(path, aid, prims, mats, extras, glow_factor):
         if m["group"] == "glow":
             md["emissiveTexture"] = {"index": m["image"]}
             md["emissiveFactor"] = [float(x) for x in glow_factor]
-            ex["role"] = ("GLOW: windows / embers. Shipped at day level; raise emissive (e.g. to "
-                          f"{list(GLOW_NIGHT)}) after 17:45 and back after 06:30 (bible 1.5)")
+            ex["role"] = ("GLOW: windows / embers. Shipped dark (emissiveFactor 0: windows do not glow at noon); "
+                          f"raise emission to emissive_night {list(GLOW_NIGHT)} at 17:45 and back to 0 after 06:30 "
+                          "(bible 1.5)")
             ex["emissive_day"] = [float(x) for x in glow_factor]
             ex["emissive_night"] = list(GLOW_NIGHT)
         if m["group"] == "team":

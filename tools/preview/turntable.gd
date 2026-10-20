@@ -262,7 +262,10 @@ func _sway_preview(n: Node, sh: Shader) -> int:
 				var mat := mi.mesh.surface_get_material(s)
 				var vc = (mat.get_meta("extras", {}) as Dictionary).get("vc_vertex_color", "") if mat != null else ""
 				if vc == "multiply" and mat is StandardMaterial3D:
-					var m2 := (mat as StandardMaterial3D).duplicate() as StandardMaterial3D
+					# start from the override when _tint_team already set one (keeps the team colour)
+					var base := mi.get_surface_override_material(s)
+					var src: StandardMaterial3D = base as StandardMaterial3D if base is StandardMaterial3D else mat as StandardMaterial3D
+					var m2 := src.duplicate() as StandardMaterial3D
 					m2.vertex_color_use_as_albedo = true
 					if (mat.get_meta("extras", {}) as Dictionary).get("billboard", "") == "fixed_y":
 						m2.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y   # kit LOD2 tree impostors

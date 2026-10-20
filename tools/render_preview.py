@@ -38,6 +38,11 @@ IGNORED_STDERR = (
     re.compile(r"audio", re.I),
     re.compile(r"^\s*at: "),
     re.compile(r"Condition \"status < 0\""),
+    # A GLB outside tools/preview whose external images have Godot .import files (the building kit's shared
+    # sheets): ResourceLoader looks for the imported .ctex in the preview project's .godot, fails, and
+    # GLTFDocument falls back to reading the image bytes, so the texture still loads.
+    re.compile(r"(Unable to open file|Failed loading resource): (res://\.godot/imported/\S+\.ctex"
+               r"|/\S+\.(png|jpe?g|webp))\."),
 )
 
 

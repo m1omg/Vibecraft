@@ -2,26 +2,28 @@
   "generator": "tools/kits/buildings.py (procedural bpy kit, no paid generation)",
   "conventions": {
     "units": "metres, Y up (Godot), origin = footprint centre on the ground, door/front faces -Z",
-    "footprint": "faction-doc cells x 0.5 m (kingdom.md 7.2, clans.md 7); heights per art bible 1.3 (10-cell column)",
-    "materials": "<id> = opaque atlas of tileable swatches (cells 448 px + 32 px wrap padding); <id>_GLOW = windows / embers / smoke-ring glow (emissive, raise emission at night); <id>_TEAM = light grey cloth, UnitView multiplies albedo_color by the player colour. Primitive order GLOW, atlas, TEAM (Godot 4.7's glTF import skips vertex_color_use_as_albedo on a mesh's first primitive; buildings without GLOW start with a hidden 1 mm dummy triangle)",
+    "footprint": "faction-doc cells x 0.5 m (kingdom.md 7.2, clans.md 7; art bible 1.3, decided 2026-10-19): supply 8x8 (4 m, 3-3.5 m tall), production / altar / shop / research 12x12 (6 m, 5-6 m; altar and shops 4.5-5.5 m), towers 4x4 (2 m, 6-8 m), halls 16x16 (8 m). Ground geometry stays inside the footprint (outside_footprint_m reports the overshoot below / above 1.5 m: eaves, pennants and streamers may reach ~0.3 m out)",
+    "ground": "every building stands on an irregular ground apron covering its footprint: top 1.5 cm above y = 0 (packed earth with a timber kerb and cobbles for the kingdom, trampled earth with a drystone curb and felt rugs for the clans), a skirt down to -0.2 m so terrain bumps never open a gap",
+    "facing": "door on -Z like units; UnitView draws structures at a fixed world yaw of PI so the door always faces the RTS camera (which sits on +Z) whatever the sim facing",
+    "materials": "<id> = opaque faction atlas (textures/<faction>_buildings_atlas.jpg, tileable swatches at 144 px/m, pattern periods matched to the AI halls: roof courses ~0.3 m, rubble stones 0.4-0.7 m); <id>_GLOW = windows / embers / smoke-ring glow (textures/buildings_glow.png; shipped with emissiveFactor 0 for day, extras emissive_night = the dusk value to set at 17:45, bible 1.5); <id>_TEAM = light grey cloth (textures/buildings_team.png), UnitView multiplies albedo_color by the player colour. Primitive order GLOW, atlas, TEAM (Godot 4.7's glTF import skips vertex_color_use_as_albedo on a mesh's first primitive; buildings without GLOW start with a hidden 1 mm dummy triangle)",
     "COLOR_0": "RGB = painted AO (ray-cast crevices, ground contact) x top light x per-part tint; A = 1",
     "TEXCOORD_1": "x = build layer (0 frame / lattice / walls, 1 covering: roofs, felt), y = normalized height (0 ground .. 1 top)"
   },
   "build_progress": {
-    "approach": "no _construction meshes: a build_progress shader reveals the finished mesh bottom-up from UV2",
-    "kingdom": "scaffold-raised: discard where UV2.y > progress (+ a ragged noise band and a glowing edge); scaffold and ladders are particles / a separate shared prop",
-    "clans": "Raising, two passes: layer 0 (lattice, masts, stone ring) reveals over progress 0..0.6, layer 1 (felt walls and domes, team bands) over 0.4..1.0",
-    "gdshader": "float p = mix(progress / 0.6, (progress - 0.4) / 0.6, step(0.5, UV2.x)); if (UV2.y > clamp(p, 0.0, 1.0) + 0.03 * noise(VERTEX.xz * 4.0)) discard;"
+    "approach": "no _construction meshes: tools/kits/build_reveal.gdshader reveals the finished mesh bottom-up. Height = object-space VERTEX.y / model_height (set it to height_m; AI halls: their AABB height), so it needs no vertex data and works on the AI halls and hall upgrades too",
+    "kingdom": "scaffold-raised: two_pass = false; a ragged hash-noise edge with an ember glow; scaffold and ladders are particles / a separate shared prop",
+    "clans": "Raising, two_pass = true: UV2.x = 0 (lattice, masts, stone ring) rises over progress 0..0.6, UV2.x = 1 (felt walls and domes, team bands) over 0.4..1.0",
+    "uniforms": "albedo_tex, albedo_color (team colour on TEAM surfaces), use_vertex_color, emission_tex, emission, progress, model_height, two_pass, band, edge_color, edge_energy"
   },
-  "team_coverage": "team_coverage_rts = visible TEAM fraction of the silhouette from the 56 deg RTS pitch, front view and mean of 4 yaws (art bible 3.1 asks 6-10 % for buildings; the kit aims at ~8-15 %)",
+  "team_coverage": "team_coverage_rts = visible TEAM fraction of the silhouette from the 56 deg RTS pitch, front view and mean of 4 yaws (art bible 3.1 asks 6-10 % for buildings, the kit brief 12-18 %: the kit aims at ~8-15 %, at least one team area in the upper third)",
   "buildings": {
     "clans_banner_shell": {
       "id": "clans_banner_shell",
       "faction": "clans",
       "role": "T2 hall upgrade: add-on to clans_shell_hall",
       "footprint_cells": [
-        10,
-        10
+        16,
+        16
       ],
       "footprint_m": [
         8.0,
@@ -38,11 +40,12 @@
           3.437
         ]
       },
-      "tris": 6849,
+      "tris": 6945,
       "materials": [
         {
           "name": "clans_banner_shell",
-          "texture": [
+          "texture": "textures/clans_buildings_atlas.jpg",
+          "texture_px": [
             2048,
             1024
           ],
@@ -51,22 +54,30 @@
             "lattice",
             "shell",
             "drystone",
-            "bronze"
+            "bronze",
+            "pal"
           ]
         },
         {
           "name": "clans_banner_shell_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
-            "team",
+            "team_gong",
             "team_plain"
           ]
         }
       ],
-      "file_bytes": 893672,
+      "file_bytes": 406892,
+      "glb_sha1": "65dcf3ed613effbb",
+      "team_piping_tris": 480,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.0
+      },
       "notes": "Banner Shell (T2 hall upgrade): ADD-ON pieces in the Shell Hall GLB's own space (8 m model): tall felt banners on carved masts, a second gong frame at the door and a lattice gallery round the shell (+12 % height).",
       "height_target_m": [
         5.73,
@@ -75,8 +86,8 @@
       "addon_of": "clans_shell_hall",
       "placement": "add-on in the clans_shell_hall.glb model space (8 m model): same parent and transform as the T1 hall, show both after the upgrade",
       "team_coverage_rts": {
-        "front": 0.07,
-        "mean_4_yaws": 0.074
+        "front": 0.065,
+        "mean_4_yaws": 0.066
       }
     },
     "clans_bow_mast": {
@@ -91,39 +102,42 @@
         2.0,
         2.0
       ],
-      "height_m": 6.17,
+      "height_m": 6.67,
       "bounds_m": {
         "x": [
-          -1.12,
-          1.168
+          -1.321,
+          1.708
         ],
         "z_godot": [
-          -0.883,
-          0.841
+          -1.252,
+          0.965
         ]
       },
-      "tris": 2611,
+      "tris": 3865,
       "materials": [
         {
           "name": "clans_bow_mast",
-          "texture": [
+          "texture": "textures/clans_buildings_atlas.jpg",
+          "texture_px": [
             2048,
             1024
           ],
           "swatches": [
+            "dirt",
             "drystone",
             "wood",
             "bronze",
             "saffron",
-            "teal",
-            "pal"
+            "pal",
+            "teal"
           ]
         },
         {
           "name": "clans_bow_mast_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
             "team_plain",
@@ -131,15 +145,21 @@
           ]
         }
       ],
-      "file_bytes": 711688,
-      "notes": "Bow-Mast (tower, 4x4 cells = 2 m): a tall carved mast with a round deck, a felt windbreak, a large laminated recurve bow of wood and bronze on a swivel, felt streamers and a felt cone cap.",
+      "file_bytes": 304196,
+      "glb_sha1": "d0f92b09b5bbc582",
+      "team_piping_tris": 472,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.708
+      },
+      "notes": "Bow-Mast (tower, 4x4 cells = 2 m, 6-8 m): a tall carved mast on a 1.7 m drystone footing with a carved collar and three raking braces, a round deck with a felt windbreak (team band), a 2.6 m laminated recurve bow of wood and bronze on a visible swivel post (bronze-capped tips projecting past the windbreak, aimed 20 degrees off the camera axis), long felt streamers and a felt cone cap.",
       "height_target_m": [
         6.0,
         8.0
       ],
       "team_coverage_rts": {
-        "front": 0.129,
-        "mean_4_yaws": 0.123
+        "front": 0.12,
+        "mean_4_yaws": 0.112
       }
     },
     "clans_casting_pit": {
@@ -147,31 +167,32 @@
       "faction": "clans",
       "role": "smithy + lumber drop-off (Casting Pit)",
       "footprint_cells": [
-        6,
-        6
+        12,
+        12
       ],
       "footprint_m": [
-        3.0,
-        3.0
+        6.0,
+        6.0
       ],
-      "height_m": 3.24,
+      "height_m": 5.555,
       "bounds_m": {
         "x": [
-          -1.505,
-          1.554
+          -2.937,
+          2.903
         ],
         "z_godot": [
-          -1.365,
-          1.54
+          -2.94,
+          2.957
         ]
       },
-      "tris": 3283,
+      "tris": 7372,
       "materials": [
         {
           "name": "clans_casting_pit_GLOW",
-          "texture": [
-            256,
-            256
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
           ],
           "swatches": [
             "ember"
@@ -179,50 +200,145 @@
         },
         {
           "name": "clans_casting_pit",
-          "texture": [
+          "texture": "textures/clans_buildings_atlas.jpg",
+          "texture_px": [
             2048,
-            2048
+            1024
           ],
           "swatches": [
+            "dirt",
             "drystone",
-            "pal",
             "clay",
             "iron",
             "bronze",
-            "bark",
-            "rings",
             "wood",
             "teal",
+            "bark",
+            "rings",
+            "pal",
             "saffron"
           ]
         },
         {
           "name": "clans_casting_pit_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
-            "team_plain",
-            "team"
+            "team_gong",
+            "team_plain"
           ]
         }
       ],
-      "file_bytes": 981764,
-      "notes": "Casting Pit (smithy + lumber drop-off, 6x6 cells = 3 m): a sunken stone-rimmed casting pit with molten bronze, a clay cone kiln, log stacks, a felt awning on poles.",
+      "file_bytes": 442272,
+      "glb_sha1": "92fa31e13e31d515",
+      "team_piping_tris": 568,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.0
+      },
+      "notes": "Casting Pit (smithy + lumber drop-off, 12x12 cells = 6 m, 5-6 m): a casting pit sunk into a raised packed-clay working floor (stone-lined inner wall dropping to a dark floor, a glowing crucible and a glowing pour channel), a 2.8 m clay cone kiln, a tall log stack under a felt lean-to (lumber drop-off read), a carved mast with team streamers and a team banner on the lean-to.",
       "height_target_m": [
-        2.4,
-        3.2
+        5.0,
+        6.0
       ],
       "team_coverage_rts": {
-        "front": 0.098,
-        "mean_4_yaws": 0.06
+        "front": 0.065,
+        "mean_4_yaws": 0.028
       }
     },
     "clans_grapple_yard": {
       "id": "clans_grapple_yard",
       "faction": "clans",
       "role": "barracks (Grapple Yard)",
+      "footprint_cells": [
+        12,
+        12
+      ],
+      "footprint_m": [
+        6.0,
+        6.0
+      ],
+      "height_m": 5.855,
+      "bounds_m": {
+        "x": [
+          -2.93,
+          2.95
+        ],
+        "z_godot": [
+          -2.93,
+          2.953
+        ]
+      },
+      "tris": 9336,
+      "materials": [
+        {
+          "name": "clans_grapple_yard_GLOW",
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
+          ],
+          "swatches": [
+            "ember"
+          ]
+        },
+        {
+          "name": "clans_grapple_yard",
+          "texture": "textures/clans_buildings_atlas.jpg",
+          "texture_px": [
+            2048,
+            1024
+          ],
+          "swatches": [
+            "dirt",
+            "drystone",
+            "lattice",
+            "teal",
+            "pal",
+            "bronze",
+            "wood",
+            "saffron",
+            "clay",
+            "iron"
+          ]
+        },
+        {
+          "name": "clans_grapple_yard_TEAM",
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
+            512,
+            512
+          ],
+          "swatches": [
+            "team_band",
+            "team_plain"
+          ]
+        }
+      ],
+      "file_bytes": 612168,
+      "glb_sha1": "6a0fd6d93abd9dba",
+      "team_piping_tris": 904,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.0
+      },
+      "notes": "Grapple Yard (barracks, 12x12 cells = 6 m, 5-6 m): a long felt yurt at the back (two round smoke vents) beside a 3.6 m round wrestling ring with a sand floor and a post-and-rope fence (its entrance away from the yurt door), two tall carved masts with team streamers at the ring's entrance, mace racks and a bench on the trampled-earth apron.",
+      "height_target_m": [
+        5.0,
+        6.0
+      ],
+      "team_coverage_rts": {
+        "front": 0.088,
+        "mean_4_yaws": 0.079
+      }
+    },
+    "clans_home_yurt": {
+      "id": "clans_home_yurt",
+      "faction": "clans",
+      "role": "supply + worker garrison (Home Yurt)",
       "footprint_cells": [
         8,
         8
@@ -231,99 +347,25 @@
         4.0,
         4.0
       ],
-      "height_m": 3.64,
+      "height_m": 3.355,
       "bounds_m": {
         "x": [
-          -2.122,
-          1.737
+          -1.934,
+          2.211
         ],
         "z_godot": [
-          -1.961,
-          1.929
+          -1.895,
+          1.936
         ]
       },
-      "tris": 5050,
-      "materials": [
-        {
-          "name": "clans_grapple_yard_GLOW",
-          "texture": [
-            256,
-            256
-          ],
-          "swatches": [
-            "ember"
-          ]
-        },
-        {
-          "name": "clans_grapple_yard",
-          "texture": [
-            2048,
-            1024
-          ],
-          "swatches": [
-            "drystone",
-            "lattice",
-            "teal",
-            "bronze",
-            "wood",
-            "pal",
-            "saffron",
-            "clay"
-          ]
-        },
-        {
-          "name": "clans_grapple_yard_TEAM",
-          "texture": [
-            512,
-            256
-          ],
-          "swatches": [
-            "team_band",
-            "team_plain"
-          ]
-        }
-      ],
-      "file_bytes": 1005336,
-      "notes": "Grapple Yard (barracks, 8x8 cells = 4 m): a long yurt behind a round fenced wrestling ring, mace racks, two carved masts with team streamers at the ring's entrance.",
-      "height_target_m": [
-        3.0,
-        4.2
-      ],
-      "team_coverage_rts": {
-        "front": 0.114,
-        "mean_4_yaws": 0.09
-      }
-    },
-    "clans_home_yurt": {
-      "id": "clans_home_yurt",
-      "faction": "clans",
-      "role": "supply + worker garrison (Home Yurt)",
-      "footprint_cells": [
-        4,
-        4
-      ],
-      "footprint_m": [
-        2.0,
-        2.0
-      ],
-      "height_m": 2.49,
-      "bounds_m": {
-        "x": [
-          -0.87,
-          1.224
-        ],
-        "z_godot": [
-          -0.99,
-          0.936
-        ]
-      },
-      "tris": 1938,
+      "tris": 4980,
       "materials": [
         {
           "name": "clans_home_yurt_GLOW",
-          "texture": [
-            256,
-            256
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
           ],
           "swatches": [
             "ember"
@@ -331,17 +373,19 @@
         },
         {
           "name": "clans_home_yurt",
-          "texture": [
+          "texture": "textures/clans_buildings_atlas.jpg",
+          "texture_px": [
             2048,
-            2048
+            1024
           ],
           "swatches": [
+            "dirt",
             "drystone",
             "lattice",
             "teal",
+            "pal",
             "bronze",
             "wood",
-            "pal",
             "saffron",
             "bark",
             "rings",
@@ -350,9 +394,10 @@
         },
         {
           "name": "clans_home_yurt_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
             "team_band",
@@ -360,15 +405,21 @@
           ]
         }
       ],
-      "file_bytes": 967376,
-      "notes": "Home Yurt (supply + worker garrison, 4x4 cells = 2 m): small round felt dome with a smoke ring and a rolled felt skirt (rolls up for Roll the Felt), a short streamer mast by the door.",
+      "file_bytes": 312080,
+      "glb_sha1": "46ecc691a152906f",
+      "team_piping_tris": 400,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.211
+      },
+      "notes": "Home Yurt (supply + worker garrison, 8x8 cells = 4 m, 3-3.5 m): a round felt dome with a glowing smoke ring, a rolled felt skirt (it rolls up for Roll the Felt) and a team band, a carved streamer mast by the door, a log pile and big clay jars, a felt rug on the trampled-earth apron inside a low stone curb.",
       "height_target_m": [
-        2.0,
-        2.8
+        3.0,
+        3.5
       ],
       "team_coverage_rts": {
-        "front": 0.131,
-        "mean_4_yaws": 0.144
+        "front": 0.085,
+        "mean_4_yaws": 0.092
       }
     },
     "clans_mirror_yurt": {
@@ -376,31 +427,32 @@
       "faction": "clans",
       "role": "caster lodge (Mirror Yurt)",
       "footprint_cells": [
-        8,
-        8
+        12,
+        12
       ],
       "footprint_m": [
-        4.0,
-        4.0
+        6.0,
+        6.0
       ],
-      "height_m": 3.8,
+      "height_m": 5.08,
       "bounds_m": {
         "x": [
-          -2.101,
-          1.962
+          -3.169,
+          2.909
         ],
         "z_godot": [
-          -1.649,
-          2.149
+          -2.92,
+          2.902
         ]
       },
-      "tris": 4930,
+      "tris": 9230,
       "materials": [
         {
           "name": "clans_mirror_yurt_GLOW",
-          "texture": [
-            256,
-            256
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
           ],
           "swatches": [
             "ember"
@@ -408,25 +460,28 @@
         },
         {
           "name": "clans_mirror_yurt",
-          "texture": [
+          "texture": "textures/clans_buildings_atlas.jpg",
+          "texture_px": [
             2048,
             1024
           ],
           "swatches": [
+            "dirt",
             "drystone",
             "lattice",
             "teal",
+            "pal",
             "bronze",
             "wood",
-            "pal",
             "saffron"
           ]
         },
         {
           "name": "clans_mirror_yurt_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
             "team_band",
@@ -434,15 +489,21 @@
           ]
         }
       ],
-      "file_bytes": 903072,
-      "notes": "Mirror Yurt (caster lodge, 8x8 cells = 4 m): a tall felt dome ringed by bronze sun-mirrors on tilting carved posts (nothing sewn or studded on the felt).",
+      "file_bytes": 560836,
+      "glb_sha1": "2a1499dfc134fee0",
+      "team_piping_tris": 968,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.169
+      },
+      "notes": "Mirror Yurt (caster lodge, 12x12 cells = 6 m, 5-6 m): a tall felt dome under a saffron cap and a bronze knob, ringed by big bronze sun-mirrors (0.9 m) on tilting carved posts, their faces turned up towards the sky and the RTS camera (nothing sewn or studded on the felt).",
       "height_target_m": [
-        3.6,
-        4.6
+        5.0,
+        6.0
       ],
       "team_coverage_rts": {
-        "front": 0.111,
-        "mean_4_yaws": 0.088
+        "front": 0.077,
+        "mean_4_yaws": 0.073
       }
     },
     "clans_naming_stones": {
@@ -450,61 +511,73 @@
       "faction": "clans",
       "role": "hero altar (Naming Stones)",
       "footprint_cells": [
-        6,
-        6
+        12,
+        12
       ],
       "footprint_m": [
-        3.0,
-        3.0
+        6.0,
+        6.0
       ],
-      "height_m": 3.04,
+      "height_m": 5.405,
       "bounds_m": {
         "x": [
-          -1.431,
-          1.608
+          -2.958,
+          2.922
         ],
         "z_godot": [
-          -1.78,
-          1.411
+          -2.888,
+          2.927
         ]
       },
-      "tris": 3749,
+      "tris": 9064,
       "materials": [
         {
           "name": "clans_naming_stones",
-          "texture": [
+          "texture": "textures/clans_buildings_atlas.jpg",
+          "texture_px": [
             2048,
             1024
           ],
           "swatches": [
+            "dirt",
             "drystone",
+            "saffron",
             "stone",
-            "glyph",
+            "glyph_hail",
+            "glyph_wind",
             "wood",
             "bronze",
-            "saffron"
+            "pal"
           ]
         },
         {
           "name": "clans_naming_stones_TEAM",
-          "texture": [
-            256,
-            256
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
+            512,
+            512
           ],
           "swatches": [
-            "team_plain"
+            "team_plain",
+            "team_gong"
           ]
         }
       ],
-      "file_bytes": 729824,
-      "notes": "Naming Stones (hero altar, 6x6 cells = 3 m): a ring of rough standing stones carved with hail and wind glyphs (nothing hung on them, no faces), a flat naming stone at the centre, a frame of small bronze gongs beside them.",
+      "file_bytes": 570936,
+      "glb_sha1": "ef2e88fdf404714f",
+      "team_piping_tris": 1376,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.0
+      },
+      "notes": "Naming Stones (hero altar, 12x12 cells = 6 m, 4.5-5.5 m): a ring of six rough standing stones (2.6-3.5 m) carved with hail and wind glyphs (nothing hung on them, no faces), open to the camera, round an ochre felt floor with a flat naming stone at its centre; a frame of bronze gongs on team-ribboned cords beside them and two taller carved masts with long team streamers at the back.",
       "height_target_m": [
-        2.2,
-        3.0
+        4.5,
+        5.5
       ],
       "team_coverage_rts": {
-        "front": 0.141,
-        "mean_4_yaws": 0.108
+        "front": 0.109,
+        "mean_4_yaws": 0.079
       }
     },
     "clans_tea_tent": {
@@ -512,31 +585,32 @@
       "faction": "clans",
       "role": "faction shop (Tea Tent)",
       "footprint_cells": [
-        6,
-        6
+        12,
+        12
       ],
       "footprint_m": [
-        3.0,
-        3.0
+        6.0,
+        6.0
       ],
-      "height_m": 2.82,
+      "height_m": 5.255,
       "bounds_m": {
         "x": [
-          -1.198,
-          1.195
+          -2.883,
+          2.949
         ],
         "z_godot": [
-          -1.674,
-          1.435
+          -2.887,
+          2.927
         ]
       },
-      "tris": 3262,
+      "tris": 8042,
       "materials": [
         {
           "name": "clans_tea_tent_GLOW",
-          "texture": [
-            256,
-            256
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
           ],
           "swatches": [
             "ember"
@@ -544,17 +618,19 @@
         },
         {
           "name": "clans_tea_tent",
-          "texture": [
+          "texture": "textures/clans_buildings_atlas.jpg",
+          "texture_px": [
             2048,
-            2048
+            1024
           ],
           "swatches": [
+            "dirt",
             "drystone",
             "lattice",
             "stripes",
+            "pal",
             "bronze",
             "wood",
-            "pal",
             "saffron",
             "iron",
             "teal"
@@ -562,9 +638,10 @@
         },
         {
           "name": "clans_tea_tent_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
             "team_band",
@@ -572,15 +649,21 @@
           ]
         }
       ],
-      "file_bytes": 996232,
-      "notes": "Tea Tent (faction shop, 6x6 cells = 3 m): a striped saffron-and-teal yurt, a felt awning at the door, a big bronze urn on a tripod and bronze cups on a low table, felt cushions.",
+      "file_bytes": 501180,
+      "glb_sha1": "73abf43988c8ee8f",
+      "team_piping_tris": 744,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.0
+      },
+      "notes": "Tea Tent (faction shop, 12x12 cells = 6 m, 4.5-5.5 m): a striped saffron-and-teal yurt with a felt porch awning on carved posts (team valance), a 1.45 m polished bronze tea urn on an iron tripod with a curl of steam at the door, one big low tea table with a bronze tray and cups, felt cushions, two streamer masts.",
       "height_target_m": [
-        2.6,
-        3.4
+        4.5,
+        5.5
       ],
       "team_coverage_rts": {
-        "front": 0.069,
-        "mean_4_yaws": 0.096
+        "front": 0.092,
+        "mean_4_yaws": 0.108
       }
     },
     "kingdom_collegium": {
@@ -588,31 +671,32 @@
       "faction": "kingdom",
       "role": "caster hall (Collegium)",
       "footprint_cells": [
-        8,
-        8
+        12,
+        12
       ],
       "footprint_m": [
-        4.0,
-        4.0
+        6.0,
+        6.0
       ],
-      "height_m": 4.719,
+      "height_m": 5.9,
       "bounds_m": {
         "x": [
-          -2.025,
-          2.048
+          -3.145,
+          2.922
         ],
         "z_godot": [
-          -2.018,
-          2.026
+          -2.901,
+          3.208
         ]
       },
-      "tris": 10184,
+      "tris": 10501,
       "materials": [
         {
           "name": "kingdom_collegium_GLOW",
-          "texture": [
-            256,
-            256
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
           ],
           "swatches": [
             "window"
@@ -620,205 +704,59 @@
         },
         {
           "name": "kingdom_collegium",
-          "texture": [
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
             2048,
-            2048
+            1024
           ],
           "swatches": [
+            "dirt",
+            "oak",
             "rubble",
             "plaster",
-            "oak",
             "planks",
             "iron",
             "pal",
             "roof",
             "bark",
-            "leaves",
-            "dirt"
+            "leaves"
           ]
         },
         {
           "name": "kingdom_collegium_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
             512
           ],
           "swatches": [
             "team_plain",
             "team_band",
-            "team"
+            "team_wheel"
           ]
         }
       ],
-      "file_bytes": 1721780,
-      "notes": "Collegium (caster hall, 8x8 cells = 4 m): a tall narrow jettied guild house with a bell-cote on its front gable, beside a walled linden herb garden.",
+      "file_bytes": 863692,
+      "glb_sha1": "953defed1f60ae0a",
+      "team_piping_tris": 1376,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.208
+      },
+      "notes": "Collegium (caster hall, 12x12 cells = 6 m, 5-6 m): a tall narrow two-storey jettied guild house with its gable to the camera and a little bell-cote on the gable, beside a walled herb garden: a low rubble-stone wall with an irregular mossy coping and gate piers, two garden lindens (2.6-2.9 m, the doodad kit's rounded-cone crown), box-hedge rows and raised herb beds.",
       "height_target_m": [
-        4.0,
-        4.9
+        5.0,
+        6.0
       ],
       "team_coverage_rts": {
-        "front": 0.083,
-        "mean_4_yaws": 0.069
+        "front": 0.071,
+        "mean_4_yaws": 0.057
       }
     },
     "kingdom_croft": {
       "id": "kingdom_croft",
       "faction": "kingdom",
       "role": "supply (Croft)",
-      "footprint_cells": [
-        4,
-        4
-      ],
-      "footprint_m": [
-        2.0,
-        2.0
-      ],
-      "height_m": 2.868,
-      "bounds_m": {
-        "x": [
-          -1.033,
-          0.938
-        ],
-        "z_godot": [
-          -0.908,
-          0.958
-        ]
-      },
-      "tris": 3568,
-      "materials": [
-        {
-          "name": "kingdom_croft_GLOW",
-          "texture": [
-            256,
-            256
-          ],
-          "swatches": [
-            "window"
-          ]
-        },
-        {
-          "name": "kingdom_croft",
-          "texture": [
-            2048,
-            2048
-          ],
-          "swatches": [
-            "rubble",
-            "plaster",
-            "oak",
-            "planks",
-            "iron",
-            "pal",
-            "roof",
-            "brick",
-            "straw",
-            "bark",
-            "rings"
-          ]
-        },
-        {
-          "name": "kingdom_croft_TEAM",
-          "texture": [
-            512,
-            512
-          ],
-          "swatches": [
-            "team_plain",
-            "team_band",
-            "team"
-          ]
-        }
-      ],
-      "file_bytes": 1135948,
-      "notes": "Croft (supply, 4x4 cells = 2 m): small steep-roofed half-timber cottage, chimney, stork nest.",
-      "height_target_m": [
-        2.5,
-        3.5
-      ],
-      "team_coverage_rts": {
-        "front": 0.082,
-        "mean_4_yaws": 0.07
-      }
-    },
-    "kingdom_curio_cabinet": {
-      "id": "kingdom_curio_cabinet",
-      "faction": "kingdom",
-      "role": "faction shop (Curio Cabinet)",
-      "footprint_cells": [
-        6,
-        6
-      ],
-      "footprint_m": [
-        3.0,
-        3.0
-      ],
-      "height_m": 4.237,
-      "bounds_m": {
-        "x": [
-          -1.258,
-          1.316
-        ],
-        "z_godot": [
-          -1.319,
-          1.589
-        ]
-      },
-      "tris": 6360,
-      "materials": [
-        {
-          "name": "kingdom_curio_cabinet_GLOW",
-          "texture": [
-            256,
-            256
-          ],
-          "swatches": [
-            "window"
-          ]
-        },
-        {
-          "name": "kingdom_curio_cabinet",
-          "texture": [
-            2048,
-            1024
-          ],
-          "swatches": [
-            "rubble",
-            "plaster",
-            "oak",
-            "planks",
-            "iron",
-            "pal",
-            "roof"
-          ]
-        },
-        {
-          "name": "kingdom_curio_cabinet_TEAM",
-          "texture": [
-            512,
-            512
-          ],
-          "swatches": [
-            "team_plain",
-            "team_band",
-            "team"
-          ]
-        }
-      ],
-      "file_bytes": 1036340,
-      "notes": "Curio Cabinet (shop, 6x6 cells = 3 m): narrow shopfront house with a striped awning over the counter and its sign: a giant painted chest of small drawers standing out on the front.",
-      "height_target_m": [
-        3.2,
-        4.2
-      ],
-      "team_coverage_rts": {
-        "front": 0.124,
-        "mean_4_yaws": 0.088
-      }
-    },
-    "kingdom_drill_yard": {
-      "id": "kingdom_drill_yard",
-      "faction": "kingdom",
-      "role": "barracks (Drill Yard)",
       "footprint_cells": [
         8,
         8
@@ -827,24 +765,202 @@
         4.0,
         4.0
       ],
-      "height_m": 3.666,
+      "height_m": 4.018,
       "bounds_m": {
         "x": [
-          -2.022,
-          2.022
+          -1.988,
+          1.932
         ],
         "z_godot": [
-          -1.965,
-          1.977
+          -1.946,
+          1.921
         ]
       },
-      "tris": 8720,
+      "tris": 7177,
+      "materials": [
+        {
+          "name": "kingdom_croft_GLOW",
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
+          ],
+          "swatches": [
+            "window"
+          ]
+        },
+        {
+          "name": "kingdom_croft",
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
+            2048,
+            1024
+          ],
+          "swatches": [
+            "dirt",
+            "oak",
+            "rubble",
+            "plaster",
+            "pal",
+            "roof",
+            "planks",
+            "iron",
+            "brick",
+            "straw",
+            "bark",
+            "rings",
+            "wattle",
+            "leaves"
+          ]
+        },
+        {
+          "name": "kingdom_croft_TEAM",
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
+            512,
+            512
+          ],
+          "swatches": [
+            "team_plain",
+            "team_band",
+            "team_wheel"
+          ]
+        }
+      ],
+      "file_bytes": 555112,
+      "glb_sha1": "e203a050af6c4264",
+      "team_piping_tris": 776,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.0
+      },
+      "notes": "Croft (supply, 8x8 cells = 4 m, 3-3.5 m): a half-timber cottage under a steep half-hipped roof whose gable faces the camera (door rising into the gable, team-shuttered windows), a chunky chimney, a big stork nest with a white stork on the back of the ridge, a lean-to woodshed with ring-ended logs, a wattle-fenced cabbage bed and a hay stook, all on a packed-earth apron with a timber kerb and a cobbled door path.",
+      "height_target_m": [
+        3.0,
+        3.5
+      ],
+      "budget_note": "roof ridge 3.0 m; the stork in its nest stands to ~3.8 m",
+      "team_coverage_rts": {
+        "front": 0.07,
+        "mean_4_yaws": 0.052
+      }
+    },
+    "kingdom_curio_cabinet": {
+      "id": "kingdom_curio_cabinet",
+      "faction": "kingdom",
+      "role": "faction shop (Curio Cabinet)",
+      "footprint_cells": [
+        12,
+        12
+      ],
+      "footprint_m": [
+        6.0,
+        6.0
+      ],
+      "height_m": 5.203,
+      "bounds_m": {
+        "x": [
+          -3.037,
+          2.922
+        ],
+        "z_godot": [
+          -2.932,
+          3.244
+        ]
+      },
+      "tris": 7728,
+      "materials": [
+        {
+          "name": "kingdom_curio_cabinet_GLOW",
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
+          ],
+          "swatches": [
+            "window"
+          ]
+        },
+        {
+          "name": "kingdom_curio_cabinet",
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
+            2048,
+            1024
+          ],
+          "swatches": [
+            "dirt",
+            "oak",
+            "rubble",
+            "plaster",
+            "pal",
+            "roof",
+            "planks",
+            "iron"
+          ]
+        },
+        {
+          "name": "kingdom_curio_cabinet_TEAM",
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
+            512,
+            512
+          ],
+          "swatches": [
+            "team_plain",
+            "team_band",
+            "team_wheel"
+          ]
+        }
+      ],
+      "file_bytes": 632116,
+      "glb_sha1": "437193db15e837ed",
+      "team_piping_tris": 608,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.244
+      },
+      "notes": "Curio Cabinet (faction shop, 12x12 cells = 6 m, 4.5-5.5 m): a narrow half-timber shopfront with its gable to the camera, a wide shop window with a counter under a striped team awning, and its sign: a giant painted chest of small drawers standing on a bracket shelf at the eaves in front of the gable; a market table with crates, a barrel group and a handcart on a cobbled forecourt.",
+      "height_target_m": [
+        4.5,
+        5.5
+      ],
+      "team_coverage_rts": {
+        "front": 0.074,
+        "mean_4_yaws": 0.059
+      }
+    },
+    "kingdom_drill_yard": {
+      "id": "kingdom_drill_yard",
+      "faction": "kingdom",
+      "role": "barracks (Drill Yard)",
+      "footprint_cells": [
+        12,
+        12
+      ],
+      "footprint_m": [
+        6.0,
+        6.0
+      ],
+      "height_m": 5.778,
+      "bounds_m": {
+        "x": [
+          -3.214,
+          2.897
+        ],
+        "z_godot": [
+          -2.904,
+          2.957
+        ]
+      },
+      "tris": 8141,
       "materials": [
         {
           "name": "kingdom_drill_yard_GLOW",
-          "texture": [
-            256,
-            256
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
           ],
           "swatches": [
             "window"
@@ -852,44 +968,54 @@
         },
         {
           "name": "kingdom_drill_yard",
-          "texture": [
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
             2048,
-            2048
+            1024
           ],
           "swatches": [
+            "dirt",
+            "oak",
             "rubble",
             "plaster",
-            "oak",
             "pal",
             "roof",
             "planks",
             "iron",
+            "brick",
             "wattle",
             "straw"
           ]
         },
         {
           "name": "kingdom_drill_yard_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
             512
           ],
           "swatches": [
             "team_plain",
             "team_band",
-            "team"
+            "team_wheel"
           ]
         }
       ],
-      "file_bytes": 1386456,
-      "notes": "Drill Yard (barracks, 8x8 cells = 4 m): timber longhouse with a front cross-gable, a fenced yard with a pavise wall, a weapon rack and a straw drill dummy; tall pennant mast.",
+      "file_bytes": 661940,
+      "glb_sha1": "e54ed341f33968af",
+      "team_piping_tris": 832,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.214
+      },
+      "notes": "Drill Yard (barracks, 12x12 cells = 6 m, 5-6 m): a big timber longhouse with its gable (double door, team-shuttered windows) to the camera, a dormer and a chimney on the slopes; an L-shaped wattle-fenced drill yard round it on packed earth: a pavise wall of tall shields, a polearm rack, a straw drill dummy in a kettle hat and a tall team pennant mast at the gate.",
       "height_target_m": [
-        3.4,
-        4.2
+        5.0,
+        6.0
       ],
       "team_coverage_rts": {
-        "front": 0.127,
-        "mean_4_yaws": 0.102
+        "front": 0.081,
+        "mean_4_yaws": 0.062
       }
     },
     "kingdom_foundry": {
@@ -897,31 +1023,32 @@
       "faction": "kingdom",
       "role": "smithy (Foundry)",
       "footprint_cells": [
-        6,
-        6
+        12,
+        12
       ],
       "footprint_m": [
-        3.0,
-        3.0
+        6.0,
+        6.0
       ],
-      "height_m": 4.8,
+      "height_m": 5.86,
       "bounds_m": {
         "x": [
-          -1.322,
-          1.291
+          -3.134,
+          2.975
         ],
         "z_godot": [
-          -1.447,
-          1.443
+          -2.903,
+          2.984
         ]
       },
-      "tris": 6287,
+      "tris": 6914,
       "materials": [
         {
           "name": "kingdom_foundry_GLOW",
-          "texture": [
-            512,
-            256
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
           ],
           "swatches": [
             "window",
@@ -930,45 +1057,62 @@
         },
         {
           "name": "kingdom_foundry",
-          "texture": [
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
             2048,
-            2048
+            1024
           ],
           "swatches": [
+            "dirt",
+            "oak",
             "rubble",
             "pal",
-            "oak",
-            "plaster",
-            "planks",
             "roof",
             "brick",
+            "plaster",
+            "planks",
             "iron",
-            "scales",
+            "bronze",
             "bark"
           ]
         },
         {
           "name": "kingdom_foundry_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
             512
           ],
           "swatches": [
             "team_plain",
             "team_band",
-            "team"
+            "team_wheel"
           ]
         }
       ],
-      "file_bytes": 1271440,
-      "notes": "Foundry (smithy, 6x6 cells = 3 m): stone ground floor, timber upper storey, a crow-stepped front gable, a tall brick chimney with a bronze cap, forge glow through open doors, anvil.",
+      "file_bytes": 540288,
+      "glb_sha1": "afd213c2969bca0f",
+      "team_piping_tris": 576,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.134
+      },
+      "notes": "Foundry (smithy, 12x12 cells = 6 m, 5-6 m): a stone-and-brick forge house with a crow-stepped brick gable to the camera and a glowing forge door, a massive square brick chimney stack on the camera-side corner under a simple dark-bronze cowl (smoke anchor for VFX), and an open lean-to smithy with anvil, forge bed, quench tub and grindstone; an ingot stack, a coal heap and barrels on the cobbled yard.",
       "height_target_m": [
-        3.0,
-        4.6
+        5.0,
+        6.0
       ],
+      "anchors_godot": {
+        "smoke": [
+          0.48,
+          5.15,
+          -0.45
+        ]
+      },
+      "budget_note": "chimney stack + cowl 5.7 m (art bible 4.2), the rest <= 4.3 m",
       "team_coverage_rts": {
-        "front": 0.102,
-        "mean_4_yaws": 0.073
+        "front": 0.071,
+        "mean_4_yaws": 0.05
       }
     },
     "kingdom_gun_tower": {
@@ -983,56 +1127,65 @@
         2.0,
         2.0
       ],
-      "height_m": 7.552,
+      "height_m": 7.555,
       "bounds_m": {
         "x": [
-          -1.015,
-          1.015
+          -1.004,
+          1.003
         ],
         "z_godot": [
           -1.269,
-          1.015
+          1.003
         ]
       },
-      "tris": 5601,
+      "tris": 6571,
       "materials": [
         {
           "name": "kingdom_gun_tower",
-          "texture": [
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
             2048,
             1024
           ],
           "swatches": [
             "rubble",
+            "dirt",
             "oak",
             "planks",
             "pal",
             "iron",
             "roof",
-            "scales"
+            "bronze"
           ]
         },
         {
           "name": "kingdom_gun_tower_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
             "team_band",
-            "team"
+            "team_wheel"
           ]
         }
       ],
-      "file_bytes": 838768,
+      "file_bytes": 446852,
+      "glb_sha1": "92b214ab0817c658",
+      "team_piping_tris": 688,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.269
+      },
       "notes": "",
       "height_target_m": [
         6.0,
         8.0
       ],
       "team_coverage_rts": {
-        "front": 0.111,
-        "mean_4_yaws": 0.113
+        "front": 0.072,
+        "mean_4_yaws": 0.078
       }
     },
     "kingdom_lookout": {
@@ -1047,54 +1200,63 @@
         2.0,
         2.0
       ],
-      "height_m": 6.933,
+      "height_m": 6.884,
       "bounds_m": {
         "x": [
-          -1.001,
-          1.001
+          -0.993,
+          1.194
         ],
         "z_godot": [
-          -1.001,
-          1.001
+          -0.99,
+          0.99
         ]
       },
-      "tris": 3065,
+      "tris": 3297,
       "materials": [
         {
           "name": "kingdom_lookout",
-          "texture": [
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
             2048,
             1024
           ],
           "swatches": [
+            "dirt",
             "oak",
             "rubble",
             "planks",
             "roof",
-            "iron"
+            "iron",
+            "pal"
           ]
         },
         {
           "name": "kingdom_lookout_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
-            "team_band",
-            "team"
+            "team_wheel"
           ]
         }
       ],
-      "file_bytes": 635820,
-      "notes": "Lookout (scout tower, 4x4 cells = 2 m): thin splayed timber tower, railed platform, steep pyramid roof on posts. gun=True: the Gun Tower upgrade (stone base, plank parapet with hook-guns, onion cap).",
+      "file_bytes": 260068,
+      "glb_sha1": "2ddc66e48e4b3ec9",
+      "team_piping_tris": 376,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.194
+      },
+      "notes": "Lookout (scout tower, 4x4 cells = 2 m, 6-8 m): thin splayed timber tower, railed platform, steep pyramid roof (oak hip boards) on posts, a big team pennant on the finial. gun=True: the Gun Tower upgrade (stone base, plank parapet with hook-guns, a smooth ribbed dark-bronze onion cap).",
       "height_target_m": [
         6.0,
         8.0
       ],
       "team_coverage_rts": {
-        "front": 0.151,
-        "mean_4_yaws": 0.135
+        "front": 0.073,
+        "mean_4_yaws": 0.045
       }
     },
     "kingdom_oath_hall": {
@@ -1102,31 +1264,32 @@
       "faction": "kingdom",
       "role": "hero altar (Oath Hall)",
       "footprint_cells": [
-        6,
-        6
+        12,
+        12
       ],
       "footprint_m": [
-        3.0,
-        3.0
+        6.0,
+        6.0
       ],
-      "height_m": 3.516,
+      "height_m": 5.194,
       "bounds_m": {
         "x": [
-          -1.49,
-          1.49
+          -3.02,
+          3.019
         ],
         "z_godot": [
-          -1.578,
-          1.44
+          -2.912,
+          3.042
         ]
       },
-      "tris": 6272,
+      "tris": 9661,
       "materials": [
         {
           "name": "kingdom_oath_hall_GLOW",
-          "texture": [
-            512,
-            256
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
           ],
           "swatches": [
             "window",
@@ -1135,41 +1298,50 @@
         },
         {
           "name": "kingdom_oath_hall",
-          "texture": [
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
             2048,
             1024
           ],
           "swatches": [
+            "dirt",
+            "oak",
             "rubble",
             "planks",
             "iron",
-            "oak",
             "pal",
             "roof"
           ]
         },
         {
           "name": "kingdom_oath_hall_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
             512
           ],
           "swatches": [
             "team_plain",
             "team_band",
-            "team"
+            "team_wheel"
           ]
         }
       ],
-      "file_bytes": 856728,
-      "notes": "Oath Hall (altar, 6x6 cells = 3 m): squat stone hall, hip roof, a giant iron wheel arch over the door, the oath wheel set in the floor in front.",
+      "file_bytes": 666928,
+      "glb_sha1": "1619372cc544e32d",
+      "team_piping_tris": 896,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.042
+      },
+      "notes": "Oath Hall (hero altar, 12x12 cells = 6 m, 4.5-5.5 m): a squat rubble-stone hall under a heavy hip roof (oak hip boards, team ridge tiles) with battered corner buttresses; in front of the door stands its signature, a free-standing gate made of the upper half of a giant iron wheel rising well above the eaves and leaning back towards the camera; the oath wheel is set in the cobbled forecourt before it, braziers and team banners flank it.",
       "height_target_m": [
-        2.8,
-        3.6
+        4.5,
+        5.5
       ],
       "team_coverage_rts": {
-        "front": 0.139,
-        "mean_4_yaws": 0.121
+        "front": 0.082,
+        "mean_4_yaws": 0.045
       }
     },
     "kingdom_timber_yard": {
@@ -1177,33 +1349,35 @@
       "faction": "kingdom",
       "role": "lumber drop-off (Timber Yard)",
       "footprint_cells": [
-        8,
-        8
+        12,
+        12
       ],
       "footprint_m": [
-        4.0,
-        4.0
+        6.0,
+        6.0
       ],
-      "height_m": 3.473,
+      "height_m": 5.49,
       "bounds_m": {
         "x": [
-          -2.239,
-          2.119
+          -3.09,
+          2.95
         ],
         "z_godot": [
-          -1.733,
-          1.78
+          -2.93,
+          2.953
         ]
       },
-      "tris": 5541,
+      "tris": 8040,
       "materials": [
         {
           "name": "kingdom_timber_yard",
-          "texture": [
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
             2048,
             1024
           ],
           "swatches": [
+            "dirt",
             "oak",
             "rubble",
             "planks",
@@ -1211,30 +1385,37 @@
             "pal",
             "bark",
             "rings",
-            "iron"
+            "iron",
+            "straw"
           ]
         },
         {
           "name": "kingdom_timber_yard_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
-            "team_band",
-            "team"
+            "team_wheel"
           ]
         }
       ],
-      "file_bytes": 906944,
-      "notes": "Timber Yard (lumber drop-off, 8x8 cells = 4 m): open timber shed over a sawpit with a log on trestles and a two-man pit saw, a tall cribbed log stack at one end, sawn planks.",
+      "file_bytes": 660372,
+      "glb_sha1": "2f66e74d5ad315b3",
+      "team_piping_tris": 376,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.09
+      },
+      "notes": "Timber Yard (lumber drop-off, 12x12 cells = 6 m, 5-6 m), built at the tree line: an open mono-pitch lean-to (high open front, roof falling to a plank back wall) over stacked planks and squared beams, a sawpit in front with a log on tall trestles and a two-man pit saw, a tall gin-pole hoist with a jib and a team pennant over the pit, and a tall end pile of big logs held by posts with their ring ends to the camera.",
       "height_target_m": [
-        3.0,
-        4.0
+        5.0,
+        6.0
       ],
       "team_coverage_rts": {
-        "front": 0.078,
-        "mean_4_yaws": 0.067
+        "front": 0.079,
+        "mean_4_yaws": 0.03
       }
     },
     "kingdom_wainwright_yard": {
@@ -1242,61 +1423,73 @@
       "faction": "kingdom",
       "role": "siege workshop (Wainwright Yard)",
       "footprint_cells": [
-        8,
-        8
+        12,
+        12
       ],
       "footprint_m": [
-        4.0,
-        4.0
+        6.0,
+        6.0
       ],
-      "height_m": 4.595,
+      "height_m": 5.34,
       "bounds_m": {
         "x": [
-          -2.25,
-          2.133
+          -3.155,
+          3.082
         ],
         "z_godot": [
-          -1.747,
-          1.953
+          -2.902,
+          3.032
         ]
       },
-      "tris": 6191,
+      "tris": 10694,
       "materials": [
         {
           "name": "kingdom_wainwright_yard",
-          "texture": [
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
             2048,
             1024
           ],
           "swatches": [
+            "dirt",
             "oak",
             "rubble",
             "planks",
             "roof",
-            "iron"
+            "pal",
+            "iron",
+            "bark",
+            "rings"
           ]
         },
         {
           "name": "kingdom_wainwright_yard_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
             "team_band",
-            "team"
+            "team_wheel"
           ]
         }
       ],
-      "file_bytes": 909208,
-      "notes": "Wainwright Yard (siege workshop, 8x8 cells = 4 m): open shed with a wagon on the stocks, wheels leaning on the posts, and a giant wagon wheel on a pole as the yard sign.",
+      "file_bytes": 919364,
+      "glb_sha1": "0399394e7ac320ea",
+      "team_piping_tris": 228,
+      "outside_footprint_m": {
+        "below_1.5m": 0.0,
+        "above_1.5m": 0.155
+      },
+      "notes": "Wainwright Yard (siege workshop, 12x12 cells = 6 m, 5-6 m): a two-bay open shed (twin gables to the camera over a valley) with a wagon on the stocks and wheels leaning on the posts, and its sign: a giant 2.8 m wagon wheel mounted high on a braced pole, tilted back so it reads as a full circle from the RTS camera. A finished wagon under an ivory canvas (one team stripe) waits in the yard beside a stack of new wheels and a timber pile.",
       "height_target_m": [
-        3.6,
-        4.6
+        5.0,
+        6.0
       ],
       "team_coverage_rts": {
-        "front": 0.179,
-        "mean_4_yaws": 0.157
+        "front": 0.083,
+        "mean_4_yaws": 0.08
       }
     },
     "kingdom_walled_burg": {
@@ -1304,37 +1497,50 @@
       "faction": "kingdom",
       "role": "T2 hall upgrade: add-on to kingdom_moot_hall",
       "footprint_cells": [
-        10,
-        10
+        16,
+        16
       ],
       "footprint_m": [
         8.0,
         8.0
       ],
-      "height_m": 11.703,
+      "height_m": 12.085,
       "bounds_m": {
         "x": [
-          -4.014,
-          4.014
+          -4.119,
+          4.119
         ],
         "z_godot": [
-          -3.701,
-          4.016
+          -4.004,
+          3.883
         ]
       },
-      "tris": 8001,
+      "tris": 11688,
       "materials": [
         {
+          "name": "kingdom_walled_burg_GLOW",
+          "texture": "textures/buildings_glow.png",
+          "texture_px": [
+            320,
+            192
+          ],
+          "swatches": [
+            "window"
+          ]
+        },
+        {
           "name": "kingdom_walled_burg",
-          "texture": [
+          "texture": "textures/kingdom_buildings_atlas.jpg",
+          "texture_px": [
             2048,
             1024
           ],
           "swatches": [
             "planks",
             "oak",
+            "pal",
             "plaster",
-            "scales",
+            "bronze",
             "iron",
             "rubble",
             "roof"
@@ -1342,27 +1548,34 @@
         },
         {
           "name": "kingdom_walled_burg_TEAM",
-          "texture": [
+          "texture": "textures/buildings_team.png",
+          "texture_px": [
             512,
-            256
+            512
           ],
           "swatches": [
             "team_band",
-            "team"
+            "team_wheel"
           ]
         }
       ],
-      "file_bytes": 1211104,
-      "notes": "Walled Burg (T2 hall upgrade): ADD-ON pieces in the Moot Hall GLB's own space (8 m model): a ring of parked wagons as a low wall, stone corner buttresses for the stone ground floor, team banners on tall poles, and a taller onion dome enclosing the T1 turret (+14 % height).",
+      "file_bytes": 967440,
+      "glb_sha1": "667513f018b92b59",
+      "team_piping_tris": 1032,
+      "outside_footprint_m": {
+        "below_1.5m": 0.119,
+        "above_1.5m": 0.073
+      },
+      "notes": "Walled Burg (T2 hall upgrade): ADD-ON pieces in the Moot Hall GLB's own space (8 m model): a ring of parked Bombard-sized wagons (2.6 m, burgundy boards, team-painted side boards) as a low wall, an arc of four in front flanking the door and two along the sides; stone corner buttresses for the stone ground floor; team banners on tall poles; and a taller smooth dark-bronze onion (7 ribs, team ring, Ember Wheel finial) lifted on a drum over the T1 turret, set above the stepped gable so the gable stays clear (+14 % height).",
       "height_target_m": [
-        10.6,
+        11.0,
         12.2
       ],
       "addon_of": "kingdom_moot_hall",
       "placement": "add-on in the kingdom_moot_hall.glb model space (8 m model): same parent and transform as the T1 hall, show both after the upgrade",
       "team_coverage_rts": {
-        "front": 0.061,
-        "mean_4_yaws": 0.06
+        "front": 0.064,
+        "mean_4_yaws": 0.045
       }
     }
   }

@@ -8,12 +8,20 @@ Build space is Blender-like: metres, **Z up, the model's front faces +Y**. The w
 glTF/Godot space with (x, y, z) -> (x, z, -y), so the front ends up facing **-Z** (Godot forward).
 
 Vertex data written per vertex (see docs in doodads.py / the manifest):
-  COLOR_0     standard materials: RGB = painted AO + tint (multiplies albedo, glTF semantics), A = 1
-              SWAY materials (name contains "SWAY"): R = sway weight (0 at the trunk base -> 1 at the
-              canopy edge), G = painted AO (multiply into albedo in the sway shader), B = phase (0..1,
-              per leaf cluster, to de-synchronise gusts), A = 1
-  TEXCOORD_1  (UV2) x = sway weight (0 for rigid props), y = normalized height (0 at ground, 1 at the
-              top of the asset) for build/collapse reveals and height gradients
+  COLOR_0     every material, foliage included: RGB = painted AO + tint (multiplies albedo, glTF
+              semantics), A = 1. So a plain glTF import already looks right.
+  TEXCOORD_1  (UV2) x = sway weight (0 for rigid props, 0 at the trunk base -> 1 at the canopy edge on
+              foliage), y = normalized height (0 at ground, 1 at the top of the asset) for build/collapse
+              reveals and height gradients
+  TEXCOORD_2  SWAY materials only (Godot: CUSTOM0.xy, vertex shader): x = per-cluster phase 0..1 (de-
+              synchronises gusts), y = 0
+Every mesh starts with a hidden 1 mm dummy triangle (same material as its first real primitive):
+Godot 4.7's glTF importer sets vertex_color_use_as_albedo on every material used by a primitive
+other than a mesh's first one, so with the dummy every kit material gets the flag on a plain import.
+
+Atlas materials (`Atlas`): one texture made of cells; parts give UVs in cell repeat units (`Part.cell`)
+and the writer cuts triangles on integer UV lines and maps every piece into its cell (wrap padding),
+so tiled swatches, bands (wrap in u only) and decals share one material at a fixed texel density.
 """
 from __future__ import annotations
 
@@ -142,6 +150,7 @@ class Mat:
         # "tiled": world-scale box / grain projection, texel density = size / repeat (checked by the kit);
         # "atlas": cards, decals, painted atlases and unique paint (density set per part, not checked)
         self.uv_kind = uv_kind
+        self.atlas = None             # Atlas: parts carry `cell` and UVs in cell repeat units
 
     def gltf_name(self, asset_id):
         tags = []
@@ -282,6 +291,198 @@ def encode_image(mat: Mat):
         mime = "image/jpeg"
     _ENC_CACHE[key] = (buf.getvalue(), mime)
     return _ENC_CACHE[key]
+
+
+# ---------------------------------------------------------------------------- atlas materials
+
+class Cell:
+    """One region of an `Atlas`.
+    kind   "tile":  tileable both ways; part UVs in repeats (cut on integer u and v lines)
+           "band":  tileable in u only; u in repeats (cut on integer u), v in [0, 1] across the band
+           "decal": u, v in [0, 1] (clamped)
+    image  callable -> PIL image (resized to the cell's inner size)
+    px     inner size (w, h) in pixels; repeat (ru, rv) = metres covered by one repeat (for the texel
+           density report: px / repeat)
+    emissive  optional callable -> PIL image for the emission texture (black elsewhere)."""
+
+    def __init__(self, key, image, kind="tile", px=(256, 256), repeat=(2.0, 2.0), emissive=None, pad=None):
+        self.key = key
+        self.image = image
+        self.kind = kind
+        self.px = (int(px[0]), int(px[1]))
+        self.repeat = (float(repeat[0]), float(repeat[1]))
+        self.emissive = emissive
+        self.pad = pad if pad is not None else (16 if kind != "decal" else 6)
+
+    def density(self):
+        return self.px[0] / self.repeat[0], self.px[1] / self.repeat[1]
+
+
+class Atlas:
+    """Square texture made of cells (deterministic shelf packing in the given order). rects[key] =
+    (x0, y0, w, h) of the inner (unpadded) area in pixels."""
+
+    def __init__(self, key, cells, size=1024):
+        self.key = key
+        self.size = size
+        self.cells = {c.key: c for c in cells}
+        self.order = [c.key for c in cells]
+        x = y = row_h = 0
+        self.rects = {}
+        self.place = []
+        for c in cells:
+            w, h = c.px[0] + 2 * c.pad, c.px[1] + 2 * c.pad
+            if x + w > size:
+                x, y, row_h = 0, y + row_h, 0
+            if y + h > size:
+                raise ValueError(f"atlas {key}: cell {c.key} does not fit")
+            self.place.append((c, x, y))
+            self.rects[c.key] = (x + c.pad, y + c.pad, c.px[0], c.px[1])
+            x += w
+            row_h = max(row_h, h)
+
+    def _compose(self, which):
+        n = self.size
+        img = np.zeros((n, n, 3), np.float32)
+        used = np.zeros((n, n), bool)
+        for c, x, y in self.place:
+            fn = c.image if which == "albedo" else c.emissive
+            if fn is None:
+                arr = np.zeros((c.px[1], c.px[0], 3), np.float32)
+            else:
+                im = fn().convert("RGB")
+                if im.size != c.px:
+                    im = im.resize(c.px, Image.LANCZOS)
+                arr = np.asarray(im, np.float32) / 255.0
+            p = c.pad
+            if c.kind == "tile":
+                arr = np.pad(arr, [(p, p), (p, p), (0, 0)], mode="wrap")
+            elif c.kind == "band":
+                arr = np.pad(np.pad(arr, [(0, 0), (p, p), (0, 0)], mode="wrap"), [(p, p), (0, 0), (0, 0)], mode="edge")
+            else:
+                arr = np.pad(arr, [(p, p), (p, p), (0, 0)], mode="edge")
+            img[y:y + arr.shape[0], x:x + arr.shape[1]] = arr
+            used[y:y + arr.shape[0], x:x + arr.shape[1]] = True
+        if which == "albedo" and (~used).any():
+            img[~used] = img[used].reshape(-1, 3).mean(0)
+        return to_img(img)
+
+    def image_fn(self):
+        return lambda: cached_image(("atlas", self.key, "albedo"), lambda: self._compose("albedo"))
+
+    def emissive_fn(self):
+        if not any(c.emissive is not None for c in self.cells.values()):
+            return None
+        return lambda: cached_image(("atlas", self.key, "emissive"), lambda: self._compose("emissive"))
+
+    def mat(self, key=None, tag="", emissive_factor=(0.0, 0.0, 0.0), extras=None, roughness=1.0, emissive=True):
+        em = self.emissive_fn() if emissive else None
+        m = Mat(key or self.key, self.image_fn(), repeat=1.0, size=self.size, emissive=em is not None,
+                emissive_image=em, emissive_factor=emissive_factor, tag=tag, extras=extras, uv_kind="atlas",
+                roughness=roughness)
+        m.atlas = self
+        return m
+
+    def density_report(self):
+        out = {}
+        for k in self.order:
+            c = self.cells[k]
+            if c.kind == "decal":
+                continue
+            du, dv = c.density()
+            out[k] = round((du + dv) / 2) if c.kind == "tile" else round(du)
+        return out
+
+
+def _clip_poly(poly, k, val, keep_ge):
+    out = []
+    n = len(poly)
+    for i in range(n):
+        a, b = poly[i], poly[(i + 1) % n]
+        ina = a[k] >= val - 1e-9 if keep_ge else a[k] <= val + 1e-9
+        inb = b[k] >= val - 1e-9 if keep_ge else b[k] <= val + 1e-9
+        if ina:
+            out.append(a)
+        if ina != inb:
+            t = (val - a[k]) / (b[k] - a[k])
+            out.append(a + (b - a) * t)
+    return out
+
+
+def cut_uv(A, cut_u=True, cut_v=True):
+    """A: (M, 3, K) per-corner attributes, uv in [..., 0:2], position in [..., 2:5]. Splits triangles on
+    integer u (and v) lines so every piece lies in one repeat, then reduces u (v) to [0, 1]."""
+    if len(A) == 0:
+        return A
+    A = A.copy()
+    eps = 1e-6
+    u, v = A[..., 0], A[..., 1]
+    u0, u1 = np.floor(u.min(1) + eps), np.floor(u.max(1) - eps)
+    if cut_v:
+        v0, v1 = np.floor(v.min(1) + eps), np.floor(v.max(1) - eps)
+    else:
+        v0 = v1 = np.zeros(len(A))
+    simple = (u0 == u1) & (v0 == v1)
+    out = [A[simple].copy()]
+    out[0][..., 0] -= u0[simple][:, None]
+    if cut_v:
+        out[0][..., 1] -= v0[simple][:, None]
+    pieces = []
+    for f in np.flatnonzero(~simple):
+        tri = [A[f, 0], A[f, 1], A[f, 2]]
+        for iu in range(int(u0[f]), int(u1[f]) + 1):
+            pu = _clip_poly(_clip_poly(tri, 0, iu, True), 0, iu + 1, False)
+            if len(pu) < 3:
+                continue
+            for iv in range(int(v0[f]), int(v1[f]) + 1):
+                pv = _clip_poly(_clip_poly(pu, 1, iv, True), 1, iv + 1, False) if cut_v else pu
+                if len(pv) < 3:
+                    continue
+                for j in range(1, len(pv) - 1):
+                    t3 = np.stack([pv[0], pv[j], pv[j + 1]]).copy()
+                    if np.linalg.norm(np.cross(t3[1, 2:5] - t3[0, 2:5], t3[2, 2:5] - t3[0, 2:5])) < 1e-10:
+                        continue
+                    t3[:, 0] -= iu
+                    if cut_v:
+                        t3[:, 1] -= iv
+                    pieces.append(t3)
+    if pieces:
+        out.append(np.stack(pieces))
+    R = np.concatenate(out)
+    R[..., 0:2] = np.clip(R[..., 0:2], 0.0, 1.0)
+    return R
+
+
+def _fit_one_repeat(A, axes, salt):
+    """Parts (or groups) smaller than one repeat: shift their UVs inside a single repeat (no cuts)."""
+    for ax in axes:
+        lo, hi = A[..., ax].min(), A[..., ax].max()
+        if hi - lo < 0.999:
+            frac = (zlib_crc(f"{salt}:{len(A)}:{round(float(lo), 4)}:{ax}") % 1000) / 1000.0
+            A[..., ax] += np.floor(lo) + frac * (0.999 - (hi - lo)) - lo + 0.0005
+    return A
+
+
+def zlib_crc(s):
+    import zlib
+    return zlib.crc32(s.encode("utf-8")) & 0x7FFFFFFF
+
+
+def atlas_corners(A, atlas, cell, salt=""):
+    """Cut / clamp per-corner attributes of one cell and map their uv into the atlas."""
+    c = atlas.cells[cell]
+    x0, y0, w, h = atlas.rects[cell]
+    n = atlas.size
+    if c.kind == "tile":
+        A = cut_uv(_fit_one_repeat(A.copy(), (0, 1), salt + cell), True, True)
+    elif c.kind == "band":
+        A = cut_uv(_fit_one_repeat(A.copy(), (0,), salt + cell), True, False)
+    else:
+        A = A.copy()
+        A[..., 0:2] = np.clip(A[..., 0:2], 0.0, 1.0)
+    A[..., 0] = (x0 + A[..., 0] * w) / n
+    A[..., 1] = (y0 + A[..., 1] * h) / n
+    return A
 
 
 # ---------------------------------------------------------------------------- procedural paint
@@ -714,6 +915,7 @@ class Part:
         self.occ = 1.0                 # occluder weight (0 none, 0.5 cards, 1 solid)
         self.node = ""
         self.dark = None               # per-vertex extra darkening (crevices), multiplies
+        self.cell = None               # atlas materials: cell key (str) or per-triangle array of keys
 
     # --- transforms -------------------------------------------------------------------------
     def xf(self, m=None, t=(0, 0, 0), s=None):
@@ -753,7 +955,7 @@ class Part:
 
     def copy(self):
         p = Part(self.v.copy(), self.t.copy(), self.mat, None if self.uv is None else self.uv.copy(), self.smooth)
-        for k in ("nmode", "ncenter", "nblend", "sway", "phase", "ao", "ao_fn", "occ", "node"):
+        for k in ("nmode", "ncenter", "nblend", "sway", "phase", "ao", "ao_fn", "occ", "node", "cell"):
             setattr(p, k, getattr(self, k))
         p.tint = self.tint.copy()
         p.dark = None if self.dark is None else self.dark.copy()
@@ -1202,7 +1404,21 @@ def blob(mat, radius=1.0, subdiv=2, scale=(1, 1, 1), seed=0, noise_amp=0.15, noi
 
 def card(w, h, mat, rect, segs=(1, 1), bend=0.0, pivot="center"):
     """Foliage/billboard card in the local XZ plane (normal -Y), rect=(u0, v0, u1, v1) in the
-    atlas. bend pushes the edges back (+Y) for volume. pivot 'center' or 'bottom'."""
+    atlas. bend pushes the edges back (+Y) for volume. pivot 'center' or 'bottom'. segs="fan": 4 corners
+    + a centre vertex (4 triangles): the corners and centre of a bent (2, 2) card, so a low LOD keeps its
+    shape and its centre-to-edge shading."""
+    if segs == "fan":
+        u0, v0, u1, v1 = rect
+        zc = 0.0 if pivot == "center" else h / 2
+        cy = bend * 2.0 * max(w, h) * 0.5
+        verts = np.array([(-w / 2, cy, zc - h / 2), (w / 2, cy, zc - h / 2), (w / 2, cy, zc + h / 2),
+                          (-w / 2, cy, zc + h / 2), (0.0, 0.0, zc)])
+        uvv = np.array([(u0, v1), (u1, v1), (u1, v0), (u0, v0), ((u0 + u1) / 2, (v0 + v1) / 2)])
+        tris = np.array([(4, 0, 1), (4, 1, 2), (4, 2, 3), (4, 3, 0)])
+        p = Part(verts, tris, mat, uvv[tris], 180.0)
+        p.occ = 0.5
+        p.ao = False
+        return p
     nx, nz = segs
     xs = np.linspace(-w / 2, w / 2, nx + 1)
     zs = np.linspace(-h / 2, h / 2, nz + 1) if pivot == "center" else np.linspace(0, h, nz + 1)
@@ -1368,6 +1584,7 @@ class Asset:
         parts = self.parts
         lo, hi = self.bounds()
         H = self.height or max(hi[2], 1e-3)
+        self._H = H
         # occluders
         def bvh(sel):
             vs, ts, off = [], [], 0
@@ -1450,14 +1667,17 @@ class Asset:
                 sw = np.zeros(n)
             p.sw = np.clip(sw, 0.0, 1.0)
             p.hn = np.clip(z / H, 0.0, 1.0)
-            if p.mat.sway:
-                g = np.clip(shade * p.tint.mean(axis=1), 0, 1)
-                p.col = np.stack([p.sw, g, np.full(n, p.phase % 1.0), np.ones(n)], axis=1)
-            else:
-                rgb = np.clip(p.tint * shade[:, None], 0, 1)
-                p.col = np.concatenate([rgb, np.ones((n, 1))], axis=1)
+            p.ph = np.full(n, float(p.phase) % 1.0)
+            rgb = np.clip(p.tint * shade[:, None], 0, 1)
+            p.col = np.concatenate([rgb, np.ones((n, 1))], axis=1)
 
     # ---------------------------------------------------------------------------- export
+    def corners(self, p, piv):
+        """Per-corner attribute rows of a baked part: uv(2) pos(3) normal(3) uv1(2) colour(4) phase(1)."""
+        T = p.t
+        return np.concatenate([p.uv, p.v[T] - piv, p.cn, np.stack([p.sw[T], p.hn[T]], axis=-1), p.col[T],
+                               p.ph[T][..., None]], axis=2)
+
     def export(self, path, mats_used=None):
         self.bake()
         # materials in order of first use
@@ -1466,26 +1686,50 @@ class Asset:
             if p.mat not in mats:
                 mats.append(p.mat)
         nodes_out = []
+        self.uv_stats = {}
         for name in self.node_order:
             nd = self.nodes[name]
             prims = []
+            piv = nd["pivot"]
             for m in mats:
                 sel = [p for p in self.parts if p.node == name and p.mat is m]
                 if not sel:
                     continue
-                pos, nor, uv0, uv1, col = [], [], [], [], []
-                piv = nd["pivot"]
-                for p in sel:
-                    T = p.t
-                    pos.append((p.v[T] - piv).reshape(-1, 3))
-                    nor.append(p.cn.reshape(-1, 3))
-                    uv0.append(p.uv.reshape(-1, 2))
-                    uv1.append(np.stack([p.sw[T], p.hn[T]], axis=-1).reshape(-1, 2))
-                    col.append(p.col[T].reshape(-1, 4))
-                prims.append((mats.index(m), np.concatenate(pos), np.concatenate(nor), np.concatenate(uv0),
-                              np.concatenate(uv1), np.concatenate(col)))
+                rows = []
+                for pi, p in enumerate(sel):
+                    A = self.corners(p, piv)
+                    if m.atlas is not None:
+                        cells = p.cell
+                        if cells is None:
+                            raise ValueError(f"{self.id}: part on atlas {m.key} without a cell")
+                        if isinstance(cells, str):
+                            cells = np.array([cells] * len(A))
+                        cells = np.asarray(cells)
+                        for ck in m.atlas.order:
+                            idx = np.flatnonzero(cells == ck)
+                            if len(idx):
+                                rows.append(atlas_corners(A[idx], m.atlas, ck, f"{self.id}:{name}:{pi}"))
+                    else:
+                        rows.append(A)
+                A = np.concatenate(rows)
+                prims.append((mats.index(m), A, bool(m.sway)))
+            if prims:
+                # hidden 1 mm first primitive (see the module doc: Godot sets vertex_color_use_as_albedo on
+                # every material used by a non-first primitive)
+                mi, A0, sw0 = prims[0]
+                D = np.repeat(A0[:1, :1].copy(), 3, axis=1)
+                D[0, :, 2:5] = [[0.0, 0.0, 0.0], [0.001, 0.0, 0.0], [0.0, 0.001, 0.0]]
+                D[0, :, 5:8] = [0.0, 0.0, 1.0]
+                D[0, :, 8] = 0.0
+                D[0, :, 9] = float(np.clip(piv[2] / self._H, 0.0, 1.0))      # UV2.y = its normalized height
+                D[0, :, 10:14] = 1.0
+                D[0, :, 14] = 0.0
+                prims.insert(0, (mi, D, sw0))
             nodes_out.append({"name": self.id if name == "" else name, "parent": nd["parent"], "pivot": nd["pivot"],
                               "prims": prims, "key": name})
+        # triangles as written (after the atlas cuts), without the hidden dummy triangles
+        self.exported_tris = int(sum(len(A_) for nd in nodes_out for _, A_, _ in nd["prims"]) - sum(
+            1 for nd in nodes_out if nd["prims"]))
         write_glb(path, self.id, nodes_out, mats, self.extras)
         return mats
 
@@ -1561,13 +1805,13 @@ def write_glb(path, aid, nodes, mats, extras):
             else:
                 md["emissiveTexture"] = {"index": ti}
             md["emissiveFactor"] = [float(x) for x in m.emissive_factor]
-        ex = {"vc_vertex_color": "sway" if m.sway else "multiply"}
+        ex = {"vc_vertex_color": "multiply", "vertex_color": "RGB=painted AO and tint (multiply), A=1"}
         if m.sway:
-            ex["vertex_color"] = "R=sway weight, G=painted AO, B=cluster phase, A=1"
-            ex["uv2"] = "x=sway weight, y=normalized height"
+            ex["sway"] = True
+            ex["uv2"] = "x=sway weight (0 base -> 1 tip), y=normalized height"
+            ex["uv3"] = "TEXCOORD_2 (Godot CUSTOM0.xy): x=cluster phase 0..1, y=0"
         else:
-            ex["vertex_color"] = "RGB=painted AO and tint (multiply), A=1"
-            ex["uv2"] = "x=sway weight (0), y=normalized height"
+            ex["uv2"] = "x=sway weight (0 on rigid parts), y=normalized height"
         if m.tag:
             ex["role"] = m.tag
         ex.update(m.extras)
@@ -1578,13 +1822,15 @@ def write_glb(path, aid, nodes, mats, extras):
     name_to_idx = {}
     for nd in nodes:
         prims_out = []
-        for (mi, pos, nor, uv0, uv1, col) in nd["prims"]:
-            P = _to_gltf(pos).astype(np.float32)
-            N = _to_gltf(nor).astype(np.float32)
-            U0 = uv0.astype(np.float32)
-            U1 = uv1.astype(np.float32)
-            C = col.astype(np.float32)
-            rows = np.concatenate([P, N, U0, U1, C], axis=1)
+        for (mi, A, has_ph) in nd["prims"]:
+            A = A.reshape(-1, A.shape[-1])
+            P = _to_gltf(A[:, 2:5]).astype(np.float32)
+            N = _to_gltf(A[:, 5:8]).astype(np.float32)
+            U0 = A[:, 0:2].astype(np.float32)
+            U1 = A[:, 8:10].astype(np.float32)
+            C = A[:, 10:14].astype(np.float32)
+            U2 = np.stack([A[:, 14], np.zeros(len(A))], axis=1).astype(np.float32)
+            rows = np.concatenate([P, N, U0, U1, C, U2], axis=1)
             uniq, inv = np.unique(rows, axis=0, return_inverse=True)
             inv = inv.reshape(-1)
             # keep first-occurrence order for nicer locality (still deterministic)
@@ -1595,15 +1841,18 @@ def write_glb(path, aid, nodes, mats, extras):
             remap[order] = np.arange(len(order))
             uniq = uniq[order]
             idx = remap[inv]
-            P, N, U0, U1, C = uniq[:, 0:3], uniq[:, 3:6], uniq[:, 6:8], uniq[:, 8:10], uniq[:, 10:14]
+            P, N, U0, U1, C, U2 = (uniq[:, 0:3], uniq[:, 3:6], uniq[:, 6:8], uniq[:, 8:10], uniq[:, 10:14],
+                                   uniq[:, 14:16])
             N = nrm(N).astype(np.float32)
             attrs = {
                 "POSITION": add_acc(P.astype(np.float32), 5126, "VEC3", 34962, minmax=True),
                 "NORMAL": add_acc(N, 5126, "VEC3", 34962),
                 "TEXCOORD_0": add_acc(U0.astype(np.float32), 5126, "VEC2", 34962),
                 "TEXCOORD_1": add_acc(U1.astype(np.float32), 5126, "VEC2", 34962),
-                "COLOR_0": add_acc(C.astype(np.float32), 5126, "VEC4", 34962),
             }
+            if has_ph:
+                attrs["TEXCOORD_2"] = add_acc(U2.astype(np.float32), 5126, "VEC2", 34962)
+            attrs["COLOR_0"] = add_acc(C.astype(np.float32), 5126, "VEC4", 34962)
             if len(uniq) < 65535:
                 ind = add_acc(idx.astype(np.uint16), 5123, "SCALAR", 34963)
             else:

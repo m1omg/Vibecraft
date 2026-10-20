@@ -6,7 +6,8 @@
 ## masks.json: {"size": 512, "pitch": 56, "fov": 30,
 ##   "shots": [{"glbs": ["/abs/a.glb", ...], "out": "/abs/a_0.png", "yaw": 0, "target": [x, y, z], "distance": d}]}
 ## Each shot renders the model alone from the RTS pitch with unshaded flat colours: TEAM materials
-## red, everything else green, background black. buildings.py counts the pixels (visible team
+## red, everything else green, background black; with "min_y" (m) everything lower than that (the
+## ground apron, rugs, kerbs) is left out, so only the standing building counts. buildings.py counts the pixels (visible team
 ## fraction of the silhouette, art bible 3.1).
 extends SceneTree
 
@@ -25,10 +26,26 @@ func _initialize() -> void:
 	_run()
 
 
-func _flat(col: Color) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = col
+const FLAT := """
+shader_type spatial;
+render_mode unshaded, cull_back;
+uniform vec4 col : source_color;
+uniform float min_y = -100.0;
+varying float wy;
+void vertex() { wy = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y; }
+void fragment() { if (wy < min_y) { discard; } ALBEDO = col.rgb; }
+"""
+
+
+## Flat colour; fragments below min_y (world) are dropped, so the ground apron / rugs / kerb (everything
+## within a hand's width of the ground) do not count as silhouette.
+func _flat(col: Color, min_y: float) -> ShaderMaterial:
+	var sh := Shader.new()
+	sh.code = FLAT
+	var m := ShaderMaterial.new()
+	m.shader = sh
+	m.set_shader_parameter("col", col)
+	m.set_shader_parameter("min_y", min_y)
 	return m
 
 
@@ -64,8 +81,9 @@ func _run() -> void:
 	cam.far = 500.0
 	vp.add_child(cam)
 	cam.current = true
-	var team := _flat(Color(1, 0, 0))
-	var other := _flat(Color(0, 1, 0))
+	var min_y := float(spec.get("min_y", -100.0))
+	var team := _flat(Color(1, 0, 0), min_y)
+	var other := _flat(Color(0, 1, 0), min_y)
 	var pitch := deg_to_rad(float(spec.get("pitch", 56.0)))
 	for shot in spec["shots"]:
 		var node := Node3D.new()

@@ -3,12 +3,14 @@ shader_type spatial;
 // name contains "SWAY" (tree canopies, hedges, reeds, flower and grass cards). It is also what
 // tools/render_preview.py and tools/kits/lineup.gd apply to SWAY materials, so the QA renders match.
 //
-// Vertex data written by doodads.py on SWAY materials:
-//   COLOR.r  sway weight: 0 at the trunk base / stem root -> 1 at the canopy edge / blade tip
-//   COLOR.g  painted ambient occlusion (multiply into the albedo, linear)
-//   COLOR.b  per-cluster phase 0..1 (de-synchronises gusts between leaf clumps)
-//   UV2.x    sway weight again (also present on the rigid bark parts of a tree: trunk bends a little)
-//   UV2.y    normalized height (0 at the ground, 1 at the top of the asset)
+// Vertex data written by doodads.py on SWAY materials (the same layout as every other kit material, so
+// a plain glTF import with vertex_color_use_as_albedo already shows the painted AO; this shader adds
+// the sway):
+//   COLOR.rgb  painted ambient occlusion and tint (multiply into the albedo, linear), COLOR.a = 1
+//   UV2.x      sway weight: 0 at the trunk base / stem root -> 1 at the canopy edge / blade tip (also on
+//              the rigid bark parts of a tree, small: the trunk bends a little)
+//   UV2.y      normalized height (0 at the ground, 1 at the top of the asset)
+//   CUSTOM0.x  per-cluster phase 0..1 (glTF TEXCOORD_2; de-synchronises gusts between leaf clumps)
 // The albedo texture has straight alpha (cutout, glTF alphaMode MASK) and colour padded into the
 // transparent texels, so mipmaps never fringe.
 // Bible §6.4: crown sway 0.5 Hz, ~3 cm at the crown; per-instance hue jitter is `tint`.
@@ -23,19 +25,19 @@ uniform float sway_freq = 0.5;            // Hz
 uniform vec3 wind_dir = vec3(1.0, 0.0, 0.35);
 uniform float flutter = 0.012;            // small fast leaf flutter, metres
 
-varying float v_ao;
+varying vec3 v_ao;
 
 void vertex() {
-	float w = COLOR.r;
+	float w = UV2.x;
 	vec3 origin = MODEL_MATRIX[3].xyz;
-	float ph = COLOR.b * 6.2831853 + origin.x * 0.37 + origin.z * 0.23;
+	float ph = CUSTOM0.x * 6.2831853 + origin.x * 0.37 + origin.z * 0.23;
 	float t = TIME * sway_freq * 6.2831853;
 	float gust = sin(t + ph) * 0.75 + sin(t * 2.37 + ph * 1.7) * 0.25;
 	vec3 wd = normalize(inverse(mat3(MODEL_MATRIX)) * normalize(wind_dir));
 	VERTEX += wd * gust * sway_amp * w * w;
 	VERTEX.y -= abs(gust) * sway_amp * 0.15 * w * w;
 	VERTEX += vec3(sin(TIME * 7.1 + ph * 3.0 + VERTEX.y), 0.0, cos(TIME * 6.3 + ph * 2.0 + VERTEX.x)) * flutter * w;
-	v_ao = COLOR.g;
+	v_ao = COLOR.rgb;
 }
 
 void fragment() {
