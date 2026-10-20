@@ -633,9 +633,10 @@ requirements, ability unlocks. Each file's header documents the full contract.
 
 - Input actions (project.godot `[input]`, generated from `Settings.default_actions()` by
   `tools/gen_input_map.gd`; `Settings` re-adds any missing at runtime): `cam_left/right/up/down`
-  (arrow keys), `cam_zoom_in/out` (wheel), `cam_drag` (middle mouse), `select` (LMB), `command`
-  (RMB), `queue_modifier` (shift), `cancel` (Esc), `menu` (F10), `jump_alert` (space),
-  `subgroup_next` (tab), `group_0..9` (digit keys; ctrl/shift read from event modifiers),
+  (arrow keys), `cam_zoom_in/out` (wheel, PgUp / PgDn), `cam_drag` (middle mouse), `select`
+  (LMB), `command` (RMB), `queue_modifier` (shift), `cancel` (Esc), `menu` (F10), `jump_alert`
+  (space), `subgroup_next` (tab; with shift it cycles back), `select_hero_1..3` (F1–F3),
+  `cycle_halls` (Backspace), `group_0..9` (digit keys; ctrl/shift read from event modifiers),
   `card_0..11` (command card grid Q W E R / A S D F / Z X C V, row-major).
 - `RtsCamera` (`extends Camera3D`): looks at a ground `focus` point from `distance` along a fixed
   pitch (-56°; `main.gd` applies `RenderProfile`: FOV 55° vertical `KEEP_HEIGHT`, distance
@@ -657,7 +658,12 @@ requirements, ability unlocks. Each file's header documents the full contract.
   click / drag box (own mobile units preferred over own buildings over one foreign unit) /
   shift-add/remove / ctrl-click or double-click = all own units of that type on screen, control
   groups 0-9 (ctrl+N set, shift+N add, N select, double-tap N centres camera), max 12 per
-  selection (`Settings.max_selection`), tab cycles `active_subgroup_def()`. Picking is
+  selection (`Settings.max_selection`). The selection is kept in subgroup priority order
+  (`Selection.priority_before`, rules §18.3: heroes first in training order, then food cost
+  descending, then def id) and the cap applies after sorting, so heroes are never dropped; the
+  first subgroup starts active; tab / shift+tab cycle `active_subgroup_def()`. F1–F3
+  (`select_hero(n)`, own heroes by unit id; double-tap centres) and Backspace (`cycle_halls()`,
+  own `town_hall` structures, selects and centres). Picking is
   screen-space against interpolated unit positions (`pick_unit(screen_pos)`), no physics bodies.
   Emits `Events.selection_changed`.
   The press must land in the world (HUD panels stop it); once pressing, drag motion and the
