@@ -73,6 +73,41 @@ then press F5 again. From a terminal you can also run
 
 A selection holds at most 12 units (genre standard). Use control groups for the whole army.
 
+## Sound and game feel
+
+**Turn your sound on.** This build has the first real sound effects, voice lines and game-feel
+("juice") effects. We want to hear what you think of them.
+
+- **Voice lines:** your units answer when you select them ("What?"), when you order them to move
+  ("Yes"), and when you order them to attack ("Attack"). An order is an attack when you use A,
+  or right-click an enemy. Only the **Pavisiers, Hookgunners and Hodmen** have voices so far.
+  Hookgunners have no attack lines yet, so they say a Yes line instead. The Linden Sisters, the
+  Bombard Wagon and the two heroes are silent for now; they answer with a soft click. If you
+  click fast, you hear clicks instead of the same line over and over. This is deliberate. On
+  the Tormai side, the Yurtwright and Grappler are voiced, but you never command them.
+- **Combat sounds:** sword and flail swings, hits that sound different on flesh, mail and wood,
+  hookgun shots, javelin throws, Sling-Cart pots and Bombard blasts with their
+  impacts, death cries and bodies hitting the ground. Each sound has several takes, and the same
+  take never plays twice in a row.
+- **Interface sounds:** button clicks, order and selection ticks, and an error sound when an
+  order is refused. For example, press A and then click a Gold Seam (it cannot be attacked).
+- **Music:** only a short kingdom opening cue at the start of the match. **There is no in-game
+  music yet**, so the battle itself has none. At the end of a match the battle sounds fade down
+  under the banner.
+- **Game feel:** these effects follow the classic games, so they are small and quick at the
+  default zoom. Zoom in to see them clearly.
+  - **Orders:** a ripple and a pin where you click. Attack-move shows red chevrons. Units nod as
+    they take an order.
+  - **Selection:** the rings pop in from the corner where you dragged.
+  - **Hits:** sparks and splinters, with a short pause on the attacker as a blow lands. The
+    health bars show a trailing "damage ghost".
+  - **Deaths and missiles:** units fall with a puff of dust, and arrows and javelins stick in
+    the ground.
+  - **Camera:** a small shake when a Bombard ball or a Sling-Cart pot lands near the centre of
+    the screen.
+  - **Floating text:** following the classic games, there are no damage numbers over every
+    hit. Only critical hits show a number.
+
 ## Things to try
 
 - Box-select the army and attack-move (**A** + click) down your ramp. Then try right-clicking
@@ -96,7 +131,11 @@ A selection holds at most 12 units (genre standard). Use control groups for the 
 - **No fog of war:** the whole map is visible. The minimap is a placeholder (coloured dots).
 - **Placeholder models:** the Bombard Wagon, the Sling-Cart, every creep and the Coaching Inn are
   simple stand-in shapes.
-- **Audio** is mostly missing or placeholder (a separate pass is in progress).
+- **Audio:** **no in-game music yet** (only the 2-second kingdom opening cue), and no ambience.
+  Several units are not voiced yet (see "Sound and game feel"), and there are no "annoyed" lines
+  for clicking a unit many times. Some sounds borrow another sound for now: the Wheel Marshal's
+  axe swing uses the sword swing, and arrows use the javelin impact. Spellcasters' staff swings
+  and some impacts (stone, straw) have no sound of their own yet.
 - **HUD:** functional stub. The portraits are initials, and there are no tooltips and no idle-worker
   button. The white text at the top left (FPS, tick, unit count) is a debug line for this test.
 - **The enemy is a script, not the real AI.** One wave at 1:30, a base guard that defends and
@@ -127,10 +166,13 @@ Please answer what you can. Short notes are fine.
 8. **Units:** which unit felt too weak or too strong? Did the heroes feel like heroes?
 9. **Visuals:** can you read units and buildings at the default zoom? Are the team colours clear?
    Is anything ugly or confusing?
-10. **Performance:** what FPS did you see (top-left), and were there any hitches? Tell us your GPU
+10. **Sound and feel:** did the voice lines, hits and shots make commanding the army feel
+    better? Was any sound annoying, too loud, too quiet or repeated too often? Did any effect
+    (ripples, sparks, the shake, the hit pause) feel wrong, too big or too small?
+11. **Performance:** what FPS did you see (top-left), and were there any hitches? Tell us your GPU
     and monitor refresh rate. Does it feel equally smooth at 60 / 144 / 240 Hz?
-11. **Classic feel:** what felt most like the classic hero-RTS games? What felt least like them?
-12. **Bugs:** anything that crashed, froze, errored or got stuck. Please copy the Godot "Output"
+12. **Classic feel:** what felt most like the classic hero-RTS games? What felt least like them?
+13. **Bugs:** anything that crashed, froze, errored or got stuck. Please copy the Godot "Output"
     panel text into your report.
 
 ## How to report

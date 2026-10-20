@@ -85,6 +85,9 @@ func covers(screen_pos: Vector2) -> bool:
 	return top_bar.get_global_rect().has_point(screen_pos) or console.get_global_rect().has_point(screen_pos)
 
 
+var _notices_muted: bool = false
+
+
 func _process(delta: float) -> void:
 	if world == null:
 		return
@@ -100,12 +103,20 @@ func _process(delta: float) -> void:
 
 ## Shows a notification for the local player (latest wins).
 func _on_notification(pid: int, _kind: String, text: String) -> void:
-	if pid != player_id or text.is_empty():
+	if pid != player_id or text.is_empty() or _notices_muted:
 		return
 	notice.text = text
 	notice.visible = true
 	notice.modulate.a = 1.0
 	_notice_t = 0.0
+
+
+## Hides the notification line at once and for the rest of the match (the end banner owns the
+## screen, SEQ-02 UI exit).
+func clear_notice() -> void:
+	_notice_t = -1.0
+	notice.visible = false
+	_notices_muted = true
 
 
 # --- top bar -------------------------------------------------------------------------------

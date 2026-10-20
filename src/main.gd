@@ -252,6 +252,7 @@ func _on_unit_died(u: Node, _killer: Node) -> void:
 ## The scenario decided the match: the end banner (the world keeps running behind it).
 func _on_match_ended(winner: int) -> void:
 	commands.cancel_targeting()
+	hud.clear_notice()
 	var lp := world.local_player_id
 	var kind := "draw" if winner < 0 else ("victory" if winner == lp else "defeat")
 	var enemy_losses := 0
