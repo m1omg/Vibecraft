@@ -35,7 +35,7 @@ def build():
     p = Piece("clans_3", seed=303, bpm=100, meter=(4, 4), key="A", mode="dorian")
     p.mix = {k: dict(v) for k, v in P.MIX_CLANS.items()}
     p.mix["master"]["lowshelf"] = (110, -1.0)
-    p.kind, p.tail_s, p.length_range = "track", 6.5, (198.0, 215.0)
+    p.kind, p.tail_s, p.length_range = "track", 2.6, (198.0, 215.0)
 
     gong = p.track("gong", P.GONG)
     gsm = p.track("gong_small", P.GONG_SMALL)
