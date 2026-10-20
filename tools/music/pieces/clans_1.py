@@ -35,7 +35,7 @@ def build():
     p = Piece("clans_1", seed=101, bpm=92, meter=(4, 4), key="D", mode="dorian")
     p.mix = {k: dict(v) for k, v in P.MIX_CLANS.items()}
     p.mix["master"]["lowshelf"] = (110, -1.5)                    # the drones and the deep drum share the low end
-    p.kind, p.tail_s, p.length_range = "track", 7.5, (200.0, 220.0)
+    p.kind, p.tail_s, p.length_range = "track", 2.6, (200.0, 220.0)
 
     gong = p.track("gong", P.GONG)
     gsm = p.track("gong_small", P.GONG_SMALL)

@@ -75,8 +75,8 @@ def build():
         p.breathe(s.b(bar), beats=1.5, depth=0.04)
     p.breathe(B.b(0), beats=2.0, depth=0.05)
     p.breathe(br.b(4), beats=2.0, depth=0.06)
-    p.rit(cl.b(1, 3), cl.b(3, 3.5), to=0.76)
-    p.fermata(cl.b(3, 3.5), 2.5, stretch=1.5)
+    p.rit(cl.b(1, 3), cl.b(3, 4.5), to=0.74)
+    p.fermata(cl.b(3, 4.5), 1.5, stretch=1.2)               # the breath: the hall still rings when the gong comes
 
     # ================================================================= INTRO (bars 1-5): the ring of gongs
     gong.note(intro.b(0), E2, 9.0, vel=70, stroke="bowed")
@@ -284,30 +284,34 @@ def build():
     chant.curve(A2.b(7), A2.b(12), 122, 88)
 
     # ================================================================= CLOSE (bars 45-49): one last gong
-    fid.play(M("4:3 3:3 | 0:6 | 1:6~s | 0:3.5~lm"), cl.b(0), octave=-1, vel=86, art="legato", dyn="dim")
+    fid.play(M("4:3 3:3 | 0:6 | 1:6~s | 0:4.5~lm"), cl.b(0), octave=-1, vel=86, art="legato", dyn="dim")
     fid.curve(cl.b(0), cl.b(2), 104, 112)
     fid.curve(cl.b(2), cl.b(3, 3.5), 112, 92)
-    fhi.play(M("7:6 | 6:6 | 5:6~s | 2:3.5"), cl.b(0), vel=72, art="legato")       # E | D | C# | G# (the major third)
+    fid.curve(cl.b(3, 3.5), cl.b(3, 4.5), 92, 72)
+    fhi.play(M("7:6 | 6:6 | 5:6~s | 2:4.5"), cl.b(0), vel=72, art="legato")       # E | D | C# | G# (the major third)
     fhi.curve(cl.b(0), cl.b(3, 3.5), 96, 80)
+    fhi.curve(cl.b(3, 3.5), cl.b(3, 4.5), 80, 64)
     for i, (r, top) in enumerate((("E2", "B2"), ("D2", "A2"), ("D2", "A2"))):
         flo.chord(cl.b(i), [n(r), n(top)], 6.05, vel=82, art="tenuto")
-    flo.chord(cl.b(3), ["E2", "B2", "E3"], 3.5, vel=84, art="exact")
+    flo.chord(cl.b(3), ["E2", "B2", "E3"], 4.5, vel=84, art="exact")
     flo.curve(cl.b(0), cl.b(3), 104, 96)
+    flo.curve(cl.b(3, 3.0), cl.b(3, 4.5), 96, 74)
     hrn1.notes_seq(cl.b(0), ["B2", "A2"], [6.0, 6.0], vel=74, art="legato")
     hrn1.notes_seq(cl.b(2), ["F#2"], [6.0], vel=76, art="legato")
-    hrn1.notes_seq(cl.b(3), ["E2"], [3.5], vel=76, art="legato")
+    hrn1.notes_seq(cl.b(3), ["E2"], [4.5], vel=76, art="legato")
     hrn2.notes_seq(cl.b(1), ["D2"], [12.0], vel=70, art="legato")
-    hrn2.notes_seq(cl.b(3), ["B2"], [3.5], vel=72, art="legato")
+    hrn2.notes_seq(cl.b(3), ["B2"], [4.5], vel=72, art="legato")
     hrn1.curve(cl.b(0), cl.b(3), 100, 106)
-    hrn1.curve(cl.b(3), cl.b(3, 3.5), 106, 96)
+    hrn1.curve(cl.b(3), cl.b(3, 4.5), 106, 84)
     hrn2.curve(cl.b(1), cl.b(3), 70, 100)
+    hrn2.curve(cl.b(3), cl.b(3, 4.5), 100, 82)
     for bar in range(3):
         _drum_bar(drum, cl.b(bar), 88 - 8 * bar)
         for beat in (1, 3, 5):
             claps.hit(cl.b(bar, beat), "clap", 78 - 12 * bar, hands=6 - 2 * bar)
     drum.hit(cl.b(3), "doum", 84)
     chant.note(cl.b(0), E2, 18.0, vel=76, vowels=["a", "o", "u"], overtones=[12, 9, 8])
-    chant.note(cl.b(3), E2, 3.5, vel=70, vowel="m")
+    chant.note(cl.b(3), E2, 4.5, vel=70, vowel="m")
     chant.curve(cl.b(0), cl.b(3), 92, 80)
     gong.note(cl.b(0), E2, 1, vel=100)
     gmid.note(cl.b(2), "D3", 9.0, vel=58, stroke="bowed")
