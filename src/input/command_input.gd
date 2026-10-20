@@ -157,8 +157,12 @@ func _issue(cmd: Dictionary) -> void:
 	Audio.play_voice(first, "attack" if cmd["type"] in ["attack", "attack_move"] else "yes")
 
 
-## Short-lived shrinking ring where an order was given (visual only).
+## Short-lived shrinking ring where an order was given (visual only). A fallback: when the
+## World has its fx runtime, OrderMarkers (src/fx) draws the juiced marks from
+## Events.command_issued instead (juice bible CMB-08).
 func _marker(p: Vector3, col: Color) -> void:
+	if Vfx.instance != null and Vfx.instance.world == world:
+		return
 	var quad := QuadMesh.new()
 	quad.size = Vector2(1.6, 1.6)
 	quad.orientation = PlaneMesh.FACE_Y

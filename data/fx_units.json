@@ -1,0 +1,84 @@
+{
+  "_doc": "Per-entity juice sheets (juice bible §4.8 rule: per-entity juice numbers live in the fx sheet, global ones in data/feel/feel_default.tres). Read by src/fx/fx_defs.gd (FxDefs.sheet), never by the simulation. Merge order: defaults -> grammar (faction/family) -> derived from the def (armor_type -> material, weapon hint -> weapon class) -> units.<def_id> -> the def's own optional `fx` block. Sources: combat-and-units.md §4.8 (weapon timing, materials) and §4.9 (motion sheets). Field docs: data/SCHEMA.md §fx_units.",
+  "defaults": {
+    "mass": 1.0, "material": "flesh", "weapon": "slash", "gait": "biped", "stride_len_m": 1.4,
+    "bob_amp": 0.03, "lean_deg": 4.0, "ack": "nod", "grammar": "neutral", "corpse": "body"
+  },
+  "grammars": {
+    "kingdom": {"ack": "salute", "nod_deg": 8.0, "nod_down_ms": 50.0, "nod_up_ms": 110.0, "stop_zeta": 0.5, "stop_squash": 0.95},
+    "clans": {"ack": "bow", "nod_deg": 10.0, "nod_down_ms": 80.0, "nod_up_ms": 160.0, "stop_zeta": 0.4, "stop_squash": 0.92, "c1_offset": -0.1},
+    "creep": {"ack": "none", "nod_deg": 6.0, "nod_down_ms": 60.0, "nod_up_ms": 120.0, "stop_zeta": 0.4, "stop_squash": 0.94},
+    "neutral": {"ack": "nod", "nod_deg": 7.0, "nod_down_ms": 60.0, "nod_up_ms": 120.0, "stop_zeta": 0.4, "stop_squash": 0.94}
+  },
+  "armor_material": {"heavy": "metal", "medium": "flesh", "light": "flesh", "unarmored": "flesh", "fortified": "wood", "hero": "flesh"},
+  "weapon_hint": {"sword": "slash", "mace": "blunt", "club": "blunt", "tool": "blunt", "staff": "magic", "javelin": "pierce", "gun": "pierce", "bow": "pierce", "none": "blunt"},
+  "weapons": {
+    "pierce": {"split": 0.45, "pull": -0.15, "c1": 1.1, "hit_stop_ms": 40, "cone_deg": 25, "count": 0.6, "knock_m": 0.05, "whoosh": "sw_pierce", "smear": "thrust"},
+    "slash": {"split": 0.60, "pull": -0.30, "c1": 1.3, "hit_stop_ms": 45, "cone_deg": 50, "count": 1.0, "knock_m": 0.07, "whoosh": "sw_slash", "smear": "side"},
+    "chop": {"split": 0.68, "pull": -0.40, "c1": 1.5, "hit_stop_ms": 55, "cone_deg": 60, "count": 1.3, "knock_m": 0.08, "whoosh": "sw_chop", "smear": "over"},
+    "blunt": {"split": 0.72, "pull": -0.45, "c1": 1.6, "hit_stop_ms": 60, "cone_deg": 80, "count": 1.1, "knock_m": 0.11, "whoosh": "sw_blunt", "ground_ring": true, "smear": "over"},
+    "flail": {"split": 0.72, "pull": -0.45, "c1": 1.6, "hit_stop_ms": 60, "cone_deg": 80, "count": 1.1, "knock_m": 0.11, "whoosh": "sw_blunt", "smear": "over"},
+    "grapple": {"split": 0.55, "pull": 0.0, "c1": 1.2, "hit_stop_ms": 70, "cone_deg": 90, "count": 0.8, "knock_m": 0.14, "whoosh": "", "smear": ""},
+    "claw": {"split": 0.55, "pull": -0.25, "c1": 1.3, "hit_stop_ms": 45, "cone_deg": 40, "count": 1.0, "knock_m": 0.07, "whoosh": "sw_slash", "smear": "side"},
+    "magic": {"split": 0.60, "pull": -0.20, "c1": 1.3, "hit_stop_ms": 40, "cone_deg": 120, "count": 0.8, "knock_m": 0.06, "whoosh": "sw_magic", "smear": ""}
+  },
+  "ranged": {
+    "gun": {"count": 0.6, "knock_m": 0.05, "sticks": false},
+    "thrown": {"count": 0.7, "knock_m": 0.06, "sticks": true},
+    "bow": {"count": 0.7, "knock_m": 0.05, "sticks": true},
+    "bolt": {"count": 0.8, "knock_m": 0.06, "sticks": false},
+    "coal": {"count": 0.8, "knock_m": 0.06, "sticks": false},
+    "siege": {"count": 1.4, "knock_m": 0.18, "sticks": false}
+  },
+  "missiles": {
+    "arrow": {"ranged": "bow", "trail": [0.95, 0.93, 0.85, 0.55], "trail_w": 0.05, "launch_sfx": "", "hit_sfx": "javelin_hit"},
+    "javelin": {"ranged": "thrown", "trail": [0.95, 0.9, 0.8, 0.5], "trail_w": 0.06, "launch_sfx": "javelin_throw", "hit_sfx": "javelin_hit"},
+    "bullet": {"ranged": "gun", "trail": [1.0, 0.86, 0.55, 0.8], "trail_w": 0.04, "hdr": 2.0, "launch_sfx": "hookgun_fire", "hit_sfx": "bullet_hit"},
+    "arcane_bolt": {"ranged": "bolt", "trail": [0.7, 0.85, 1.0, 0.7], "trail_w": 0.12, "hdr": 1.6, "launch_sfx": "gust_bolt", "hit_sfx": "atk_herb_mote"},
+    "ice_pellet": {"ranged": "bolt", "trail": [0.85, 0.95, 1.0, 0.6], "trail_w": 0.06, "launch_sfx": "", "hit_sfx": "atk_herb_mote"},
+    "coal_lump": {"ranged": "coal", "trail": [1.0, 0.55, 0.2, 0.7], "trail_w": 0.08, "hdr": 1.6, "launch_sfx": "", "hit_sfx": "claypot_hit"},
+    "bombard_ball": {"ranged": "siege", "trail": [0.55, 0.52, 0.48, 0.5], "trail_w": 0.14, "launch_sfx": "bombard_fire", "hit_sfx": "bombard_hit"},
+    "clay_pot": {"ranged": "siege", "trail": [0.6, 0.5, 0.4, 0.4], "trail_w": 0.12, "launch_sfx": "slingcart_throw", "hit_sfx": "claypot_hit"}
+  },
+  "materials": {
+    "metal": {"bursts": [["spark", 7], ["star", 1]], "sound": "metal"},
+    "wood": {"bursts": [["splinter", 5], ["sawdust", 1]], "sound": "wood"},
+    "flesh": {"bursts": [["star_soft", 1], ["droplet", 4]], "sound": "flesh"},
+    "stone": {"bursts": [["flare_stone", 1], ["chip_stone", 5], ["dust_stone", 1]], "sound": "stone"},
+    "straw": {"bursts": [["straw", 6], ["chaff", 1]], "sound": "straw"},
+    "soot": {"bursts": [["star_soft", 1], ["droplet", 3], ["soot_puff", 1]], "sound": "flesh"},
+    "hail": {"bursts": [["star", 1], ["chip_ice", 5]], "sound": "stone"}
+  },
+  "units": {
+    "kingdom_hodman": {"mass": 0.8, "material": "flesh", "weapon": "blunt", "stride_len_m": 1.10, "bob_amp": 0.035, "lean_deg": 5, "ack": "hop", "split": 0.62, "pull": -0.30, "c1": 1.3},
+    "kingdom_flail_levy": {"mass": 0.9, "material": "flesh", "weapon": "flail", "stride_len_m": 1.20, "bob_amp": 0.035, "lean_deg": 7, "ack": "hop"},
+    "kingdom_pavisier": {"mass": 1.2, "material": "metal", "material_front": {"material": "wood", "arc_deg": 60}, "weapon": "slash", "stride_len_m": 1.50, "bob_amp": 0.025, "lean_deg": 4, "ack": "salute"},
+    "kingdom_hookgunner": {"mass": 1.0, "material": "flesh", "weapon": "blunt", "ranged": "gun", "stride_len_m": 1.50, "bob_amp": 0.030, "lean_deg": 4, "ack": "salute"},
+    "kingdom_linden_sister": {"mass": 0.9, "material": "flesh", "weapon": "magic", "ranged": "bolt", "stride_len_m": 1.40, "bob_amp": 0.025, "lean_deg": 4, "ack": "salute"},
+    "kingdom_bombard_wagon": {"mass": 3.0, "material": "wood", "material_front": {"material": "metal", "arc_deg": 40}, "weapon": "blunt", "ranged": "siege", "gait": "wheeled", "lean_deg": 0, "ack": "crew", "corpse": "wreck"},
+    "kingdom_wheel_marshal": {"mass": 2.0, "material": "metal", "weapon": "chop", "stride_len_m": 1.90, "bob_amp": 0.040, "lean_deg": 4, "ack": "salute"},
+    "kingdom_firewright": {"mass": 1.2, "material": "flesh", "weapon": "magic", "ranged": "coal", "stride_len_m": 1.70, "bob_amp": 0.035, "lean_deg": 5, "ack": "salute"},
+    "clans_yurtwright": {"mass": 0.9, "material": "flesh", "weapon": "blunt", "stride_len_m": 1.15, "bob_amp": 0.035, "lean_deg": 5, "ack": "bow", "nod_deg": 8.0, "split": 0.62, "pull": -0.30, "c1": 1.2},
+    "clans_grappler": {"mass": 1.8, "material": "flesh", "weapon": "blunt", "stride_len_m": 1.70, "bob_amp": 0.050, "lean_deg": 3, "ack": "bow", "nod_deg": 12.0, "heavy_sound": true},
+    "clans_javelineer": {"mass": 1.0, "material": "flesh", "weapon": "pierce", "ranged": "thrown", "stride_len_m": 1.60, "bob_amp": 0.040, "lean_deg": 7, "ack": "bow", "nod_deg": 8.0},
+    "clans_gustcaller": {"mass": 0.9, "material": "flesh", "weapon": "magic", "ranged": "bolt", "stride_len_m": 1.40, "bob_amp": 0.020, "lean_deg": 4, "ack": "bow"},
+    "clans_sling_cart": {"mass": 2.6, "material": "wood", "weapon": "blunt", "ranged": "siege", "gait": "wheeled", "lean_deg": 0, "ack": "crew", "corpse": "wreck"},
+    "clans_hero_uncut": {"mass": 1.3, "material": "flesh", "weapon": "slash", "stride_len_m": 2.00, "bob_amp": 0.030, "lean_deg": 8, "ack": "bow", "split": 0.50, "pull": -0.25, "c1": 1.2},
+    "clans_hero_skymirror": {"mass": 1.4, "material": "flesh", "weapon": "magic", "ranged": "bolt", "stride_len_m": 1.60, "bob_amp": 0.030, "lean_deg": 3, "ack": "bow"},
+    "creep_sootcoat_cutpurse": {"mass": 0.9, "material": "soot", "weapon": "slash", "stride_len_m": 1.50, "bob_amp": 0.040, "lean_deg": 8, "split": 0.50, "pull": -0.20, "c1": 1.2},
+    "creep_sootcoat_coal_lobber": {"mass": 0.9, "material": "soot", "weapon": "blunt", "ranged": "coal", "stride_len_m": 1.50, "bob_amp": 0.035, "lean_deg": 6},
+    "creep_sootcoat_collier": {"mass": 1.3, "material": "soot", "weapon": "chop", "stride_len_m": 1.50, "bob_amp": 0.040, "lean_deg": 6},
+    "creep_sootcoat_kiln_master": {"mass": 1.5, "material": "soot", "weapon": "blunt", "stride_len_m": 1.60, "bob_amp": 0.045, "lean_deg": 6},
+    "creep_harvest_strawling": {"mass": 0.5, "material": "straw", "weapon": "slash", "stride_len_m": 0.90, "bob_amp": 0.060, "lean_deg": 0, "split": 0.55, "pull": -0.25, "c1": 1.3},
+    "creep_harvest_fieldkeeper": {"mass": 1.1, "material": "straw", "weapon": "pierce", "stride_len_m": 1.20, "bob_amp": 0.070, "lean_deg": 0},
+    "creep_harvest_crowherd": {"mass": 1.0, "material": "straw", "weapon": "magic", "ranged": "bolt", "stride_len_m": 1.20, "bob_amp": 0.070, "lean_deg": 0},
+    "creep_harvest_crow": {"mass": 0.3, "material": "flesh", "weapon": "claw", "gait": "flyer", "lean_deg": 0},
+    "creep_cairn_cairnling": {"mass": 2.0, "material": "stone", "weapon": "blunt", "stride_len_m": 1.00, "bob_amp": 0.030, "lean_deg": 0},
+    "creep_cairn_drystone_walker": {"mass": 3.0, "material": "stone", "weapon": "blunt", "stride_len_m": 1.40, "bob_amp": 0.040, "lean_deg": 0},
+    "creep_cairn_menhir_elder": {"mass": 4.0, "material": "stone", "weapon": "blunt", "stride_len_m": 1.60, "bob_amp": 0.040, "lean_deg": 0},
+    "dummy_worker": {"mass": 0.8, "material": "flesh", "weapon": "blunt", "stride_len_m": 1.10},
+    "dummy_soldier": {"mass": 1.2, "material": "metal", "material_front": {"material": "wood", "arc_deg": 60}, "weapon": "slash", "stride_len_m": 1.50},
+    "dummy_archer": {"mass": 1.0, "material": "flesh", "weapon": "slash", "ranged": "bow", "stride_len_m": 1.40},
+    "dummy_creep": {"mass": 1.5, "material": "flesh", "weapon": "blunt", "stride_len_m": 1.40, "grammar": "creep"}
+  }
+}

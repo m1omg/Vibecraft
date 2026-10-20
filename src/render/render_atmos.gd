@@ -1,7 +1,7 @@
 class_name RenderAtmos
 extends RefCounted
 ## Render clock and shared per-frame material uniforms (visual only; nothing here touches the sim).
-## - `now()`: the fx clock (real seconds, wrapped hourly) used for latched effects: a hit flash
+## - `now()`: the fx clock (FxClock.fx_now, wrapped hourly) used for latched effects: a hit flash
 ##   stores its start time once and the shader evaluates the curve, so it is exact at any refresh
 ##   rate (juice bible R25). The shader-side copy (`fx_time`) is pushed once per frame by `update()`.
 ## - cloud shadows drift with the wind on the same real clock (bible §1.5: about 1 m/s).
@@ -18,7 +18,11 @@ static var unit_fill := Color(0.55, 0.62, 1.0, 0.0)
 static var _extra: Array[ShaderMaterial] = []
 
 
+## The fx clock as the shaders see it: FxClock (game-scaled, frozen on pause, driven once per
+## frame by Vfx) once a driver runs, else real time (tools and scenes without a World).
 static func now() -> float:
+	if FxClock.driven:
+		return FxClock.shader_time()
 	return fmod(Time.get_ticks_usec() / 1000000.0, WRAP)
 
 

@@ -111,9 +111,18 @@ src/
                 color_grade.gd (grading LUTs), render_profile.gd (camera constants),
                 terrain_textures.gd (ladder Texture2DArray), view_hooks.gd (selection rim, pads),
                 unit_manifest_builder.gd (generates assets/models/units/manifest.json)
-  fx/           vfx.gd (floating combat text, hit flashes; later pooled particles),
-                selection_circles.gd + ring.gdshader,
-                health_bars.gd + health_bar.gdshader, proc_mesh.gd (placeholder mesh helpers)
+  fx/           the juice runtime (juice bible §4; visual only): fx_clock.gd (FxClock: fx / ui
+                clocks, tick anchor), juice.gd + juice_curves.gd (easings, exact springs, the
+                anticipation curve, material tokens), feel_constants.gd (FeelConstants resource,
+                data/feel/feel_default.tres), fx_defs.gd (per-unit fx sheets, data/fx_units.json),
+                vfx.gd (Vfx router: event queue, governor, allow(), trace), particle_pool.gd
+                (GPU/CPU burst pools, data/fx_particles.json), ground_marks.gd + ground_mark.gdshader
+                (decal-substitute ground quads), popup_text.gd + combat_text.gd (the only world
+                text + its policy), material_flash.gd, combat_fx.gd (impacts, clash, deaths),
+                missile_fx.gd + trail.gdshader (release tells, trails, stuck missiles),
+                body_juice.gd (unit body composer), order_markers.gd (CMB-08..11, rally flag),
+                camera_juice.gd (CAM-05 trauma + kick), selection_circles.gd (rings, hover),
+                health_bars.gd + health_bar.gdshader (ghost bar), fx_textures.gd, proc_mesh.gd
 data/           see data/SCHEMA.md: factions, units, buildings, heroes, abilities, buffs, items,
                 upgrades, shops, creep_camps, doodads, scenarios (.json), strings/en.json,
                 maps/*.json, test_defs.json (tests only)
@@ -373,8 +382,10 @@ energy-conserving latched hit flash, corpse team-colour ebb, night unit fill), `
 map** (`src/render/unit_uniforms.gdshaderinc`, juice bible R4: 0 `flash` (t0 on the fx clock,
 strength, duration), 1 `flash_tint`, 2 `rim_boost`, 3 `team_sat`, 4 `sat_front`, 5–6 hero status,
 7 `rim_col`, 8–10 economy props, 11 `variant_a` (structures: x = build progress), 12 reserved,
-13 `team_color`), written only when they change. Hooks: `flash(strength, tint, duration)` (Vfx),
-`set_selected()` / `set_hovered()` (rim boost; `ViewHooks` forwards `selection_changed`), optional
+13 `team_color`), written only when they change. Hooks: `flash(strength, tint, duration, hold)`
+(through `MaterialFlash`; slot 0 w = hold s), `set_selected()` / `set_hovered()` (rim boost;
+`ViewHooks` forwards `selection_changed`, `SelectionCircles` the hover), `set_rim_pulse(v)`
+(target flash), `juice: BodyJuice` (the body composer, writes `rig` once per frame), optional
 sim publishers read by duck typing: `build_progress` (0..1), `anim_hint` ("work" / "cast") with
 `work_progress()` / `cast_progress()` (+ `*_point_ratio()`, `*_time()`).
 Animation (rigged GLBs, `AnimationPlayer` in manual mode, advanced every frame with real delta):
@@ -617,11 +628,20 @@ requirements, ability unlocks. Each file's header documents the full contract.
   `card_0..11` (command card grid Q W E R / A S D F / Z X C V, row-major).
 - `RtsCamera` (`extends Camera3D`): looks at a ground `focus` point from `distance` along a fixed
   pitch (-56°; `main.gd` applies `RenderProfile`: FOV 55° vertical `KEEP_HEIGHT`, distance
-  18.75–35.2 m, default 25.8 m, near 0.3 / far 120 m — research README §1), wheel zoom (smoothed), arrow
+  18.75–35.2 m, default 25.8 m, near 0.3 / far 120 m — research README §1), wheel zoom, arrow
   keys + screen-edge pan (speed scales with zoom; `Settings.edge_pan_*`; only after the mouse has
   moved inside a focused window) + middle-drag "grab the ground", clamped to the map; ground
-  height followed smoothly. API: `setup(world, start)`, `jump_to(pos)`, `screen_to_ground(px)`.
-  Runs in `_process` with delta, physics interpolation off.
+  height followed smoothly. API: `setup(world, start)`, `jump_to(pos)` (instant),
+  `zoom_notch(step)`, `screen_to_ground(px)`, `pitch_for(d)`, `pan_velocity`, `edge_dir`.
+  Runs in `_process` with delta (process ALWAYS), physics interpolation off. Juice (CAM-01/03/
+  05/06), exact for any frame time: the pan velocity approaches the input exponentially (crisp
+  start `pan_accel_k`, firm stop `pan_stop_k`) and the focus integrates it in closed form
+  (`pan_step`); edge pan waits `edge_dwell_ms`; a wheel notch lands 15 % on its own frame then
+  eases (`zoom_k`); the pitch couples to the distance (exactly −56° at the default); pushing past
+  an end stop kicks a small spring. `juice: CameraJuice` (also `CameraJuice.current`) adds the
+  whitelisted trauma shake and directional kick through `h_offset` / `v_offset` and a roll, so
+  picking through `project_ray_*` sees the shaken view. `_apply()` calls
+  `Audio.follow_camera()` (the listener at the ground focus).
 - `Selection` (`extends Control`, full-screen overlay, mouse filter ignore, draws the drag box):
   click / drag box (own mobile units preferred over own buildings over one foreign unit) /
   shift-add/remove / ctrl-click or double-click = all own units of that type on screen, control
@@ -651,13 +671,63 @@ requirements, ability unlocks. Each file's header documents the full contract.
   ring. `activate_card(slot, shift)` is shared by hotkeys and HUD buttons; `command_ground(pos,
   shift)` serves the minimap. Later: ability targeting and the build placement ghost
   (green/red footprint).
-- Fx: `SelectionCircles` (one MultiMesh of flat rings tilted to the terrain normal; green own,
-  red enemy/hostile, yellow neutral/allied) and `HealthBars` (one MultiMesh of camera-facing bars,
-  billboarding + fill in the shader, custom data = hp ratio / size), both rebuilt each render
-  frame from `display_pos()` into a reused float buffer.
-- `Vfx` (`src/fx/vfx.gd`, `World/Fx/Vfx`): listens to `unit_damaged`; pooled Label3D floating
-  damage numbers (rise + fade, red for the local player's losses) and `UnitView.flash()`. Visual
-  only, `_process` + delta, own jitter RNG (never `World.rng`).
+- **Juice runtime** (`src/fx/`, juice bible §4; visual only, never writes sim state, never reads
+  `World.rng`; tests: `test_juice*.gd`). Rules: gameplay only in the 30 Hz tick, every juice
+  curve a closed-form function of time (exact springs, `Juice.damp`, latched peaks, stateless
+  hashes, ≤ 12 Hz patterns, no shader `TIME`), so the picture is the same at any refresh rate.
+  - Clocks: `FxClock.fx_now` (game-scaled, frozen while the World is paused) and `ui_now`
+    (unscaled, always runs), advanced once per frame by `Vfx` (process priority −100, process
+    ALWAYS). `FxClock.tick_age` = `World.interpolation_fraction() × DT`; juice anchored to a sim
+    event back-dates to `FxClock.tick_time()` (knockback, gait crossings, bank, bar ghost);
+    latched effects (≤ 60 ms) start at their peak on the first frame instead. Shaders read the
+    fx clock as the `fx_time` uniform (`RenderAtmos.update`).
+  - `Vfx` (`World/Fx/Vfx`, static `Vfx.instance`): subscribes to `Events` (`unit_damaged`,
+    `unit_died`, `command_issued`, `selection_changed`, `bounty_paid`, `income_received`) and
+    `Audio.voice_started`; handlers only enqueue (≤ `queue_records` 512), `_process` drains at the
+    top of the frame and routes to `CombatFx`, `CombatText`, `OrderMarkers`, body composers. It
+    owns `particles: ParticlePool`, `marks: GroundMarks`, `popups: PopupText`, `orders`,
+    `missiles: MissileFx`, the density governor (`tier`, `tier_mult()`), `allow(pos, importance)`
+    (fog, 2 m frustum margin, distance from the camera focus), `trace(tag, id)` (`--feel-trace`)
+    and `signal battle_started(pos)` (CMB-36 first-contact clash).
+  - `ParticlePool`: pre-built one-shot emitters per kind (`data/fx_particles.json`),
+    `GPUParticles3D` on Forward+, `CPUParticles3D` on Compatibility (or `--cpu-particles`), fixed
+    60 fps simulation; a busy kind never pops an emitter younger than 50 % of its life (importance
+    ≥ 3 evicts), ≤ `spawn_budget_per_frame` particles per frame for optional bursts.
+    `burst(kind, pos, dir, count_mult, importance, tint)`.
+  - `GroundMarks` (one MultiMesh, cap 192, `ground_mark.gdshader`): the decal substitute (no
+    `Decal` node anywhere): ripples, dust rings, chevrons, crosshairs, patrol arrows, target
+    blinks, dashed lines; `add(kind, pos, r0, r1, color, life, t_offset, param, follow,
+    ui_clock)`, `add_frame(xf, shape, ...)` for one frame. Shapes are coded (solid own, notched
+    hostile, dashed hover / creep).
+  - `PopupText` (pooled 2D labels on a CanvasLayer, fixed px size) is the **only** world text
+    (no `Label3D`); `CombatText` decides what to print: *Minimal* by default (crits, heals ≥ 10,
+    the local player's bounty and income), never a number on every hit, never XP; merges by key
+    within 250 ms.
+  - `MaterialFlash.hit / death_beat / structure_hit` write `UnitView.flash(strength, tint,
+    duration, hold)` once per event (the shader evaluates the latched curve); `UnitView.juice`
+    (`BodyJuice`, mobile units) composes lean / push-off / stop plant / bank / nods / acks /
+    knockback / tremble into one write of `rig.transform` per frame, remaps skinned strikes so
+    the contact frame lands on the damage tick with a visual hit-stop (`Juice.strike_phase`),
+    starts the whoosh so its peak lands on contact, drops step dust on stride plants, and calls
+    `Vfx.body_landed` on death contact.
+  - `CombatFx`: victim flash, mass-scaled knockback away from the origin, material × weapon
+    bursts at the contact (frontal-arc material, e.g. the Pavisier's pavise is wood), blunt
+    ground rings, the first-contact clash, layered sounds through `Audio.event`. `MissileFx`
+    watches `World/Projectiles` (read only): release tells, one trail ribbon per missile, arrows
+    and javelins that stick in units or the ground (ring of `stuck_cap`), siege impacts with the
+    whitelisted camera trauma.
+  - `OrderMarkers` (from `command_issued`, local player): move ripple + pin, attack-move
+    chevrons, patrol arrows, attack-ground crosshair, target blink + rim pulse, the order ripple
+    through the selection (`SelectionCircles.pulse`, `BodyJuice.nod`, 28 ms per rank), spam taps,
+    ≤ 8 live markers, shift waypoint lines, rally flags. `CommandInput._marker` defers to it.
+  - `SelectionCircles` (one MultiMesh, ground-mark shader): rings that pop in and paint in from
+    the drag corner, deselect ghosts, order pulses, the speaker shimmer, and hover (SEL-02: the
+    unit under the cursor gets a dashed ring, `UnitView.set_hovered`, its bar; `hovered`).
+    `HealthBars` (one MultiMesh, billboard shader): exact value, the damage ghost (holds 400 ms,
+    closed-form drain), a latched 70 ms border flash, hovered / selected bars always drawn.
+  - Feel numbers: global ones in `FeelConstants.c()` (`data/feel/feel_default.tres`, `validate()`
+    asserts the legal ranges), per-unit ones in the fx sheet (`FxDefs.sheet(u)`,
+    `data/fx_units.json` + an optional def `fx` block). No literals in fx code.
 - `HUD` (`src/ui/hud.tscn` + `hud.gd`, class `Hud`, its own `CanvasLayer` layer 2, process
   always): top bar (gold, lumber, food used/cap, upkeep label, day/night clock, menu button →
   `menu_requested`) bound to the local `PlayerState`; bottom console (206 px of the 900 px
@@ -680,13 +750,30 @@ requirements, ability unlocks. Each file's header documents the full contract.
 
 ## 12. Audio
 
-`Audio` autoload: pooled `AudioStreamPlayer` (UI, voice) and `AudioStreamPlayer3D` (world SFX),
-buses `Master/Music/SFX/Voice/UI/Ambience`, per-sound polyphony caps, voice response cooldowns
-(ready/what/yes/attack/annoyed — annoyed after N rapid clicks), music playlist per faction,
-day/night ambience beds. Missing files are silently skipped. API: `play_ui(id)`,
-`play_3d(id, pos)`, `play_voice(unit, category)`; files are looked up as
+`Audio` autoload (`src/autoload/audio.gd`, the director of juice bible §4.6; process ALWAYS).
+Buses `Master` → `Music`, `SFX` (→ `Combat`, `World`, `Sub` with a 140 Hz low-pass), `Voice`
+(→ `Acks`), `UI`, `Ambience`. Sample **families** come from `assets/audio/sfx/manifest.json`
+(id → files; a variant is picked by a stateless hash with no back-to-back repeat); voices from
+`assets/audio/voice/manifest.json` (speaker → def_ids, category → files); legacy single files
 `assets/audio/sfx/ui/<id>`, `assets/audio/sfx/<id>`, `assets/audio/voice/<def_id>/<category>`
-with `.ogg/.wav/.mp3`.
+(`.ogg/.wav/.mp3`) still resolve. **Every request no-ops silently when the asset is missing.**
+`data/sfx_events.json`: `families` (measured onset / peak ms, bus, per-family cap, spacing) and
+`events` (a game event → layers: family templates filled from ctx such as
+`hit_{material}_{weight}`, conditions `kill` / `!armoured` / `mass>=2.5`, computed pitch with a
+hashed jitter, onset alignment so the transient lands on the event frame, no-cut windows).
+API: `event(id, pos, ctx) -> int` (layers started), `play_3d(id, pos, opts)` (priority,
+volume_db, pitch, from, bus, no_cut_ms, cap, spacing_ms), `play_2d(id, opts)`, `play_ui(id)`,
+`thump(db)`, `play_voice(unit, category)` (ready / what / yes / attack / annoyed: 2D on the
+input frame, one ack at a time, What ≤ 1 per 400 ms, Yes / Attack ≤ 1 per 1000 ms, an order or
+selection tick when debounced, annoyed after 5 clicks in 2.5 s), `order_tick(unit, category)`,
+`signal voice_started(unit, category, length)` (length 0 when the line is missing),
+`peak_s(family)`, `onset_s(family)`, `follow_camera(cam, focus, distance)` (listener; also the
+cull centre: beyond `cull_distance_m` × distance / 28 nothing starts), `duck(key, bus, db)` /
+`release(key)` (deepest duck per bus wins; Music ≤ 8 dB down). Pools: `one_shot_pool` 3D voices
+(steal the lowest priority, oldest first, never inside a no-cut window), `ui_pool` 2D voices.
+Voice accounting runs on `now()` (wall clock; tests set `clock_override`). The selection "What"
+plays on `Events.selection_changed` when the local player picked new units or re-clicked the
+same ones (never when a death prunes the selection). Music playlists and ambience beds: later.
 
 ## 13. Testing
 
