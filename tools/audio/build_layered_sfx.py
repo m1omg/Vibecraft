@@ -10,6 +10,7 @@ Recipes live in tools/audio/layered_recipes.json:
 
 Layer keys (all optional except one of src / synth):
   src        path under assets_src/audio/cc0/ (CC0 files only; keep the pack's License.txt beside them)
+  own        path under assets/audio/sfx/ of one of our own generated takes (derived variants, no new cost)
   synth      a procedural layer: "thump" (pitched-down sine kick: f0, f1, decay), "rumble" (low-passed noise: dur, lp,
              decay), "bowl" (inharmonic bronze partials: f0, decay, choke_ms), "tick" (short filtered click: f, decay),
              "noise" (band noise burst: dur, lp, hp, decay)
@@ -42,6 +43,7 @@ import split_takes as st  # noqa: E402
 
 SR = st.SR
 CC0 = os.path.join(REPO, "assets_src", "audio", "cc0")
+OWN = os.path.join(REPO, "assets", "audio", "sfx")
 
 
 def bw(y, lp=0.0, hp=0.0, order=2):
@@ -126,18 +128,18 @@ def synth(kind, p, rng):
 _cache = {}
 
 
-def load_src(rel):
-    if rel not in _cache:
-        path = os.path.join(CC0, rel)
+def load_src(rel, root=CC0):
+    if (root, rel) not in _cache:
+        path = os.path.join(root, rel)
         if not os.path.exists(path):
             raise FileNotFoundError(path)
-        _cache[rel] = st.decode(path)
-    return _cache[rel]
+        _cache[(root, rel)] = st.decode(path)
+    return _cache[(root, rel)]
 
 
 def render_layer(L, rng):
-    if "src" in L:
-        y = load_src(L["src"]).copy()
+    if "src" in L or "own" in L:
+        y = load_src(L["src"]).copy() if "src" in L else load_src(L["own"], OWN).copy()
         s = int(L.get("start_ms", 0) * SR / 1000)
         y = y[s:]
         if L.get("len_ms"):
@@ -177,7 +179,7 @@ def render_take(T, seed):
         mix = mix[: min(n, (last[-1] + 1) * 220 + int(0.01 * SR))]
     if T.get("max_ms"):
         mix = mix[: int(T["max_ms"] * SR / 1000)]
-    mix = st.fade(mix - mix.mean(), 3.0, T.get("fade_out_ms", 20.0))
+    mix = st.fade(mix - mix.mean(), 3.0, T.get("fade_out_ms", 60.0 if T.get("max_ms") else 20.0))
     pk = np.abs(mix).max()
     if pk > 0:
         mix *= 10 ** (-1.0 / 20) / pk
@@ -199,9 +201,12 @@ def main():
         if a.ids and r["id"] not in a.ids:
             continue
         out = os.path.join(REPO, "assets", "audio", "sfx", r["group"])
+        counters = {}
         for i, T in enumerate(r["takes"]):
-            y = render_take(T, seed=hash(r["id"]) % 100000 + i if False else 1000 + i)
-            fn = os.path.join(out, "%s_%02d.wav" % (r["id"], i + 1))
+            y = render_take(T, seed=1000 + i)
+            stem = r["id"] + ("_" + T["name"] if T.get("name") else "")
+            counters[stem] = counters.get(stem, 0) + 1
+            fn = os.path.join(out, "%s_%02d.wav" % (stem, counters[stem]))
             st.write_wav(fn, y)
             m = st.metrics(y, 220)
             print("%s dur %.3f cen %5d" % (os.path.relpath(fn, REPO), m["dur"], m["centroid_hz"]))
