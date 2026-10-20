@@ -5,6 +5,7 @@
   python3 tools/music/render.py PIECE.py --out assets/audio/music/kingdom_1.ogg --length-check
   python3 tools/music/render.py PIECE.py --loop --xfade 3          # menu / score beds
   python3 tools/music/render.py PIECE.py --trim 2.4 --trim-fade 0.3 # opening cues
+  python3 tools/music/render.py PIECE.py --split-perc               # + <out>_main.ogg / <out>_perc.ogg rally stems
 
 The piece module defines build() -> score.Piece. Pipeline (all deterministic):
   1. compile the score (humanise, ornaments, tempo map) and write <work>/<name>.mid (the full MIDI);
@@ -276,7 +277,7 @@ def stem_chain(inst):
     return ",".join(ch)
 
 
-def mix_stems(stems, ir_path, out_path, cfg, work):
+def mix_stems(stems, ir_path, out_path, cfg, work, script_name="mix.filter"):
     """stems: list of (wav_path, Instrument). Writes the dry+wet bus (float WAV)."""
     rv = cfg["reverb"]
     lines = []
@@ -294,7 +295,7 @@ def mix_stems(stems, ir_path, out_path, cfg, work):
     # energy-normalised IR as generated
     lines.append(f"[snd][{k}:a]afir=dry=1:wet=1:gtype=none:irgain=1:irfmt=input:maxir=12[wet]")
     lines.append("[dry][wet]amix=inputs=2:normalize=0:duration=first[out]")
-    script = os.path.join(work, "mix.filter")
+    script = os.path.join(work, script_name)
     with open(script, "w") as f:
         f.write(";\n".join(lines))
     cmd = ["ffmpeg", "-v", "error", "-y", "-filter_complex_threads", "1"]
@@ -306,10 +307,11 @@ def mix_stems(stems, ir_path, out_path, cfg, work):
     return out_path
 
 
-def glue(bus_path, out_path, cfg):
+def glue(bus_path, out_path, cfg, gain=None):
     b, m = cfg["bus"], cfg["master"]
     meas = analyze.ebur128(bus_path)
-    gain = b["lufs"] - meas["lufs"]
+    if gain is None:
+        gain = b["lufs"] - meas["lufs"]
     chain = [f"volume={gain:.3f}dB"]
     if m.get("lowshelf") and m["lowshelf"][1]:
         chain.append(f"lowshelf=f={m['lowshelf'][0]}:g={m['lowshelf'][1]}")
@@ -423,9 +425,46 @@ def master(form_path, ogg_path, cfg, work):
     return info
 
 
+# ----------------------------------------------------------------------------------------------- rally stems
+def split_perc(piece, stem_list, cfg, work, out, ir_path, form_path, bus_gain, kind, xfade, trim, trim_fade, tail):
+    """The rally stems (juice MUS-01): <out>_main.ogg (tracks without Instrument.perc) and <out>_perc.ogg (perc
+    tracks), each through the same room, glue gain, form and master gain as the full mix, so main + perc adds up
+    to the full mix (up to the bus compressor). The game plays them in an AudioStreamSynchronized."""
+    main = [(p, i) for p, i in stem_list if not (i.perc or i.drums)]
+    perc = [(p, i) for p, i in stem_list if i.perc or i.drums]
+    if not main or not perc:
+        return {"skipped": "needs both perc and non-perc tracks"}
+    g_master = analyze.ebur128(out)["lufs"] - analyze.ebur128(form_path)["lufs"]
+    base = out[:-4] if out.endswith(".ogg") else out
+    res = {"master_gain_db": round(g_master, 2)}
+    decoded = {}
+    for label, subset in (("main", main), ("perc", perc)):
+        bus = mix_stems(subset, ir_path, os.path.join(work, f"bus_{label}.wav"), cfg, work, f"mix_{label}.filter")
+        glued = os.path.join(work, f"glued_{label}.wav")
+        glue(bus, glued, cfg, gain=bus_gain)
+        y, _ = shape_form(read_wav(glued), piece, kind, xfade, trim, trim_fade, tail)
+        fpath = os.path.join(work, f"form_{label}.wav")
+        write_wav(fpath, y)
+        o = f"{base}_{label}.ogg"
+        tp = cfg["master"]["tp"] - 0.6
+        run(["ffmpeg", "-v", "error", "-y", "-i", fpath, "-af",
+             f"volume={g_master:.3f}dB,alimiter=limit={10 ** (tp / 20):.6f}:attack=4:release=80:level=disabled:asc=1,"
+             f"aresample={SR}", "-c:a", "libvorbis", "-q:a", "6", "-ar", str(SR), "-ac", "2", "-map_metadata", "-1",
+             "-fflags", "+bitexact", "-flags:a", "+bitexact", o])
+        m = analyze.ebur128(o)
+        res[label] = {"file": os.path.relpath(o, ROOT), "lufs": m["lufs"], "true_peak_db": m["true_peak_db"],
+                      "sha256": sha(o)}
+        decoded[label] = analyze.decode(o)
+    full = analyze.decode(out)
+    n = min(len(full), len(decoded["main"]), len(decoded["perc"]))
+    resid = full[:n] - decoded["main"][:n] - decoded["perc"][:n]
+    res["null_residual_db"] = round(10 * math.log10((resid ** 2).mean() / ((full[:n] ** 2).mean() + 1e-20) + 1e-20), 1)
+    return res
+
+
 # ----------------------------------------------------------------------------------------------- main
 def render(piece_path, out=None, kind=None, xfade=None, trim=None, trim_fade=None, length_check=False,
-           length=None, work=None, png_dir=OUT_DIR, pngs=True, jobs=4, levels=True, cache=True):
+           length=None, work=None, png_dir=OUT_DIR, pngs=True, jobs=4, levels=True, cache=True, split=False):
     t_start = time.time()
     CACHE["on"] = cache
     piece, mod = load_piece(piece_path)
@@ -497,6 +536,9 @@ def render(piece_path, out=None, kind=None, xfade=None, trim=None, trim_fade=Non
     report["master"] = master(form_path, out, cfg, work)
     hashes["ogg"] = sha(out)
     report["hashes"] = hashes
+    if split:
+        report["rally_stems"] = split_perc(piece, stem_list, cfg, work, out, ir_path, form_path,
+                                           report["glue"]["bus_gain_db"], kind, xfade, trim, trim_fade, tail)
     # checks
     meas = analyze.measure(out, loop=(kind == "loop"))
     report["measure"] = meas
@@ -519,6 +561,9 @@ def render(piece_path, out=None, kind=None, xfade=None, trim=None, trim_fade=Non
     if len(audio) / SR > piece.duration_s + 0.5:
         spans.append(("(tail)", piece.duration_s, len(audio) / SR))
     report["sections_db"] = analyze.section_loudness(audio, spans)
+    if report["piece"].get("range_warnings"):
+        report["warnings"] = [f"{w[0]}: {w[3]} notes outside the range ({w[1]}..{w[2]})"
+                              for w in report["piece"]["range_warnings"]]
     report["problems"] = problems
     if pngs:
         spec = os.path.join(png_dir, f"{name}_spectrogram.png")
@@ -554,11 +599,13 @@ def main(argv=None):
     ap.add_argument("--no-cache", action="store_true", help="re-render every stem (the cache in <work>/cache is keyed "
                     "by the stem MIDI or the synth notes and code, so it is safe to keep)")
     ap.add_argument("--no-levels", action="store_true", help="skip the per-stem active-level measurement")
+    ap.add_argument("--split-perc", action="store_true", help="also write the rally stems <out>_main.ogg and "
+                    "<out>_perc.ogg (tracks with Instrument.perc), mastered with the full mix's gain (juice MUS-01)")
     a = ap.parse_args(argv)
     kind = "loop" if a.loop else a.kind
     rep = render(a.piece, out=a.out, kind=kind, xfade=a.xfade, trim=a.trim, trim_fade=a.trim_fade,
                  length_check=a.length_check, length=a.length, work=a.work, pngs=not a.no_png, jobs=a.jobs,
-                 levels=not a.no_levels, cache=not a.no_cache)
+                 levels=not a.no_levels, cache=not a.no_cache, split=a.split_perc)
     print(json.dumps(rep, indent=1))
     if rep["problems"]:
         log("[render] PROBLEMS: " + "; ".join(rep["problems"]))

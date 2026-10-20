@@ -1221,7 +1221,18 @@ class Piece:
             "name": self.name, "seed": self.seed, "mode": repr(self.mode), "duration_s": round(self.duration_s, 3),
             "sections": [(s.name, round(self.seconds(s.start), 2)) for s in self.sections],
             "tracks": {k: len(t.compiled["notes"]) for k, t in self.tracks.items()},
+            "range_warnings": self.range_warnings(),
         }
+
+    def range_warnings(self):
+        """Notes outside an instrument's playable range (Instrument.lo / hi): [track, lowest, highest, count]."""
+        out = []
+        for k, t in self.tracks.items():
+            lo, hi = t.inst.lo, t.inst.hi
+            bad = [c.pitch for c in (t.compiled["notes"] if t.compiled else []) if not lo <= c.pitch <= hi]
+            if bad and not t.inst.drums:
+                out.append([k, note_name(min(bad)), note_name(max(bad)), len(bad)])
+        return out
 
 
 def _note_shape(shape, u, d, connected):

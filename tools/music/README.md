@@ -25,6 +25,7 @@ python3 tools/music/render.py tools/music/pieces/style_kingdom.py               
 python3 tools/music/render.py PIECE.py --out assets/audio/music/kingdom_1.ogg --length-check
 python3 tools/music/render.py PIECE.py --out assets/audio/music/menu.ogg --loop --xfade 3
 python3 tools/music/render.py PIECE.py --out assets/audio/music/opening_kingdom.ogg --trim 2.4 --trim-fade 0.3
+python3 tools/music/render.py PIECE.py --out assets/audio/music/kingdom_1.ogg --split-perc  # + _main / _perc rally stems
 bash tools/music/test_determinism.sh
 ```
 
@@ -207,7 +208,8 @@ regenerate.
 * `stems`: per-stem `active_db` (level while playing, after the stem's EQ and gain): melody about -30, counter-lines
   -34, drones -38, background voices -42 are the palette defaults;
 * `master`: loudnorm measurements, `normalization_type` (must be `linear`), any limiter ceiling;
-* `hashes`: MIDI, every stem, the Ogg.
+* `hashes`: MIDI, every stem, the Ogg;
+* `warnings`: notes outside an instrument's playable range (`Instrument.lo` / `hi`); `rally_stems` with `--split-perc`.
 
 Then **look at both PNGs** with an image viewer: the piano roll (one colour per track, section lines, a K-weighted
 loudness lane) for register spread, density, call and response and the arc; the spectrogram for mud (a solid
@@ -232,8 +234,10 @@ their PNGs are kept in `docs/audio/music-style/` for review.
 * The numpy instruments are models, not recordings: gongs, hurdy-gurdy and chant are convincing in a mix, and the
   frame drum and claps are good; the jaw harp is the least natural when exposed solo. The chant is wordless by
   construction (formant vowels only).
-* The rally percussion stem (juice MUS-01, P2) is not split out yet: tracks carry `perc=True` so a `--split-perc` mode
-  can mix the two stem groups through the same chain later.
+* Rally stems (juice MUS-01, P2): `--split-perc` writes `<out>_main.ogg` (tracks without `Instrument.perc`) and
+  `<out>_perc.ogg` (perc tracks) through the same room, glue gain, form and master gain as the full mix. They are
+  sample-synchronous with it, but main + perc only nulls against the full mix to about -18 dB, because the bus
+  compressor and limiter react to level. Put a drum in the main stem with `P.FRAME_DRUM.variant(perc=False)`.
 * Rendering takes about real time (40 s for a 40 s piece, most of it the numpy synths and the ffmpeg passes); the stem
   cache makes mix-only changes fast.
 * Pieces are rendered at 48 kHz only; the stem MIDI uses up to 2 channels per mono track and channel 10 for kits.
