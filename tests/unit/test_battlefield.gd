@@ -278,6 +278,19 @@ func test_busy_creep_still_calls_its_camp() -> void:
 	assert_eq(creeps[0].combat_target_id(), decoy.id, "the busy creep keeps its target")
 
 
+## The opening frames the army the player commands next to the hall (QA PT1: it used to be
+## centred on the hall roof with the army cut off at the screen edge).
+func test_camera_opens_between_hall_and_army() -> void:
+	var r := _headless()
+	var w: World = r[0]
+	var b: BattlefieldScenario = r[1]
+	var hall := w.get_unit(b.structures[0])
+	var army := BattlefieldScenario._centre(b.members(b.group("army", 0)))
+	var c := b.camera_start(0)
+	assert_lt(Grid.flat_dist(c, (hall.pos + army) * 0.5), 1.5, "focus between the hall and the army")
+	assert_lt(Grid.flat_dist(c, army), Grid.flat_dist(hall.pos, army), "closer to the army than the hall is")
+
+
 ## A player reduced to buildings and workers cannot fight back (no production here): the Tormai
 ## guards leave their post and go to finish it.
 func test_guards_hunt_a_defenceless_player() -> void:

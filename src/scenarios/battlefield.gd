@@ -222,15 +222,33 @@ func wave_marching() -> bool:
 	return false
 
 
-## Where the camera starts for `pid`: its first structure (the hall), else its first group.
+## Camera focus at the start for `pid`: the player entry's `camera` [x, z] when the data sets it,
+## else the midpoint between its first structure (the hall) and its army group, so the opening
+## shows the army the player is about to command next to the base; without a hall the army (or
+## the first group), without either the map centre.
 func camera_start(pid: int) -> Vector3:
+	for p: Dictionary in def.get("players", []):
+		if int(p.get("slot", -1)) == pid and p.has("camera"):
+			var c: Array = p["camera"]
+			return Vector3(float(c[0]), 0.0, float(c[1]))
+	var hall := Vector3.INF
 	for sid in structures:
 		var s := world.get_unit(sid)
 		if s != null and s.player_id == pid:
-			return s.pos
+			hall = s.pos
+			break
+	var army := Vector3.INF
 	for g in groups:
-		if g["player"] == pid:
-			return g["post"]
+		if g["player"] == pid and (army == Vector3.INF or g["role"] == ROLE_ARMY):
+			army = g["post"]
+			if g["role"] == ROLE_ARMY:
+				break
+	if hall != Vector3.INF and army != Vector3.INF:
+		return Vector3((hall.x + army.x) * 0.5, 0.0, (hall.z + army.z) * 0.5)
+	if army != Vector3.INF:
+		return Vector3(army.x, 0.0, army.z)
+	if hall != Vector3.INF:
+		return Vector3(hall.x, 0.0, hall.z)
 	return world.map.size_world().x * 0.5 * Vector3(1, 0, 1)
 
 

@@ -131,7 +131,7 @@ func _boot_battlefield(map: MapData) -> void:
 	world.systems_root.add_child(battle)
 	battle.setup_match(world, scenario)
 	battle.ended.connect(_on_match_ended)
-	camera.setup(world, battle.camera_start(0) + Vector3(0, 0, -4))
+	camera.setup(world, battle.camera_start(0))
 
 
 ## Start base (rules §3.2): the faction's T1 hall and its start units (workers) on a 1 m spacing

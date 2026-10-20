@@ -420,6 +420,7 @@ scenario's map.
 | `camps` | creep camp instance ids of the map to spawn (`CreepSystem.spawn_camps(map, only)`); empty = none |
 | `players` | `[{slot, faction, control, structures, groups}]`; `slot` = player id = team; `control`: `human` (the local player, slot 0) or `scenario_ai` (played by the scenario: `PlayerState.is_ai`, no `AiPlayer`) |
 | `players[].structures` | `[{def, pos, facing?}]` finished buildings (facing in degrees; default towards the map centre). Validated: `def` is a building |
+| `players[].camera` | optional `[x, z]`: the camera focus at the start (local player). Default: the midpoint between the first structure and the `army` group |
 | `players[].groups` | `[{id, role, pos, face, row, spacing?, units, attack_after?, target?}]`: `units` = `[[def, count], ...]` front row first, laid out in rows of `row` facing the point `face`; validated: mobile unit defs, counts > 0 |
 | `role` | `army` (no script), `workers` (idle), `guard` (holds `pos`, defends, assists, regroups), `wave` (waits like a guard, then after `attack_after` s attack-moves at `target` — `hall` = the first enemy structure listed — and keeps hunting the nearest enemy entity) |
 
