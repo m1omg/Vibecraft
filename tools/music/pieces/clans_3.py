@@ -7,15 +7,20 @@ Form (82 bars). Intro 1-6: the long-necked lute alone in its running riff (a dro
 sixteenths, two peaks and a falling turn), the jaw harp joins in bar 3, stamps in bar 5. Drums 7-10: the frame
 drums enter at full gallop, a half close on E, the fiddle runs up into the theme. A 11-26: the high fiddle states
 the theme: the Gong-Ring diminished to eighths (E-D-A, B resolving to A) with a gallop turn, answered by scale runs
-to the octave; period 1 ends on the held second resolving to A (bars 17-18), period 2 (19-26) sequences a run
-figure down a step (19, 21) and climbs to B5 (23). B 27-46: call and response between fiddle and lute: two-bar
-calls (the motif INVERTED, rising) answered by the lute with the motif upright (27-34), one-bar exchanges (35-38),
-half-bar exchanges (39-42, breathless), then both together in octave runs to a held E and a cut-off (43-46).
-Break 47-54: drums, stamps and claps alone in 7/8 + 4/4 (2+2+3 against the gallop), lute chops, bright small
-gongs. A' 55-72: the theme at full power, the raspy low fiddle an octave under the high one, the lute riff,
-claps on the backbeat, a burst of overtone chant and the big gong at the climax (67-70), a two-bar run to the
-arrival. Outro 73-82: a ritardando from 100 to 72 BPM, the riff in eighths, the drums thin to a heartbeat, the
-motif augmented x2 on the fiddle, the held B resolving to A over the last gong.
+to the octave; period 1 ends on the held second resolving to A (bars 17-18), period 2 (19-26, the jaw harp drops
+out) sequences a run figure down a step (19, 21) and climbs to B5 (23). B 27-46, the valley and the climb back:
+call and response between fiddle and lute over a bare floor (one deep stroke a bar, hand-drum ghost notes, no
+stamps, no jaw harp; the lute riff only under the fiddle's calls): two-bar calls (the motif INVERTED, rising)
+answered by the lute with the motif upright (27-34), one-bar exchanges (35-38); then the gallop and the stamps come
+back for the half-bar exchanges (39-42, breathless), the jaw harp in 41, and both together in octave runs to a
+held E and a cut-off (43-46). Break 47-54: hand drum and stamps alone in 7/8 + 4/4 (2+2+3 against the gallop), the
+deep drum, claps, jaw harp and bright small gongs join at bar 51 and the break crescendos into A'. A' 55-72: the
+theme at full power, the raspy low fiddle an octave under the high one, claps on the backbeat (55-62); then the
+lute takes the second period of the theme under a new fiddle descant, over a reharmonised, moving bass
+(Bm G Em Am G D Em Am), the drums in half time and then galloping again, a burst of overtone chant and the big gong
+at the climax (67-70), a two-bar run to the arrival. Outro 73-82: a ritardando from 100 to 72 BPM, the riff in
+eighths, the drums thin to a heartbeat, the motif augmented x2 on the fiddle, the held B resolving to A over the
+last gong, which rings out.
 Render: python3 tools/music/render.py tools/music/pieces/clans_3.py --out assets/audio/music/clans_3.ogg --length-check
 """
 import os
@@ -35,7 +40,7 @@ def build():
     p = Piece("clans_3", seed=303, bpm=100, meter=(4, 4), key="A", mode="dorian")
     p.mix = {k: dict(v) for k, v in P.MIX_CLANS.items()}
     p.mix["master"]["lowshelf"] = (110, -1.0)
-    p.kind, p.tail_s, p.length_range = "track", 2.6, (198.0, 215.0)
+    p.kind, p.tail_s, p.length_range = "track", 4.5, (198.0, 215.0)
 
     gong = p.track("gong", P.GONG)
     gsm = p.track("gong_small", P.GONG_SMALL)
@@ -127,8 +132,7 @@ def build():
         E.riff(lute, A.b(i), c, vel=80 if i < 8 else 84)
     flo.drone(A.b(0), A.b(16), [A2, E3], vel=70)
     flo.curve(A.b(0), A.b(16), 80, 92)
-    E.jaw(jaw, p, A.bar0, 8, KS, grid="x.xxx.xxx.xxx.xx", vel=60, pitch="A2")
-    E.jaw(jaw, p, A.bar0 + 8, 8, KS, grid="x...x.x.x...x.x.", vel=58, pitch="A2")   # thinner under the runs
+    E.jaw(jaw, p, A.bar0, 8, KS, grid="x.xxx.xxx.xxx.xx", vel=60, pitch="A2")      # (out under the runs, 19-26)
     _gallop(p, deep, hand, claps, A, 0, 16, vel=98, fills=(3, 7, 11, 15))
     gong.note(A.b(0), "A2", 1, vel=108)
     gong.note(A.b(8), "A2", 1, vel=96)
@@ -138,15 +142,15 @@ def build():
     # ================================================================= B (27-46): call and response
     call1 = M("0:1/2 1:1/2 4:1 3:3/2~s 4:1/2 | 5:1/4 4:1/4 3:1/4 2:1/4 1:1/2 2:1/2 4:2~s", bar=4)   # inverted
     ans1 = M("4:1/2 3:1/2 0:1 1:3/2 0:1/2 | -1:1/4 0:1/4 1:1/4 2:1/4 1:1/2 0:1/2 0:2~gu", bar=4)   # upright
-    fhi.play(call1, B.b(0), vel=88, art="legato", dyn="cresc")
-    lead.play(ans1, B.b(2), vel=90)
-    fhi.play(call1.transpose(2), B.b(4), vel=90, art="legato", dyn="cresc")
-    lead.play(ans1.transpose(1), B.b(6), vel=92)
+    fhi.play(call1, B.b(0), vel=78, art="legato", dyn="cresc")
+    lead.play(ans1, B.b(2), vel=66)
+    fhi.play(call1.transpose(2), B.b(4), vel=80, art="legato", dyn="cresc")
+    lead.play(ans1.transpose(1), B.b(6), vel=68)
     # one-bar exchanges
-    fhi.play(M("7:1/4 6:1/4 5:1/4 4:1/4 3:1/2 5:1/2 3:2~s"), B.b(8), vel=92, art="legato")
-    lead.play(M("3:1/2 2:1/2 -1:1 0:3/2 -1:1/2"), B.b(9), vel=94)
-    fhi.play(M("6:1/4 5:1/4 4:1/4 3:1/4 2:1/2 4:1/2 2:2~s"), B.b(10), vel=94, art="legato")
-    lead.play(M("4:1/2 2:1/2 0:1 1:3/2 0:1/2"), B.b(11), vel=96)
+    fhi.play(M("7:1/4 6:1/4 5:1/4 4:1/4 3:1/2 5:1/2 3:2~s"), B.b(8), vel=82, art="legato")
+    lead.play(M("3:1/2 2:1/2 -1:1 0:3/2 -1:1/2"), B.b(9), vel=72)
+    fhi.play(M("6:1/4 5:1/4 4:1/4 3:1/4 2:1/2 4:1/2 2:2~s"), B.b(10), vel=84, art="legato")
+    lead.play(M("4:1/2 2:1/2 0:1 1:3/2 0:1/2"), B.b(11), vel=76)
     # half-bar exchanges: breathless
     for i, (f, l) in enumerate((("4:1/4 5:1/4 6:1/4 7:1/4 8:1", "4:1/2 3:1/2 1:1"),
                                 ("7:1/4 6:1/4 5:1/4 4:1/4 5:1", "3:1/2 2:1/2 0:1"),
@@ -162,100 +166,137 @@ def build():
     fhi.play(run, B.b(16), vel=100, art="legato", dyn="arch")
     fid.play(plain(run), B.b(16), octave=-1, vel=92, art="legato")
     lead.play(plain(run).fragment(0, 22), B.b(16), octave=-1, vel=92)
-    fhi.curve(B.b(0), B.b(8), 100, 112)
-    fhi.curve(B.b(8), B.b(16), 112, 122)
+    fhi.curve(B.b(0), B.b(8), 72, 86)
+    fhi.curve(B.b(8), B.b(12), 86, 100)
+    lead.expr(B.b(0), 74)                                                          # the valley: the lute answers softly
+    lead.curve(B.b(8), B.b(12), 74, 92)
+    lead.expr(B.b(12), 100)
+    fhi.curve(B.b(12), B.b(16), 108, 122)
     fhi.curve(B.b(16), B.b(18, 2), 122, 126)
     fhi.curve(B.b(18, 2), B.b(19, 2), 126, 96)
     fid.curve(B.b(16), B.b(19, 2), 104, 118)
     ch_b = ["C", "C", "Am", "Am", "G", "G", "Em", "Em", "D", "D", "C", "C", "Em", "D", "C", "D", "Am", "G", "Em"]
     for i, c in enumerate(ch_b):
-        E.riff(lute, B.b(i), c, vel=72 if i < 12 else 80, density="sparse" if i < 12 else "full")
+        if i in (0, 1, 4, 5):                                                     # under the fiddle's calls only
+            E.riff(lute, B.b(i), c, vel=66, density="sparse")
+        elif i >= 12:
+            E.riff(lute, B.b(i), c, vel=76 if i < 16 else 82, density="full")
     lute.chord(B.b(19), [52, 59, 64], 2.0, vel=86, strum=0.02)                 # the held E: lute rings, stops
     flo.drone(B.b(0), B.b(8), ["C3", "G3"], vel=64)
     flo.drone(B.b(8), B.b(12), ["D3", "A3"], vel=64)
     flo.drone(B.b(12), B.b(16), [A2, E3], vel=66)
     flo.drone(B.b(16), B.b(19, 2), ["E2", "B2"], vel=74)
-    flo.curve(B.b(0), B.b(16), 76, 90)
+    flo.curve(B.b(0), B.b(12), 62, 74)
+    flo.curve(B.b(12), B.b(16), 74, 90)
     flo.curve(B.b(16), B.b(19, 2), 90, 110)
-    E.jaw(jaw, p, B.bar0, 8, KS, grid="x...x.x.x...x.x.", vel=56, pitch="A2")
-    E.jaw(jaw, p, B.bar0 + 8, 11, KS, grid="x.xxx.xxx.xxx.xx", vel=60, fade=(0.9, 1.15), pitch="A2")
-    _gallop(p, deep, hand, claps, B, 0, 8, vel=90, fills=(7,), light=True)
-    _gallop(p, deep, hand, claps, B, 8, 11, vel=100, fills=(11, 15, 18))
+    E.jaw(jaw, p, B.bar0 + 14, 5, KS, grid="x.xxx.xxx.xxx.xx", vel=60, fade=(0.8, 1.15), pitch="A2")
+    # the valley (27-38): one deep stroke a bar, the hand drum's ghost gallop, no stamps; then the climb back
+    for k in range(12):
+        b0 = B.b(k)
+        deep.hit(b0, "dum", 80 if k < 8 else 86)
+        if k >= 8:
+            deep.hit(b0 + 2, "doum", 58 + 2 * (k - 8))
+        hand.pattern(b0, 1, {"tek": "x.gg.ggx.g.gx.g." if k % 4 != 3 else "x.gg.ggx.g.gxrrr"}, vel=50 + k)
+    _gallop(p, deep, hand, claps, B, 12, 4, vel=94, fills=(15,), light=True)
+    _gallop(p, deep, hand, claps, B, 16, 3, vel=102, fills=(18,))
     deep.hit(B.b(19), "dum", 120)
     deep.hit(B.b(19, 2), "doum", 90)
     claps.hit(B.b(19), "stamp", 104)
     claps.hit(B.b(19), "clap", 100)
-    gong.note(B.b(0), "A2", 1, vel=100)
+    gong.note(B.b(0), "A2", 1, vel=86)
+    gong.note(B.b(12), "A2", 1, vel=92)
     gong.note(B.b(16), "A2", 1, vel=104)
     gong.note(B.b(19), "E2", 1, vel=110)
-    for bar, beat in ((1, 2), (3, 2), (5, 2), (7, 2), (9, 0), (11, 0), (13, 0), (15, 0), (17, 2), (18, 2)):
-        gsm.note(B.b(bar, beat), "E4" if bar % 4 == 1 else "A3", 1, vel=66 + bar)
+    for bar, beat in ((1, 2), (5, 2), (9, 0), (11, 0), (13, 0), (15, 0), (17, 2), (18, 2)):
+        gsm.note(B.b(bar, beat), "E4" if bar % 4 == 1 else "A3", 1, vel=(58 if bar < 12 else 66) + bar)
 
     # ================================================================= BREAK (47-54): 7/8 against the gallop
     pat78 = {"deep": {"dum": "X...x...X.....", "tek": "..g...g...x.x."},
              "hand": {"tek": "X.xxX.xxX.xX.x"}}
     pat44 = {"deep": {"dum": "X.......X.......", "doum": "....x.......x...", "tek": "..g...g...g.xxxx"},
              "hand": {"tek": "X.xxX.xxX.xxXrrr"}}
+    # bars 47-50: hand drum and stamps alone; 51-54: the deep drum, claps, jaw harp and small gongs join,
+    # a crescendo into A'
     for i in range(8):
         b0 = brk.b(i)
         bl = p.bar_len(brk.bar0 + i)
         pt = pat78 if bl == 3.5 else pat44
-        v = 100 + 2 * i
-        deep.pattern(b0, 1, pt["deep"], vel=v)
-        hand.pattern(b0, 1, pt["hand"], vel=v * 0.78)
+        v = 84 + 4 * i
+        if i >= 4:
+            deep.pattern(b0, 1, pt["deep"], vel=v)
+        hand.pattern(b0, 1, pt["hand"], vel=v * (0.92 if i < 4 else 0.8))
         groups = (0, 1, 2) if bl == 3.5 else (0, 1, 2, 3)
         for g in groups:
-            claps.hit(b0 + g, "stamp", 92 if g == 0 else 78)
-        if bl == 3.5:
-            claps.hit(b0 + 2.5, "clap", 96)
-            claps.hit(b0 + 3.0, "clap", 84)
-        else:
-            claps.hit(b0 + 1, "clap", 92)
-            claps.hit(b0 + 3, "clap", 98)
-        lute.chord(b0, [45, 52, 57], 0.4, vel=90, strum=0.01)                     # chops on the downbeat
-        if bl == 3.5:
-            lute.chord(b0 + 2, [45, 52, 57], 0.3, vel=80, strum=0.01)
-        gsm.note(b0 + (2.5 if bl == 3.5 else 3.0), "E4" if i % 2 else "A3", 1, vel=74 + 2 * i)
-    for i in range(8):
-        E.jaw(jaw, p, brk.bar0 + i, 1, KS[i % 4:] + KS[:i % 4], vel=66 + i, pitch="A2",
+            claps.hit(b0 + g, "stamp", (92 if g == 0 else 76) * (0.9 if i < 4 else 1.0))
+        if i >= 4:
+            if bl == 3.5:
+                claps.hit(b0 + 2.5, "clap", 92)
+                claps.hit(b0 + 3.0, "clap", 82)
+            else:
+                claps.hit(b0 + 1, "clap", 90)
+                claps.hit(b0 + 3, "clap", 98)
+            gsm.note(b0 + (2.5 if bl == 3.5 else 3.0), "E4" if i % 2 else "A3", 1, vel=70 + 2 * i)
+    for i in range(4, 8):
+        E.jaw(jaw, p, brk.bar0 + i, 1, KS[i % 4:] + KS[:i % 4], vel=62 + 2 * i, pitch="A2",
               grid="X.xxx.xxX.xx.x" if p.bar_len(brk.bar0 + i) == 3.5 else "X.xxx.xxX.xxx.xx")
-    flo.drone(brk.start, brk.end, [A2, E3], vel=66)
-    flo.curve(brk.start, brk.end, 70, 96)
-    wind.note(brk.b(0), 60, 14.0, vel=70, fc=900, fc_to=1600, whistle=0.35)
-    gong.note(brk.b(0), "A2", 1, vel=100)
+    flo.drone(brk.b(4), brk.end, [A2, E3], vel=66)
+    flo.curve(brk.b(4), brk.end, 60, 96)
+    wind.note(brk.b(0), 60, 14.0, vel=64, fc=900, fc_to=1600, whistle=0.35)
+    gong.note(brk.b(4), "A2", 1, vel=104)
     deep.roll(brk.b(7, 2), 2.0, "tek", vel0=50, vel1=118, rate=0.125, accent_end=False)
     hand.roll(brk.b(7, 2), 2.0, "tek", vel0=40, vel1=100, rate=1 / 6.0, accent_end=False)
 
     # ================================================================= A' (55-72): full power
     fhi.play(t1, A2s.b(0), vel=94, art="legato", dyn="arch")
     fid.play(plain(t1), A2s.b(0), octave=-1, vel=86, art="legato")
-    fhi.play(t2, A2s.b(8), vel=100, art="legato", dyn="arch")
-    fid.play(plain(t2), A2s.b(8), octave=-1, vel=92, art="legato")
+    # second period (63-70): the lute takes the theme, the fiddle sings a new descant above it, the bass moves
+    lead.play(plain(t2), A2s.b(8), octave=-1, vel=100, dyn="arch")
+    desc = M("3:3 4:1 | 6:4~s | 5:2 4:2 | 4:2 7:2 | 8:4~s | 7:2 5:2 | 4:2 3:2 | 2:4", bar=4, name="descant")
+    fhi.play(desc, A2s.b(8), vel=92, art="legato", dyn="arch")
     fin = M("0:1/4 1:1/4 2:1/4 3:1/4 4:1/4 5:1/4 6:1/4 7:1/4 8:1/2 7:1/2 6:1/2 5:1/2 |"
             "4:1/2 3:1/2 0:1 1:3/2~s 0:1/2", bar=4, name="arrival")
     fhi.play(fin, A2s.b(16), vel=102, art="legato")
     fid.play(plain(fin), A2s.b(16), octave=-1, vel=94, art="legato")
     fhi.curve(A2s.b(0), A2s.b(8), 108, 116)
-    fhi.curve(A2s.b(8), A2s.b(12, 2), 112, 127)
-    fhi.curve(A2s.b(12, 2), A2s.b(16), 127, 110)
+    fhi.curve(A2s.b(8), A2s.b(9), 84, 104)
+    fhi.curve(A2s.b(9), A2s.b(12, 2), 104, 124)
+    fhi.curve(A2s.b(12, 2), A2s.b(16), 124, 104)
     fhi.curve(A2s.b(16), A2s.b(18), 116, 104)
-    fid.curve(A2s.b(0), A2s.b(12), 104, 118)
-    fid.curve(A2s.b(12), A2s.b(18), 118, 104)
-    for i, c in enumerate(ch_a + ["Am", "Am"]):
+    fid.curve(A2s.b(0), A2s.b(8), 104, 116)
+    fid.curve(A2s.b(16), A2s.b(18), 112, 104)
+    for i, c in enumerate(ch_a[:8]):
         E.riff(lute, A2s.b(i), c, vel=86)
-    for i, c in enumerate(["Am", "D", "G", "Em", "Am", "C", "G", "Am"]):
-        E.riff(lead, A2s.b(8 + i), c, vel=60, density="sparse")                    # a second lute, thinner
-    flo.drone(A2s.b(0), A2s.b(18), [A2, E3], vel=74)
-    flo.curve(A2s.b(0), A2s.b(18), 96, 108)
-    E.jaw(jaw, p, A2s.bar0, 18, KS, grid="x.xxx.xxx.xxx.xx", vel=66, pitch="A2")
-    _gallop(p, deep, hand, claps, A2s, 0, 18, vel=106, fills=(3, 7, 11, 15, 17), backbeat=True)
-    chant.note(A2s.b(12), "A2", 8.3, vel=96, vowels=["a", "o", "a"], overtones=[None, 12, 8])   # the burst
-    chant.note(A2s.b(14), "A2", 8.5, vel=92, vowels=["a", "o", "u"], overtones=[9, 8, None])
-    chant.curve(A2s.b(12), A2s.b(13), 40, 122)
-    chant.curve(A2s.b(13), A2s.b(15), 122, 110)
-    chant.curve(A2s.b(15), A2s.b(16, 2), 110, 30)
+    for i in (16, 17):
+        E.riff(lute, A2s.b(i), "Am", vel=86)
+    # the bass: the A drone, then the reharmonised second period in moving open fifths, then the drone again
+    flo.drone(A2s.b(0), A2s.b(8), [A2, E3], vel=74)
+    for i, (r, f5) in enumerate([("B2", "F#3"), ("G2", "D3"), ("E2", "B2"), ("A2", "E3"),
+                                 ("G2", "D3"), ("D2", "A2"), ("E2", "B2"), ("A2", "E3")]):
+        flo.chord(A2s.b(8 + i), [r, f5], 4.1, vel=78, art="tenuto")
+    flo.drone(A2s.b(16), A2s.b(18), [A2, E3], vel=74)
+    flo.curve(A2s.b(0), A2s.b(8), 96, 104)
+    flo.curve(A2s.b(8), A2s.b(12), 96, 110)
+    flo.curve(A2s.b(12), A2s.b(18), 110, 106)
+    E.jaw(jaw, p, A2s.bar0, 8, KS, grid="x.xxx.xxx.xxx.xx", vel=66, pitch="A2")
+    E.jaw(jaw, p, A2s.bar0 + 16, 2, KS, grid="x.xxx.xxx.xxx.xx", vel=68, pitch="A2")
+    _gallop(p, deep, hand, claps, A2s, 0, 8, vel=106, fills=(3, 7), backbeat=True)
+    for k in range(8, 12):                                                         # 63-66: half time
+        b0 = A2s.b(k)
+        deep.pattern(b0, 1, {"dum": "X.......X.......", "tek": "......g.......g." if k < 11 else
+                             "......g.....gxgx"}, vel=100)
+        hand.pattern(b0, 1, {"tek": "x.ggx.ggx.ggx.gg"}, vel=70)
+        claps.hit(b0 + 1, "clap", 86)
+        claps.hit(b0 + 3, "clap", 92)
+    _gallop(p, deep, hand, claps, A2s, 12, 6, vel=106, fills=(15, 17), backbeat=True)
+    # the burst of chant at the climax, on the moving roots (G D E A), its whistle on chord tones
+    for bar, pc, beats, vw, ot in ((12, "G2", 4.3, ["a", "o"], [None, 12]), (13, "D2", 4.3, ["o", "a"], [8, 12]),
+                                   (14, "E2", 4.3, ["a", "o"], [12, 8]), (15, "A2", 6.5, ["a", "o", "u"], [8, 12, None])):
+        chant.note(A2s.b(bar), pc, beats, vel=94, vowels=vw, overtones=ot)
+    chant.curve(A2s.b(12), A2s.b(13), 40, 118)
+    chant.curve(A2s.b(13), A2s.b(15), 118, 108)
+    chant.curve(A2s.b(15), A2s.b(16, 2), 108, 30)
     gong.note(A2s.b(0), "A2", 1, vel=116)
-    gong.note(A2s.b(8), "A2", 1, vel=104)
+    gong.note(A2s.b(8), "B2", 1, vel=96)
     gong.note(A2s.b(12), "A2", 1, vel=120)
     gong.note(A2s.b(16), "A2", 1, vel=108)
     for bar in range(18):
@@ -277,9 +318,11 @@ def build():
     fid.play(M("0:2 -1:2 | 0:4"), out.b(0), octave=-1, vel=80, art="legato")
     fid.play(M("0:4 | -3:4 | 0:8"), out.b(6), octave=-1, vel=66, art="legato")
     fid.curve(out.b(0), out.b(2), 104, 90)
-    fid.curve(out.b(6), out.b(10), 80, 46)
+    fid.curve(out.b(6), out.b(8), 80, 56)
+    fid.curve(out.b(8), out.b(10), 56, 20)                                      # tapers into the gong's ring
     flo.drone(out.b(0), out.b(10), [A2, E3], vel=72)
-    flo.curve(out.b(0), out.b(10), 100, 50)
+    flo.curve(out.b(0), out.b(8), 100, 60)
+    flo.curve(out.b(8), out.b(10), 60, 20)
     E.jaw(jaw, p, out.bar0, 2, KS, grid="x.xxx.xxx.xxx.xx", vel=60, fade=(1.0, 0.85), pitch="A2")
     E.jaw(jaw, p, out.bar0 + 2, 3, KS, grid="x.x.x.x.x.x.x.x.", vel=52, fade=(0.9, 0.7), pitch="A2")
     E.jaw(jaw, p, out.bar0 + 5, 2, KS, grid="x...x...x...x...", vel=46, fade=(0.8, 0.6), pitch="A2")
@@ -290,7 +333,7 @@ def build():
     deep.hit(out.b(8), "doum", 76)
     wind.note(out.b(4), 60, 16.0, vel=74, fc=600, fc_to=1100, whistle=0.4)
     gsm.note(out.b(5, 0), "E4", 1, vel=58)
-    gong.note(out.b(8), "A2", 1, vel=96, decay=12.0)
+    gong.note(out.b(8), "A2", 1, vel=96, decay=12.0)                            # rings out as the tail
     return p
 
 
