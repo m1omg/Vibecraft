@@ -1,163 +1,190 @@
 shader_type spatial;
-// Terrain: up to 8 splat layers (weights in COLOR = layers 0-3, CUSTOM0 = layers 4-7) with
-// height-based noise blending, triplanar rock on cliff walls (UV2.x = 1), fog-of-war hook.
-// Layers are procedural colour+noise placeholders until `use_layer_textures` is enabled with a
-// Texture2DArray (one slice per layer, same order):
-//   0 grass, 1 dark grass, 2 dirt, 3 rough dirt, 4 rock, 5 sand, 6 dry grass, 7 paved
+// Greenvale terrain (art bible §6.1, research README §2): the 7-tile ladder (Texture2DArray, slices in
+// draw order 0 scree .. 6 thick meadow) blended reference-RTS style with an ordered 16-case CORNER MASK, not
+// soft splats. The corners are the tile centres around the fragment (dual grid of `tile_info`); for
+// every ladder slot present, in draw order, the 4-bit mask "corner slot >= L" is interpolated over
+// the dual cell and thresholded at 0.5 against world-space noise (amplitude 0.35 tile, ~1.7 cycles
+// per tile), so later tiles overlap earlier ones with brushed, never tile-aligned edges and a
+// painted dark rim. Corners across a cliff wall (connectivity bits in tile_info.g) take the
+// fragment's own slot, so ground never bleeds over a wall.
+// Anti-repetition: world-space UVs, two rotated samples mixed by noise, macro tint (45 m period).
+// Cliff walls (UV2.x = 1): triplanar limestone, dark foot, lighter mossy painted lip (UV2.y = height
+// fraction up the wall). Tile tops: COLOR.r cliff-foot AO, COLOR.g cliff-top lip.
+// Water margin: wet band (-25 % value within ~0.35 m above the water line), tinted lake bed.
+// Lighting: wrap-Lambert key with drifting cloud shadows (render_common). Fog-of-war hook.
 
-render_mode diffuse_burley, specular_schlick_ggx, cull_back;
+render_mode cull_back, specular_disabled;
 
-uniform sampler2DArray layer_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform bool use_layer_textures = false;
-uniform float layer_uv_scale = 0.25;          // texture repeats per metre
-uniform sampler2D rock_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform bool use_rock_texture = false;
-uniform float rock_uv_scale = 0.3;
-uniform float blend_sharpness = 0.25;
+#include "res://src/render/render_common.gdshaderinc"
 
+uniform sampler2DArray ground_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D tile_info : filter_nearest, repeat_disable;
+uniform sampler2D cliff_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform vec2 map_tiles = vec2(96.0, 96.0);
+uniform float tile_m = 2.0;
+uniform float ground_uv_scale = 0.16;        // repeats per metre (1024 px over ~6 m)
+uniform float cliff_uv_scale = 0.5;
+uniform float edge_noise_amp = 0.35;         // in tile units (bible §6.1)
+uniform float edge_noise_freq = 0.85;        // cycles per metre (~1.7 per 2 m tile)
+uniform float edge_width = 0.045;
+uniform float edge_rim = 0.16;               // painted darker rim just inside an overlapping tile
+uniform float macro_period = 45.0;
+uniform float ground_saturation = 0.84;     // terrain stays the quietest layer (bible §1.4: <= 45 %)
+uniform float water_level = -0.45;
 uniform sampler2D fog_tex : hint_default_white, filter_linear;
 uniform bool fog_enabled = false;
 uniform vec2 map_size_m = vec2(192.0, 192.0);
 
-varying vec3 world_pos;
-varying vec3 world_normal;
-varying vec4 w_lo;
-varying vec4 w_hi;
-varying float rock_flag;
+varying vec3 v_world;
+varying vec3 v_wnormal;
+varying float v_ao;
+varying float v_lip;
+varying float v_wall;
+varying float v_wall_h;
 
-const vec3 LAYER_COLOR[8] = vec3[8](
-	vec3(0.34, 0.44, 0.19),   // grass
-	vec3(0.23, 0.33, 0.15),   // dark grass
-	vec3(0.45, 0.34, 0.21),   // dirt
-	vec3(0.38, 0.32, 0.25),   // rough dirt
-	vec3(0.43, 0.41, 0.38),   // rock
-	vec3(0.71, 0.63, 0.45),   // sand
-	vec3(0.50, 0.46, 0.25),   // dry grass
-	vec3(0.55, 0.52, 0.47)    // paved
-);
-const float LAYER_FREQ[8] = float[8](0.35, 0.45, 0.6, 0.9, 0.7, 0.8, 0.4, 0.5);
-const float LAYER_CONTRAST[8] = float[8](0.25, 0.3, 0.3, 0.45, 0.35, 0.18, 0.3, 0.2);
-
-float hash12(vec2 p) {
-	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-	p3 += dot(p3, p3.yzx + 33.33);
-	return fract((p3.x + p3.y) * p3.z);
+void vertex() {
+	v_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	v_wnormal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	v_ao = COLOR.r;
+	v_lip = COLOR.g;
+	v_wall = UV2.x;
+	v_wall_h = UV2.y;
 }
 
-float vnoise(vec2 p) {
-	vec2 i = floor(p);
-	vec2 f = fract(p);
-	vec2 u = f * f * (3.0 - 2.0 * f);
-	float a = hash12(i);
-	float b = hash12(i + vec2(1.0, 0.0));
-	float c = hash12(i + vec2(0.0, 1.0));
-	float d = hash12(i + vec2(1.0, 1.0));
-	return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+ivec2 clamp_tile(ivec2 t) {
+	return clamp(t, ivec2(0), ivec2(map_tiles) - ivec2(1));
 }
 
-float fbm(vec2 p) {
-	float v = 0.0;
-	float amp = 0.5;
-	for (int i = 0; i < 4; i++) {
-		v += amp * vnoise(p);
-		p = p * 2.03 + vec2(17.1, 9.7);
-		amp *= 0.5;
+ivec2 tile_data(ivec2 t) {
+	vec4 d = texelFetch(tile_info, clamp_tile(t), 0);
+	return ivec2(int(d.r * 255.0 + 0.5), int(d.g * 255.0 + 0.5));
+}
+
+int bit_for(ivec2 d) {
+	if (d.y == 0) {
+		return d.x > 0 ? 0 : 1;
 	}
-	return v;
+	if (d.x == 0) {
+		return d.y > 0 ? 2 : 3;
+	}
+	if (d.y > 0) {
+		return d.x > 0 ? 4 : 5;
+	}
+	return d.x > 0 ? 6 : 7;
 }
 
-// Paving stones: running-bond rows of irregular slabs with soft grout.
-float paving(vec2 p) {
-	p.x += step(1.0, mod(floor(p.y), 2.0)) * 0.5;
-	p += (vec2(vnoise(p * 3.0), vnoise(p * 3.0 + 7.0)) - 0.5) * 0.08;
-	vec2 cell = floor(p);
-	vec2 f = fract(p);
-	float d = min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y));
-	float stone = 0.88 + 0.22 * hash12(cell);
-	return mix(0.72, stone, smoothstep(0.02, 0.08, d));
+vec3 ground(int id, vec2 xz) {
+	vec2 uv = xz * ground_uv_scale;
+	float layer = float(id);
+	vec3 a = texture(ground_tex, vec3(uv, layer)).rgb;
+	// rotated (37 deg), rescaled second sample mixed in by low-frequency noise: hides the repeat
+	vec2 uv2 = mat2(vec2(0.799, 0.602), vec2(-0.602, 0.799)) * uv * 0.83 + vec2(0.37, 0.61);
+	vec3 b = texture(ground_tex, vec3(uv2, layer)).rgb;
+	float m = smoothstep(0.3, 0.7, vc_vnoise(xz * 0.13 + layer * 3.7));
+	return mix(a, b, m);
 }
 
-vec3 layer_color(int i, vec2 xz) {
-	if (use_layer_textures) {
-		return texture(layer_albedo, vec3(xz * layer_uv_scale, float(i))).rgb;
-	}
-	float n = fbm(xz * LAYER_FREQ[i] + float(i) * 13.7);
-	float speck = vnoise(xz * 6.0 + float(i) * 3.1);
-	vec3 c = LAYER_COLOR[i] * (1.0 - LAYER_CONTRAST[i] + 2.0 * LAYER_CONTRAST[i] * n);
-	c *= 0.92 + 0.16 * speck;
-	if (i == 7) {
-		c *= paving(xz * vec2(0.8, 1.1));
-	}
+float edge_noise(vec2 xz, float salt) {
+	vec2 p = xz * edge_noise_freq + vec2(salt * 17.31, salt * 5.77);
+	return vc_vnoise(p) * 0.62 + vc_vnoise(p * 2.37 + 3.1) * 0.28 + vc_vnoise(p * 5.3 + 9.2) * 0.1 - 0.5;
+}
+
+vec3 cliff_sample(vec2 uv) {
+	// two scales mixed by noise and a gentle domain warp: breaks the straight block courses
+	vec2 w = vec2(vc_vnoise(uv * 1.7), vc_vnoise(uv * 1.7 + 5.3)) - 0.5;
+	vec2 uvw = uv + w * 0.22;
+	vec3 a = texture(cliff_tex, uvw).rgb;
+	vec3 b = texture(cliff_tex, uvw * 0.57 + vec2(0.31, 0.17)).rgb;
+	return mix(a, b, smoothstep(0.35, 0.65, vc_vnoise(uv * 0.6 + 2.0)));
+}
+
+vec3 cliff_color(vec3 p, vec3 n) {
+	vec3 bw = pow(abs(n), vec3(4.0));
+	bw /= (bw.x + bw.y + bw.z);
+	vec3 cx = cliff_sample(vec2(p.z, -p.y) * cliff_uv_scale);
+	vec3 cy = cliff_sample(p.xz * cliff_uv_scale);
+	vec3 cz = cliff_sample(vec2(p.x, -p.y) * cliff_uv_scale);
+	vec3 c = cx * bw.x + cy * bw.y + cz * bw.z;
+	// deepen the crevices, keep the faces pale (painted, chunky read)
+	c *= mix(0.62, 0.98, smoothstep(0.12, 0.55, vc_luma(c)));
+	// moss on ledges facing the sky
+	c = mix(c, vec3(0.30, 0.38, 0.17), smoothstep(0.35, 0.8, n.y) * 0.6);
 	return c;
 }
 
-vec3 rock_color(vec3 p, vec3 n) {
-	vec3 bw = pow(abs(n), vec3(4.0));
-	bw /= (bw.x + bw.y + bw.z);
-	if (use_rock_texture) {
-		vec3 cx = texture(rock_albedo, p.zy * rock_uv_scale).rgb;
-		vec3 cy = texture(rock_albedo, p.xz * rock_uv_scale).rgb;
-		vec3 cz = texture(rock_albedo, p.xy * rock_uv_scale).rgb;
-		return cx * bw.x + cy * bw.y + cz * bw.z;
-	}
-	// procedural strata: horizontal bands warped by noise, per projection plane
-	float sx = fbm(p.zy * vec2(0.8, 2.2));
-	float sy = fbm(p.xz * 0.9);
-	float sz = fbm(p.xy * vec2(0.8, 2.2));
-	float s = sx * bw.x + sy * bw.y + sz * bw.z;
-	float band = 0.5 + 0.5 * sin(p.y * 5.0 + s * 6.0);
-	vec3 base = mix(vec3(0.30, 0.27, 0.24), vec3(0.50, 0.46, 0.40), s);
-	return base * (0.8 + 0.25 * band);
-}
-
-float fog_factor(vec2 xz) {
-	float f = texture(fog_tex, xz / map_size_m).r;
-	return f < 0.5 ? mix(0.0, 0.45, f * 2.0) : mix(0.45, 1.0, (f - 0.5) * 2.0);
-}
-
-void vertex() {
-	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	world_normal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
-	w_lo = COLOR;
-	w_hi = CUSTOM0;
-	rock_flag = UV2.x;
-}
-
 void fragment() {
-	vec2 xz = world_pos.xz;
-	float w[8] = float[8](w_lo.r, w_lo.g, w_lo.b, w_lo.a, w_hi.r, w_hi.g, w_hi.b, w_hi.a);
-	// height blend: each layer gets a noise "height", the tallest weighted layers win with a
-	// soft transition band, giving organic borders instead of bilinear smears.
-	float hmax = 0.0;
-	float hv[8];
-	for (int i = 0; i < 8; i++) {
-		hv[i] = w[i] > 0.001 ? w[i] + 0.55 * fbm(xz * 0.55 + float(i) * 7.3) : -1.0;
-		hmax = max(hmax, hv[i]);
-	}
-	vec3 col = vec3(0.0);
-	float total = 0.0;
-	for (int i = 0; i < 8; i++) {
-		float b = max(hv[i] - hmax + blend_sharpness, 0.0);
-		if (b > 0.0) {
-			col += layer_color(i, xz) * b;
-			total += b;
+	vec2 xz = v_world.xz;
+	vec3 col;
+	if (v_wall > 0.5) {
+		col = cliff_color(v_world, v_wnormal);
+		// dark foot, lighter painted lip with a little moss on the top course (bible §6.2)
+		col *= mix(0.6, 1.0, smoothstep(0.0, 0.4, v_wall_h));
+		float lip = smoothstep(0.78, 0.97, v_wall_h);
+		col = mix(col, col * 1.22 + vec3(0.015, 0.02, 0.0), lip);
+		col = mix(col, vec3(0.30, 0.38, 0.17), smoothstep(0.93, 1.0, v_wall_h) * 0.55);
+		col *= mix(0.9, 1.05, vc_vnoise(v_world.xz * 0.7 + v_world.y * 0.9));
+	} else {
+		vec2 p = xz / tile_m - 0.5;
+		ivec2 c0 = ivec2(floor(p));
+		vec2 f = fract(p);
+		ivec2 own = clamp_tile(ivec2(floor(xz / tile_m)));
+		ivec2 od = tile_data(own);
+		int ids[4];
+		ivec2 offs[4] = ivec2[4](ivec2(0, 0), ivec2(1, 0), ivec2(0, 1), ivec2(1, 1));
+		for (int i = 0; i < 4; i++) {
+			ivec2 t = c0 + offs[i];
+			ivec2 d = t - own;
+			if (d == ivec2(0)) {
+				ids[i] = od.x;
+			} else {
+				bool linked = ((od.y >> bit_for(d)) & 1) == 1;
+				ids[i] = linked ? tile_data(t).x : od.x;
+			}
 		}
+		int lo = min(min(ids[0], ids[1]), min(ids[2], ids[3]));
+		int hi = max(max(ids[0], ids[1]), max(ids[2], ids[3]));
+		col = ground(lo, xz);
+		for (int l = lo + 1; l <= hi; l++) {
+			if (ids[0] != l && ids[1] != l && ids[2] != l && ids[3] != l) {
+				continue;
+			}
+			float w00 = ids[0] >= l ? 1.0 : 0.0;
+			float w10 = ids[1] >= l ? 1.0 : 0.0;
+			float w01 = ids[2] >= l ? 1.0 : 0.0;
+			float w11 = ids[3] >= l ? 1.0 : 0.0;
+			float fld = mix(mix(w00, w10, f.x), mix(w01, w11, f.x), f.y);
+			float a = fld + edge_noise(xz, float(l)) * 2.0 * edge_noise_amp;
+			float m = smoothstep(0.5 - edge_width, 0.5 + edge_width, a);
+			if (m > 0.001) {
+				vec3 g = ground(l, xz);
+				g *= mix(1.0 - edge_rim, 1.0, smoothstep(0.5, 0.5 + 0.16, a));
+				col = mix(col, g, m);
+			}
+		}
+		col *= v_ao;
+		col = mix(col, col * 1.14 + vec3(0.012, 0.012, 0.0), v_lip * 0.7);
+		// macro tint: +-6 % value, slight warm / cool hue drift (bible §6.1)
+		float mt = vc_vnoise(xz / macro_period) * 0.7 + vc_vnoise(xz / (macro_period * 0.37) + 4.0) * 0.3;
+		col *= mix(vec3(0.93, 0.95, 0.97), vec3(1.06, 1.05, 0.99), mt);
+		col = vc_saturate(col, ground_saturation);
 	}
-	col /= max(total, 0.0001);
-
-	float steep = smoothstep(0.82, 0.6, world_normal.y);
-	float rock = max(rock_flag, steep);
-	if (rock > 0.001) {
-		col = mix(col, rock_color(world_pos, world_normal), rock);
-	}
-	// darken the base of walls slightly (fake ambient occlusion)
-	col *= 1.0 - 0.18 * rock_flag * (1.0 - clamp(fract(world_pos.y / 1.75) * 2.0, 0.0, 1.0));
-
+	// shore: wet band above the water line, tinted bed below it (bible §6.3)
+	float h = v_world.y;
+	float wet = smoothstep(water_level + 0.38, water_level + 0.04, h);
+	col *= 1.0 - 0.25 * wet;
+	float under = smoothstep(water_level, water_level - 0.7, h);
+	col = mix(col, col * vec3(0.55, 0.72, 0.74), under);
 	if (fog_enabled) {
-		col *= fog_factor(xz);
+		float fw = texture(fog_tex, xz / map_size_m).r;
+		col *= fw < 0.5 ? mix(0.0, 0.45, fw * 2.0) : mix(0.45, 1.0, (fw - 0.5) * 2.0);
 	}
-	// palette and procedural colours are authored in sRGB; lighting works in linear space
-	ALBEDO = use_layer_textures ? col : pow(col, vec3(2.2));
-	ROUGHNESS = mix(0.92, 0.8, rock);
-	SPECULAR = 0.25;
+	ALBEDO = col;
+	ROUGHNESS = 1.0;
+	METALLIC = 0.0;
+}
+
+void light() {
+	float ndl = dot(NORMAL, LIGHT);
+	float w = clamp((ndl + 0.2) / 1.2, 0.0, 1.0);
+	DIFFUSE_LIGHT += w * ATTENUATION * LIGHT_COLOR / PI * vc_cloud(v_world.xz);
 }

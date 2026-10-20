@@ -137,6 +137,7 @@
     "dummy_mine": {
       "name": "Placeholder Mine",
       "kind": "resource",
+      "model": "neutral/gold_mine",
       "flags": ["resource", "gold_mine", "invulnerable"],
       "shape": "mine",
       "hp": 2000,

@@ -81,9 +81,12 @@ src/
   autoload/     defs.gd (Defs), audio.gd (Audio), settings.gd (Settings), events.gd (Events)
   main.tscn + main.gd   boots a match: scenario "slice" (data/maps/slice.json, both factions,
                 start halls + workers, mines, neutral buildings, creep camps, AI seat) or
-                "sandbox" (generated test map with dummy defs; engine playtests)
+                "sandbox" (generated test map with dummy defs; engine playtests). Both paths
+                apply the view setup (RenderProfile camera + ViewHooks); `spawn_skirmish =
+                false` skips start bases and creep camps (screenshot / showcase scripts)
   world/        world.gd + world.tscn (match root), grid.gd, map_data.gd, map_generator.gd,
-                terrain_builder.gd, terrain.gdshader, water.gdshader, tree.gdshader,
+                terrain_builder.gd, terrain.gdshader, water.gdshader, tree.gdshader (legacy
+                card-tree shader, unused since the kit trees: they use render/foliage.gdshader),
                 pathing.gd, group_path.gd, spatial_hash.gd, fog.gd, doodads.gd, day_night.gd
   entities/     unit.gd, order.gd, orders/ (one OrderHandler per order type), projectile.gd,
                 unit_view.gd (visuals) + unit_placeholder.gdshader
@@ -93,6 +96,13 @@ src/
                 items.gd (+ items/effects/*.gd), shops.gd, creeps.gd, ai/ai_player.gd
   input/        rts_camera.gd, selection.gd, command_input.gd
   ui/           hud.tscn + hud.gd, command_card.gd, minimap.gd, tooltip.gd, theme/
+  render/       visual-only rendering layer: asset_library.gd (model resolution, shared painterly
+                materials, manifests), unit.gdshader / structure.gdshader / foliage.gdshader +
+                unit_uniforms.gdshaderinc (fixed instance-uniform slots) + render_common.gdshaderinc,
+                render_atmos.gd (fx clock, shared per-frame uniforms), time_of_day.gd (Greenvale keys),
+                color_grade.gd (grading LUTs), render_profile.gd (camera constants),
+                terrain_textures.gd (ladder Texture2DArray), view_hooks.gd (selection rim, pads),
+                unit_manifest_builder.gd (generates assets/models/units/manifest.json)
   fx/           vfx.gd (floating combat text, hit flashes; later pooled particles),
                 selection_circles.gd + ring.gdshader,
                 health_bars.gd + health_bar.gdshader, proc_mesh.gd (placeholder mesh helpers)
@@ -314,18 +324,48 @@ signals per M2 system (economy, construction, production, tech, heroes, abilitie
 items, shops, creeps, fog; listed by owner in `docs/m2-ownership.md` §6 and documented in each
 system's header). Signals are emitted immediately; deaths are deferred to `cleanup`.
 
-Visuals are a child `UnitView` (`src/entities/unit_view.gd`): loads `assets/models/<model>.glb` if
-it exists, otherwise builds a placeholder from the def's `shape` hint (`humanoid` capsule + head +
-team-colour band and shoulders with a `weapon` prop; `building` box + `roof` pyramid/gable +
-team band and banner; `mine` rock mound with gold nuggets). Placeholder parts are merged into one
-vertex-coloured mesh cached per (def, team colour), so each unit is one draw call. Applies team colour
-(shader param on materials whose name contains `TEAM` or via mask texture); drives animation:
-standard clip names **`idle, walk, attack, death, work, cast, birth`**. If a clip is missing it falls
-back to procedural motion: walk bob/lean, attack lunge (melee) or draw (ranged) peaking at the
-damage point, death topple (0.55 s) then sink during the last 2.5 s before removal (structures
-sink and tilt). Placeholders use `unit_placeholder.gdshader` (sRGB vertex colours + per-instance
-`flash` uniform for hit flashes, so all units still share one material). Selection circle and
-health bar are rendered by `fx/` systems, not by `UnitView`.
+Visuals are a child `UnitView` (`src/entities/unit_view.gd`; visual only, reads sim state, never
+writes it). Model: `AssetLibrary.model_path(def, def_id)` = the def's `model` (`"units/<name>"`, a bare
+name or a res:// path), else the unit manifest alias for the def id (`kingdom_pavisier` →
+`kingdom_infantry`), else `assets/models/{units,buildings,neutral}/<def_id>.glb`, else a placeholder from
+the def's `shape` hint (`humanoid` capsule + head + team band; `building` box + roof + banner; `mine`
+mound with nuggets; merged into one vertex-coloured mesh per (def, team colour)). Units render at
+native GLB size × `def.model_scale` (default `def.scale`); **structures are scaled uniformly to their
+data footprint** (footprint metres / the building manifest's `footprint_m` or the model AABB;
+`model_fit: "none"` keeps `model_scale` / `scale`). Upgraded halls point `model` at the T1 hall and
+list their add-on in `model_addons` (data/SCHEMA.md): each add-on is parented in the hall's model
+space (a building-manifest `addon_of` entry loaded directly is likewise parented with its T1 hall).
+A def with `model_depleted` (Gold Seam) swaps to that model on `Events.mine_depleted`. Every
+imported material is converted once
+(cached per source material) to the shared painterly shaders in `src/render/`: `unit.gdshader`
+(wrap-Lambert + soft two-band key, no specular, model-space value gradient, team colour from the
+`<model>_team.png` texel mask + magenta key or a grey `TEAM` surface multiplied, team-colour rim,
+energy-conserving latched hit flash, corpse team-colour ebb, night unit fill), `structure.gdshader`
+(same + vertex AO, `GLOW/LAMP/EMBER/GLYPH` emission × `glow_energy`, construction reveal) and
+`foliage.gdshader` (`SWAY` surfaces). Per-instance values are **instance uniforms in a fixed slot
+map** (`src/render/unit_uniforms.gdshaderinc`, juice bible R4: 0 `flash` (t0 on the fx clock,
+strength, duration), 1 `flash_tint`, 2 `rim_boost`, 3 `team_sat`, 4 `sat_front`, 5–6 hero status,
+7 `rim_col`, 8–10 economy props, 11 `variant_a` (structures: x = build progress), 12 reserved,
+13 `team_color`), written only when they change. Hooks: `flash(strength, tint, duration)` (Vfx),
+`set_selected()` / `set_hovered()` (rim boost; `ViewHooks` forwards `selection_changed`), optional
+sim publishers read by duck typing: `build_progress` (0..1), `anim_hint` ("work" / "cast") with
+`work_progress()` / `cast_progress()` (+ `*_point_ratio()`, `*_time()`).
+Animation (rigged GLBs, `AnimationPlayer` in manual mode, advanced every frame with real delta):
+clips **`idle, walk, attack, death, work, cast`** with fallbacks (attack ← work ← cast; idle ← walk);
+`idle/walk/work/run` loop (LOOP_LINEAR), others play once; 0.15 s crossfades. Walk playback = actual
+speed / `walk_anim_speed` × model scale (stride matching, from `assets/models/units/manifest.json`).
+Attack / cast / work clips are **positioned from the sim swing progress**: `[0, damage point]` maps
+to `[start_s, hit_s]` and the backswing to `[hit_s, end_s]` (manifest `attack_hit_s` = peak
+weapon-hand speed; the wind-up start is pulled in so it never plays faster than 3× or slower than
+0.6×), so the strike frame lands exactly on the sim damage point at any frame rate. Death plays once
+from `dead_time()` and holds; the team colour ebbs from 0.7 s over 1.4 s (feet to head) and the body
+sinks over the last 1.5 s before removal. Off-screen rigs skip skeleton work (frustum sphere test) and
+loops catch up when seen. Models without clips fall back to procedural motion (bob/lean, lunge or
+draw peaking at the damage point, topple + sink; structures sink and tilt).
+`src/render/unit_manifest_builder.gd` regenerates the unit manifest (clip lengths, stride speed from
+`tools/autorig.py`'s QA `stance_speed_mps` when its logs are given, else measured from the toe bones;
+strike / cast / work hit frames; death settle time). Selection circle and health bar are rendered by
+`fx/` systems, not by `UnitView`.
 `Projectile` (`src/entities/projectile.gd`, `Node3D` under `World/Projectiles`): simulated in
 the `projectiles` stage; homes on its target's current `hit_point()` along a parabola whose peak
 is `arc × flight distance`, carries the base damage rolled at launch, and on arrival `Combat`
@@ -426,20 +466,38 @@ frees it. Visuals are a placeholder arrow mesh.
   base, 2 starts with gold mines, 4 creep camps (sandbox scenario and engine tests).
 - `TerrainBuilder` generates chunked `ArrayMesh` (16×16 tiles per chunk): tile tops (2×2
   subdivided) at their corner heights + vertical cliff walls with noise bulges (seams stay exact),
-  ramps as slopes; splat weights for layers 0–3 in `COLOR` and 4–7 in `CUSTOM0` (averaged across
-  tiles sharing a vertex at the same height), `UV2.x = 1` marks cliff walls. `terrain.gdshader`
-  blends up to 8 layers with noise height-blending. Layers are procedural colour+noise
-  placeholders until `use_layer_textures` is set with a `Texture2DArray` in `layer_albedo`
-  (slices: 0 grass, 1 dark grass, 2 dirt, 3 rough dirt, 4 rock, 5 sand, 6 dry grass, 7 paved);
-  walls use triplanar rock (`rock_albedo` + `use_rock_texture`, procedural strata otherwise).
+  ramps as slopes; `UV2 = (1, height fraction up the wall)` marks cliff walls; tile-top `COLOR.r` =
+  cliff-foot AO, `COLOR.g` = cliff-top lip. Ground look: the Greenvale 7-tile ladder
+  (`TerrainTextures.ladder_array()`, a `Texture2DArray` in draw order 0 `gv_scree`, 1 `gv_cracked`,
+  2 `gv_dirt`, 3 `gv_road`, 4 `gv_grassy_dirt`, 5 `gv_meadow`, 6 `gv_thick_meadow`) blended with an
+  **ordered 16-case corner mask** on the dual grid of tile centres: per present slot L (in draw
+  order) the 4-bit mask "corner slot ≥ L" is interpolated and thresholded against world-space noise
+  (0.35 tile amplitude, ~1.7 cycles per tile) with a painted rim — no soft splats. Per-tile data in
+  `tile_info` (RGBA8, nearest): R = ladder slot, G = 8 connectivity bits (no blending across a
+  wall). `MapData.tex` legacy indices map to the ladder through `LEGACY_TO_LADDER` (maps authored
+  in ladder order set `tex_set = "gv_ladder"`); ramps paint `gv_dirt`, cliff feet get a `gv_scree`
+  band. `paint_tiles(rect, slot)` repaints at runtime (building pads via `ViewHooks`). World-space UVs
+  (~6 m per repeat), two rotated samples + 45 m macro tint; walls are triplanar `cliff_limestone`
+  (warped, two scales, dark foot, mossy lighter lip); wet band and tinted bed at the water line.
   Fog hook: `fog_tex` (L8: 0 unexplored, 0.5 fogged, 1 visible), `fog_enabled`, `map_size_m`
-  — shared by the tree and water shaders; `TerrainBuilder.set_fog_texture(tex)`.
+  — shared by the foliage and water shaders; `TerrainBuilder.set_fog_texture(tex)`.
 - `Doodads` stores trees on a 1 m tree grid (one tree = 2×2 cells), lumber per tree from
-  `data/doodads.json`, renders them via one `MultiMeshInstance3D` per tree type (placeholder
-  cone/cylinder pine and sphere-canopy tree, wind sway in the shader), handles
-  `harvest(tree, amount)`, `remove_tree`, `tree_at_cell`, `nearest_tree`; depleted trees free their
-  cells and emit `tree_felled`.
-- Water: simple animated plane shader at a fixed level.
+  `data/doodads.json`, handles `harvest(tree, amount)`, `remove_tree`, `tree_at_cell`,
+  `nearest_tree`; depleted trees free their cells and emit `tree_felled`. Visuals: the doodad kit's
+  hill oak / linden / hazel GLBs (species picked per tree by hash from the map tree type; card-cluster
+  trees from `assets/textures/foliage` when missing), canopy-fitted to the 1 m grid, one MultiMesh
+  per (species, LOD, 32 m chunk); enclosed trees use LOD1 and are promoted to the full mesh when a
+  neighbour falls; a stump replaces a felled tree; instance hue/value jitter in `INSTANCE_CUSTOM`
+  (instance colours white: Compatibility multiplies COLOR by them). Plus a deterministic,
+  non-blocking decor scatter (tufts, wildflowers, scree rocks, reeds, lily pads, mushrooms) cleared
+  under building footprints (`clear_decor`). Wind sway in `foliage.gdshader` (COLOR.r weight).
+- Water: `water_ripples` scrolled at two scales, shallow/deep by depth read from a terrain height
+  texture (no depth buffer, Compatibility-safe), foam line at the shore, ripple-normal glint.
+- Lighting (`DayNight`, visual only): `TimeOfDay` keys (juice world §5.1) drive a sun (50–55° from
+  screen lower-left by day, low at dawn/dusk) and a moon (#8EA6FF) with the shadow hand-over,
+  coloured ambient, Reinhard (white 1.5), depth fog 32–90 m in the key colour, glow above HDR 1.1,
+  per-hour saturation/contrast + a procedural grading LUT (`ColorGrade`), and through `RenderAtmos`
+  the shared uniforms: fx clock, drifting cloud shadows, night unit fill, window/lamp glow.
 
 ## 8. Fog of war
 
@@ -452,7 +510,8 @@ use these queries so turning fog on changes no call sites.
 Target design: `Fog` keeps per-player `PackedByteArray` grids (0 = unexplored, 1 = explored/fogged, 2 = visible)
 at 1 m resolution. Recomputed ~10 Hz from unit sight radii (cliff level blocks sight to higher
 levels, trees don't for the slice). Uploads the local player's grid into an `ImageTexture` (L8)
-used by terrain/doodad shaders and the minimap. Enemy units outside visible cells are hidden;
+used by the terrain, water and foliage (trees, `src/render/foliage.gdshader`) shaders through
+`World.set_fog_texture` and by the minimap. Enemy units outside visible cells are hidden;
 enemy buildings once seen leave a "ghost" until re-scouted.
 
 ## 9. Players & economy
@@ -530,7 +589,8 @@ requirements, ability unlocks. Each file's header documents the full contract.
   `subgroup_next` (tab), `group_0..9` (digit keys; ctrl/shift read from event modifiers),
   `card_0..11` (command card grid Q W E R / A S D F / Z X C V, row-major).
 - `RtsCamera` (`extends Camera3D`): looks at a ground `focus` point from `distance` along a fixed
-  pitch (default -56°, FOV 45°, distance 14–46 m, default 28 m), wheel zoom (smoothed), arrow
+  pitch (-56°; `main.gd` applies `RenderProfile`: FOV 55° vertical `KEEP_HEIGHT`, distance
+  18.75–35.2 m, default 25.8 m, near 0.3 / far 120 m — research README §1), wheel zoom (smoothed), arrow
   keys + screen-edge pan (speed scales with zoom; `Settings.edge_pan_*`; only after the mouse has
   moved inside a focused window) + middle-drag "grab the ground", clamped to the map; ground
   height followed smoothly. API: `setup(world, start)`, `jump_to(pos)`, `screen_to_ground(px)`.

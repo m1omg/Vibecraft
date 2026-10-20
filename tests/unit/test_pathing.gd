@@ -185,25 +185,40 @@ func test_unreachable_query_is_cheap() -> void:
 
 
 func test_relabel_only_when_a_split_is_possible() -> void:
-	var m := MapGenerator.test_map()
-	var w := make_world(m)
-	var p := w.pathing
-	var r := Grid.footprint_rect(m.start_locations[0] + Vector3(12, 0, -12), Vector2i(8, 8))
-	assert_true(p.is_rect_free(r), "test site is free")
-	p.set_footprint_rect(r, true)
-	assert_false(p._labels_dirty, "building in the open cannot split a region: no relabel")
-	# force a full background relabel and measure its per-tick cost
-	p._labels_dirty = true
+	var m: MapData
+	var p: Pathing
+	# Force a full background relabel and measure its per-tick cost. The job is deterministic, so
+	# (like test_perf's best_tick_samples) it runs 3 times on fresh worlds and each tick keeps its
+	# fastest run scaled to the reference machine: host noise on a shared VM no longer fails the
+	# bound, while a real spike (a step doing too much work) shows in every run.
+	var best := PackedFloat64Array()
 	var ticks := 0
+	for rep in 3:
+		m = MapGenerator.test_map()
+		var w := make_world(m)
+		p = w.pathing
+		var r := Grid.footprint_rect(m.start_locations[0] + Vector3(12, 0, -12), Vector2i(8, 8))
+		assert_true(p.is_rect_free(r), "test site is free")
+		p.set_footprint_rect(r, true)
+		assert_false(p._labels_dirty, "building in the open cannot split a region: no relabel")
+		p._labels_dirty = true
+		var k := machine_slowdown()
+		ticks = 0
+		while ticks < 300:
+			var t := Time.get_ticks_usec()
+			p.begin_tick()
+			var ms := (Time.get_ticks_usec() - t) / 1000.0 / k
+			if ticks < best.size():
+				best[ticks] = minf(best[ticks], ms)
+			else:
+				best.append(ms)
+			ticks += 1
+			if p._job.is_empty() and not p._labels_dirty:
+				break
 	var worst := 0.0
-	while ticks < 300:
-		var t := Time.get_ticks_usec()
-		p.begin_tick()
-		worst = maxf(worst, (Time.get_ticks_usec() - t) / 1000.0)
-		ticks += 1
-		if p._job.is_empty() and not p._labels_dirty:
-			break
-	print("     full relabel: %d ticks, worst %.2f ms/tick" % [ticks, worst])
+	for v in best:
+		worst = maxf(worst, v)
+	print("     full relabel: %d ticks, worst %.2f ms/tick (best of 3)" % [ticks, worst])
 	assert_lt(float(ticks), 150.0, "relabel finishes within ~5 s of sim time")
 	assert_lt(worst, 8.0, "relabel step stays bounded")
 	var s0 := Grid.world_to_cell(m.start_locations[0] + Vector3(0, 0, -8))
@@ -303,6 +318,36 @@ func test_group_order_shares_path_searches() -> void:
 	for i in units.size():
 		worst = maxf(worst, Grid.flat_dist(units[i].pos, goals[i]))
 	assert_lt(worst, 2.0, "every unit reached its formation slot (worst %.2f m)" % worst)
+
+
+## A unit that leaves its group order before taking its share of the group path (here: an
+## attack-move member that auto-acquires an enemy while the tick's path budget is spent) drops the
+## group entirely; its chase path is then a plain query, never a lookup on a cleared group.
+@warning_ignore("integer_division")
+func test_engaging_before_the_group_path_drops_the_group() -> void:
+	var m := MapGenerator.test_map()
+	var w := make_world(m)
+	var s0 := m.start_locations[0]
+	var units: Array = []
+	var ids: Array = []
+	for i in 24:
+		var u := w.spawn_unit("dummy_soldier", 0, s0 + Vector3((i % 6) * 1.2 - 3.0, 0, (i / 6) * 1.2 + 6.0))
+		units.append(u)
+		ids.append(u.id)
+	w.issue({"type": "attack_move", "player": 0, "units": ids, "pos": m.start_locations[1]})
+	var enemy := w.spawn_unit("dummy_soldier", 1, s0 + Vector3(0, 0, 14))
+	for i in 3:
+		w.step()
+	for u: Unit in units:
+		assert_false(u._group_try and u._group == null, "%s holds no stale group flag" % u.name)
+	for i in 30 * 10:
+		w.step()
+	assert_false(enemy.alive, "the group chased and killed the enemy it met")
+	var moving := 0
+	for u: Unit in units:
+		if u.alive and u.current != null and u.path.size() >= 2:
+			moving += 1
+	assert_true(moving > 0, "and resumed its attack-move along real paths")
 
 
 func test_can_reach_uses_region_labels() -> void:

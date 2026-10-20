@@ -11,6 +11,12 @@ extends Node3D
 @export_enum("slice", "sandbox") var scenario: String = "slice"
 @export var map_seed: int = 1337
 @export var player_factions: Array[String] = ["kingdom", "clans"]
+## false: only the map (with its Gold Seams and neutral buildings), lighting and camera are set up;
+## no start bases or creep camps (screenshot / showcase scripts place units).
+@export var spawn_skirmish: bool = true
+## Sandbox slot colours (art bible §2.4: kingdom Emerald vs clans Royal Blue, never the reference
+## pairing of blue against red). The slice picks the same pair from factions.<id>.colour_prefs.
+const SLOT_COLORS: Array[Color] = [Color("#2EAE3A"), Color("#285DE6")]
 
 @onready var world: World = $World
 @onready var camera: RtsCamera = $Camera
@@ -39,6 +45,7 @@ func _ready() -> void:
 
 func _boot_slice(map: MapData) -> void:
 	world.setup(map, map_seed)
+	_setup_view()
 	var taken: Array = []
 	for pid in 2:
 		var fid := player_factions[pid]
@@ -57,9 +64,10 @@ func _boot_slice(map: MapData) -> void:
 		world.spawn_unit("gold_mine", PlayerState.NEUTRAL_PASSIVE, g, atan2(-(hall.x - g.x), -(hall.z - g.z)))
 	for nb: Dictionary in map.neutral_buildings:
 		world.spawn_unit(str(nb["def"]), PlayerState.NEUTRAL_PASSIVE, nb["pos"], deg_to_rad(float(nb.get("facing", 0.0))))
-	for pid in 2:
-		_spawn_start(pid, map.start_locations[pid], map.gold_mines[pid], map)
-	world.creeps.spawn_camps(map)
+	if spawn_skirmish:
+		for pid in 2:
+			_spawn_start(pid, map.start_locations[pid], map.gold_mines[pid], map)
+		world.creeps.spawn_camps(map)
 	camera.setup(world, map.start_locations[0] + Vector3(0, 0, -4))
 
 
@@ -103,18 +111,31 @@ func _boot_sandbox() -> void:
 	Defs.load_test_defs()   # the sandbox uses the placeholder dummy_* defs
 	var map := MapGenerator.test_map(map_seed)
 	world.setup(map, map_seed)
+	_setup_view()
 	for p: PlayerState in [world.add_player(0, 0, "placeholder_a", false),
 			world.add_player(1, 1, "placeholder_b", true)]:
 		var fac := Defs.faction(p.faction)
 		p.gold = int(fac.get("start_gold", 0))
 		p.lumber = int(fac.get("start_lumber", 0))
+		p.color = SLOT_COLORS[p.id]
 	world.add_player(PlayerState.NEUTRAL_HOSTILE, PlayerState.NEUTRAL_HOSTILE)
 	world.add_player(PlayerState.NEUTRAL_PASSIVE, PlayerState.NEUTRAL_PASSIVE)
 	world.local_player_id = 0
-	for pid in 2:
-		_spawn_sandbox_base(pid, map.start_locations[pid], map.gold_mines[pid], map)
-	world.creeps.spawn_camps(map)
+	if spawn_skirmish:
+		for pid in 2:
+			_spawn_sandbox_base(pid, map.start_locations[pid], map.gold_mines[pid], map)
+		world.creeps.spawn_camps(map)
 	camera.setup(world, map.start_locations[0] + Vector3(0, 0, -4))
+
+
+## Environment setup: camera constants (RenderProfile, research README §1) and the view hooks
+## (selection rim highlight, building pads). Lighting and grade live in DayNight.
+func _setup_view() -> void:
+	RenderProfile.apply_camera(camera)
+	var hooks := ViewHooks.new()
+	hooks.name = "ViewHooks"
+	world.add_child(hooks)
+	hooks.setup(world)
 
 
 func _spawn_sandbox_base(pid: int, start: Vector3, mine: Vector3, map: MapData) -> void:
