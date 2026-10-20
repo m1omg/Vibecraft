@@ -269,7 +269,8 @@ def stem_chain(inst):
     ch = ["aformat=sample_fmts=flt:channel_layouts=stereo", f"volume={inst.trim_db:.2f}dB"]
     if inst.drive > 0:
         pre = 10.0 + 14.0 * inst.drive
-        ch += [f"volume={pre:.2f}dB", "asoftclip=type=tanh:oversample=2", f"volume={-pre:.2f}dB"]
+        # (asoftclip's oversample option loses about 6 dB in ffmpeg 6.1, so it is not used)
+        ch += [f"volume={pre:.2f}dB", "asoftclip=type=tanh", f"volume={-pre:.2f}dB"]
     ch += eq_filters(inst.eq)
     ch += [f"volume={inst.gain_db:.2f}dB", pan_filter(inst.pan, inst.width)]
     return ",".join(ch)
@@ -506,12 +507,20 @@ def render(piece_path, out=None, kind=None, xfade=None, trim=None, trim_fade=Non
     if length_check and rng:
         if not (rng[0] <= meas["duration_s"] <= rng[1]):
             problems.append(f"duration {meas['duration_s']} s outside {rng}")
+    audio = analyze.decode(out)
+    spans = []
+    for i, s in enumerate(piece.sections):
+        t0 = piece.seconds(s.start)
+        t1 = piece.seconds(s.end) if i + 1 < len(piece.sections) else min(len(audio) / SR, piece.seconds(s.end))
+        spans.append((s.name, t0, min(t1, len(audio) / SR)))
+    if len(audio) / SR > piece.duration_s + 0.5:
+        spans.append(("(tail)", piece.duration_s, len(audio) / SR))
+    report["sections_db"] = analyze.section_loudness(audio, spans)
     report["problems"] = problems
     if pngs:
         spec = os.path.join(png_dir, f"{name}_spectrogram.png")
         roll = os.path.join(png_dir, f"{name}_pianoroll.png")
         analyze.spectrogram(out, spec, title=name)
-        audio = analyze.decode(out)
         marks = []
         if kind == "loop":
             marks.append((piece.duration_s - xfade, "xfade"))

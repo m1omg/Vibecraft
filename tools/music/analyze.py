@@ -10,8 +10,9 @@ Measurements:
                air >6k), to check warmth versus muddiness and the unit-voice gap
   arc          short-term loudness (3 s windows, K-weighted) min / median / max: the dynamic arc
   gaps         spans quieter than -40 dB below the median for more than 2 s (empty spans)
-  seam (loop)  across the loop point: RMS step (dB), 1/3-octave spectral distance (dB) compared with the
-               median distance between neighbouring windows inside the piece, and the sample jump
+  seam (loop)  across the loop point: RMS step (dB, aim within +-2), 1/3-octave spectral distance (dB) and its
+               ratio to the median distance between neighbouring 0.5 s windows inside the piece (aim < 1.5),
+               and the sample jump at the seam over the 99th percentile of all sample steps (aim < 1: no click)
 Pictures: spectrogram (ffmpeg showspectrumpic, log frequency) and the piano roll (score data, see
 pianoroll()).
 """
@@ -92,6 +93,17 @@ def third_octave(seg, sr=SR):
     return np.array(out)
 
 
+def section_loudness(x, spans, sr=SR):
+    """K-weighted mean loudness (dB) of each (name, t0, t1) span: the section-by-section dynamic arc."""
+    k = (kweight(x) ** 2).mean(1)
+    out = []
+    for name, t0, t1 in spans:
+        a, b = int(max(0, t0) * sr), int(min(len(k), t1 * sr))
+        if b > a:
+            out.append((name, round(t0, 2), round(10 * math.log10(k[a:b].mean() + 1e-20), 1)))
+    return out
+
+
 def seam(x, sr=SR, w=0.5):
     """Loop seam metrics: the end of the file played into its start."""
     k = int(w * sr)
@@ -104,11 +116,11 @@ def seam(x, sr=SR, w=0.5):
     for s in range(k, len(m) - k, max(k, len(m) // 60)):
         dists.append(np.mean(np.abs(third_octave(m[s - k:s]) - third_octave(m[s:s + k]))))
     med = float(np.median(dists)) if dists else 1.0
-    local = math.sqrt(np.mean(np.concatenate([a[-480:], b[:480]]) ** 2)) + 1e-12
     jump = float(np.max(np.abs(x[0] - x[-1])))
+    p99 = float(np.percentile(np.abs(np.diff(x, axis=0)), 99)) + 1e-12
     return {"rms_step_db": round(20 * math.log10(rb / ra), 2), "spec_dist_db": round(d_seam, 2),
             "interior_median_db": round(med, 2), "spec_ratio": round(d_seam / max(med, 1e-6), 2),
-            "jump_rel_db": round(20 * math.log10(jump / local + 1e-12), 1)}
+            "jump_vs_p99": round(jump / p99, 2)}
 
 
 def gaps(st, thresh_db=40.0, min_len=2):

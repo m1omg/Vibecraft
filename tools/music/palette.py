@@ -88,46 +88,46 @@ BELL = Instrument("town_bell", synth="bell", program=14, gain_db=-6.0, trim_db=3
 # two-string bowed fiddle, jaw harp, long low bronze horns, wordless overtone chant, claps and stamps.
 # No taiko, no low brass + electric guitar.
 TWO_STRING = Instrument("two_string_fiddle", program=42, mono=True, shape="bow", vibrato=WIDE_VIB, bend_range=4,
-                        gain_db=0.0, trim_db=3.5, drive=0.35, pan=0.12, width=0.5, reverb=0.28,
+                        gain_db=0.0, trim_db=7.4, drive=0.35, pan=0.12, width=0.5, reverb=0.28,
                         eq=[("hp", 110), ("peak", 1400, 2.0, 1.2), ("peak", 2700, -2.0, 1.2),
                             ("highshelf", 6500, -4.0)],
                         vel_lo=46, vel_hi=112, timing_ms=8, lag_ms=5, lo=43, hi=84, color=(232, 150, 60))
-TWO_STRING_HI = TWO_STRING.variant(name="two_string_high", program=110, trim_db=0.0, drive=0.25,
+TWO_STRING_HI = TWO_STRING.variant(name="two_string_high", program=110, trim_db=5.5, gain_db=-2.0, drive=0.25,
                                    eq=[("hp", 200), ("peak", 1500, 1.5, 1.2), UNIT_DIP, ("highshelf", 6000, -5.0)],
                                    lo=55, hi=93, color=(240, 190, 90))
-LUTE = Instrument("long_lute", program=106, gain_db=-3.0, trim_db=9.0, pan=-0.35, width=0.5, reverb=0.22,
+LUTE = Instrument("long_lute", program=106, gain_db=-4.0, trim_db=13.8, pan=-0.35, width=0.5, reverb=0.22,
                   eq=[("hp", 120), ("peak", 2200, -2.0, 1.0), ("highshelf", 7000, -3.0)],
                   vel_lo=44, vel_hi=118, timing_ms=6, accent=7, lo=45, hi=86, color=(110, 200, 170))
 BRONZE_HORNS = Instrument("bronze_horns", program=57, mono=True, shape="breath", vibrato=HORN_VIB,
-                          gain_db=-9.0, trim_db=-2.0, pan=-0.4, width=0.7, reverb=0.6,
+                          gain_db=-8.0, trim_db=12.8, pan=-0.4, width=0.7, reverb=0.6,
                           eq=[("hp", 50), ("lp", 2200), ("lowshelf", 150, 1.5)], vel_lo=36, vel_hi=92,
                           timing_ms=12, lag_ms=14, lo=33, hi=62, color=(200, 140, 70))
-GONG = Instrument("gong", synth="gong", program=0, perc=True, gain_db=-3.0, trim_db=10.0, pan=0.05, width=1.0,
+GONG = Instrument("gong", synth="gong", program=0, perc=True, gain_db=-5.0, trim_db=1.3, pan=0.05, width=1.0,
                   reverb=0.4, eq=[("hp", 30), ("highshelf", 7000, -3.0)],
                   synth_params={"decay": 9.0, "bloom": 0.6, "bright": 0.5, "identity": 1},
                   timing_ms=3, accent=0, color=(240, 200, 60))
-GONG_SMALL = GONG.variant(name="gong_small", pan=0.35, gain_db=-8.0,
+GONG_SMALL = GONG.variant(name="gong_small", pan=0.35, gain_db=-9.0, trim_db=3.9,
                           synth_params={"decay": 4.5, "bloom": 0.35, "bright": 0.7, "identity": 2},
                           color=(250, 220, 120))
-JAW_HARP = Instrument("jaw_harp", synth="jawharp", program=0, gain_db=-8.0, trim_db=6.0, pan=0.3, width=0.4,
+JAW_HARP = Instrument("jaw_harp", synth="jawharp", program=0, gain_db=-9.0, trim_db=7.2, pan=0.3, width=0.4,
                       reverb=0.15, eq=[("hp", 80), ("peak", 2500, -3.0, 1.0), ("lp", 7000)],
                       synth_params={"fundamental": 50, "q": 9.0, "decay": 0.9}, timing_ms=4, accent=4,
                       color=(150, 220, 90))
-CHANT = Instrument("overtone_chant", synth="chant", program=53, gain_db=-8.0, trim_db=7.0, pan=0.0, width=1.0,
+CHANT = Instrument("overtone_chant", synth="chant", program=53, gain_db=-9.0, trim_db=2.1, pan=0.0, width=1.0,
                    reverb=0.45, eq=[("hp", 60), ("peak", 2200, -2.0, 1.0), ("lp", 5000)],
                    synth_params={"voices": 3, "detune_cents": 7.0, "overtone_db": 20.0, "breath": 0.04},
                    timing_ms=15, accent=0, color=(110, 140, 200))
-DEEP_DRUM = Instrument("deep_frame_drum", synth="framedrum", program=0, perc=True, gain_db=-2.0, trim_db=3.0,
+DEEP_DRUM = Instrument("deep_frame_drum", synth="framedrum", program=0, perc=True, gain_db=-4.0, trim_db=-1.6,
                        pan=-0.1, width=0.5, reverb=0.22, eq=[("hp", 32), ("lp", 6000)],
                        synth_params={"size": 1.0, "skin": 0.9, "ring": 1.25}, vel_lo=1, vel_hi=127, timing_ms=4,
                        accent=0, color=(210, 70, 60),
                        drum_map={"dum": 36, "doum": 33, "tek": 36, "slap": 36, "mute": 36})
-HAND_DRUM = Instrument("hand_frame_drum", synth="framedrum", program=0, perc=True, gain_db=-6.0, trim_db=2.0,
+HAND_DRUM = Instrument("hand_frame_drum", synth="framedrum", program=0, perc=True, gain_db=-8.0, trim_db=9.9,
                        pan=0.28, width=0.5, reverb=0.18, eq=[("hp", 60), ("lp", 8000)],
                        synth_params={"size": 1.0, "skin": 1.1, "ring": 0.8}, vel_lo=1, vel_hi=127, timing_ms=4,
                        accent=0, color=(230, 120, 100),
                        drum_map={"dum": 45, "doum": 43, "tek": 45, "slap": 45, "mute": 45})
-CLAPS = Instrument("claps", synth="claps", program=0, perc=True, gain_db=-8.0, trim_db=10.0, pan=0.0, width=1.0,
+CLAPS = Instrument("claps", synth="claps", program=0, perc=True, gain_db=-8.0, trim_db=15.8, pan=0.0, width=1.0,
                    reverb=0.3, eq=[("hp", 40), ("peak", 2200, -2.0, 1.0), ("highshelf", 8000, -3.0)],
                    synth_params={"hands": 6, "spread_ms": 9.0, "identity": 1}, vel_lo=1, vel_hi=127, timing_ms=6,
                    accent=0, color=(230, 230, 230),
@@ -145,10 +145,10 @@ MIX_KINGDOM = {
     "master": {"lufs": -16.0, "tp": -1.0, "dip": (2300, -1.5, 0.8), "lowshelf": (90, 0.0), "highshelf": (8500, 1.5)},
 }
 MIX_CLANS = {
-    "reverb": {"decay": 2.6, "predelay_ms": 32, "early": 0.25, "damp": 0.65, "width": 1.0, "hp": 140, "lp": 6500,
+    "reverb": {"decay": 2.6, "predelay_ms": 32, "early": 0.25, "damp": 0.65, "width": 1.0, "hp": 140, "lp": 8500,
                "seed": 23},
     "bus": {"lufs": -20.0, "threshold_db": -21.0, "ratio": 2.0, "attack": 30, "release": 320, "knee": 4},
-    "master": {"lufs": -16.0, "tp": -1.0, "dip": (2300, -1.5, 0.8), "lowshelf": (80, 0.5), "highshelf": (10000, -1.5)},
+    "master": {"lufs": -16.0, "tp": -1.0, "dip": (2300, -1.5, 0.8), "lowshelf": (80, 0.0), "highshelf": (8500, 1.5)},
 }
 MIX_SHARED = {  # menu / score bed: both palettes meet
     "reverb": {"decay": 2.3, "predelay_ms": 26, "early": 0.3, "damp": 0.6, "width": 1.0, "hp": 150, "lp": 7000,
