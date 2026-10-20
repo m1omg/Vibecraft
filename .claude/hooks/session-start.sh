@@ -1,6 +1,7 @@
 #!/bin/bash
 # Installs the Vibecraft toolchain for Claude Code cloud sessions:
-# Godot 4.7.2 (editor/runtime), Blender bpy (asset tooling), lavapipe Vulkan + Xvfb (screenshots).
+# Godot 4.7.2 (editor/runtime), Blender bpy (asset tooling), lavapipe Vulkan + Xvfb (screenshots),
+# FluidSynth + FluidR3_GM soundfont + mido (music toolkit).
 set -euo pipefail
 
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
@@ -39,6 +40,20 @@ fi
 
 echo "export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json" >> "${CLAUDE_ENV_FILE:-/dev/null}"
 echo "export BLENDER_PY=$BPY_ENV/bin/python" >> "${CLAUDE_ENV_FILE:-/dev/null}"
+
+# --- Music toolkit (tools/music): FluidSynth, the FluidR3_GM soundfont, mido ---
+# Not needed by the game or its tests, so a failure here never blocks the session.
+if ! command -v fluidsynth >/dev/null 2>&1 || [ ! -f /usr/share/sounds/sf2/FluidR3_GM.sf2 ]; then
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get install -y -q fluidsynth fluid-soundfont-gm >/dev/null 2>&1 \
+    || { apt-get update -q >/dev/null 2>&1 && apt-get install -y -q fluidsynth fluid-soundfont-gm >/dev/null 2>&1; } \
+    || echo "session-start: fluidsynth / fluid-soundfont-gm not installed (tools/music cannot render)" >&2
+fi
+if ! python3 -c "import mido, numpy, PIL" >/dev/null 2>&1; then
+  pip install -q mido numpy pillow >/dev/null 2>&1 \
+    || pip install -q --break-system-packages mido numpy pillow >/dev/null 2>&1 \
+    || echo "session-start: mido not installed (tools/music cannot write MIDI)" >&2
+fi
 
 # --- Import the Godot project so headless tests can run immediately -----------
 if [ -f "$CLAUDE_PROJECT_DIR/project.godot" ]; then
