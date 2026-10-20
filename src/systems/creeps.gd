@@ -25,12 +25,15 @@ var _camps: Dictionary = {}    ## camp instance id -> {template, pos, members: A
 
 
 ## Spawns every camp of `map` (owner NEUTRAL_HOSTILE). Map camps without a template (test maps)
-## spawn their `creeps` list on the ring. Returns the number of creeps spawned.
-func spawn_camps(map: MapData) -> int:
+## spawn their `creeps` list on the ring. `only` (camp instance ids) limits it to those camps
+## (scripted scenarios); empty = all. Returns the number of creeps spawned.
+func spawn_camps(map: MapData, only: Array = []) -> int:
 	var n := 0
 	for i in map.creep_camps.size():
 		var c: Dictionary = map.creep_camps[i]
 		var cid := str(c.get("id", "camp_%d" % i))
+		if not only.is_empty() and not only.has(cid):
+			continue
 		var centre: Vector3 = c["pos"]
 		var creeps: Array = c.get("creeps", [])
 		var tmpl := Defs.camps.get(str(c.get("template", "")), {}) as Dictionary

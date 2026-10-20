@@ -9,7 +9,7 @@ extends Node
 ##   heroes     heroes.json "heroes" (raw hero data: attributes, growth, kit)
 ##   abilities, buffs, ground_effects, items, upgrades, shops, services, camps, factions, doodads
 ##   combat, upkeep (Array), team_colours (Array), rules (deep merge of every file's "rules" block),
-##   strings (data/strings/en.json)
+##   strings (data/strings/en.json), scenarios (scenarios.json "scenarios": scripted match set-ups)
 ## Files may carry a top-level "rules" block; Defs deep-merges them into `rules` (a key defined in
 ## two files is a validation error). Keys starting with "_" are comments and are skipped.
 
@@ -59,6 +59,7 @@ var upkeep: Array = []
 var team_colours: Array = []
 var rules: Dictionary = {}
 var strings: Dictionary = {}
+var scenarios: Dictionary = {}       ## scenarios.json "scenarios" (data/SCHEMA.md §15)
 var errors: Array[String] = []
 ## True once load_test_defs() merged data/test_defs.json (tests and the sandbox scenario only).
 var test_defs_loaded: bool = false
@@ -124,6 +125,7 @@ func reload() -> void:
 	_take_rules(camp_file, "creep_camps.json")
 	camps = _section(camp_file, "camps")
 	doodads = _table(_load_file("doodads.json"))
+	scenarios = _section(_load_file("scenarios.json"), "scenarios")
 	strings = {}
 	var st := _load_file(STRINGS_FILE)
 	for k: String in st:
@@ -164,6 +166,7 @@ func reload() -> void:
 	_validate_factions()
 	_validate_simple(doodads, "doodad", ["name", "lumber", "shape"])
 	_validate_cards()
+	_validate_scenarios()
 	for e in errors:
 		push_error("Defs: " + e)
 
@@ -220,6 +223,11 @@ func doodad(id: String) -> Dictionary:
 
 func faction(id: String) -> Dictionary:
 	return _lookup(factions, id, "faction")
+
+
+## Scripted match set-up (scenarios.json; data/SCHEMA.md §15), e.g. "battlefield".
+func scenario(id: String) -> Dictionary:
+	return _lookup(scenarios, id, "scenario")
 
 
 func has_unit(id: String) -> bool:
@@ -881,3 +889,33 @@ func _card_key(card: String, keys: Dictionary, key: String, owner: String) -> vo
 		errors.append("card '%s': hotkey %s used by %s and %s" % [card, key, keys[key], owner])
 	else:
 		keys[key] = owner
+
+
+## scenarios.json: every referenced faction, structure and unit exists; structures are buildings,
+## group units are mobile units or heroes; counts are positive; positions are [x, z].
+func _validate_scenarios() -> void:
+	for id: String in scenarios:
+		var sc: Dictionary = scenarios[id]
+		for key: String in ["name", "map", "players"]:
+			if not sc.has(key):
+				errors.append("scenario '%s' missing required field '%s'" % [id, key])
+		for p: Dictionary in sc.get("players", []):
+			var where := "scenario '%s' slot %s" % [id, p.get("slot", "?")]
+			if not factions.has(str(p.get("faction", ""))):
+				errors.append("%s: unknown faction '%s'" % [where, p.get("faction", "")])
+			for s: Dictionary in p.get("structures", []):
+				var bd: Dictionary = units.get(str(s.get("def", "")), {})
+				if bd.is_empty() or str(bd.get("kind", "")) != "building":
+					errors.append("%s: structure '%s' is not a building" % [where, s.get("def", "")])
+				if (s.get("pos", []) as Array).size() != 2:
+					errors.append("%s: structure '%s' needs pos [x, z]" % [where, s.get("def", "")])
+			for g: Dictionary in p.get("groups", []):
+				if (g.get("pos", []) as Array).size() != 2:
+					errors.append("%s: group '%s' needs pos [x, z]" % [where, g.get("id", "")])
+				for pair: Variant in g.get("units", []):
+					var entry: Array = pair if pair is Array else []
+					var ud: Dictionary = units.get(str(entry[0]) if entry.size() == 2 else "", {})
+					if ud.is_empty() or str(ud.get("kind", "")) != "unit" or float(ud.get("speed", 0.0)) <= 0.0:
+						errors.append("%s: group '%s' entry %s is not a mobile unit" % [where, g.get("id", ""), str(pair)])
+					elif int(entry[1]) <= 0:
+						errors.append("%s: group '%s' count for '%s' must be positive" % [where, g.get("id", ""), entry[0]])

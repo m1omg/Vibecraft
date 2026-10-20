@@ -71,3 +71,7 @@ signal camp_woke(camp_id: String)
 signal bounty_paid(player_id: int, amount: int, pos: Vector3)
 # fog (E)
 signal fog_updated(player_id: int)
+# match / scenarios (src/scenarios/*: scripted set-ups such as the Playtest 1 battlefield)
+## The match is decided (juice SEQ-02 listens): winning player id (1v1: = its team), -1 when
+## nobody is left; reason e.g. "annihilation".
+signal match_ended(winner: int, reason: String)

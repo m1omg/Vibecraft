@@ -1,0 +1,84 @@
+{
+  "_doc": "Scripted match set-ups (data/SCHEMA.md §15). Read by Defs.scenario(id) and run by src/scenarios/battlefield.gd. Positions are world metres [x, z] on the scenario's map; structures snap to the nearest legal, free spot (Construction.can_place plus a 1-cell margin) within `snap_radius`.",
+  "scenarios": {
+    "battlefield": {
+      "name": "Battlefield Sandbox",
+      "_doc": "Playtest 1 (Battlefield sandbox): Brennmark (kingdom, local player) against the Tormai (clans, scripted AI) on Wether Downs. Static bases (no economy, no production), two full armies with level-3 heroes, three creep camps. The Tormai guard their base with one group and send the other (the war-band) at the player's hall after attack_after seconds. Win by destroying every enemy unit and structure.",
+      "map": "slice",
+      "victory": "annihilation",
+      "hero_level": 3,
+      "think_interval": 0.5,
+      "defend_radius": 24.0,
+      "assist_radius": 14.0,
+      "regroup_after": 6.0,
+      "snap_radius": 12.0,
+      "formation_spacing": 1.5,
+      "camps": ["camp_gv_charcoal_clamp_p1", "camp_gv_turnip_patch_p1", "camp_gv_cairn_gate"],
+      "players": [
+        {
+          "slot": 0,
+          "faction": "kingdom",
+          "control": "human",
+          "structures": [
+            {"def": "kingdom_moot_hall", "pos": [30, 166]},
+            {"def": "kingdom_croft", "pos": [24, 176]},
+            {"def": "kingdom_croft", "pos": [32, 176]},
+            {"def": "kingdom_drill_yard", "pos": [40, 152]},
+            {"def": "kingdom_oath_hall", "pos": [24, 146]},
+            {"def": "kingdom_foundry", "pos": [44, 172]},
+            {"def": "kingdom_collegium", "pos": [36, 140]}
+          ],
+          "groups": [
+            {
+              "id": "army", "role": "army", "pos": [44, 160], "face": [56, 154], "row": 6,
+              "units": [
+                ["kingdom_pavisier", 6],
+                ["kingdom_wheel_marshal", 1], ["kingdom_hookgunner", 4], ["kingdom_firewright", 1],
+                ["kingdom_linden_sister", 2], ["kingdom_bombard_wagon", 1]
+              ]
+            },
+            {
+              "id": "workers", "role": "workers", "pos": [23, 166], "face": [17, 166], "row": 5, "spacing": 1.0,
+              "units": [["kingdom_hodman", 5]]
+            }
+          ]
+        },
+        {
+          "slot": 1,
+          "faction": "clans",
+          "control": "scenario_ai",
+          "structures": [
+            {"def": "clans_shell_hall", "pos": [166, 30]},
+            {"def": "clans_home_yurt", "pos": [176, 24]},
+            {"def": "clans_home_yurt", "pos": [176, 32]},
+            {"def": "clans_grapple_yard", "pos": [152, 40]},
+            {"def": "clans_naming_stones", "pos": [146, 24]},
+            {"def": "clans_casting_pit", "pos": [172, 44]},
+            {"def": "clans_mirror_yurt", "pos": [140, 36]}
+          ],
+          "groups": [
+            {
+              "id": "guard", "role": "guard", "pos": [160, 47], "face": [154, 58], "row": 4,
+              "units": [
+                ["clans_grappler", 3],
+                ["clans_hero_skymirror", 1], ["clans_javelineer", 2], ["clans_gustcaller", 1]
+              ]
+            },
+            {
+              "id": "warband", "role": "wave", "pos": [126, 82], "face": [96, 110], "row": 4,
+              "attack_after": 90.0, "target": "hall",
+              "units": [
+                ["clans_grappler", 3], ["clans_hero_uncut", 1],
+                ["clans_javelineer", 2], ["clans_gustcaller", 1], ["clans_sling_cart", 1]
+              ]
+            },
+            {
+              "id": "workers", "role": "workers", "pos": [166, 23], "face": [166, 17], "row": 5, "spacing": 1.0,
+              "units": [["clans_yurtwright", 5]]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

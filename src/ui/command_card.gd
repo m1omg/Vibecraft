@@ -45,10 +45,10 @@ func _on_selection_changed(_units: Array) -> void:
 	refresh()
 
 
-## Hotkey text of a card slot from the input map (e.g. "Q").
+## Hotkey text of a card slot from the input map under the active preset (e.g. "A" or "R").
 static func hotkey_label(slot: int) -> String:
-	var action := "card_%d" % slot
-	if not InputMap.has_action(action):
+	var action := CommandInput.hotkey_action(slot)
+	if action.is_empty() or not InputMap.has_action(action):
 		return ""
 	for ev in InputMap.action_get_events(action):
 		if ev is InputEventKey:
