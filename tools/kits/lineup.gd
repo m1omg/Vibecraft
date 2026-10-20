@@ -96,6 +96,11 @@ func _run() -> void:
 	fa.store_string(JSON.stringify(labels, " "))
 	fa.close()
 	print("VC_LINEUP:" + o.out_dir)
+	for k in _scene_cache:
+		(_scene_cache[k] as Node).free()
+	_scene_cache.clear()
+	world.queue_free()
+	await process_frame
 	quit(0)
 
 
@@ -117,7 +122,7 @@ func _build_env() -> void:
 	sun.light_color = Color(1.0, 0.95, 0.85)              # DayNight.DAY_SUN
 	sun.light_energy = 1.1
 	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 70.0
+	sun.directional_shadow_max_distance = 110.0          # covers the 46 m max-zoom shot
 	sun.shadow_blur = 1.5
 	world.add_child(sun)
 	# elevation 52 deg, from screen lower-left (camera sits at +Z looking -Z)
@@ -223,24 +228,32 @@ void fragment() {
 	world.add_child(mi)
 
 
+var _scene_cache := {}
+
+
 func _place(ob: Dictionary) -> void:
 	var path: String = ob.glb
 	if not FileAccess.file_exists(path):
 		printerr("missing " + path)
 		return
-	var doc := GLTFDocument.new()
-	var st := GLTFState.new()
-	if doc.append_from_file(path, st) != OK:
-		printerr("failed " + path)
-		return
-	var n := doc.generate_scene(st) as Node3D
+	var n: Node3D
+	if _scene_cache.has(path):
+		n = (_scene_cache[path] as Node3D).duplicate() as Node3D   # forests: load each GLB once
+	else:
+		var doc := GLTFDocument.new()
+		var st := GLTFState.new()
+		if doc.append_from_file(path, st) != OK:
+			printerr("failed " + path)
+			return
+		n = doc.generate_scene(st) as Node3D
+		_fix_materials(n)
+		_scene_cache[path] = n.duplicate()
 	var p: Array = ob.get("pos", [0, 0, 0])
 	n.position = Vector3(float(p[0]), float(p[1]), float(p[2]))
 	n.rotation.y = deg_to_rad(float(ob.get("yaw", 0.0)))
 	var s := float(ob.get("scale", 1.0))
 	n.scale = Vector3(s, s, s)
 	world.add_child(n)
-	_fix_materials(n)
 	var ab := _aabb(n)
 	if ob.has("label"):
 		placed.append({"label": ob.label, "top": Vector3(ab.get_center().x, ab.end.y, ab.get_center().z),

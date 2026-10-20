@@ -8,8 +8,12 @@ would, the AI-made reference hall and units for scale and style) and renders it 
 tools/kits/lineup.gd: RtsCamera pitch 56 deg, vertical FOV 45, DayNight day light. Shots:
   map      vignette at the default camera distance (28 m): tree wall, Gold Seam beside the
            reference Moot Hall, road, walls, hedges, pond, a creep camp
-  neutral  the neutral structures (Gold Seam, Weighstall, Hale Spring) next to the Shell Hall, 20 m
-  cat1/2   every asset in labelled rows at close zoom (16 m)
+  neutral  the neutral structures (Gold Seam, Weighstall, Hale Spring) next to the Shell Hall, 25 m
+  forest   a tree block at the map generator's density (a tree on ~88 % of the 1 m tree cells) with a
+           2 m lane cut along and one across the view, units standing in them (28 m)
+  lod      the same tree block twice at the maximum zoom-out (46 m): LOD0 left, LOD1 right
+  mine4    the Gold Seam at yaw 180 / 90 / 0 / 270 (every side must read as cliff + gold seam), 28 m
+  cat1-3   every asset in labelled rows at close zoom (22 m)
 The composed PNG stacks the shots with a title bar each.
 """
 from __future__ import annotations
@@ -37,7 +41,7 @@ B = os.path.join(REPO, "assets", "models", "buildings")
 U = os.path.join(REPO, "assets", "models", "units")
 T = os.path.join(REPO, "assets", "textures", "terrain")
 
-RECT = (-36.0, -28.0, 284.0, 28.0)     # x0, z0, x1, z1 of the painted splat
+RECT = (-36.0, -28.0, 470.0, 28.0)     # x0, z0, x1, z1 of the painted splat
 PPM = 4                                 # splat pixels per metre
 
 
@@ -106,32 +110,32 @@ class Scene:
 # layouts
 # =============================================================================================
 
-def tree_wall(sc, x0, x1, z_back, z_front, seed=3, density=1.0, mix=(0.62, 0.22, 0.16)):
-    """Irregular tree line on the 1 m tree grid: oaks, lindens, hazels at the front edge."""
+def tree_wall(sc, x0, x1, z_back, z_front, seed=3, fill=0.88, mix=(0.55, 0.25, 0.20), lanes=(), lod=""):
+    """Tree wall on the 1 m tree grid like src/world/map_generator.gd: a tree on ~88 % of the cells
+    (cell centre + up to 15 cm, src/world/doodads.gd), an irregular front edge, oaks / lindens / hazels
+    (hazels more likely on the front edge), +-15 % scale, random yaw. lanes: [(x0, z0, x1, z1)] cut out."""
     rng = random.Random(seed)
-    taken = set()
-    z = z_back
-    row = 0
-    while z <= z_front:
-        x = x0 + (row % 2) * 1.6 + rng.uniform(0, 1.0)
-        while x <= x1:
-            gx, gz = round(x), round(z + rng.uniform(-0.8, 0.8))
-            if (gx, gz) not in taken:
-                taken.add((gx, gz))
-                r = rng.random()
-                front = z > z_front - 2.6
-                if front and r < 0.45:
-                    kind = "tree_hazel"
-                elif r < mix[0]:
-                    kind = "tree_hill_oak"
-                elif r < mix[0] + mix[1]:
-                    kind = "tree_linden"
-                else:
-                    kind = "tree_hazel"
-                sc.put(kind, gx, gz, yaw=rng.uniform(0, 360), s=rng.uniform(0.85, 1.15))
-            x += rng.uniform(2.6, 3.6) / density
-        z += 2.4
-        row += 1
+    for gx in range(int(math.floor(x0)), int(math.ceil(x1))):
+        edge = z_front + 1.2 * math.sin(gx * 0.7 + seed) + 0.8 * math.sin(gx * 0.23 + seed * 2.1)
+        for gz in range(int(math.floor(z_back)), int(math.ceil(z_front + 2.0))):
+            x, z = gx + 0.5, gz + 0.5
+            r_fill, r_kind = rng.random(), rng.random()
+            yaw, s = rng.uniform(0, 360), rng.uniform(0.85, 1.15)
+            jx, jz = rng.uniform(-0.15, 0.15), rng.uniform(-0.15, 0.15)
+            if z > edge or r_fill > fill:
+                continue
+            if any(a <= x < b and c <= z < d for a, c, b, d in lanes):
+                continue
+            front = z > edge - 2.0
+            if front and r_kind < 0.4:
+                kind = "tree_hazel"
+            elif r_kind < mix[0]:
+                kind = "tree_hill_oak"
+            elif r_kind < mix[0] + mix[1]:
+                kind = "tree_linden"
+            else:
+                kind = "tree_hazel"
+            sc.put(kind + lod, x + jx, z + jz, yaw=yaw, s=s)
 
 
 def scatter(sc, rng, centre, radius, n, ids, scale=(0.85, 1.2)):
@@ -159,8 +163,8 @@ def layout_map(sc):
     sc.rect(0, -1.0, -1.5, 7.5, 4.5, soft=1.5)                # walled field (thick meadow)
     sc.disc(0, 17.0, 1.0, 4.4, soft=2.0)                      # pond margin
     # forest edge with a tongue of trees down the left
-    tree_wall(sc, -34, 34, -22.0, -10.5, seed=11)
-    tree_wall(sc, -34, -21, -10.0, -1.5, seed=12, density=0.9)
+    tree_wall(sc, -34, 34, -22.0, -11.0, seed=11)
+    tree_wall(sc, -34, -21, -11.0, -2.0, seed=12)
     # Gold Seam at the forest edge, 6 m (hall edge -> seam edge) above the reference Moot Hall
     sc.put("kingdom_moot_hall", -11.0, 3.5, yaw=180.0)
     sc.put("gold_mine", -10.5, -8.5, yaw=180.0)
@@ -201,7 +205,7 @@ def layout_map(sc):
     sc.put("lily_pads", 17.4, 0.8, yaw=30.0, y=0.03)
     # Sootcoat camp (Charcoal Clamp)
     sc.put("camp_charcoal_clamp", 11.5, -7.0, yaw=0.0)
-    sc.put("camp_lean_to", 6.0, -6.6, yaw=200.0)
+    sc.put("camp_lean_to", 6.0, -6.6, yaw=275.0)              # sideways: open side to -X (see the manifest)
     sc.put("camp_campfire", 8.6, -3.6, yaw=0.0)
     sc.put("camp_cordwood_stack", 13.2, -3.2, yaw=250.0)
     sc.put("camp_crates", 5.4, -3.0, yaw=30.0)
@@ -228,7 +232,7 @@ def layout_map(sc):
 def layout_neutral(sc, ox=70.0):
     """Shot 'neutral': the three neutral structures next to the Shell Hall, focus (ox, 0)."""
     sc.rect(0, ox - 30, -26, ox + 30, -10.5, soft=3.0)
-    tree_wall(sc, ox - 28, ox + 28, -20.0, -12.0, seed=21)
+    tree_wall(sc, ox - 28, ox + 28, -20.0, -12.5, seed=21)
     sc.disc(1, ox - 9.0, -1.0, 4.4, soft=1.5)                # weighstall yard
     sc.path(2, [(ox - 30, 6.0), (ox - 9, 4.0), (ox + 30, 5.5)], 3.0)
     sc.disc(0, ox + 9.0, -1.0, 4.6, soft=2.0)                # spring dell
@@ -256,6 +260,35 @@ def layout_neutral(sc, ox=70.0):
     sc.put("camp_crates", ox - 6.0, 3.6, yaw=160.0)
 
 
+def layout_forest(sc, ox=320.0):
+    """Shot 'forest': tree block at the generator's density with a 2 m lane along the view (x 319-321)
+    and one across it (z -3..-1), units standing in both."""
+    sc.rect(0, ox - 24, -24, ox + 24, 6.0, soft=2.0)
+    tree_wall(sc, ox - 22, ox + 22, -22.0, 4.0, seed=31, lanes=[(ox - 1.0, -30.0, ox + 1.0, 10.0),
+                                                                (ox - 30.0, -3.0, ox + 30.0, -1.0)])
+    for k, (x, z, yw) in enumerate([(ox, -9.0, 180), (ox, -2.0, 200), (ox - 8.0, -2.0, 90), (ox + 7.0, -2.0, 270),
+                                    (ox, 2.5, 160)]):
+        sc.put(["kingdom_infantry", "kingdom_hodman", "clans_grappler", "kingdom_infantry", "clans_yurtwright"][k],
+               x, z, yaw=yw)
+
+
+def layout_lod(sc, ox=380.0):
+    """Shot 'lod': the same 14 x 12 m tree block with LOD0 (left) and LOD1 (right), seen from 46 m."""
+    for dx, lod in ((-11.0, ""), (11.0, "_lod1")):
+        tree_wall(sc, ox + dx - 7, ox + dx + 7, -10.0, 2.0, seed=41, lod=lod)
+        sc.put("kingdom_infantry", ox + dx, 5.0, yaw=180.0, label="LOD1" if lod else "LOD0")
+
+
+def layout_mine4(sc, ox=440.0):
+    """Shot 'mine4': the Gold Seam at four yaws (the game spawns it facing the hall, so any side may face
+    the camera)."""
+    for k, yw in enumerate((180.0, 90.0, 0.0, 270.0)):
+        x = ox - 12.0 + k * 8.0
+        sc.disc(3, x, -1.0, 3.6, soft=1.0)
+        sc.put("gold_mine", x, -1.0, yaw=yw)
+        sc.put("kingdom_hodman", x - 2.0, 3.2, yaw=200.0, label=f"yaw {int(yw)}")
+
+
 CATALOGUE = [
     # (shot, z, ids): far row first so tall trees never hide the near row
     ("cat1", -3.5, ["tree_hill_oak", "tree_hill_oak_lod1", "tree_linden", "tree_linden_lod1", "tree_hazel",
@@ -271,10 +304,11 @@ CATALOGUE = [
     ("cat3", 3.5, ["gold_mine_collapsed", "beehive_skeps"]),
 ]
 CAT_X0 = 130.0
+LABELLED = ("cat", "mine4", "lod")
 
 
 def layout_catalogue(sc):
-    widths = {"tree_hill_oak": 6.6, "tree_hill_oak_lod1": 6.6, "tree_linden": 5.0, "tree_linden_lod1": 5.0,
+    widths = {"tree_hill_oak": 3.8, "tree_hill_oak_lod1": 3.8, "tree_linden": 3.6, "tree_linden_lod1": 3.6,
               "tree_hazel": 3.4, "tree_hazel_lod1": 3.4, "tree_felled_log": 4.2, "camp_charcoal_clamp": 4.4,
               "cart_broken": 4.0, "mushroom_ring": 3.0, "camp_turnip_rows": 4.6, "wall_drystone_corner": 3.0,
               "rock_boulder_large": 3.2, "wall_drystone_straight": 2.8, "wall_drystone_end_broken": 3.2,
@@ -295,7 +329,8 @@ def layout_catalogue(sc):
                                  "texture": os.path.join(T, "water_ripples.png")})
             if aid.startswith("camp_"):
                 sc.disc(1, x + w / 2, z, w * 0.45, soft=0.8)
-            sc.put(aid, x + w / 2, z, yaw=180.0, label=True, y=0.03 if aid == "lily_pads" else 0.0)
+            yaw = 270.0 if aid == "camp_lean_to" else 180.0       # the lean-to is placed sideways (manifest note)
+            sc.put(aid, x + w / 2, z, yaw=yaw, label=True, y=0.03 if aid == "lily_pads" else 0.0)
             x += w
     return [{"name": n, "focus": [cx, 0.0], "distance": 22.0, "pitch": 56.0, "fov": 45.0} for n, cx in shots.items()]
 
@@ -317,7 +352,11 @@ TITLES = {
            "reference Moot Hall (AI), road, walls, hedge, pond, Sootcoat camp",
     "neutral": "Neutral structures at 25 m: Weighstall, Gold Seam, Hale Spring; reference Shell Hall (AI) and units; "
                "Turnip Patch and Standing Ring props",
-    "cat1": "Catalogue 1 (22 m): trees + impostor-friendly low LODs, stump, felled log, boulders, drystone walls",
+    "forest": "Tree wall at the map generator's density (a tree on ~88 % of the 1 m tree cells), 2 m lanes cut along "
+              "and across the view, units in the lanes, 28 m",
+    "lod": "The same tree block at maximum zoom-out (46 m): LOD0 (left) vs LOD1 (right)",
+    "mine4": "Gold Seam at yaw 180 / 90 / 0 / 270 (spawned facing the hall: every side is cliff with the gold seam), 28 m",
+    "cat1": "Catalogue 1 (22 m): trees + low LODs, stump, felled log, boulders, drystone walls",
     "cat2": "Catalogue 2 (22 m): hedge, wattle, hay stook, shore, meadow cards; mushroom ring, cart, milestone, cairn, camp",
     "cat3": "Catalogue 3 (22 m): creep-camp kit (Sootcoats, Tattiebogles, Cairnwakes) and extras",
 }
@@ -326,7 +365,7 @@ TITLES = {
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-o", "--out", default=os.path.join(REPO, "tests", "output", "doodads_lineup.png"))
-    ap.add_argument("--shots", default="map,neutral,cat1,cat2,cat3")
+    ap.add_argument("--shots", default="map,neutral,forest,lod,mine4,cat1,cat2,cat3")
     ap.add_argument("--size", default="1920x1080")
     ap.add_argument("--keep", default=None, help="keep the individual shot PNGs in this folder")
     ap.add_argument("--godot", default=os.environ.get("VC_GODOT") or shutil.which("godot") or "godot")
@@ -342,6 +381,15 @@ def main():
     if "neutral" in want:
         layout_neutral(sc)
         shots.append({"name": "neutral", "focus": [70.0, 0.0], "distance": 25.0, "pitch": 56.0, "fov": 45.0})
+    if "forest" in want:
+        layout_forest(sc)
+        shots.append({"name": "forest", "focus": [320.0, -2.0], "distance": 28.0, "pitch": 56.0, "fov": 45.0})
+    if "lod" in want:
+        layout_lod(sc)
+        shots.append({"name": "lod", "focus": [380.0, -2.0], "distance": 46.0, "pitch": 56.0, "fov": 45.0})
+    if "mine4" in want:
+        layout_mine4(sc)
+        shots.append({"name": "mine4", "focus": [440.0, 0.0], "distance": 28.0, "pitch": 56.0, "fov": 45.0})
     if any(w.startswith("cat") for w in want):
         shots += [s for s in layout_catalogue(sc) if s["name"] in want]
 
@@ -385,7 +433,7 @@ def main():
     for s in shots:
         im = Image.open(os.path.join(work, s["name"] + ".png")).convert("RGB")
         d = ImageDraw.Draw(im)
-        if s["name"].startswith("cat"):
+        if s["name"].startswith(LABELLED):
             for lb in labels.get(s["name"], []):
                 txt = lb["label"]
                 x, y = lb["bx"], lb["by"] + 6

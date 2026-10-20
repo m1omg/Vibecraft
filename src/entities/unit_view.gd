@@ -98,6 +98,11 @@ func setup(u: Unit) -> void:
 	body = Node3D.new()
 	body.name = "Body"
 	rig.add_child(body)
+	# Structures always show their door to the RTS camera (which sits on +Z): building models face -Z,
+	# so they are drawn at a fixed world yaw of PI whatever the sim facing (visual only; the sim keeps
+	# its facing for exits and rally defaults).
+	if u.is_building:
+		rig.rotation.y = PI - u.facing
 	var d := u.def
 	is_structure = u.is_building or u.is_resource
 	height = float(d.get("height", 1.5)) * float(d.get("scale", 1.0))
