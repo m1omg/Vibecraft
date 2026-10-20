@@ -11,7 +11,8 @@ cadence line (D-C-G, A-G-F-E, D). The interlude drops the drone: the dulcimer pl
 the held second B resolving to A. Dialogue II swaps the roads: the two-string climbs the Wheel, the fiddle answers
 with the Gong-Ring in stretto over its held A, and the two lines meet on one D (bar 23, a held unison: the clans
 slide into it, the kingdom steps into it); they close in parallel sixths, the two-string's E a suspension over the
-fiddle's last D. The settle is drone, a last gong and the dulcimer's E-D, ringing across the loop seam.
+fiddle's last D. The settle is drone, a last gong and the dulcimer's E-D; the fiddle answers it softly with the
+Gong-Ring's fall (A-G-D), and that D fades across the loop seam, so the drone-only stretch stays short on every cycle.
 Render: python3 tools/music/render.py tools/music/pieces/score_bed.py --length-check
 (The module is score_bed.py so it never shadows the toolkit's score.py; the piece is still named "score".)
 """
@@ -20,7 +21,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import palette as P  # noqa: E402
-from ext_shared import arp, line, mel  # noqa: E402
+from ext_shared import arp, line, mel, two_string  # noqa: E402
 from score import Piece  # noqa: E402
 
 HB1 = {"doum": "x...........", "dum": "..o........."}          # one lub-dub per bar (slow heart)
@@ -42,8 +43,7 @@ def build():
     gong = p.track("gong", P.GONG.variant(pan=0.0, gain_db=-6.0))
     gsm = p.track("gong_small", P.GONG_SMALL.variant(pan=-0.4, gain_db=-12.0))
     fid = p.track("fiddle", P.FIDDLE.variant(pan=0.26, vibrato=dict(P.BOW_VIB, depth=0.12, delay=0.3)))
-    two = p.track("two_string", P.TWO_STRING.variant(pan=-0.26, gain_db=1.5,       # thinner low-mid in the tenor
-                                                    eq=P.TWO_STRING.eq + [("peak", 175, -2.5, 1.0)]))
+    two = p.track("two_string", two_string(pan=-0.26, gain_db=1.5))   # nasal, not boomy, in the tenor
     dul = p.track("dulcimer", P.DULCIMER.variant(pan=0.38, gain_db=-3.5))
     lute = p.track("lute", P.LUTE.variant(pan=-0.36, gain_db=-4.0))
     vc = p.track("cello", P.CELLO.variant(pan=-0.04, gain_db=-5.5))
@@ -173,9 +173,10 @@ def build():
         vel=78, dyn="arch")
     fid.swell(B(24), B(27), 80, 112, peak=0.4)
     fid.curve(B(27), B(28, 1.0), 92, 46)
-    mel(two, B(24, 1.5), "C4:1.5 | B3:1 A3:.5 G3:1.5 | C4:1 B3:.5 A3:.5 E3:2.5 D3:4.5:sd", vel=70, dyn="arch")
+    mel(two, B(24, 1.5), "C4:1.5 | B3:1 A3:.5 G3:1.5 | C4:1 B3:.5 A3:.5 E3:2.5 D3:6:sd", vel=70, dyn="arch")
     two.swell(B(24, 1.5), B(27, 1.5), 82, 100, peak=0.5)
-    two.curve(B(27, 1.5), B(28, 3.0), 92, 40)
+    two.curve(B(27, 1.5), B(28, 1.5), 92, 70)
+    two.curve(B(28, 1.5), B(29, 1.5), 70, 36)                       # the last D fades under the dulcimer's E-D
     ring(24, 0, ["D5", "G5"], 1.5, 38)
     ring(24, 1.5, ["E5", "G5"], 1.5, 36)
     ring(25, 1.5, ["B4", "D5"], 1.5, 38)
@@ -187,6 +188,9 @@ def build():
     # ======================================================================= settle (28-30): drone and gong
     gong.note(B(28), "D2", 1, vel=60, decay=11.0)
     mel(dul, B(29), "E5:1.5 D5:4:o", vel=40, art="ring")            # the held second, resolving, once more
+    # and the fiddle answers it with the Gong-Ring's fall (A-G-D), its D fading across the loop seam
+    mel(fid, B(30), "A4:1 G4:.5 D4:4", vel=50, dyn="dim")
+    fid.swell(B(30), B(31, 1.5), 40, 76, peak=0.3)
     p.set_end(B(31))
     return p
 
