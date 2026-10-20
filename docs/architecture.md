@@ -23,15 +23,27 @@ change an interface here, change this file in the same commit.
    paused so nothing oscillates between the last two ticks).
    Determinism: sim code never uses wall-clock time, `randf()` without the world RNG, or
    unordered iteration (path budgets are query counts and cell costs, not milliseconds).
-3. **Data-driven.** Units, buildings, abilities, items, upgrades, factions live in `data/*.json`,
-   loaded by the `Defs` autoload. Code never hardcodes a unit stat. `Defs.unit(id)`,
-   `ability(id)`, `item(id)`, `upgrade(id)`, `doodad(id)`, `faction(id)` return the def dictionary
-   (empty + one warning when unknown); `Defs.combat`, `Defs.upkeep`, `Defs.errors`. Unit defs
-   require `name, kind (unit|building|resource), hp, radius` (+ `speed` > 0 for units,
-   `footprint [w, h]` in cells for structures); defaults are filled in (`UNIT_DEFAULTS`), and
-   visual hints live in the def too (`shape`, `weapon`, `roof`, `height`, `scale`, `model`).
-   Content is not decided yet: data uses neutral placeholder ids (`dummy_worker`, `dummy_hall`,
-   `gold_mine`…).
+3. **Data-driven.** Every gameplay number lives in `data/*.json`, split per domain:
+   `factions.json` (factions, global `rules`, `combat`, `upkeep`, `team_colours`), `units.json`,
+   `buildings.json`, `heroes.json`, `abilities.json`, `buffs.json` (+ ground effects),
+   `items.json`, `upgrades.json`, `shops.json` (+ services), `creep_camps.json`, `doodads.json`,
+   `strings/en.json`, `maps/<name>.json`. **Every field is documented in `data/SCHEMA.md`.**
+   The `Defs` autoload loads, fills defaults (`UNIT_DEFAULTS`, class timings, night sight,
+   regen), validates fields and cross references (errors collected in `Defs.errors`; tests fail
+   on any) and serves: `Defs.unit(id)` (every entity: units, buildings and one derived level-1
+   def per hero), `building`, `hero`, `ability`, `buff`, `ground_effect`, `item`, `upgrade`,
+   `shop`, `service`, `camp`, `doodad`, `faction` (empty + one warning when unknown),
+   `Defs.rule("economy.gold_per_trip", fallback)` (the deep merge of every file's `rules`
+   block; a leaf defined twice is an error), `Defs.text(key)` (UI strings), `ability_rank(id,
+   rank)`, `upgrade_level(id, level)`, `hero_stats(id, level, bonus)` (the one hero formula),
+   `xp_for_level`, `level_for_xp`, `prd_c(p)`, `trained_at`, `researched_at`, `effect_ids()`,
+   `Defs.combat`, `Defs.upkeep`, `Defs.team_colours`. Code never hardcodes a stat.
+   Entity defs require `name, kind (unit|building|resource|item), hp, radius` (+ `speed` > 0
+   for mobile units unless flag `immobile`, `footprint [w, h]` in cells for structures);
+   visual hints live in the def (`shape`, `weapon`, `roof`, `height`, `scale`, `model`,
+   `model_fit`). Content is the slice (`slice-content.json`): kingdom/clans/creep/neutral ids.
+   Engine-level tests use placeholder `dummy_*` defs from `data/test_defs.json`, merged only by
+   `Defs.load_test_defs()` (test runner, sandbox scenario).
 4. **Runs without art.** Every visual has a procedural placeholder fallback, so the game is always
    playable even if a model/texture/sound is missing. Missing assets log a warning once.
 5. **Testable headless.** Every system can be exercised from `tests/` with `godot --headless`.
@@ -49,7 +61,7 @@ change an interface here, change this file in the same commit.
 | Fog grid | 1 m resolution (192 × 192) |
 | Typical unit radius | worker 0.35, infantry 0.45, large 0.7–1.0 m |
 | Typical speeds | slow 3.0, normal 4.2, fast 5.5 m/s |
-| Building footprints | in pathing cells, e.g. hall 10×10, barracks 8×8, farm 4×4, tower 4×4 |
+| Building footprints | in pathing cells: halls 16×16 (8 m), production / tech / shops 12×12, supply 8×8, towers 4×4, gold seam 12×12 |
 
 Grid helpers live in `src/world/grid.gd` (`class_name Grid`, static funcs):
 `world_to_cell(Vector3)->Vector2i`, `cell_to_world(Vector2i)->Vector3` (cell centre, y=0),
@@ -67,22 +79,30 @@ Player ids: humans/AI 0..11, `PlayerState.NEUTRAL_HOSTILE = 12` (creeps, enemy o
 project.godot
 src/
   autoload/     defs.gd (Defs), audio.gd (Audio), settings.gd (Settings), events.gd (Events)
-  main.tscn + main.gd   boots a skirmish on the generated test map (camera, selection, input)
+  main.tscn + main.gd   boots a match: scenario "slice" (data/maps/slice.json, both factions,
+                start halls + workers, mines, neutral buildings, creep camps, AI seat) or
+                "sandbox" (generated test map with dummy defs; engine playtests)
   world/        world.gd + world.tscn (match root), grid.gd, map_data.gd, map_generator.gd,
                 terrain_builder.gd, terrain.gdshader, water.gdshader, tree.gdshader,
                 pathing.gd, group_path.gd, spatial_hash.gd, fog.gd, doodads.gd, day_night.gd
-  entities/     unit.gd, order.gd, projectile.gd, unit_view.gd (visuals) + unit_placeholder.gdshader,
-                resource_node logic in unit.gd
-  systems/      player_state.gd (PlayerState), combat.gd, abilities.gd (+ abilities/*.gd effects),
-                heroes.gd, economy.gd, production.gd, creeps.gd, ai/ai_player.gd
+  entities/     unit.gd, order.gd, orders/ (one OrderHandler per order type), projectile.gd,
+                unit_view.gd (visuals) + unit_placeholder.gdshader
+  systems/      sim_system.gd (SimSystem base), player_state.gd (PlayerState), combat.gd,
+                economy.gd, construction.gd, production.gd, tech.gd, heroes.gd, abilities.gd
+                (+ abilities/: effect.gd, cast_context.gd, registry.gd, effects/*.gd), buffs.gd,
+                items.gd (+ items/effects/*.gd), shops.gd, creeps.gd, ai/ai_player.gd
   input/        rts_camera.gd, selection.gd, command_input.gd
   ui/           hud.tscn + hud.gd, command_card.gd, minimap.gd, tooltip.gd, theme/
   fx/           vfx.gd (floating combat text, hit flashes; later pooled particles),
                 selection_circles.gd + ring.gdshader,
                 health_bars.gd + health_bar.gdshader, proc_mesh.gd (placeholder mesh helpers)
-data/           factions.json, units.json, abilities.json, items.json, upgrades.json, maps/*.json
+data/           see data/SCHEMA.md: factions, units, buildings, heroes, abilities, buffs, items,
+                upgrades, shops, creep_camps, doodads (.json), strings/en.json, maps/*.json,
+                test_defs.json (tests only)
 assets/         models/ textures/ icons/ audio/{sfx,voice,music,ambience}/ ui/
 tools/          python asset tooling (bpy, image processing), asset manifest,
+                maps/build_slice_map.py (writes data/maps/slice.json from the sketch + brief),
+                ip/check_banned_terms.py, ip/check_value_echo.py,
                 gen_input_map.gd (regenerates project.godot [input] from Settings.default_actions())
 tests/          headless test runner (tests/unit), scripted playtests + screenshots (tests/playtest)
 docs/           design, research, this file
@@ -103,58 +123,89 @@ Scene children: `Terrain` (TerrainBuilder), `Doodads`, `Units` (unit container),
 lets tests drive `step()` manually.
 
 1. `orders`  — commands queued by input/AI since the last tick are applied (`World._apply_commands`)
-2. `production` — training queues, construction progress, research
-3. `units` — each `Unit.sim_tick(dt)`: order state machine, movement (pathing+steering), attacks
-4. `projectiles`
-5. `abilities` — buffs/debuffs/auras/DoTs tick
-6. `economy` — income, upkeep
-7. `creeps` — camp leash/sleep/respawn
-8. `ai` — AI players think (throttled, e.g. every 0.5 s)
-9. `fog` — visibility recompute (throttled to ~10 Hz)
-10. `cleanup` — dead entity removal, events flushed
+2. `production` — `construction` (sites, repair, garrisons), `production` (queues), `tech` (tiers, research effects)
+3. `units` — each `Unit.sim_tick(dt)`: summon lifetime, stun / root, the current order's handler, movement (pathing+steering), attacks
+4. `projectiles` — `combat` (first), projectiles
+5. `abilities` — `abilities` (casts, cooldowns, ground effects), `buffs` (durations, DoTs, auras, regen), `items` (use, recall channels)
+6. `economy` — `economy` (income, upkeep tier), `heroes` (XP, revive), `shops` (stock, restock)
+7. `creeps` — `creeps` (camps, leash, sleep, bounty)
+8. `ai` — one `AiPlayer` per AI seat (throttled to `rules.ai.<difficulty>.think_interval`)
+9. `fog` — `fog` (visibility recompute, throttled to `rules.vision.fog_update`)
+10. `cleanup` — dead entity removal (`died` hooks, then `unit_died`), removed units freed
+
+The gameplay systems are `SimSystem`s (`src/systems/sim_system.gd`: `setup(world)`,
+`sim_tick(world, dt)`, `hooks()`, `on_unit_spawned/died/removed/damaged`, `handle_command`).
+`World.SYSTEM_STAGES` lists them as `[property, stage, script]`; `World.setup` installs each as
+a child of `Systems`, stores it in the typed property (`world.economy`, `world.construction`,
+`world.production`, `world.tech`, `world.heroes`, `world.abilities`, `world.buffs`,
+`world.items`, `world.shops`, `world.creeps`, `world.fog`) and registers it for its stage in
+that order. A system returns the hook names it wants from `hooks()` (`&"spawned"`, `&"died"`,
+`&"removed"`, `&"damaged"`); World calls them after `spawn_unit`, in cleanup, from
+`remove_unit` and from `Unit.take_damage`. Each system file starts with its owner,
+responsibilities, signals, commands and callers; `docs/m2-ownership.md` maps owners and the
+cross-system call contracts.
 
 `World` exposes: `tick_count:int`, `time:float` (sim seconds), `players:Array[PlayerState]`,
 `entities:Dictionary(id->Unit)`, `unit_list:Array[Unit]` (stable spawn order — iterate this),
-`spatial:SpatialHash`, `pathing:Pathing`, `map:MapData`, `fog:Fog`, `local_player_id`, `rng`
-(seeded), and helpers `setup(map, seed)`, `step()`, `add_player(id, team, faction, ai)`,
+`spatial:SpatialHash`, `pathing:Pathing`, `map:MapData`, the systems above, `ai_players`,
+`local_player_id`, `rng` (seeded), and helpers `setup(map, seed)`, `step()`,
+`add_player(id, team, faction, ai = false, difficulty = "normal")` (an AI seat gets an
+`AiPlayer` registered in the `ai` stage),
 `player(id)`, `team_of`, `is_enemy` (O(1): a player x player table rebuilt by `add_player`;
 call `refresh_relations()` after changing a team), `hostile_mask(pid)` (bitmask of the player
 ids `pid` fights; player ids are 0..15), `is_ally`, `player_color`,
 `interpolation_fraction()` (visual only, see §1), `max_unit_radius` (from Defs),
-`spawn_unit(def_id, player_id, pos, facing=0)` (structures snap to their footprint and block
-pathing; mobile units snap to the nearest walkable cell), `get_unit(id)`, `units_of_player`,
+`spawn_unit(def_id, player_id, pos, facing=0, opts={})` (structures snap to their footprint and
+block pathing unless `blocks_pathing` is false; mobile units snap to the nearest walkable cell;
+`opts`: `under_construction`, `hp_fraction`, `food_reserved`), `remove_unit(u)` (out of the
+sim without dying: picked-up items, transforms; `removed` hooks), `set_hidden(u, hide)` (in a
+mine or garrison: out of the spatial hash, keeps its orders), `adjust_food(pid, used, cap)`,
+`notify_damaged(u, amount, src)`, `get_unit(id)`, `units_of_player`,
 `query_radius(pos, r, filter:Callable, out:Array)`, `issue(command:Dictionary)`,
 `mark_dead(unit, killer)`, `raycast_ground(origin, dir)`, `resolve_smart(unit, target)`,
 `combat:Combat` (child of `Systems`, registered for the `projectiles` stage),
-`projectile_root` (`Projectiles` node), `gather_handler:Callable(worker, resource)` (economy
-hook called when a GATHER order reaches its resource; unset = the order just completes) and
-`corpse_count()`.
+`projectile_root` (`Projectiles` node), `gather_handler:Callable(worker, resource)` (legacy
+test hook: when set it wins over `Economy.on_gather_reached`) and `corpse_count()`.
 Death: `Unit.die()` marks the unit; `cleanup` takes it out of the sim (spatial hash, `entities`,
-`unit_list`), frees its footprint, releases its food and emits `unit_died`. The node stays as a
+`unit_list`), frees its footprint, releases its food, runs the `died` hooks and emits
+`unit_died`. The node stays as a
 corpse (UnitView plays topple + sink) for `Unit.decay_ticks()` (`combat.defaults.corpse_decay`
 8 s, `structure_decay` 4 s, or a def `decay`), then `cleanup` frees it. Corpse removal is sim
 time, so it is identical on every machine. `spawn_unit`/`cleanup` also keep
-`PlayerState.food_used` (unit `cost.food`) and `food_cap` (`food_provided`) up to date.
+`PlayerState.food_used` (unit `cost.food`; not for `food_from_source` transforms, not twice for
+units Production already reserved) and `food_cap` (`food_provided`, only once a site is
+finished) up to date.
 
 Commands are plain dictionaries so input, AI, tests and (later) replays/network share one path:
 ```
-{ "type": "move"|"attack_move"|"attack"|"stop"|"hold"|"patrol"|"smart"|"gather"|"build"|
-          "train"|"cancel"|"cast"|"rally"|"research"|"use_item"|"drop_item"|"learn",
+{ "type": <unit order name> | <system command name>,
   "player": int, "units": [ids], "pos": Vector3?, "target": id?, "def": String?,
-  "ability": String?, "slot": int?, "queue": bool }
+  "ability": String?, "slot": int?, "tree": int?, "data": Dictionary?, "queue": bool }
 ```
 Commands are applied at the start of the next tick. Only units owned by `player` obey. A
-command whose `target` died before it applied falls back to its `pos`, or is dropped. Unit
-order types today: `move, stop, hold, patrol, attack_move, attack, smart, gather, build, cast,
-rally, follow` (`follow` added for right-clicking an ally). `smart` is resolved **per unit**
-by `World.resolve_smart(u, target)`: structures that train units → `rally` (sets
-`rally_pos`/`rally_id`, never becomes a running order); no target → `move`; resource →
-`gather` for workers, `move` for others; enemy → `attack` (`follow` if the unit has no weapon);
-mobile ally → `follow`; allied structure → `move` to it (a follow on a building never ends).
-`attack` without a target is an `attack_move`. `gather` walks to the resource and calls
-`World.gather_handler` (stub until economy.gd); build/cast still just move to their target.
-Building/hero commands (`train, cancel, research, use_item, drop_item, learn`) are
-rejected with a warning until production/heroes exist.
+command whose `target` died before it applied falls back to its `pos`, or is dropped.
+
+- **Unit orders** (`Order.TYPE_NAMES`): `move, stop, hold, patrol, attack_move, attack, smart,
+  follow, gather, return` / `return_resources, build, repair, cast, learn, use_item,
+  pickup_item, drop_item, give_item` (a drop onto an own hero), `attack_ground, enter, rally`.
+  `def` → `Order.def_id` (building to place), `ability` → `Order.ability`, `slot` →
+  `Order.slot` (inventory slot), `data` is copied into `Order.data`. A `cast` given to a
+  structure goes to `AbilitySystem.handle_command` instead (building abilities).
+- **System commands** (`World.SYSTEM_COMMANDS`, never unit orders): `train`, `cancel`,
+  `research` → `Production`; `buy`, `sell`, `service` → `ShopSystem`; `revive` →
+  `HeroSystem`; `autocast` → `AbilitySystem`. World calls `system.handle_command(cmd, units)`
+  with the command's living units owned by `player`.
+- **Smart** (right-click) is resolved **per unit** by `World.resolve_smart(u, target)`:
+  structures that train units → `rally` (sets `rally_pos`/`rally_id`, never becomes a running
+  order); ground item → `pickup_item` (`ItemSystem.can_pickup`); resource → `gather` for
+  workers; enemy → `attack` (`follow` if the unit has no weapon); own construction site →
+  `build` (help build); own drop-off while carrying → `return_resources`; own garrison with
+  room → `enter`; damaged allied structure / mechanical unit for a worker with a repair
+  ability → `repair`; mobile ally → `follow`; anything else → `move` (a follow on a building
+  never ends). On the ground `resolve_smart_point(u, tree)`: rally for producers, `gather` for
+  workers when a living tree lies within `TREE_CLICK_RADIUS` (1.2 m) of the click (the tree
+  index goes into `Order.data.tree`), else `move`. `attack` without a target is an
+  `attack_move`.
 Group moves keep a compact group's formation (offsets from the group centre when its spread is
 < 8 m); otherwise everyone heads for the point and separation spreads them. Every ground
 move / attack-move / patrol given to 2+ units carries one `GroupPath` (`Order.group_path`) so
@@ -169,8 +220,23 @@ with an id: mobile units, heroes, workers, buildings, gold mines, critters. Tree
 Key fields: `id, def_id, def:Dictionary, player_id, team, hp, max_hp, mana, max_mana, armor,
 armor_type, radius, speed, sight, flags (is_building, is_hero, is_worker, is_resource, is_flying),
 orders:Array[Order], current:Order, attack:Dictionary, abilities:Array, buffs:Array,
-carry_gold, carry_lumber, hero:Dictionary (level, xp, str, agi, int, skill_points, ability_ranks),
-inventory:Array (6)`.
+carry_gold, carry_lumber, hero:Dictionary (HeroSystem: hero_id, level, xp, skill_points, ranks,
+attr_bonus, proper_name), inventory:Array (6), level, is_item / item_id / item_charges (ground
+items), is_summoned, is_mechanical, lifetime_ticks, camp_id, under_construction,
+build_progress, garrison, hidden, autocast, cooldowns, status, mod_totals, hp_regen,
+mana_regen, sight_night`.
+**Stat pipeline**: live stats = base stats (from the def, `set_base_stats` for heroes and
+transforms) + every modifier source. A system owns one source and replaces it whole with
+`set_modifiers(source, mods)` (`&"tech"`, `&"hero"`, `&"items"`, `&"buffs"`...; `{}` removes
+it); `recompute_stats()` sums them (`max_hp`, `max_hp_pct`, `max_mana`, `armor`, `damage`,
+`damage_pct`, `attack_speed_pct`, `move_speed`, `move_speed_pct`, `range`, `sight`,
+`hp_regen`, `mana_regen`, `miss_chance` / `evasion` (max wins), `crit`, `damage_taken_pct`,
+`status` lists). Missing HP/mana are kept when the maximum grows; speed and attack speed are
+clamped by `combat.move_speed_clamp` / `attack_speed_clamp`. Statuses (`Unit.STATUS_FLAGS`:
+`stun, root, silence, disarm, invulnerable, cannot_die, hidden, invisible, sleep, taunt,
+ignore_slows, no_displace`) set `stunned`, `rooted`, `silenced`, `disarmed`, `cannot_die`
+(damage stops at 1 HP), `is_invulnerable`; a stunned or sleeping unit does not act, a rooted
+one does not move. Nothing else writes stats.
 Sim state (written only in `sim_tick`): `pos:Vector3` (authoritative position; the Node3D
 transform is a copy written once per tick), `prev_pos`, `facing` (yaw, forward = -Z rotated),
 `target_radius` (centre-to-edge reach for target queries: footprint half-diagonal for
@@ -186,7 +252,24 @@ edge; footprint rectangle for structures — all ranges are measured this way),
 `find_target(r)`, `is_valid_target(o)`, `combat_target_id()`, `hit_point()`, and visual-only
 readers `swing_progress()`, `damage_point_ratio()`, `dead_time()`.
 `Order` (`src/entities/order.gd`): `type:Order.Type`, `target_pos`, `target_id` (0 = none),
-`def_id`, `ability`, `data`; `Order.make(type, pos, target)`, `Order.type_from_string(s)`.
+`def_id`, `ability`, `slot`, `data` (per-order state; a system driving the order sets
+`data.phase`), `group_path`; `Order.make(type, pos, target)`, `Order.type_from_string(s)`.
+New types are appended to the enum (never reordered).
+**Order handlers** (`src/entities/orders/`): each `Order.Type` has one stateless
+`OrderHandler` (`OrderHandlers.of(type)`, `OrderHandlers.idle()` for a unit without orders):
+`can_start(u, o)` (refuse at issue time), `enter(u, o)`, `tick(u, o, dt) -> Vector3` (desired
+velocity; `u.finish_order()` completes), `exit(u, o)` (always called when the order ends or is
+replaced), `accepts_retaliation(u, o)`, `is_instant()` + `apply_instant(u, o)` (learn: runs
+without interrupting the current order), `allows_immobile()` (towers, immobile summons).
+Handlers use the public Unit API (`order_goal, begin_move, stop_moving, follow_path,
+chase_move, chase_point, steer_direct, face, scan, engage, engaged, fight, give_up, is_lost,
+return_to, settle, home_pos, set_home, cancel_swing, edge_distance_to_point, heal`).
+Implemented: `idle` (acquire, retaliate, guard return; stationary towers fire from place),
+`move`, `stop`, `hold`, `attack`, `attack_move`, `patrol`, `follow`. Hand-off handlers (walk,
+then call the owning system; their file headers state the contract): `gather` and
+`return_resources` (Economy), `build`, `repair`, `enter` (Construction), `cast`
+(AbilitySystem), `learn` (HeroSystem), `use_item`, `pickup_item`, `drop_item` (ItemSystem),
+`attack_ground` (`Combat.fire_at_point`). Shift-queues hold at most `rules.controls.shift_queue_max` (32) orders.
 Order behaviour: MOVE follows its path and completes on arrival (or when stalled next to a
 crowded goal) and ignores enemies; STOP clears the queue (and cancels a wind-up); HOLD never
 completes, cannot be pushed and attacks only enemies already in weapon range, never moving;
@@ -226,8 +309,10 @@ Signals via `Events` autoload: `unit_spawned(u)`, `unit_died(u, killer)`, `unit_
 `selection_changed(units)`, `notification(player_id, kind, text)`, plus `alert_raised(player_id,
 pos)` (space bar jumps the camera to the latest; `Combat` raises it, with an "under_attack"
 notification, when a player's unit is hit by an enemy, at most every `alert_interval` 8 s),
-`tree_felled(pos)`, `command_issued(command)` and `menu_requested` (F10). Signals are emitted
-immediately; deaths are deferred to `cleanup`.
+`tree_felled(pos)`, `command_issued(command)` and `menu_requested` (F10), plus one block of
+signals per M2 system (economy, construction, production, tech, heroes, abilities, buffs,
+items, shops, creeps, fog; listed by owner in `docs/m2-ownership.md` §6 and documented in each
+system's header). Signals are emitted immediately; deaths are deferred to `cleanup`.
 
 Visuals are a child `UnitView` (`src/entities/unit_view.gd`): loads `assets/models/<model>.glb` if
 it exists, otherwise builds a placeholder from the def's `shape` hint (`humanoid` capsule + head +
@@ -316,19 +401,29 @@ frees it. Visuals are a placeholder arrow mesh.
 
 ## 7. Map, terrain, doodads
 
-- `MapData` loads `data/maps/<name>.json`: size in tiles, per-tile `tex` index (0..7), per-tile
-  `cliff` level (deviation from "per-vertex": per-tile levels give clean vertical walls between
-  tiles), `water`, an explicit `ramps` list (`rect` in tiles, ascending `dir`, `low` level; a ramp
+- `MapData` loads `data/maps/<name>.json` (format: `data/SCHEMA.md` §12): size in tiles, per-tile
+  `tex` index (0..7), per-tile `cliff` level (deviation from "per-vertex": per-tile levels give
+  clean vertical walls between tiles), `water`, `boundary` (unpathable, unbuildable edge tiles;
+  `is_boundary_tile`), an explicit `ramps` list (`rect` in tiles, ascending `dir`, `low` level; a ramp
   is 2 tiles long and rises exactly one level), start locations, gold mines, `trees`
-  (`[x, z, type]` on the 1 m tree grid), creep camps, neutral buildings. Layers serialize as one
-  digit string per row. `compute_heights()` derives 4 corner heights per tile (flat, ramp slope,
+  (`[x, z, type]` on the 1 m tree grid), creep camps (`{id, template, side, pos, creeps,
+  facing, layout?}`), neutral buildings (`{def, pos, facing}`) and an authored `meta` block
+  (starts, expansions, `gold_amounts` → `mine_gold(i)`, creep route, lanes, landmarks,
+  critters, ramp names) kept verbatim. Layers serialize as one digit string per row. `compute_heights()` derives 4 corner heights per tile (flat, ramp slope,
   or sunken lake bed); `height_at(x, z)` is the bilinear surface and matches the mesh exactly.
   Also `has_wall_x/z`, `compute_blocked_cells()`, `raycast(origin, dir)`, `to_dict/from_dict`,
   `load_json/save_json`. Tests can build a `MapData` in code.
+- **The slice map** `data/maps/slice.json` ("Wether Downs", 96 × 96 tiles, mirror-symmetric
+  across the x = z diagonal) is generated by `tools/maps/build_slice_map.py` from
+  `data/maps/wether_downs_sketch.txt` and `docs/design/slice-plan.md` (cliff levels by flood
+  fill, the exact ramp table, flattened hall/seam pads with the 6 m hall–seam gap, cleared camp
+  areas, tree walls as checkerboard pairs so they are impassable): 2 starts, 5 gold seams, 16
+  camps, 3 neutral buildings, 12 ramps, ~5100 trees. Never hand-edit it; rerun the tool.
+  `tests/unit/test_slice_map.gd` checks symmetry, pads, reachability and the sleep mix.
 - `MapGenerator.test_map(seed)` (`src/world/map_generator.gd`) builds the deterministic,
   point-symmetric 96×96 test slice: level-1 base, level-0 basin with a lake, two level-2 plateaus
   with a level-3 hill each, 10 ramps, forest border + noise clusters + a lumber line behind each
-  base, 2 starts with gold mines, 4 creep camps.
+  base, 2 starts with gold mines, 4 creep camps (sandbox scenario and engine tests).
 - `TerrainBuilder` generates chunked `ArrayMesh` (16×16 tiles per chunk): tile tops (2×2
   subdivided) at their corner heights + vertical cliff walls with noise bulges (seams stay exact),
   ramps as slopes; splat weights for layers 0–3 in `COLOR` and 4–7 in `CUSTOM0` (averaged across
@@ -348,7 +443,13 @@ frees it. Visuals are a placeholder arrow mesh.
 
 ## 8. Fog of war
 
-`Fog` keeps per-player `PackedByteArray` grids (0 = unexplored, 1 = explored/fogged, 2 = visible)
+Contract (stub until agent E lands it; `src/world/fog.gd`, stage `fog`): `Fog.state_at(pid,
+pos) -> UNEXPLORED | FOGGED | VISIBLE`, `is_visible(pid, pos)`, `is_explored(pid, pos)`,
+`can_see(pid, unit)` (visibility + invisibility/detection), `reveal(pid, pos, radius,
+duration, detect) -> handle` (timed reveals expire in the sim), `reveals()`, `grid(pid)`,
+`texture(pid)`, `enabled`. The stub reports everything visible and explored; callers already
+use these queries so turning fog on changes no call sites.
+Target design: `Fog` keeps per-player `PackedByteArray` grids (0 = unexplored, 1 = explored/fogged, 2 = visible)
 at 1 m resolution. Recomputed ~10 Hz from unit sight radii (cliff level blocks sight to higher
 levels, trees don't for the slice). Uploads the local player's grid into an `ImageTexture` (L8)
 used by terrain/doodad shaders and the minimap. Enemy units outside visible cells are hidden;
@@ -356,12 +457,21 @@ enemy buildings once seen leave a "ghost" until re-scouted.
 
 ## 9. Players & economy
 
-`PlayerState` (`src/systems/player_state.gd`; the economy system lives in `economy.gd`):
-`id, team, faction, color, is_ai, gold, lumber,
-food_used, food_cap, upkeep_tier, tech (Dictionary of completed research/buildings), heroes`.
-Upkeep tiers reduce gold per trip (thresholds from `data/factions.json`). Workers gather
-gold from mines (fixed amount per trip, max concurrent miners) and lumber from trees, return to
-nearest drop-off building.
+`PlayerState` (`src/systems/player_state.gd`): `id, team, faction, color, is_ai, gold, lumber,
+food_used, food_cap, upkeep_tier, tier, tech, upgrades (id -> level), heroes, hero_tokens,
+recall_grants, defeated`; `PlayerState.COLORS` is the art-bible team palette and
+`colour_for(faction, taken)` picks a faction's preferred free colour.
+`Economy` (`src/systems/economy.gd`, stage `economy`): `can_afford / spend / refund(pid, cost,
+factor)`, `add_income(pid, kind, amount, source, pos) -> credited` (gold from taxed sources is
+floored by the upkeep factor: tiers from `data/factions.json → upkeep`, 0–50 food 100 %,
+51–80 70 %, 81–100 40 %; lumber never taxed), `pay_fraction`, `upkeep_tier / upkeep_factor`
+(tracked every tick, `Events.upkeep_changed`), gather hand-offs for the `gather` /
+`return_resources` handlers, `find_dropoff`, `deposit`, `gold_left(mine)`.
+`Construction` (stage `production`): `can_place(pid, def, pos) -> {ok, reason, rect, pos}`
+(flat, free, in bounds, explored, hall–mine gap), build / repair / garrison hand-offs.
+`Production`: per-building queues (`train`, `cancel` with refund, food reserved when an item
+starts, spawn at the footprint edge toward the rally point). `Tech`: tier, research levels,
+requirements, ability unlocks. Each file's header documents the full contract.
 
 ## 10. Combat, abilities, heroes
 
@@ -373,21 +483,43 @@ nearest drop-off building.
   fight replays identically for a seed regardless of frame rate (tested with visuals on).
   Static helpers `type_multiplier`, `armor_factor`, `compute_damage`; `fire(attacker, target)`
   (melee hit or `launch`), `hit(src, target, base, type)`; owns `projectiles`.
-- `data/factions.json → combat`: `armor_k`, `attack_types` (original names: `blade, pierce,
-  siege, arcane, hero, chaos, spell`), `armor_types` (`light, medium, heavy, fortified, hero,
-  unarmored`), the full `types` table, and `defaults` (`acquire`, `leash`, `damage_point`,
-  `backswing`, `corpse_decay`, `structure_decay`, `help_radius`, `alert_interval`, `food_max`).
-  Defs validates every unit's `armor_type` and attack `type` against these lists.
+- `data/factions.json → combat` (rules.md §20.3): `armor_k`, `attack_types` (original names:
+  `blade, pierce, siege, arcane, heroic, raw, spell`), `armor_types` (`light, medium, heavy,
+  fortified, hero, unarmored, adamant`), the full `types` table, clamps, `defaults`
+  (`acquire`, `leash`, `damage_point`, `backswing`, `turn_rate`, `cast_point`,
+  `cast_backswing`, `corpse_decay`, `remains_decay`, `structure_decay`, `help_radius`,
+  `weapon_kind`, `alert_interval`) and `class_timings.<class>` (turn rate, damage point,
+  backswing per unit class). Defs validates every unit's `armor_type` and attack `type`
+  against these lists. Combat extensions (splash, artillery `min_range`, attack ground via
+  `Combat.fire_at_point(attacker, point)`, damage/taken modifiers from `Unit.mod_totals`) are
+  agent B's (`docs/m2-ownership.md`).
 - Unit `attack` def: `{"type", "damage": [min, max], "cooldown" (s, measured from swing start),
   "range" (m, edge to edge), "damage_point" (s), "backswing" (s), "acquire" (m; 0 = never
   auto-acquire; raised to at least range + 1), "projectile": {"speed", "arc", "model"} (absent or
   empty = melee)}`; unit-level `leash` (m) and optional `decay` (s).
-- Abilities are data entries with `type` (`target_unit`, `target_point`, `instant`, `passive`,
-  `aura`, `autocast`) and an `effect` script id; effect scripts live in `src/systems/abilities/`
-  and implement `cast(world, caster, target, rank)`. Cooldowns, mana, range, ranks, hotkeys.
-- Heroes: XP table and level cap 10, 3 normal abilities with 3 ranks + 1 ultimate at level 6,
-  attributes (STR → hp/regen, AGI → armor/attack speed, INT → mana/regen; primary attr → damage),
-  6-slot inventory, revive at altar for gold/time.
+- Abilities are data entries (`data/abilities.json`, `data/SCHEMA.md` §4) with `type`
+  (`target_unit`, `target_point`, `target_unit_or_point`, `instant`, `passive`, `aura`,
+  `toggle`, `command`) and an `effect` id. `EffectRegistry.get_effect(id)` loads
+  `src/systems/abilities/effects/<id>.gd` or `src/systems/items/effects/<id>.gd` (every id in
+  data must resolve; tested); effects extend `AbilityEffect` and implement
+  `cast(ctx: CastContext) -> bool` (`ctx.world, caster, id, source, rank, values,
+  target_unit, target_pos, targets`,
+  `ctx.value(key, fallback)`, `ctx.allows(unit)` for the ability's target filter).
+  `AbilitySystem` runs casts (`CAST` orders hand over through `can_order_cast`, `cast_range`,
+  `begin_cast`, `cast_tick`, `cancel_cast`; structures cast through the `cast` command),
+  cooldowns (`Unit.cooldowns`), autocast and ground effects; `BuffSystem` owns `Unit.buffs`
+  and pushes their modifiers as the `buffs` source. Per-rank numbers: `Defs.ability_rank(id,
+  rank)`.
+- Heroes (`HeroSystem`, `data/heroes.json`): XP table and level cap 10, 3 normal abilities with
+  3 ranks (hero levels 1/3/5) + 1 ultimate at level 6, attributes (STR → hp/regen, AGI →
+  armor/attack speed, INT → mana/regen; primary attr → damage) through `Defs.hero_stats`, the
+  derived level-1 unit def, 6-slot inventory (`ItemSystem`), revive at altar or inn.
+- Items (`ItemSystem`), shops (`ShopSystem`, per-player stock, `buy` / `sell` / `service`
+  commands) and creeps (`CreepSystem.spawn_camps(map)`: camp templates from
+  `creep_camps.json`, ring layout, guard positions, bounty) follow the same pattern; their
+  headers document the API.
+- `AiPlayer` (`src/systems/ai/ai_player.gd`): one per AI seat, throttled `think()`, tuning from
+  `rules.ai.<difficulty>`, its own RNG; it issues only player commands.
 
 ## 11. Input, camera, UI
 
@@ -477,8 +609,15 @@ with `.ogg/.wav/.mp3`.
   deterministic, so the work is identical), the fastest time per tick is kept and scaled by
   `machine_slowdown()` (a fixed GDScript workload against the reference machine), so host
   noise on shared VMs does not fail the build while a real spike still does.
+- Test data: the runner calls `Defs.load_test_defs()` first, so engine-level suites may use the
+  `dummy_*` defs of `data/test_defs.json`; gameplay suites use real slice ids.
+  `test_data.gd` (no `Defs.errors`, slice counts, hero level-1 stats, footprints, rules merge,
+  test-def isolation), `test_commands.gd` (every command route reaches its system or handler
+  — spies replace systems — and smart right-click for every target kind), `test_systems.gd`
+  (stage registration, hooks, effect registry coverage, AI install, Fog stub, Economy tax and
+  refund, the stat pipeline, towers firing in place), `test_slice_map.gd` (map contract).
 - `tests/playtest/battle.gd`: 8 soldiers + 4 archers attack-move into 10 creeps on an open
-  patch of the test map inside the real main scene (HUD visible); asserts a winner within 90 sim
+  patch of the test map inside the real main scene (`main.scenario = "sandbox"`) (HUD visible); asserts a winner within 90 sim
   s and saves `tests/output/battle_1..3.png`. The same setup (`battle_setup.gd`) runs headless
   in `test_orders.gd`.
 - Every system PR adds/updates tests. No test is skipped or disabled to get green.

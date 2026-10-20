@@ -145,7 +145,7 @@
     "clans_casting_pit": {
       "id": "clans_casting_pit",
       "faction": "clans",
-      "role": "war mill + lumber drop-off (Casting Pit)",
+      "role": "smithy + lumber drop-off (Casting Pit)",
       "footprint_cells": [
         6,
         6
@@ -209,7 +209,7 @@
         }
       ],
       "file_bytes": 981764,
-      "notes": "Casting Pit (war mill + lumber drop-off, 6x6 cells = 3 m): a sunken stone-rimmed casting pit with molten bronze, a clay cone kiln, log stacks, a felt awning on poles.",
+      "notes": "Casting Pit (smithy + lumber drop-off, 6x6 cells = 3 m): a sunken stone-rimmed casting pit with molten bronze, a clay cone kiln, log stacks, a felt awning on poles.",
       "height_target_m": [
         2.4,
         3.2
