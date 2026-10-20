@@ -7,7 +7,7 @@ One ElevenLabs request reads several lines of one speaker and one category, sepa
      runs of at least --min-sil seconds (default 0.35) are candidate cut points. With --expect N the N-1 LONGEST
      internal pauses are used, so a short breath inside a line ("Mm? Mind the mortar.") never splits it; the
      report gives the margin between the shortest pause used and the longest pause left inside a line;
-  3. trims each line (40 ms kept before the first and 90 ms after the last voiced frame) and, with --max-gap,
+  3. trims each line (40 ms kept before the first and 70 ms after the last voiced frame) and, with --max-gap,
      shortens every pause inside the line to that length (acks: 0.15 s), cut mid-pause with a 10 ms crossfade;
   4. applies the speaker's post-chain (--post, an ffmpeg filter string), with --tail seconds of padding for
      reverbs, then trims the tail again;
@@ -110,7 +110,7 @@ def analyse(x, noise_db, min_sil, expect=None):
     }
 
 
-def trim(x, noise_db, pre=0.04, post=0.09):
+def trim(x, noise_db, pre=0.04, post=0.07):
     edb = env_db(x)
     v = np.flatnonzero(edb >= noise_db)
     if len(v) == 0:
@@ -271,12 +271,12 @@ def run(raw, names=None, expect=None, out_dir=None, max_s=None, post="", tail=0.
         tempo = 1.0
         y, l = process_line(seg, post, tail, noise_db, tempo, lufs, max_tempo)
         dur = len(y) / SR
-        if max_s and dur > max_s:
-            need = dur / max_s * 1.01
-            if need <= max_tempo:
-                tempo = need
-                y, l = process_line(seg, post, tail, noise_db, tempo, lufs, max_tempo)
-                dur = len(y) / SR
+        for _ in range(4):  # padding and fades do not scale with atempo, so converge in a few steps
+            if not max_s or dur <= max_s or tempo >= max_tempo:
+                break
+            tempo = min(max_tempo, tempo * dur / max_s * 1.015)
+            y, l = process_line(seg, post, tail, noise_db, tempo, lufs, max_tempo)
+            dur = len(y) / SR
         row.update({"tempo": round(tempo, 3), "final_s": round(dur, 3), "lufs_in": round(l, 1),
                     "peak_dbfs": round(20 * np.log10(np.max(np.abs(y)) + 1e-12), 1)})
         if max_s and dur > max_s:

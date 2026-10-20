@@ -253,8 +253,10 @@ def mix_unison(script, job_a, job_b, keep=None, offset_ms=14.0, noise_db=-40.0):
         tempo = 1.0
         y, l = vo_split.process_line(m, post, tail, noise_db, tempo, -18.0, 1.15)
         dur = len(y) / vo_split.SR
-        if dur > max_s and dur / max_s * 1.01 <= 1.15:
-            tempo = dur / max_s * 1.01
+        for _ in range(4):
+            if dur <= max_s or tempo >= 1.15:
+                break
+            tempo = min(1.15, tempo * dur / max_s * 1.015)
             y, l = vo_split.process_line(m, post, tail, noise_db, tempo, -18.0, 1.15)
             dur = len(y) / vo_split.SR
         row = {"name": name, "a_s": round(len(segs[0][k]) / vo_split.SR, 3), "b_s": round(len(segs[1][k]) / vo_split.SR, 3),

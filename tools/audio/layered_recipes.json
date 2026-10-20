@@ -1900,6 +1900,142 @@
      ]
     }
    ]
+  },
+  {
+   "id": "claypot_hit",
+   "group": "ranged",
+   "source": "derived",
+   "note": "clay pot smash: our bombard_hit debris (Seed Audio) pitched up + Kenney CC0 crack and thump + procedural dust",
+   "takes": [
+    {
+     "max_ms": 800,
+     "fade_out_ms": 150,
+     "layers": [
+      {
+       "own": "ranged/bombard_hit_01.wav",
+       "pitch": 1.5,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactGlass_heavy_000.ogg",
+       "pitch": 0.7,
+       "lp": 5000,
+       "gain_db": -7
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_000.ogg",
+       "pitch": 1.1,
+       "gain_db": -3
+      },
+      {
+       "synth": "noise",
+       "dur": 0.6,
+       "lp": 2500,
+       "hp": 150,
+       "decay": 0.15,
+       "attack": 0.01,
+       "gain_db": -11,
+       "offset_ms": 20
+      }
+     ]
+    },
+    {
+     "max_ms": 800,
+     "fade_out_ms": 150,
+     "layers": [
+      {
+       "own": "ranged/bombard_hit_03.wav",
+       "pitch": 1.5,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactGlass_heavy_002.ogg",
+       "pitch": 0.7,
+       "lp": 5000,
+       "gain_db": -7
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_002.ogg",
+       "pitch": 1.1,
+       "gain_db": -3
+      },
+      {
+       "synth": "noise",
+       "dur": 0.6,
+       "lp": 2500,
+       "hp": 150,
+       "decay": 0.15,
+       "attack": 0.01,
+       "gain_db": -11,
+       "offset_ms": 20
+      }
+     ]
+    },
+    {
+     "max_ms": 800,
+     "fade_out_ms": 150,
+     "layers": [
+      {
+       "own": "ranged/bombard_hit_04.wav",
+       "pitch": 1.5,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactGlass_heavy_004.ogg",
+       "pitch": 0.7,
+       "lp": 5000,
+       "gain_db": -7
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_003.ogg",
+       "pitch": 1.1,
+       "gain_db": -3
+      },
+      {
+       "synth": "noise",
+       "dur": 0.6,
+       "lp": 2500,
+       "hp": 150,
+       "decay": 0.15,
+       "attack": 0.01,
+       "gain_db": -11,
+       "offset_ms": 20
+      }
+     ]
+    },
+    {
+     "max_ms": 800,
+     "fade_out_ms": 150,
+     "layers": [
+      {
+       "own": "ranged/bombard_hit_05.wav",
+       "pitch": 1.5,
+       "gain_db": -2
+      },
+      {
+       "src": "kenney/impact-sounds/impactGlass_heavy_001.ogg",
+       "pitch": 0.7,
+       "lp": 5000,
+       "gain_db": -7
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_004.ogg",
+       "pitch": 1.1,
+       "gain_db": -3
+      },
+      {
+       "synth": "noise",
+       "dur": 0.6,
+       "lp": 2500,
+       "hp": 150,
+       "decay": 0.15,
+       "attack": 0.01,
+       "gain_db": -11,
+       "offset_ms": 20
+      }
+     ]
+    }
+   ]
   }
  ]
 }

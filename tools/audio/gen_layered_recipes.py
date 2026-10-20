@@ -118,5 +118,12 @@ rec("hit_wood_h","combat","derived",[{"max_ms":650,"fade_out_ms":80,"layers":[
     {"src":IS+"impactWood_heavy_00%d.ogg"%c,"pitch":0.9,"gain_db":-5}]}
     for a,b,c,p in ((1,0,0,0.8),(2,3,2,0.78),(3,4,4,0.82),(1,2,1,0.75))],
     "heavy blow on planks: our hit_wood_l (Seed Audio) pitched down + Kenney CC0 plank crack")
+rec("claypot_hit","ranged","derived",[{"max_ms":800,"fade_out_ms":150,"layers":[
+    own("ranged/bombard_hit_%02d.wav"%a,pitch=1.5,gain_db=-2),
+    {"src":IS+"impactGlass_heavy_00%d.ogg"%b,"pitch":0.7,"lp":5000,"gain_db":-7},
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%c,"pitch":1.1,"gain_db":-3},
+    {"synth":"noise","dur":0.6,"lp":2500,"hp":150,"decay":0.15,"attack":0.01,"gain_db":-11,"offset_ms":20}]}
+    for a,b,c in ((1,0,0),(3,2,2),(4,4,3),(5,1,4))],
+    "clay pot smash: our bombard_hit debris (Seed Audio) pitched up + Kenney CC0 crack and thump + procedural dust")
 json.dump({"_doc":"Recipes for tools/audio/build_layered_sfx.py: CC0 (Kenney, assets_src/audio/cc0/kenney, licence files beside them) and procedural placeholder takes. A take with a 'name' is a kit item: it is written as <id>_<name>_<nn>.wav.","recipes":R},open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)),'layered_recipes.json'),'w'),indent=1)
 print(len(R))
