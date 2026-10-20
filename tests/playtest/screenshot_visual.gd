@@ -69,7 +69,7 @@ func _run() -> void:
 	await _shot("night_close", 22.5, c_start + _inward(c_start, m) * 8.5, 18.75)
 	# the clash: both armies meet in the middle
 	if only.is_empty() or only.has("battle"):
-		var mid := Vector3(96, 0, 96)
+		var mid := _open_ground(m, Vector3(96, 0, 96))
 		_teleport_army(0, mid + Vector3(-5.5, 0, 2.0))
 		_teleport_army(1, mid + Vector3(5.5, 0, -2.0))
 		for pid in 2:
@@ -80,6 +80,28 @@ func _run() -> void:
 		await _shot("battle", 13.0, mid, 21.0)
 	print("ticks simulated: %d" % world.get("tick_count"))
 	quit(0)
+
+
+## Closest point to `near` with a 20 x 12 m patch of open, dry, level ground (spiral search).
+func _open_ground(m: Object, near: Vector3) -> Vector3:
+	var pathing: Object = world.get("pathing")
+	for r in range(0, 60, 2):
+		for k in 16:
+			var a := TAU * k / 16.0
+			var p := near + Vector3(cos(a), 0, sin(a)) * r
+			var ok := true
+			var h0: float = m.height_at(p.x, p.z)
+			for dz in range(-6, 7, 2):
+				for dx in range(-10, 11, 2):
+					var q := p + Vector3(dx, 0, dz)
+					if not pathing.call("is_walkable_world", q) or absf(m.height_at(q.x, q.z) - h0) > 0.2:
+						ok = false
+						break
+				if not ok:
+					break
+			if ok:
+				return p
+	return near
 
 
 func _inward(start: Vector3, m: Object) -> Vector3:
