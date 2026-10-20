@@ -271,3 +271,38 @@ func _spread_units() -> World:
 
 func test_200_units_tick_cost() -> void:
 	assert_tick_cost(best_tick_samples(_spread_units, 90, 2), "200 units spread over a flat map", 12.0, 20.0)
+
+
+## Rules §7.10: a group whose spread is under 8 m moves in formation at its slowest member's
+## speed, so it arrives together instead of stringing out (QA PT1: the war-band reached the
+## defenders one unit at a time); a unit ordered on its own keeps its own speed, and a member
+## that engages drops the formation pace.
+@warning_ignore("integer_division")
+func test_formation_moves_at_the_slowest_speed() -> void:
+	var w := make_world()
+	var units: Array = []
+	for i in 8:
+		units.append(w.spawn_unit("dummy_soldier", 0, Vector3(10 + (i % 4) * 1.2, 0, 10 + (i / 4) * 1.2)))
+	var slow: Unit = units[5]
+	slow.speed = 3.0
+	var start: Array = units.map(func(u: Unit) -> Vector3: return u.pos)
+	_move(w, units, Vector3(45, 0, 40))
+	for t in 60:
+		w.step()
+	var most := 0.0
+	for i in units.size():
+		most = maxf(most, Grid.flat_dist((units[i] as Unit).pos, start[i]))
+		assert_true(is_equal_approx((units[i] as Unit).march_speed, 3.0), "%s keeps the group pace" % (units[i] as Unit).name)
+	assert_lt(most, 3.0 * 2.0 + 0.6, "nobody outruns the slowest member (%.2f m in 2 s)" % most)
+	assert_lt(5.0, most, "but the group does move")
+	var solo: Unit = w.spawn_unit("dummy_soldier", 0, Vector3(10, 0, 30))
+	var p0 := solo.pos
+	_move(w, [solo], Vector3(45, 0, 30))
+	for t in 30:
+		w.step()
+	assert_eq(solo.march_speed, 0.0, "a lone unit has no formation pace")
+	assert_lt(3.0 * 1.0 + 0.3, Grid.flat_dist(solo.pos, p0), "and walks at its own 4.2 m/s")
+	var foe: Unit = w.spawn_unit("dummy_soldier", 1, units[0].pos + Vector3(20, 0, 20))
+	(units[0] as Unit).engage(foe)
+	assert_eq((units[0] as Unit).march_speed, 0.0, "engaging breaks the formation pace")
+

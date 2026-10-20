@@ -234,9 +234,14 @@ command whose `target` died before it applied falls back to its `pos`, or is dro
   index goes into `Order.data.tree`), else `move`. `attack` without a target is an
   `attack_move`.
 Group moves keep a compact group's formation (offsets from the group centre when its spread is
-< 8 m); otherwise everyone heads for the point and separation spreads them. Every ground
-move / attack-move / patrol given to 2+ units carries one `GroupPath` (`Order.group_path`) so
-the group shares its path searches (§6).
+< 8 m); otherwise everyone heads for the point and separation spreads them. A formation order
+also carries the group's slowest member speed (`Order.march_speed` → `Unit.march_speed`, rules
+§7.10): every member keeps to it until it engages or the order ends, so the group arrives as a
+group. Every ground move / attack-move / patrol given to 2+ units carries one `GroupPath`
+(`Order.group_path`) so the group shares its path searches (§6). An idle unit moved only by
+shoves and separation (allies walking through) steps back to where it stood once nobody has
+pushed it for 0.5 s, if it ended up 0.75-4 m away and the spot is free
+(`Unit.SHOVE_*`).
 
 ### Scenarios
 
@@ -454,8 +459,11 @@ frees it. Visuals are a placeholder arrow mesh.
 - `GroupPath` (`src/world/group_path.gd`): one per group command. The first unit to need a
   path queries it and offers it as a base; others whose formation slot starts within 12 m of a
   base derive theirs with line checks (charged 0.2 per checked cell): the base waypoints
-  shifted by their formation offset if every segment is walkable, else the base waypoints
-  themselves, joined at one of the first 3 in straight reach. Units that fit neither query
+  shifted by their formation offset, each waypoint taking the full, half or no offset (the
+  first that is in straight walking reach, backtracking to narrow the previous waypoint when
+  none is, at most 4 checks per waypoint), so a group marches on parallel lanes and narrows
+  only at chokepoints; else the base waypoints themselves, joined at one of the first 3 in
+  straight reach. Units that fit neither query
   their own path (a new base, max 16). Only an order's first path uses it; re-paths after
   fights or stalls are ordinary queries. Measured: 250 units ordered across the slice = 4 A*
   queries, all paths assigned within 2 ticks.

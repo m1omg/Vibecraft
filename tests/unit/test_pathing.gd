@@ -314,10 +314,14 @@ func test_group_order_shares_path_searches() -> void:
 	var queries := w.pathing.total_queries - q0
 	assert_true(queries <= 4, "12 units crossing the map ran %d A* queries" % queries)
 	run_until_idle(w, units, 30 * 90)
+	# a unit that arrived early and was shoved aside by later arrivals steps back to its slot
+	# (Unit.SHOVE_*): give the group a moment to settle
+	for i in 30 * 3:
+		w.step()
 	var worst := 0.0
 	for i in units.size():
 		worst = maxf(worst, Grid.flat_dist(units[i].pos, goals[i]))
-	assert_lt(worst, 2.0, "every unit reached its formation slot (worst %.2f m)" % worst)
+	assert_lt(worst, 1.5, "every unit reached its formation slot (worst %.2f m)" % worst)
 
 
 ## A unit that leaves its group order before taking its share of the group path (here: an
@@ -396,3 +400,43 @@ func test_ray_traversal_never_misses_blocked_cells() -> void:
 			agree += 1
 	assert_eq(missed, 0, "no blocked cell missed")
 	assert_true(agree >= 390, "agrees with dense sampling (%d / 400)" % agree)
+
+
+## GroupPath shifted lanes (QA PT1: groups used to fall back to one shared lane, a single-file
+## column, whenever any shifted waypoint was blocked): the base path zig-zags round the top of
+## wall A and the bottom of wall B. A member offset towards -z cannot keep its offset at A's
+## end (it would be inside the wall) but can at B's; one offset towards +z the other way round.
+## Each narrows to the base lane only at the blocked corner and keeps its own lane at the other.
+## Paths stay walkable and end at each member's slot.
+func test_group_path_keeps_lanes_past_a_corner() -> void:
+	var p := _pathing()
+	p.set_footprint_rect(Rect2i(40, 0, 4, 100), true)    # wall A: x 20..22 m, z 0..50 m
+	p.set_footprint_rect(Rect2i(64, 28, 4, 100), true)   # wall B: x 32..34 m, z 14..64 m
+	var from := Vector3(10, 0, 30)
+	var goal := Vector3(46, 0, 30)
+	var base := p.find_path(from, goal)
+	assert_true(base.size() >= 5, "the base path zig-zags round both walls (%s)" % base)
+	var gp := GroupPath.new()
+	gp.add_base(base, goal, false)
+	for shift: Vector3 in [Vector3(0, 0, -1.5), Vector3(0, 0, 1.5)]:
+		var b := gp.find_base(from + shift, goal + shift, false)
+		assert_true(b != null, "%s: the base is shared" % shift)
+		if b == null:
+			continue
+		var path := gp.derive(p, b, from + shift, goal + shift)
+		assert_true(path.size() >= 3, "%s: derived a path" % shift)
+		assert_true(_path_is_walkable(p, path), "%s: walkable" % shift)
+		assert_near(Grid.flat_dist(path[path.size() - 1], goal + shift), 0.0, 0.01, "%s: ends at the slot" % shift)
+		var own_lane := 0
+		var shared := 0
+		for k in range(1, path.size() - 1):
+			var on_base := false
+			for q in base:
+				if q.is_equal_approx(path[k]):
+					on_base = true
+			if on_base:
+				shared += 1
+			else:
+				own_lane += 1
+		assert_true(own_lane >= 1, "%s: keeps its own lane at the open corner (%s)" % [shift, path])
+		assert_true(shared >= 1, "%s: narrows to the base lane at the blocked corner (%s)" % [shift, path])

@@ -41,6 +41,13 @@ const STRUCTURE_PENALTY := 6.0   ## acquisition prefers units over structures (m
 const BLOCKED_TICKS := 45        ## chasing without progress this long -> try another target
 const SKIP_TICKS := 90           ## how long a given-up target is ignored by acquisition
 const HOME_EPS := 1.5            ## creeps further than this from camp walk back when calm
+## An idle unit shoved aside by a passing ally steps back to where it stood once nobody has
+## pushed it for SHOVE_SETTLE_TICKS, if it ended up between SHOVE_RETURN_EPS and
+## SHOVE_RETURN_MAX away and the spot is still free (the genre's "move aside, then step back":
+## a formation keeps its slots). A unit bulldozed further than that stays where it ended up.
+const SHOVE_SETTLE_TICKS := 15
+const SHOVE_RETURN_EPS := 0.75
+const SHOVE_RETURN_MAX := 4.0
 const FOLLOW_DIST := 1.2
 const GATHER_REACH := 0.8
 ## Modifier keys whose totals take the largest value instead of the sum (rules §7.4).
@@ -146,6 +153,8 @@ var holding: bool = false
 var hash_bucket: int = -1
 var footprint: Rect2i = Rect2i()
 var push_accum: Vector3 = Vector3.ZERO
+var _shoved_from: Vector3 = Vector3.INF   ## where an idle unit stood before allies shoved it
+var _shoved_tick: int = -1
 var view: Node3D = null
 
 # movement (handler API reads `arrived`)
@@ -167,6 +176,7 @@ var engage_dist: float = 0.0      ## edge distance when engaged (retaliation can
 var guard_pos: Vector3 = Vector3.ZERO
 var returning: bool = false       ## walking back to the guard position after a leash
 var resume_path: bool = false     ## attack-move must re-path to its goal after a fight
+var march_speed: float = 0.0      ## formation speed cap of the current order (0 = none, rules §7.10)
 var patrol_from: Vector3 = Vector3.ZERO
 var blocked_ticks: int = 0
 var _home: Vector3 = Vector3.ZERO
@@ -557,6 +567,8 @@ func _start(o: Order) -> void:
 	stop_moving()
 	_group = o.group_path
 	_group_try = _group != null
+	march_speed = o.march_speed
+	_shoved_from = Vector3.INF
 	OrderHandlers.of(o.type).enter(self, o)
 
 
@@ -607,6 +619,7 @@ func finish_order(advance: bool = true) -> void:
 	holding = false
 	engage_id = 0
 	resume_path = false
+	march_speed = 0.0
 	_group = null
 	_group_try = false
 	stop_moving()
@@ -677,7 +690,8 @@ func _think(dt: float) -> Vector3:
 	return OrderHandlers.of(current.type).tick(self, current, dt)
 
 
-## Calm idle unit: guard position follows it; creeps walk back to their camp.
+## Calm idle unit: guard position follows it; creeps walk back to their camp; a unit shoved
+## aside by allies steps back to its spot (SHOVE_*).
 func settle() -> void:
 	if is_creep():
 		guard_pos = _home
@@ -685,6 +699,21 @@ func settle() -> void:
 			return_to(_home)
 	elif engage_id == 0:
 		guard_pos = pos
+		if _shoved_from != Vector3.INF and world.tick_count - _shoved_tick >= SHOVE_SETTLE_TICKS:
+			var back := _shoved_from
+			_shoved_from = Vector3.INF
+			var d := Grid.flat_dist(pos, back)
+			if d > SHOVE_RETURN_EPS and d <= SHOVE_RETURN_MAX and _spot_free(back):
+				return_to(back)
+
+
+## No other ground unit overlaps a unit of this radius standing at `p`.
+func _spot_free(p: Vector3) -> bool:
+	for n: Unit in world.spatial.query_radius(p, radius + world.max_unit_radius, _nbuf):
+		if n != self and n.alive and n.is_mobile() and not n.is_flying \
+				and Grid.flat_dist(n.pos, p) < radius + n.radius:
+			return false
+	return world.pathing.is_walkable_world(p, is_large())
 
 
 ## Camp / spawn position creeps return to (CreepSystem may move it).
@@ -767,6 +796,7 @@ func engage(t: Unit) -> void:
 	blocked_ticks = 0
 	_repath_cd = 0
 	returning = false
+	march_speed = 0.0               # a fight breaks the formation: full speed from here on
 	_group = null
 	_group_try = false
 	stop_moving()
@@ -977,9 +1007,9 @@ func follow_path(dt: float) -> Vector3:
 	if not last and dist < WAYPOINT_EPS:
 		path_i += 1
 		return follow_path(dt)
-	var spd := speed
+	var spd := speed if march_speed <= 0.0 else minf(speed, march_speed)
 	if last:
-		spd = minf(speed, dist / dt)
+		spd = minf(spd, dist / dt)
 	var dir := to / dist
 	return Vector3(dir.x, 0.0, dir.y) * spd
 
@@ -1043,7 +1073,14 @@ func _steer_and_move(desired: Vector3, dt: float) -> void:
 		vel += sep * SEPARATION_GAIN + push_accum * PUSH_GAIN
 	push_accum = Vector3.ZERO
 	vel = vel.limit_length(speed * 1.25)
+	var before := pos
 	_try_move(vel * dt)
+	# an idle unit moved only by shoves and separation remembers where it stood (settle())
+	if not moving and current == null and not returning and engage_id == 0 and not is_creep() \
+			and Grid.flat_dist(before, pos) > 0.001:
+		if _shoved_from == Vector3.INF:
+			_shoved_from = before
+		_shoved_tick = world.tick_count
 	velocity = (pos - prev_pos) / dt
 	velocity.y = 0.0
 	if moving:

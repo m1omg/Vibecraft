@@ -529,6 +529,12 @@ func _apply_command(cmd: Dictionary) -> void:
 	if tree < 0 and target == 0 and t in [Order.Type.SMART, Order.Type.GATHER] and cmd.has("pos"):
 		tree = doodads.nearest_tree(pos, TREE_CLICK_RADIUS)
 	var group: GroupPath = GroupPath.new() if us.size() > 1 else null
+	# formation (rules §7.10): the group keeps to its slowest member's speed
+	var march := 0.0
+	if not offsets.is_empty():
+		march = INF
+		for u in us:
+			march = minf(march, u.speed)
 	for i in us.size():
 		var u := us[i]
 		var ut := t as Order.Type
@@ -543,6 +549,8 @@ func _apply_command(cmd: Dictionary) -> void:
 		var o := Order.make(ut, goal, tid)
 		if tid == 0 and ut in [Order.Type.MOVE, Order.Type.ATTACK_MOVE, Order.Type.PATROL]:
 			o.group_path = group
+			if not offsets.is_empty():
+				o.march_speed = march
 		o.def_id = str(cmd.get("def", ""))
 		o.ability = str(cmd.get("ability", ""))
 		o.slot = int(cmd.get("slot", -1))

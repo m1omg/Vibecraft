@@ -32,6 +32,9 @@ var data: Dictionary = {}
 ## Shared path of the command this order came from (group moves); null for single units and
 ## targeted orders. Only the order's first path request uses it.
 var group_path: GroupPath = null
+## Formation moves (rules §7.10): the group's slowest member speed, which every member keeps to
+## until it engages or the order ends, so the group arrives as a front. 0 = the unit's own speed.
+var march_speed: float = 0.0
 
 
 static func make(t: Type, pos: Vector3 = Vector3.ZERO, target: int = 0) -> Order:

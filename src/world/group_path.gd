@@ -5,7 +5,9 @@ extends RefCounted
 ## base; group members whose formation slot starts near that base derive their path from it
 ## with a few line checks instead of their own A* query:
 ## 1. shifted: the base waypoints moved by the difference between the two goals (the formation
-##    offset; zero when everyone heads for the same point), if every segment is walkable;
+##    offset; zero when everyone heads for the same point); a waypoint whose shifted point is
+##    not in straight walking reach takes half the offset or none (the group narrows only at
+##    chokepoints and opens out again after them);
 ## 2. joined: otherwise the base waypoints themselves, entered at one of the first JOIN_TRIES
 ##    waypoints in straight reach and left for the unit's own goal at the end.
 ## A unit whose path fits neither runs its own query, which becomes another base. A group order
@@ -18,6 +20,9 @@ const CHECK_COST := 0.2          ## path budget per cell of checked segment (mea
                                  ## check costs ~1/5 of a query per cell; see Pathing.estimate_cost)
 const MAX_BASES := 16
 const JOIN_TRIES := 3
+## Share of the formation offset tried per waypoint, widest first (0 = the base waypoint).
+const SHIFT_STEPS: Array[float] = [1.0, 0.5, 0.0]
+const MAX_CHECKS_PER_WAYPOINT := 4   ## line-check allowance of one shifted derivation
 
 
 class Base:
@@ -86,22 +91,53 @@ func _check(pathing: Pathing, a: Vector3, c: Vector3, large: bool) -> bool:
 	return pathing.line_of_walk(a, c, large)
 
 
+## The base waypoints moved by the formation offset, so the group marches as a front on
+## parallel lanes. Where a shifted waypoint cannot be walked to in a straight line (a ramp, a
+## gap in a tree line, the snapped end at a building), that waypoint takes a smaller share of
+## the offset (SHIFT_STEPS, down to the base waypoint itself), backtracking to narrow the
+## previous waypoint when nothing fits: the group narrows only at the chokepoint and opens out
+## again after it. Base segments between two unshifted waypoints are known to be walkable, so
+## the search always ends (at worst on the base lane) once the first leg is walkable. Empty
+## when it is not, or when the search runs out of its check allowance.
 func _shifted(pathing: Pathing, b: Base, from: Vector3, goal: Vector3, last: Vector3) -> PackedVector3Array:
 	var base := b.path
 	var n := base.size()
 	var shift := Vector3(goal.x - b.goal.x, 0.0, goal.z - b.goal.z)
-	var same := shift.length_squared() < 1e-6   ## no formation offset: base segments are known good
-	var out := PackedVector3Array()
-	var prev := Vector3(from.x, 0.0, from.z)
-	out.append(prev)
-	for k in range(1, n):
-		var want := last if k == n - 1 else base[k] + shift
-		var known := same and k > 1 and want.is_equal_approx(base[k])
-		if not known and not _check(pathing, prev, want, b.large):
-			return PackedVector3Array()
-		out.append(want)
-		prev = want
-	return out
+	var steps: Array[float] = SHIFT_STEPS if shift.length_squared() >= 1e-6 else ([0.0] as Array[float])
+	var start := Vector3(from.x, 0.0, from.z)
+	var choice := PackedInt32Array()
+	choice.resize(n)
+	var pts := PackedVector3Array()
+	pts.resize(n)
+	pts[0] = start
+	var checks := 0
+	var limit := n * MAX_CHECKS_PER_WAYPOINT
+	var k := 1
+	while k < n:
+		var options := 1 if k == n - 1 else steps.size()
+		if choice[k] >= options:
+			if k == 1:
+				return PackedVector3Array()
+			choice[k] = 0
+			k -= 1
+			choice[k] += 1
+			continue
+		var f: float = 0.0 if k == n - 1 else steps[choice[k]]
+		var want := last if k == n - 1 else base[k] + shift * f
+		var prev_on_base := k > 1 and steps[choice[k - 1]] == 0.0
+		var known := prev_on_base and (want.is_equal_approx(base[k]))
+		if not known:
+			checks += 1
+			if checks > limit:
+				return PackedVector3Array()
+		if known or _check(pathing, pts[k - 1], want, b.large):
+			pts[k] = want
+			k += 1
+			if k < n:
+				choice[k] = 0
+		else:
+			choice[k] += 1
+	return pts
 
 
 func _joined(pathing: Pathing, b: Base, from: Vector3, last: Vector3, first: int) -> PackedVector3Array:
