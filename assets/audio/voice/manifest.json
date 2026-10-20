@@ -66,6 +66,15 @@
    "categories": {
     "ready": [
      "res://assets/audio/voice/kingdom/hookgunner/ready_01.ogg"
+    ],
+    "what": [
+     "res://assets/audio/voice/kingdom/hookgunner/what_01.ogg",
+     "res://assets/audio/voice/kingdom/hookgunner/what_02.ogg",
+     "res://assets/audio/voice/kingdom/hookgunner/what_03.ogg"
+    ],
+    "yes": [
+     "res://assets/audio/voice/kingdom/hookgunner/yes_01.ogg",
+     "res://assets/audio/voice/kingdom/hookgunner/yes_03.ogg"
     ]
    }
   },
