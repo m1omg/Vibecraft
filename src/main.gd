@@ -14,6 +14,7 @@ extends Node3D
 
 
 func _ready() -> void:
+	Defs.load_test_defs()   # the sandbox still uses the placeholder dummy_* defs
 	var map := MapGenerator.test_map(map_seed)
 	world.setup(map, map_seed)
 	for p: PlayerState in [world.add_player(0, 0, "placeholder_a", false),

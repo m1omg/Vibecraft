@@ -45,16 +45,19 @@ func test_type_table_multipliers() -> void:
 	assert_near(Combat.type_multiplier("pierce", "unarmored"), 1.5, 1e-6, "pierce vs unarmored")
 	assert_near(Combat.type_multiplier("siege", "fortified"), 1.5, 1e-6, "siege vs fortified")
 	assert_near(Combat.type_multiplier("arcane", "heavy"), 2.0, 1e-6, "arcane vs heavy")
-	assert_near(Combat.type_multiplier("hero", "fortified"), 0.5, 1e-6, "hero vs fortified")
+	assert_near(Combat.type_multiplier("heroic", "fortified"), 0.5, 1e-6, "heroic vs fortified")
+	assert_near(Combat.type_multiplier("spell", "hero"), 0.7, 1e-6, "spell vs heroic armour")
+	assert_near(Combat.type_multiplier("blade", "adamant"), 0.05, 1e-6, "blade vs adamant")
 	var attack_types: Array = Defs.combat["attack_types"]
 	var armor_types: Array = Defs.combat["armor_types"]
-	assert_true(attack_types.has("chaos") and armor_types.has("unarmored"), "original type names")
+	assert_true(attack_types.has("raw") and attack_types.has("heroic") and armor_types.has("adamant"), "original type names (rules §7.1)")
+	assert_false(attack_types.has("chaos") or attack_types.has("hero"), "retired attack ids are gone")
 	for at: String in attack_types:
 		var row: Dictionary = Defs.combat["types"][at]
 		for ar: String in armor_types:
 			assert_true(row.has(ar), "table defines %s vs %s" % [at, ar])
 	for ar: String in armor_types:
-		assert_near(Combat.type_multiplier("chaos", ar), 1.0, 1e-6, "chaos ignores armor type")
+		assert_near(Combat.type_multiplier("raw", ar), 1.0, 1e-6, "raw ignores armor type")
 	# order of operations: type multiplier, then armor reduction
 	assert_near(Combat.compute_damage(20.0, "pierce", "light", 0.0), 40.0, 1e-4, "20 pierce vs light")
 	assert_near(Combat.compute_damage(20.0, "blade", "heavy", 5.0), 20.0 * (1.0 - 0.3 / 1.3), 1e-4,

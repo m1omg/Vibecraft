@@ -90,9 +90,9 @@ func _maybe_alert(target: Unit, src: Unit) -> void:
 	if not world.is_enemy(target.player_id, src.player_id):
 		return
 	var pid := target.player_id
-	var interval := float(Defs.combat_default("alert_interval", 8.0))
+	var interval := float(Defs.rule("alerts.advisor_cooldown", Defs.combat_default("alert_interval", 8.0)))
 	if _last_alert.has(pid) and world.time - float(_last_alert[pid]) < interval:
 		return
 	_last_alert[pid] = world.time
 	Events.alert_raised.emit(pid, target.pos)
-	Events.notification.emit(pid, "under_attack", "Your forces are under attack!")
+	Events.notification.emit(pid, "under_attack", "Steel is drawn against us!")

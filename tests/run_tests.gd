@@ -32,6 +32,8 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await process_frame
+	# placeholder dummy_* defs (data/test_defs.json) exist only for tests
+	root.get_node("Defs").call("load_test_defs")
 	var filter := ""
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--filter="):

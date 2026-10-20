@@ -1,3 +1,238 @@
 {
-  "dummy_armor_1": {"name": "Placeholder Plating", "levels": 1, "cost": {"gold": 125, "lumber": 75, "time": 60}}
+  "_doc": "Research (per-level costs, times and tier gates; effects) and building upgrades (hall tiers, tower upgrades: the upgrade id equals the target building id). See data/SCHEMA.md.",
+  "kingdom_tempered_blades": {
+    "name": "Tempered Blades",
+    "kind": "research",
+    "faction": "kingdom",
+    "building": "kingdom_foundry",
+    "hotkey": "T",
+    "levels": [
+      {"cost": {"gold": 110, "lumber": 50}, "time": 60, "requires_tier": 1},
+      {"cost": {"gold": 175, "lumber": 160}, "time": 75, "requires_tier": 2}
+    ],
+    "effects": [{"type": "upgrade_damage", "units": ["kingdom_pavisier", "kingdom_flail_levy"]}],
+    "summary": "Blade units +upgrade_damage per level (Pavisier +2, Flail Levy +1)"
+  },
+  "kingdom_corned_powder": {
+    "name": "Corned Powder",
+    "kind": "research",
+    "faction": "kingdom",
+    "building": "kingdom_foundry",
+    "hotkey": "P",
+    "levels": [
+      {"cost": {"gold": 110, "lumber": 60}, "time": 60, "requires_tier": 1},
+      {"cost": {"gold": 180, "lumber": 170}, "time": 75, "requires_tier": 2}
+    ],
+    "effects": [{"type": "upgrade_damage", "units": ["kingdom_hookgunner", "kingdom_bombard_wagon"]}],
+    "summary": "Ranged and siege +upgrade_damage per level (Hookgunner +3, Bombard Wagon +7)"
+  },
+  "kingdom_gothic_plate": {
+    "name": "Gothic Plate",
+    "kind": "research",
+    "faction": "kingdom",
+    "building": "kingdom_foundry",
+    "hotkey": "G",
+    "levels": [
+      {"cost": {"gold": 120, "lumber": 70}, "time": 60, "requires_tier": 1},
+      {"cost": {"gold": 160, "lumber": 170}, "time": 75, "requires_tier": 2}
+    ],
+    "effects": [{"type": "armor", "amount": 2, "units": ["kingdom_pavisier", "kingdom_bombard_wagon"]}],
+    "summary": "+2 armour per level: Pavisier, Bombard Wagon"
+  },
+  "kingdom_quilted_gambesons": {
+    "name": "Quilted Gambesons",
+    "kind": "research",
+    "faction": "kingdom",
+    "building": "kingdom_foundry",
+    "hotkey": "Q",
+    "levels": [
+      {"cost": {"gold": 100, "lumber": 80}, "time": 60, "requires_tier": 1},
+      {"cost": {"gold": 150, "lumber": 160}, "time": 75, "requires_tier": 2}
+    ],
+    "effects": [{"type": "armor", "amount": 2, "units": ["kingdom_hookgunner", "kingdom_flail_levy"]}],
+    "summary": "+2 armour per level: Hookgunner, Flail Levy"
+  },
+  "kingdom_pavise_drill": {
+    "name": "Pavise Drill",
+    "kind": "research",
+    "faction": "kingdom",
+    "building": "kingdom_drill_yard",
+    "hotkey": "D",
+    "levels": [{"cost": {"gold": 130, "lumber": 90}, "time": 40, "requires_tier": 1}],
+    "effects": [{"type": "unlock_ability", "ability": "kingdom_plant_pavise", "units": ["kingdom_pavisier"]}],
+    "summary": "Unlocks Plant Pavise"
+  },
+  "kingdom_drawn_barrels": {
+    "name": "Drawn Barrels",
+    "kind": "research",
+    "faction": "kingdom",
+    "building": "kingdom_drill_yard",
+    "hotkey": "B",
+    "levels": [{"cost": {"gold": 80, "lumber": 130}, "time": 45, "requires_tier": 2}],
+    "effects": [{"type": "range", "value": 9.0, "units": ["kingdom_hookgunner"]}],
+    "summary": "Hookgunner range 7.0 -> 9.0 m"
+  },
+  "kingdom_case_shot": {
+    "name": "Case Shot",
+    "kind": "research",
+    "faction": "kingdom",
+    "building": "kingdom_wainwright_yard",
+    "hotkey": "C",
+    "levels": [{"cost": {"gold": 125, "lumber": 100}, "time": 45, "requires_tier": 2}],
+    "effects": [{"type": "unlock_ability", "ability": "kingdom_case_shot_passive", "units": ["kingdom_bombard_wagon"]}],
+    "summary": "Bombard Wagon splash slows -25 % for 3 s"
+  },
+  "kingdom_signal_shells": {
+    "name": "Signal Shells",
+    "kind": "research",
+    "faction": "kingdom",
+    "building": "kingdom_wainwright_yard",
+    "hotkey": "S",
+    "levels": [{"cost": {"gold": 50, "lumber": 50}, "time": 30, "requires_tier": 2}],
+    "effects": [{"type": "unlock_ability", "ability": "kingdom_signal_shell", "units": ["kingdom_bombard_wagon"]}],
+    "summary": "Bombard Wagon gains Signal Shell"
+  },
+  "kingdom_lime_mortar": {
+    "name": "Lime Mortar",
+    "kind": "research",
+    "faction": "kingdom",
+    "building": "kingdom_timber_yard",
+    "hotkey": "M",
+    "levels": [{"cost": {"gold": 125, "lumber": 25}, "time": 60, "requires_tier": 1}],
+    "effects": [{"type": "building_bonus", "armor": 2, "hp_pct": 15, "faction": "kingdom"}],
+    "summary": "All buildings +2 armour, +15 % max HP"
+  },
+  "kingdom_linden_journeyman_papers": {
+    "name": "Linden Sister: Journeyman Papers",
+    "kind": "research",
+    "faction": "kingdom",
+    "building": "kingdom_collegium",
+    "hotkey": "J",
+    "levels": [{"cost": {"gold": 120, "lumber": 60}, "time": 60, "requires_tier": 2}],
+    "effects": [
+      {"type": "unit_bonus", "hp": 35, "mana": 60, "damage": 1, "units": ["kingdom_linden_sister"]},
+      {"type": "unlock_ability", "ability": "kingdom_smoke_of_rue", "units": ["kingdom_linden_sister"]}
+    ],
+    "summary": "Smoke of Rue; +35 HP, +60 mana, +1 damage"
+  },
+  "clans_up_melee": {
+    "name": "Bronze Edges",
+    "kind": "research",
+    "faction": "clans",
+    "building": "clans_casting_pit",
+    "hotkey": "E",
+    "levels": [
+      {"cost": {"gold": 110, "lumber": 60}, "time": 55, "requires_tier": 1},
+      {"cost": {"gold": 180, "lumber": 170}, "time": 70, "requires_tier": 2}
+    ],
+    "effects": [{"type": "upgrade_damage", "units": ["clans_grappler"]}],
+    "summary": "Grappler +2 damage per level"
+  },
+  "clans_up_ranged": {
+    "name": "Bronze Points",
+    "kind": "research",
+    "faction": "clans",
+    "building": "clans_casting_pit",
+    "hotkey": "P",
+    "levels": [
+      {"cost": {"gold": 110, "lumber": 60}, "time": 55, "requires_tier": 1},
+      {"cost": {"gold": 180, "lumber": 170}, "time": 70, "requires_tier": 2}
+    ],
+    "effects": [{"type": "upgrade_damage", "units": ["clans_javelineer", "clans_sling_cart"]}],
+    "summary": "Javelineer +2, Sling-Cart +7 damage per level"
+  },
+  "clans_up_armor": {
+    "name": "Lamellar Plates",
+    "kind": "research",
+    "faction": "clans",
+    "building": "clans_casting_pit",
+    "hotkey": "L",
+    "levels": [
+      {"cost": {"gold": 140, "lumber": 70}, "time": 55, "requires_tier": 1},
+      {"cost": {"gold": 170, "lumber": 180}, "time": 70, "requires_tier": 2}
+    ],
+    "effects": [{"type": "armor", "amount": 2, "units": ["clans_grappler", "clans_javelineer", "clans_sling_cart"]}],
+    "summary": "+2 armour per level: Grappler, Javelineer, Sling-Cart"
+  },
+  "clans_up_wrestle": {
+    "name": "Wrestler's Training",
+    "kind": "research",
+    "faction": "clans",
+    "building": "clans_grapple_yard",
+    "hotkey": "W",
+    "levels": [{"cost": {"gold": 150, "lumber": 125}, "time": 50, "requires_tier": 2}],
+    "effects": [
+      {"type": "unit_bonus", "hp": 60, "units": ["clans_grappler"]},
+      {"type": "unlock_ability", "ability": "clans_shove", "units": ["clans_grappler"]}
+    ],
+    "summary": "Grapplers +60 HP and Shove"
+  },
+  "clans_up_atlatl": {
+    "name": "Throwing-Sticks",
+    "kind": "research",
+    "faction": "clans",
+    "building": "clans_grapple_yard",
+    "hotkey": "T",
+    "levels": [{"cost": {"gold": 80, "lumber": 110}, "time": 45, "requires_tier": 2}],
+    "effects": [{"type": "range", "value": 8.6, "units": ["clans_javelineer"]}],
+    "summary": "Javelineer range 7.0 -> 8.6 m"
+  },
+  "clans_up_packed_pots": {
+    "name": "Packed Clay Pots",
+    "kind": "research",
+    "faction": "clans",
+    "building": "clans_grapple_yard",
+    "hotkey": "P",
+    "levels": [{"cost": {"gold": 100, "lumber": 100}, "time": 45, "requires_tier": 2}],
+    "effects": [{"type": "splash", "half": 2.5, "units": ["clans_sling_cart"]}],
+    "summary": "Sling-Cart half-damage splash 1.9 -> 2.5 m"
+  },
+  "clans_up_gust_r2": {
+    "name": "Gustcaller: Second Ribbon",
+    "kind": "research",
+    "faction": "clans",
+    "building": "clans_mirror_yurt",
+    "hotkey": "A",
+    "levels": [{"cost": {"gold": 90, "lumber": 60}, "time": 55, "requires_tier": 2}],
+    "effects": [
+      {"type": "unit_bonus", "hp": 60, "mana": 90, "damage": 2, "units": ["clans_gustcaller"]},
+      {"type": "unlock_ability", "ability": "clans_wind_at_your_back", "units": ["clans_gustcaller"]}
+    ],
+    "summary": "+60 HP, +90 mana, +2 damage; Wind at Your Back"
+  },
+  "kingdom_walled_burg": {
+    "name": "Walled Burg",
+    "kind": "building_upgrade",
+    "faction": "kingdom",
+    "from": "kingdom_moot_hall",
+    "to": "kingdom_walled_burg",
+    "hotkey": "U",
+    "tier": 2,
+    "requires": ["kingdom_oath_hall"],
+    "levels": [{"cost": {"gold": 310, "lumber": 200}, "time": 130, "requires_tier": 1}],
+    "effects": [{"type": "hall_tier", "tier": 2}]
+  },
+  "clans_banner_shell": {
+    "name": "Banner Shell",
+    "kind": "building_upgrade",
+    "faction": "clans",
+    "from": "clans_shell_hall",
+    "to": "clans_banner_shell",
+    "hotkey": "U",
+    "tier": 2,
+    "requires": ["clans_naming_stones"],
+    "levels": [{"cost": {"gold": 305, "lumber": 195}, "time": 130, "requires_tier": 1}],
+    "effects": [{"type": "hall_tier", "tier": 2}]
+  },
+  "kingdom_gun_tower": {
+    "name": "Gun Tower",
+    "kind": "building_upgrade",
+    "faction": "kingdom",
+    "from": "kingdom_lookout",
+    "to": "kingdom_gun_tower",
+    "hotkey": "G",
+    "requires": [],
+    "levels": [{"cost": {"gold": 75, "lumber": 45}, "time": 35, "requires_tier": 1}],
+    "effects": [{"type": "transform_building"}]
+  }
 }

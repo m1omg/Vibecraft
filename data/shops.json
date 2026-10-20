@@ -1,0 +1,100 @@
+{
+  "_doc": "Shop stock (per player), services and neutral-building rules (rules.md §16, neutrals.md §5). Keys are building ids. See data/SCHEMA.md.",
+  "rules": {
+    "neutral": {
+      "use_range": 7.0,
+      "sell_factor": 0.5,
+      "stock_per_player": true,
+      "player_unit_bounty": false,
+      "buy_needs_hero": true,
+      "merc_hire_instant": true
+    }
+  },
+  "shops": {
+    "kingdom_curio_cabinet": {
+      "stock": [
+        {"item": "item_way_home_horn", "max": 2, "restock": 90.0, "from": 0, "tier": 1, "hotkey": "H"},
+        {"item": "item_kingdom_linden_salve", "max": 3, "restock": 60.0, "from": 0, "tier": 1, "hotkey": "L"},
+        {"item": "item_kingdom_sages_tincture", "max": 3, "restock": 60.0, "from": 0, "tier": 1, "hotkey": "T"},
+        {"item": "item_kingdom_tin_watchman", "max": 3, "restock": 45.0, "from": 0, "tier": 1, "hotkey": "W"},
+        {"item": "item_tailors_chalk", "max": 2, "restock": 60.0, "from": 0, "tier": 2, "hotkey": "C"}
+      ],
+      "buys_items": 0.0,
+      "needs_hero": true,
+      "owner": "faction"
+    },
+    "clans_tea_tent": {
+      "stock": [
+        {"item": "item_clans_salt_tea", "max": 3, "restock": 30.0, "from": 0, "tier": 1, "hotkey": "S"},
+        {"item": "item_clans_kettle_bottom_tea", "max": 3, "restock": 60.0, "from": 0, "tier": 1, "hotkey": "K"},
+        {"item": "item_clans_brick_tea", "max": 3, "restock": 30.0, "from": 0, "tier": 1, "hotkey": "B"},
+        {"item": "item_clans_overnight_steep", "max": 3, "restock": 60.0, "from": 0, "tier": 1, "hotkey": "O"},
+        {"item": "item_clans_hail_eye_pebble", "max": 2, "restock": 60.0, "from": 0, "tier": 1, "hotkey": "E"},
+        {"item": "item_way_home_felt", "max": 2, "restock": 100.0, "from": 0, "tier": 1, "hotkey": "H"},
+        {"item": "item_clans_folded_yurt", "max": 1, "restock": 90.0, "from": 0, "tier": 2, "hotkey": "Y"}
+      ],
+      "buys_items": 0.0,
+      "needs_hero": true,
+      "owner": "faction"
+    },
+    "neutral_weighstall": {
+      "stock": [
+        {"item": "item_rosehip_draught", "max": 3, "restock": 45.0, "from": 0, "tier": 1, "hotkey": "R"},
+        {"item": "item_bluebell_cordial", "max": 3, "restock": 45.0, "from": 0, "tier": 1, "hotkey": "B"},
+        {"item": "item_homing_pigeon", "max": 2, "restock": 120.0, "from": 0, "tier": 1, "hotkey": "H"},
+        {"item": "item_snoop_peg", "max": 2, "restock": 60.0, "from": 0, "tier": 1, "hotkey": "P"},
+        {"item": "item_tattle_burrs", "max": 2, "restock": 60.0, "from": 0, "tier": 1, "hotkey": "U"},
+        {"item": "item_picnic_hamper", "max": 2, "restock": 90.0, "from": 180, "tier": 1, "hotkey": "K"},
+        {"item": "item_wanderers_hobnails", "max": 1, "restock": 120.0, "from": 240, "tier": 1, "hotkey": "W"},
+        {"item": "item_stoutheart_weight", "max": 1, "restock": 120.0, "from": 240, "tier": 1, "hotkey": "T"},
+        {"item": "item_wiped_slate", "max": 1, "restock": 300.0, "from": 300, "tier": 1, "hotkey": "L"}
+      ],
+      "buys_items": 0.5,
+      "needs_hero": true,
+      "owner": "neutral",
+      "services": ["neutral_fair_exchange_gold", "neutral_fair_exchange_lumber"],
+      "guarded_by": "camp_gv_smugglers_den"
+    },
+    "neutral_coaching_inn": {
+      "stock": [],
+      "buys_items": 0.0,
+      "needs_hero": false,
+      "owner": "neutral",
+      "services": ["neutral_inn_revive"],
+      "hires": []
+    }
+  },
+  "services": {
+    "neutral_fair_exchange_gold": {
+      "name": "Fair Exchange: gold for lumber",
+      "kind": "trade",
+      "hotkey": "X",
+      "give": {"gold": 100},
+      "get": {"lumber": 60},
+      "cooldown": 120.0,
+      "cooldown_group": "fair_exchange",
+      "from": 180,
+      "needs_hero": false,
+      "taxed_by_upkeep": true
+    },
+    "neutral_fair_exchange_lumber": {
+      "name": "Fair Exchange: lumber for gold",
+      "kind": "trade",
+      "hotkey": "Z",
+      "give": {"lumber": 100},
+      "get": {"gold": 60},
+      "cooldown": 120.0,
+      "cooldown_group": "fair_exchange",
+      "from": 180,
+      "needs_hero": false,
+      "taxed_by_upkeep": true
+    },
+    "neutral_inn_revive": {
+      "name": "Revive",
+      "kind": "inn_revive",
+      "hotkeys": ["V", "B", "N"],
+      "needs_hero": false,
+      "notes": "Cost from rules.heroes.inn_revive; instant, 50 % HP, 0 mana (rules §6.7)"
+    }
+  }
+}

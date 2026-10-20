@@ -77,7 +77,7 @@ func _refresh_top() -> void:
 		return
 	_set_text(gold_label, "Gold  %d" % p.gold)
 	_set_text(lumber_label, "Lumber  %d" % p.lumber)
-	var cap := mini(p.food_cap, int(Defs.combat_default("food_max", 100)))
+	var cap := mini(p.food_cap, int(Defs.rule("economy.food_cap", 100)))
 	_set_text(food_label, "Food  %d / %d" % [p.food_used, cap])
 	_set_text(upkeep_label, upkeep_text(p.food_used))
 	var hour := DayNight.hour_at(world.time)
@@ -89,7 +89,7 @@ static func upkeep_text(food_used: int) -> String:
 	var label := ""
 	for tier: Dictionary in Defs.upkeep:
 		if food_used >= int(tier.get("food", 0)):
-			label = str(tier.get("label", ""))
+			label = Defs.text(str(tier.get("label", "")))
 	return label
 
 

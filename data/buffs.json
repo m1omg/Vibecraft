@@ -1,0 +1,458 @@
+{
+  "_doc": "Buffs, debuffs, auras and passives (rules.md §10) plus ground effects. Abilities and items reference these ids; numbers per rank come from the ability (Buffs.apply overrides). See data/SCHEMA.md.",
+  "rules": {
+    "status": {
+      "same_buff": "refresh",
+      "same_aura": "highest",
+      "dot_interval": 1.0,
+      "aura_refresh": 0.5,
+      "aura_linger": 2.0,
+      "fade_time": 1.0,
+      "grounded_speed_factor": 0.5,
+      "liftoff_time": 0.5
+    }
+  },
+  "buffs": {
+    "buff_stunned": {
+      "name": "Stunned",
+      "polarity": "negative",
+      "kind": "physical",
+      "dispellable": false,
+      "status": ["stun"],
+      "hero_factor": 0.5
+    },
+    "buff_rooted": {
+      "name": "Rooted",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "status": ["root"],
+      "hero_factor": 0.5
+    },
+    "buff_silenced": {
+      "name": "Silenced",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "status": ["silence"],
+      "hero_factor": 0.5
+    },
+    "buff_slowed": {
+      "name": "Slowed",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "modifiers": {"move_speed_pct": -25},
+      "hero_factor": 0.5
+    },
+    "buff_taunted": {"name": "Taunted", "polarity": "negative", "kind": "physical", "dispellable": false, "status": ["taunt"]},
+    "buff_invisible": {
+      "name": "Invisible",
+      "polarity": "positive",
+      "kind": "magic",
+      "dispellable": true,
+      "status": ["invisible"],
+      "invisibility": "fade",
+      "breaks_on": ["attack", "cast", "item"]
+    },
+    "buff_revealed": {
+      "name": "Revealed",
+      "polarity": "negative",
+      "kind": "physical",
+      "dispellable": false,
+      "status": ["revealed"]
+    },
+    "buff_timed_life": {
+      "name": "Summoned",
+      "polarity": "positive",
+      "kind": "physical",
+      "dispellable": false,
+      "status": ["timed_life"],
+      "notes": "Summon lifetime bar; on expiry the unit dies with no corpse, no bounty"
+    },
+    "buff_sleeping": {
+      "name": "Sleeping",
+      "polarity": "negative",
+      "kind": "physical",
+      "dispellable": false,
+      "status": ["sleep"],
+      "wake_on_damage": true,
+      "notes": "Creep night sleep (creeps system); never dispelled"
+    },
+    "buff_returning": {
+      "name": "Returning home",
+      "polarity": "positive",
+      "kind": "physical",
+      "dispellable": false,
+      "status": ["invulnerable", "ignore_orders"],
+      "notes": "Leashing creeps walk home invulnerable and heal fully on arrival (rules §15.2)"
+    },
+    "buff_garrisoned": {
+      "name": "Garrisoned",
+      "polarity": "positive",
+      "kind": "physical",
+      "dispellable": false,
+      "status": ["hidden", "invulnerable"]
+    },
+    "buff_brace_the_wheel": {"name": "Braced", "polarity": "positive", "kind": "magic", "dispellable": true, "modifiers": {"armor": 4}},
+    "buff_measured_cadence": {
+      "name": "Measured Cadence",
+      "polarity": "positive",
+      "kind": "aura",
+      "dispellable": false,
+      "modifiers": {"attack_speed_pct": 6}
+    },
+    "buff_wagon_ring": {
+      "name": "The Wagon Ring",
+      "polarity": "positive",
+      "kind": "ultimate",
+      "dispellable": false,
+      "status": ["cannot_die"],
+      "on_expire": {"heal_max_hp_pct": 0.15}
+    },
+    "buff_fuse_mark": {
+      "name": "Fuse Mark",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "on_expire": {"effect": "explode"},
+      "notes": "Explodes for the ability's damage on expiry (or at once where the target dies); a dispel defuses it"
+    },
+    "buff_incendiary_wadding": {
+      "name": "Incendiary Wadding",
+      "polarity": "positive",
+      "kind": "aura",
+      "dispellable": false,
+      "on_attack": {"apply_buff": "buff_wadding_burn"}
+    },
+    "buff_wadding_burn": {
+      "name": "Burning",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "periodic": {"damage_type": "spell", "dps": 3},
+      "structure_factor": 0.5
+    },
+    "buff_flail_levy": {
+      "name": "Flail Levy",
+      "polarity": "positive",
+      "kind": "physical",
+      "dispellable": false,
+      "status": ["transformed"],
+      "notes": "Timed Hodman -> Flail Levy form (40 s); on expiry the unit transforms back"
+    },
+    "buff_levy_leash": {
+      "name": "Far from home",
+      "polarity": "negative",
+      "kind": "physical",
+      "dispellable": false,
+      "notes": "Countdown shown over a Flail Levy more than 30 m from every hall (5 s grace)"
+    },
+    "buff_pavise_planted": {
+      "name": "Pavise Planted",
+      "polarity": "positive",
+      "kind": "physical",
+      "dispellable": false,
+      "modifiers": {"armor": 2, "move_speed_pct": -40, "damage_taken_pct": {"pierce": -45}}
+    },
+    "buff_pavise_cover": {
+      "name": "Under Cover",
+      "polarity": "positive",
+      "kind": "aura",
+      "dispellable": false,
+      "modifiers": {"damage_taken_pct": {"pierce": -20}}
+    },
+    "buff_braced_shot": {
+      "name": "Braced Shot",
+      "polarity": "positive",
+      "kind": "passive",
+      "dispellable": false,
+      "modifiers": {"damage_pct": 15},
+      "condition": {"still_for": 2.0}
+    },
+    "buff_case_shot_slow": {
+      "name": "Case Shot",
+      "polarity": "negative",
+      "kind": "physical",
+      "dispellable": false,
+      "duration": 3.0,
+      "hero_duration": 1.5,
+      "modifiers": {"move_speed_pct": -25}
+    },
+    "buff_dust_veil": {
+      "name": "Dust Veil",
+      "polarity": "positive",
+      "kind": "magic",
+      "dispellable": true,
+      "status": ["invisible"],
+      "invisibility": "fade",
+      "breaks_on": ["attack", "cast", "item"],
+      "modifiers": {"move_speed_pct": 20},
+      "on_break_attack": {"bonus_damage": 60, "damage_type": "heroic"}
+    },
+    "buff_dust_veil_slow": {
+      "name": "Dusted",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "duration": 2.0,
+      "hero_duration": 1.0,
+      "modifiers": {"move_speed_pct": -30}
+    },
+    "buff_clean_cut": {
+      "name": "Clean Cut",
+      "polarity": "positive",
+      "kind": "passive",
+      "dispellable": false,
+      "crit": {"chance": 0.2, "multiplier": 1.6}
+    },
+    "buff_clean_cut_haste": {
+      "name": "Clean Cut",
+      "polarity": "positive",
+      "kind": "physical",
+      "dispellable": false,
+      "duration": 1.5,
+      "modifiers": {"move_speed_pct": 25}
+    },
+    "buff_tall_grass": {
+      "name": "Through the Tall Grass",
+      "polarity": "positive",
+      "kind": "ultimate",
+      "dispellable": false,
+      "status": ["ignore_slows"],
+      "modifiers": {"attack_speed_pct": 40},
+      "on_attack": {"line_cleave": {"length": 8.0, "width": 2.0, "factor": 1.0, "structures": false}}
+    },
+    "buff_sunglint_blind": {
+      "name": "Blinded",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "modifiers": {"miss_chance": 0.35}
+    },
+    "buff_swallowed_sun_enemy": {
+      "name": "Swallowed Sun",
+      "polarity": "negative",
+      "kind": "aura",
+      "dispellable": false,
+      "modifiers": {"sight_override": 3.0, "miss_chance": 0.4}
+    },
+    "buff_swallowed_sun_ally": {
+      "name": "Swallowed Sun",
+      "polarity": "positive",
+      "kind": "aura",
+      "dispellable": false,
+      "modifiers": {"move_speed_pct": 15}
+    },
+    "buff_shove": {"name": "Shove", "polarity": "positive", "kind": "passive", "dispellable": false},
+    "buff_unbind_slow": {
+      "name": "Unbound",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "duration": 3.0,
+      "hero_duration": 1.5,
+      "modifiers": {"move_speed_pct": -40}
+    },
+    "buff_wind_at_your_back": {
+      "name": "Wind at Your Back",
+      "polarity": "positive",
+      "kind": "magic",
+      "dispellable": true,
+      "duration": 40.0,
+      "modifiers": {"move_speed_pct": 20, "attack_speed_pct": 30}
+    },
+    "buff_hail_patch_slow": {
+      "name": "Hail",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "duration": 2.0,
+      "modifiers": {"move_speed_pct": -20}
+    },
+    "buff_smoke_pot": {
+      "name": "Smoke",
+      "polarity": "negative",
+      "kind": "aura",
+      "dispellable": false,
+      "modifiers": {"miss_chance": 0.3}
+    },
+    "buff_ember_burn": {
+      "name": "Ember Burn",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "duration": 3.0,
+      "periodic": {"damage_type": "spell", "dps": 6}
+    },
+    "buff_stoke_the_coals": {
+      "name": "Stoked",
+      "polarity": "positive",
+      "kind": "magic",
+      "dispellable": true,
+      "duration": 8.0,
+      "modifiers": {"attack_speed_pct": 10, "hp_regen": 1.5}
+    },
+    "buff_choking_fumes": {
+      "name": "Choking Fumes",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "duration": 3.0,
+      "status": ["silence"],
+      "modifiers": {"move_speed_pct": -25}
+    },
+    "buff_loose_straw": {
+      "name": "Loose Straw",
+      "polarity": "negative",
+      "kind": "aura",
+      "dispellable": false,
+      "modifiers": {"move_speed_pct": -20}
+    },
+    "buff_stuffed": {
+      "name": "Stuffed",
+      "polarity": "positive",
+      "kind": "passive",
+      "dispellable": false,
+      "modifiers": {"damage_taken_pct": {"pierce": -25}}
+    },
+    "buff_stand_still": {
+      "name": "Stand Still",
+      "polarity": "positive",
+      "kind": "passive",
+      "dispellable": false,
+      "modifiers": {"armor": 3},
+      "condition": {"still_for": 3.0, "not_attacking": true}
+    },
+    "buff_settle": {
+      "name": "Settled",
+      "polarity": "positive",
+      "kind": "passive",
+      "dispellable": false,
+      "modifiers": {"armor": 3},
+      "condition": {"still_for": 2.0, "not_attacking": true}
+    },
+    "buff_old_ward": {
+      "name": "Old Ward",
+      "polarity": "positive",
+      "kind": "aura",
+      "dispellable": false,
+      "modifiers": {"damage_taken_pct": {"spell": -20}}
+    },
+    "buff_ley_pulse_slow": {
+      "name": "Ley-struck",
+      "polarity": "negative",
+      "kind": "magic",
+      "dispellable": true,
+      "duration": 3.0,
+      "modifiers": {"move_speed_pct": -30}
+    },
+    "buff_set_in_stone": {
+      "name": "Set in Stone",
+      "polarity": "positive",
+      "kind": "passive",
+      "dispellable": false,
+      "status": ["no_displace"]
+    },
+    "buff_hardy": {
+      "name": "Hardy",
+      "polarity": "positive",
+      "kind": "passive",
+      "dispellable": false,
+      "status": ["hardy"],
+      "notes": "Counts as a hero for control durations and Spell damage (rules §10.2)"
+    },
+    "buff_heal_over_time": {
+      "name": "Restoring",
+      "polarity": "positive",
+      "kind": "item",
+      "dispellable": false,
+      "periodic": {"heal_total": 0, "duration_key": "duration"},
+      "notes": "heal_area_over_time items (amount/duration from the item); not broken by damage"
+    },
+    "buff_tea_heal": {
+      "name": "Salt Tea",
+      "polarity": "positive",
+      "kind": "item",
+      "dispellable": false,
+      "periodic": {"heal_total": 300},
+      "duration": 12.0,
+      "breaks_on": ["damage"]
+    },
+    "buff_tea_mana": {
+      "name": "Brick-Tea",
+      "polarity": "positive",
+      "kind": "item",
+      "dispellable": false,
+      "periodic": {"mana_total": 120},
+      "duration": 10.0,
+      "breaks_on": ["damage"]
+    },
+    "buff_smoke_pellets": {
+      "name": "Smoke Pellets",
+      "polarity": "positive",
+      "kind": "item",
+      "dispellable": true,
+      "duration": 10.0,
+      "status": ["invisible"],
+      "invisibility": "fade",
+      "fade_time": 0.6,
+      "breaks_on": ["attack", "cast"]
+    },
+    "buff_item_cooldown": {
+      "name": "Item cooldown",
+      "polarity": "neutral",
+      "kind": "item",
+      "dispellable": false,
+      "notes": "Marker only; items track group cooldowns"
+    }
+  },
+  "ground_effects": {
+    "naphtha_fire": {
+      "name": "Burning ground",
+      "shape": "circle",
+      "relation": ["enemy"],
+      "tick": 1.0,
+      "periodic": {"damage_type": "spell", "dps_param": "ground_dps"},
+      "structure_factor": 0.5,
+      "fx": "fx_naphtha_fire"
+    },
+    "smoke_pot": {
+      "name": "Smoke cloud",
+      "shape": "circle",
+      "relation": ["enemy"],
+      "buff": "buff_smoke_pot",
+      "fx": "fx_smoke_cloud"
+    },
+    "swallowed_sun": {
+      "name": "Swallowed Sun",
+      "shape": "circle",
+      "enemy_buff": "buff_swallowed_sun_enemy",
+      "ally_buff": "buff_swallowed_sun_ally",
+      "blocks_vision": true,
+      "linger": 2.0,
+      "fx": "fx_swallowed_sun"
+    },
+    "loose_straw": {
+      "name": "Loose straw",
+      "shape": "circle",
+      "radius": 2.0,
+      "duration": 4.0,
+      "relation": ["enemy"],
+      "buff": "buff_loose_straw",
+      "fx": "fx_loose_straw"
+    },
+    "hail_patch": {
+      "name": "Hail patch",
+      "shape": "circle",
+      "radius": 2.0,
+      "duration": 2.0,
+      "relation": ["enemy"],
+      "require": ["ground"],
+      "impact_damage": 15,
+      "damage_type": "spell",
+      "buff": "buff_hail_patch_slow",
+      "fx": "fx_hail_patch"
+    }
+  }
+}

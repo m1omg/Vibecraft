@@ -1,0 +1,210 @@
+{
+  "_doc": "Placeholder defs used ONLY by tests and the sandbox scenario (Defs.load_test_defs() merges them into the real tables). Never reference these ids from gameplay data.",
+  "units": {
+    "dummy_worker": {
+      "name": "Placeholder Worker",
+      "kind": "unit",
+      "flags": ["worker"],
+      "shape": "humanoid",
+      "weapon": "tool",
+      "hp": 220,
+      "armor": 0,
+      "armor_type": "medium",
+      "radius": 0.35,
+      "speed": 4.2,
+      "turn_rate": 12.0,
+      "sight": 12.0,
+      "height": 1.3,
+      "cost": {"gold": 75, "lumber": 0, "food": 1, "time": 15},
+      "attack": {
+        "type": "blade",
+        "damage": [5, 6],
+        "cooldown": 2.0,
+        "range": 0.6,
+        "damage_point": 0.43,
+        "backswing": 0.5,
+        "acquire": 0.0
+      }
+    },
+    "dummy_soldier": {
+      "name": "Placeholder Soldier",
+      "kind": "unit",
+      "shape": "humanoid",
+      "weapon": "sword",
+      "hp": 420,
+      "armor": 2,
+      "armor_type": "heavy",
+      "radius": 0.45,
+      "speed": 4.2,
+      "turn_rate": 12.0,
+      "sight": 18.0,
+      "height": 1.6,
+      "cost": {"gold": 135, "lumber": 0, "food": 2, "time": 20},
+      "attack": {
+        "type": "blade",
+        "damage": [11, 14],
+        "cooldown": 1.35,
+        "range": 0.8,
+        "damage_point": 0.5,
+        "backswing": 0.5,
+        "acquire": 8.0
+      }
+    },
+    "dummy_archer": {
+      "name": "Placeholder Archer",
+      "kind": "unit",
+      "shape": "humanoid",
+      "weapon": "bow",
+      "hp": 310,
+      "armor": 0,
+      "armor_type": "medium",
+      "radius": 0.4,
+      "speed": 4.2,
+      "turn_rate": 12.0,
+      "sight": 18.0,
+      "height": 1.55,
+      "cost": {"gold": 130, "lumber": 10, "food": 2, "time": 20},
+      "attack": {
+        "type": "pierce",
+        "damage": [16, 19],
+        "cooldown": 1.5,
+        "range": 7.8,
+        "damage_point": 0.3,
+        "backswing": 0.4,
+        "acquire": 9.0,
+        "projectile": {"speed": 16.0, "arc": 0.15, "model": "arrow"}
+      }
+    },
+    "dummy_creep": {
+      "name": "Placeholder Creep",
+      "kind": "unit",
+      "flags": ["creep"],
+      "shape": "humanoid",
+      "weapon": "club",
+      "hp": 380,
+      "armor": 1,
+      "armor_type": "medium",
+      "radius": 0.55,
+      "speed": 3.5,
+      "turn_rate": 9.0,
+      "sight": 10.0,
+      "height": 1.9,
+      "scale": 1.15,
+      "leash": 18.75,
+      "attack": {
+        "type": "blade",
+        "damage": [14, 17],
+        "cooldown": 1.6,
+        "range": 0.9,
+        "damage_point": 0.5,
+        "backswing": 0.5,
+        "acquire": 3.9
+      }
+    },
+    "dummy_hall": {
+      "name": "Placeholder Hall",
+      "kind": "building",
+      "flags": ["town_hall", "dropoff_gold", "dropoff_lumber"],
+      "shape": "building",
+      "roof": "pyramid",
+      "hp": 1500,
+      "armor": 5,
+      "armor_type": "fortified",
+      "radius": 2.5,
+      "sight": 18.0,
+      "height": 4.5,
+      "footprint": [10, 10],
+      "food_provided": 12,
+      "trains": ["dummy_worker"],
+      "cost": {"gold": 385, "lumber": 185, "time": 120}
+    },
+    "dummy_barracks": {
+      "name": "Placeholder Barracks",
+      "kind": "building",
+      "shape": "building",
+      "roof": "gable",
+      "hp": 1100,
+      "armor": 5,
+      "armor_type": "fortified",
+      "radius": 2.0,
+      "sight": 14.0,
+      "height": 3.6,
+      "footprint": [8, 8],
+      "trains": ["dummy_soldier", "dummy_archer"],
+      "cost": {"gold": 160, "lumber": 60, "time": 60}
+    },
+    "dummy_mine": {
+      "name": "Placeholder Mine",
+      "kind": "resource",
+      "flags": ["resource", "gold_mine", "invulnerable"],
+      "shape": "mine",
+      "hp": 2000,
+      "armor": 5,
+      "armor_type": "fortified",
+      "radius": 2.0,
+      "sight": 0.0,
+      "height": 2.6,
+      "footprint": [8, 8],
+      "gold": 12500,
+      "max_workers": 5
+    }
+  },
+  "abilities": {
+    "dummy_bolt": {
+      "name": "Placeholder Bolt",
+      "type": "target_unit",
+      "effect": "damage_target",
+      "hotkey": "T",
+      "ranks": [
+        {"mana": 75, "cooldown": 9.0, "range": 8.0, "damage": 100},
+        {"mana": 75, "cooldown": 9.0, "range": 8.0, "damage": 175},
+        {"mana": 75, "cooldown": 9.0, "range": 8.0, "damage": 250}
+      ],
+      "owner": "unit",
+      "params": {"damage_type": "spell"},
+      "levels": 3
+    }
+  },
+  "items": {
+    "dummy_potion": {
+      "name": "Placeholder Potion",
+      "charges": 1,
+      "effect": "heal_instant",
+      "class": "purchasable",
+      "level": 1,
+      "price": {"gold": 150},
+      "value": 150,
+      "params": {"amount": 250},
+      "targeting": "instant"
+    }
+  },
+  "upgrades": {
+    "dummy_armor_1": {
+      "name": "Placeholder Plating",
+      "levels": [{"cost": {"gold": 125, "lumber": 75}, "time": 60, "requires_tier": 1}],
+      "kind": "research",
+      "building": "dummy_barracks",
+      "effects": []
+    }
+  },
+  "factions": {
+    "placeholder_a": {
+      "name": "Placeholder Faction A",
+      "worker": "dummy_worker",
+      "hall": "dummy_hall",
+      "start_units": {"dummy_worker": 5},
+      "start_gold": 500,
+      "start_lumber": 150,
+      "hall_tiers": ["dummy_hall"]
+    },
+    "placeholder_b": {
+      "name": "Placeholder Faction B",
+      "worker": "dummy_worker",
+      "hall": "dummy_hall",
+      "start_units": {"dummy_worker": 5},
+      "start_gold": 500,
+      "start_lumber": 150,
+      "hall_tiers": ["dummy_hall"]
+    }
+  }
+}

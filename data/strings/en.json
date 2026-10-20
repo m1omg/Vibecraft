@@ -1,0 +1,14 @@
+{
+  "_doc": "UI string table (key -> English text). Uncleared display names live here, never in defs (rules.md §20.2). tools/ip/check_banned_terms.py runs its UI pass on data/strings/.",
+  "faction_name_kingdom": "Brennmark",
+  "faction_name_clans": "the Tormai",
+  "faction_people_kingdom": "the Brennish",
+  "faction_people_clans": "the Tormai",
+  "advisor_kingdom": "the Reeve",
+  "advisor_clans": "the gong-keeper",
+  "upkeep_tier_0": "Upkeep 0 %",
+  "upkeep_tier_1": "Upkeep 30 %",
+  "upkeep_tier_2": "Upkeep 60 %",
+  "tileset_gv": "Downland",
+  "map_wether_downs": "Wether Downs"
+}
