@@ -326,6 +326,27 @@ func test_annihilation_defeat() -> void:
 	assert_eq(_ended[0], [1, "annihilation"], "winner and reason")
 
 
+## Compatibility renderer watch item (QA PT1): gl_compatibility caps shader instance uniforms
+## at 4096 items and every unit / structure geometry uses 9 (unit_uniforms.gdshaderinc). The
+## battlefield opening must leave plenty of headroom: at most INSTANCE_BUDGET geometries.
+const INSTANCE_UNIFORMS := 9
+const INSTANCE_BUDGET := 350          ## x 9 = 3150 of the 4096 items
+
+
+func test_instance_uniform_headroom() -> void:
+	var main := await _main()
+	var w: World = main.world
+	var geoms := 0
+	for u in w.unit_list:
+		if u.view is UnitView:
+			for g: GeometryInstance3D in (u.view as UnitView).get("_geoms"):
+				if is_instance_valid(g):
+					geoms += 1
+	print("     battlefield opening: %d geometries with instance uniforms (%d of 4096 items)" % [geoms, geoms * INSTANCE_UNIFORMS])
+	assert_lt(0, geoms, "views are counted")
+	assert_lt(geoms, INSTANCE_BUDGET, "instance-uniform headroom on Compatibility (%d x %d items)" % [geoms, INSTANCE_UNIFORMS])
+
+
 ## The task's headless check: the real main scene (HUD, views, fx), 3 sim-minutes with the
 ## war-band attack, no script errors (the runner fails on any), and the fight resolves: the
 ## war-band is wiped out at the player's base, both sides lost units, the player's hall stands.
