@@ -608,6 +608,7 @@ func finish_order(advance: bool = true) -> void:
 	engage_id = 0
 	resume_path = false
 	_group = null
+	_group_try = false
 	stop_moving()
 	guard_pos = pos
 	if advance and not orders.is_empty():
@@ -767,6 +768,7 @@ func engage(t: Unit) -> void:
 	_repath_cd = 0
 	returning = false
 	_group = null
+	_group_try = false
 	stop_moving()
 
 
@@ -963,7 +965,7 @@ func follow_path(dt: float) -> Vector3:
 func _request_path() -> bool:
 	var p := world.pathing
 	var large := is_large()
-	if _group_try:
+	if _group_try and _group != null:
 		if not p.has_budget():
 			return false
 		var b := _group.find_base(pos, _goal, large)

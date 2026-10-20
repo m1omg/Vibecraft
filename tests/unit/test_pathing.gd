@@ -305,6 +305,36 @@ func test_group_order_shares_path_searches() -> void:
 	assert_lt(worst, 2.0, "every unit reached its formation slot (worst %.2f m)" % worst)
 
 
+## A unit that leaves its group order before taking its share of the group path (here: an
+## attack-move member that auto-acquires an enemy while the tick's path budget is spent) drops the
+## group entirely; its chase path is then a plain query, never a lookup on a cleared group.
+@warning_ignore("integer_division")
+func test_engaging_before_the_group_path_drops_the_group() -> void:
+	var m := MapGenerator.test_map()
+	var w := make_world(m)
+	var s0 := m.start_locations[0]
+	var units: Array = []
+	var ids: Array = []
+	for i in 24:
+		var u := w.spawn_unit("dummy_soldier", 0, s0 + Vector3((i % 6) * 1.2 - 3.0, 0, (i / 6) * 1.2 + 6.0))
+		units.append(u)
+		ids.append(u.id)
+	w.issue({"type": "attack_move", "player": 0, "units": ids, "pos": m.start_locations[1]})
+	var enemy := w.spawn_unit("dummy_soldier", 1, s0 + Vector3(0, 0, 14))
+	for i in 3:
+		w.step()
+	for u: Unit in units:
+		assert_false(u._group_try and u._group == null, "%s holds no stale group flag" % u.name)
+	for i in 30 * 10:
+		w.step()
+	assert_false(enemy.alive, "the group chased and killed the enemy it met")
+	var moving := 0
+	for u: Unit in units:
+		if u.alive and u.current != null and u.path.size() >= 2:
+			moving += 1
+	assert_true(moving > 0, "and resumed its attack-move along real paths")
+
+
 func test_can_reach_uses_region_labels() -> void:
 	var p := _pathing()
 	p.set_footprint_rect(Rect2i(59, 59, 12, 1), true)
