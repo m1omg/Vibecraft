@@ -152,6 +152,11 @@ DUL_FIGS = {   # indices into tones(); step in beats
     "wide": ([0, 3, 5, 3], 1.0),                    # open, ringing quarters
     "half": ([0, 4], 2.0),
     "trip": ([0, 2, 3, 2, 3, 4, 3, 4, 5, 4, 3, 2], 1 / 3),
+    # 3/4 figures (beats=3.0)
+    "lilt": ([0, 2, 3, 2, 1, 2], 0.5),              # rocking broken chord in eighths, root to octave
+    "lilt2": ([0, 2, 1, 3, 2, 1], 0.5),
+    "open3": ([0, 3, 5], 1.0),                      # one ringing note per beat
+    "low3": ([0, 2, 3], 1.0),
 }
 
 
