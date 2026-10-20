@@ -124,7 +124,11 @@ func reload() -> void:
 	_take_rules(camp_file, "creep_camps.json")
 	camps = _section(camp_file, "camps")
 	doodads = _table(_load_file("doodads.json"))
-	strings = _table(_load_file(STRINGS_FILE))
+	strings = {}
+	var st := _load_file(STRINGS_FILE)
+	for k: String in st:
+		if not k.begins_with("_"):
+			strings[k] = str(st[k])
 	if test_defs_loaded:
 		var t := _load_file(TEST_DEFS_FILE)
 		for key: String in ["units", "abilities", "items", "upgrades", "factions"]:

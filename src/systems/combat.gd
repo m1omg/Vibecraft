@@ -96,3 +96,9 @@ func _maybe_alert(target: Unit, src: Unit) -> void:
 	_last_alert[pid] = world.time
 	Events.alert_raised.emit(pid, target.pos)
 	Events.notification.emit(pid, "under_attack", "Steel is drawn against us!")
+
+
+## Attack Ground (rules §7.9; owner: agent B): fire an artillery shell at a point (splash only,
+## trees included, no reveal). Stub: does nothing until artillery lands.
+func fire_at_point(_attacker: Unit, _point: Vector3) -> void:
+	pass

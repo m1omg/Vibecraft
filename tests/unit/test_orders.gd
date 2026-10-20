@@ -169,6 +169,7 @@ func test_creeps_wake_together_and_return_to_camp() -> void:
 func test_command_card_button_enters_targeting() -> void:
 	Settings.edge_pan_enabled = false
 	var main: Node = (load("res://src/main.tscn") as PackedScene).instantiate()
+	main.set("scenario", "sandbox")   # placeholder test map + dummy_* units
 	tree.root.add_child(main)
 	track(main)
 	await tree.process_frame
@@ -212,6 +213,7 @@ func test_command_card_button_enters_targeting() -> void:
 
 func test_hud_shows_selected_unit_stats() -> void:
 	var main: Node = (load("res://src/main.tscn") as PackedScene).instantiate()
+	main.set("scenario", "sandbox")   # placeholder test map + dummy_* units
 	tree.root.add_child(main)
 	track(main)
 	await tree.process_frame

@@ -1,6 +1,9 @@
 extends Node
-## Global event bus. Gameplay code emits; UI/audio/fx listen. Arguments are typed loosely
-## (Node / Object) where the concrete class lives outside the autoload to avoid load cycles.
+## Global event bus. Gameplay code emits (inside the fixed tick); UI, audio, juice and fx listen.
+## Arguments are typed loosely (Node / Object) where the concrete class lives outside the autoload
+## to avoid load cycles. Listeners must never change sim state (juice never changes outcomes).
+## Systems talk to each other through World hooks and their APIs, not through these signals
+## (several Worlds can exist at once in tests). Owners per group: docs/m2-ownership.md.
 
 signal unit_spawned(u: Node)
 signal unit_died(u: Node, killer: Node)
@@ -19,3 +22,52 @@ signal alert_raised(player_id: int, pos: Vector3)   ## space bar jumps to the la
 signal tree_felled(pos: Vector3)
 signal command_issued(command: Dictionary)
 signal menu_requested
+
+# --- M2 system events (docs/architecture.md §4, docs/m2-ownership.md) ----------------------
+# economy (A)
+signal income_received(player_id: int, kind: String, amount: int, pos: Vector3)
+signal upkeep_changed(player_id: int, tier: int)
+signal cargo_delivered(worker: Node, building: Node, kind: String, amount: int)
+signal mine_low(mine: Node)
+signal mine_depleted(mine: Node)
+# construction (A)
+signal construction_started(site: Node, builder: Node)
+signal construction_cancelled(site: Node)
+signal repair_started(worker: Node, target: Node)
+signal placement_rejected(player_id: int, def_id: String, reason: String)
+signal garrison_changed(building: Node)
+# production / tech (B)
+signal training_started(building: Node, def_id: String)
+signal queue_changed(building: Node)
+signal production_stalled(building: Node, reason: String)
+signal research_started(player_id: int, id: String, building: Node)
+signal tier_changed(player_id: int, tier: int)
+# heroes / abilities / buffs (C)
+signal xp_gained(hero: Node, amount: float)
+signal ability_learned(hero: Node, ability_id: String, rank: int)
+signal hero_died(hero: Node)
+signal hero_revived(hero: Node)
+signal ability_cast(caster: Node, ability_id: String, rank: int, target: Node, pos: Vector3)
+signal cast_started(caster: Node, ability_id: String)
+signal cast_cancelled(caster: Node, ability_id: String)
+signal autocast_changed(unit: Node, ability_id: String, on: bool)
+signal ground_effect_added(handle: int, effect_id: String, pos: Vector3, radius: float)
+signal buff_applied(unit: Node, buff_id: String)
+signal buff_removed(unit: Node, buff_id: String)
+signal dispelled(unit: Node, count: int)
+# items / shops / creeps (D)
+signal item_picked_up(unit: Node, item_id: String)
+signal item_dropped(unit: Node, item_id: String, pos: Vector3)
+signal item_used(unit: Node, item_id: String)
+signal inventory_changed(unit: Node)
+signal item_bought(player_id: int, shop: Node, item_id: String, hero: Node)
+signal item_sold(player_id: int, shop: Node, item_id: String)
+signal stock_changed(player_id: int, shop: Node)
+signal service_used(player_id: int, shop: Node, service_id: String)
+signal camp_aggro(camp_id: String)
+signal camp_cleared(camp_id: String)
+signal camp_slept(camp_id: String)
+signal camp_woke(camp_id: String)
+signal bounty_paid(player_id: int, amount: int, pos: Vector3)
+# fog (E)
+signal fog_updated(player_id: int)

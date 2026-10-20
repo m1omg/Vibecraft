@@ -1,22 +1,33 @@
 class_name Order
 extends RefCounted
-## One queued unit order. Created by World from command dictionaries.
+## One queued unit order. Created by World from command dictionaries (docs/architecture.md §4).
+## Its per-tick behaviour lives in a stateless handler (src/entities/orders/<type>.gd, looked up
+## with OrderHandlers.of(type)); per-order state lives here (`target_pos`, `target_id`, `data`).
 
+## Append-only: the numeric values are part of the replay/command contract.
 enum Type { MOVE, STOP, HOLD, PATROL, ATTACK, ATTACK_MOVE, SMART, GATHER, BUILD, CAST,
-	RALLY, FOLLOW }
+	RALLY, FOLLOW, RETURN_RESOURCES, REPAIR, LEARN, USE_ITEM, PICKUP_ITEM, DROP_ITEM,
+	ATTACK_GROUND, ENTER }
 
+## Command "type" strings that become unit orders. Building / player commands (train, cancel,
+## research, buy, sell, service, revive, autocast) are routed to systems by World instead.
 const TYPE_NAMES: Dictionary = {
 	"move": Type.MOVE, "stop": Type.STOP, "hold": Type.HOLD, "patrol": Type.PATROL,
 	"attack": Type.ATTACK, "attack_move": Type.ATTACK_MOVE, "smart": Type.SMART,
 	"gather": Type.GATHER, "build": Type.BUILD, "cast": Type.CAST, "rally": Type.RALLY,
-	"follow": Type.FOLLOW,
+	"follow": Type.FOLLOW, "return": Type.RETURN_RESOURCES, "return_resources": Type.RETURN_RESOURCES,
+	"repair": Type.REPAIR, "learn": Type.LEARN, "use_item": Type.USE_ITEM,
+	"pickup_item": Type.PICKUP_ITEM, "drop_item": Type.DROP_ITEM, "give_item": Type.DROP_ITEM,
+	"attack_ground": Type.ATTACK_GROUND, "enter": Type.ENTER,
 }
 
 var type: Type = Type.MOVE
 var target_pos: Vector3 = Vector3.ZERO
 var target_id: int = 0            ## 0 = no target unit
-var def_id: String = ""
-var ability: String = ""
+var def_id: String = ""           ## build: building def; train-like orders: the def
+var ability: String = ""          ## cast / learn: ability id
+var slot: int = -1                ## use_item / drop_item: inventory slot (0..5)
+## Free-form per-order state for handlers (e.g. "tree": tree index for gather, "phase").
 var data: Dictionary = {}
 ## Shared path of the command this order came from (group moves); null for single units and
 ## targeted orders. Only the order's first path request uses it.

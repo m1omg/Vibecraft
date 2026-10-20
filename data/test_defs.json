@@ -24,7 +24,8 @@
         "damage_point": 0.43,
         "backswing": 0.5,
         "acquire": 0.0
-      }
+      },
+      "abilities": ["cmd_gather"]
     },
     "dummy_soldier": {
       "name": "Placeholder Soldier",

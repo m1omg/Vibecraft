@@ -11,6 +11,7 @@ var sel: Selection
 func before_each() -> void:
 	Settings.edge_pan_enabled = false
 	main = (load("res://src/main.tscn") as PackedScene).instantiate()
+	main.set("scenario", "sandbox")   # placeholder test map + dummy_* units
 	tree.root.add_child(main)
 	track(main)
 	await tree.process_frame

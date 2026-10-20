@@ -26,7 +26,9 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	root.get_node("Settings").set("edge_pan_enabled", false)
 	var battle: GDScript = load("res://tests/playtest/battle_setup.gd")
+	root.get_node("Defs").call("load_test_defs")
 	main = (load("res://src/main.tscn") as PackedScene).instantiate()
+	main.set("scenario", "sandbox")   # the generated test map + placeholder dummy_* units
 	root.add_child(main)
 	await _frames(3)
 	world = main.get_node("World")

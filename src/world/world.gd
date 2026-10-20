@@ -2,6 +2,8 @@ class_name World
 extends Node3D
 ## Match root and fixed-step simulation driver. Gameplay advances only in `step()`, called once
 ## per physics tick (30 Hz) or manually by tests. Stage order is fixed (docs/architecture.md §4).
+## World owns every gameplay system (SYSTEM_STAGES), routes command dictionaries to unit orders
+## or to systems (SYSTEM_COMMANDS) and dispatches the unit hooks (SimSystem) in a fixed order.
 
 const TICK_RATE := 30
 const DT := 1.0 / TICK_RATE
@@ -12,9 +14,31 @@ const OWN_STAGES: Array[StringName] = [&"orders", &"units", &"cleanup"]
 ## Stages run after the units, in this order.
 const LATE_STAGES: Array[StringName] = [&"projectiles", &"abilities", &"economy", &"creeps", &"ai",
 	&"fog"]
+## Installed systems in installation (= hook and same-stage run) order: [property, stage, script].
+const SYSTEM_STAGES: Array = [
+	[&"construction", &"production", preload("res://src/systems/construction.gd")],
+	[&"production", &"production", preload("res://src/systems/production.gd")],
+	[&"tech", &"production", preload("res://src/systems/tech.gd")],
+	[&"abilities", &"abilities", preload("res://src/systems/abilities.gd")],
+	[&"buffs", &"abilities", preload("res://src/systems/buffs.gd")],
+	[&"items", &"abilities", preload("res://src/systems/items.gd")],
+	[&"economy", &"economy", preload("res://src/systems/economy.gd")],
+	[&"heroes", &"economy", preload("res://src/systems/heroes.gd")],
+	[&"shops", &"economy", preload("res://src/systems/shops.gd")],
+	[&"creeps", &"creeps", preload("res://src/systems/creeps.gd")],
+	[&"fog", &"fog", preload("res://src/world/fog.gd")],
+]
+## Command types that are not unit orders: World hands them to the named system's
+## handle_command(cmd, units) (units = the command's living units owned by cmd.player).
+const SYSTEM_COMMANDS: Dictionary = {
+	"train": &"production", "cancel": &"production", "research": &"production",
+	"buy": &"shops", "sell": &"shops", "service": &"shops",
+	"revive": &"heroes", "autocast": &"abilities",
+}
 const MAX_PLAYERS := SpatialHash.MAX_PLAYERS
 const FORMATION_MAX_SPREAD := 8.0
 const SPAWN_SNAP_CELLS := 16
+const TREE_CLICK_RADIUS := 1.2
 
 @export var auto_tick: bool = true   ## false: tests call step() themselves
 @export var visuals: bool = true     ## false: no meshes, views or fx (headless tests)
@@ -27,22 +51,35 @@ var unit_list: Array[Unit] = []      ## stable iteration order (spawn order)
 var spatial: SpatialHash
 var pathing: Pathing
 var map: MapData
-var fog: Node = null                 ## Fog system (added with the systems milestone)
 var combat: Combat                   ## damage resolution + projectiles (stage `projectiles`)
+var construction: Construction
+var production: Production
+var tech: Tech
+var abilities: AbilitySystem
+var buffs: BuffSystem
+var items: ItemSystem
+var economy: Economy
+var heroes: HeroSystem
+var shops: ShopSystem
+var creeps: CreepSystem
+var fog: Fog
+var ai_players: Array[AiPlayer] = []
 ## Largest mobile unit radius (from Defs): pads separation neighbour queries.
 var max_unit_radius: float = 1.0
 var local_player_id: int = 0
 var rng := RandomNumberGenerator.new()
-## Economy hook: Callable(worker: Unit, resource: Unit) run when a GATHER order reaches its
-## resource. Until economy.gd exists nothing is attached and the order simply completes.
+## Legacy economy hook (tests): Callable(worker: Unit, resource: Unit) run when a GATHER order
+## reaches its mine; when set it wins over Economy.on_gather_reached and the order completes.
 var gather_handler: Callable = Callable()
 
 var _next_id: int = 1
 var _pending: Array[Dictionary] = []
 var _dead: Array = []                ## [Unit, killer]
 var _corpses: Array[Unit] = []       ## dead, out of the sim, removed after their decay time
+var _removed: Array[Unit] = []       ## remove_unit()ed this tick; leave unit_list in cleanup
 var _systems: Dictionary = {}        ## stage -> Array[Node] (sim_tick(world, dt)), registration order
 var _hostile := PackedInt32Array()   ## player id -> bitmask of the player ids it is an enemy of
+var _hooks: Dictionary = {&"spawned": [], &"died": [], &"removed": [], &"damaged": []}
 
 @onready var units_root: Node3D = _child_or_new("Units", Node3D) as Node3D
 @onready var projectile_root: Node3D = _child_or_new("Projectiles", Node3D) as Node3D
@@ -73,6 +110,7 @@ func setup(m: MapData, seed_value: int = 1) -> void:
 	combat.setup(self)
 	systems_root.add_child(combat)
 	register_system(&"projectiles", combat)
+	_install_systems()
 	if visuals:
 		if terrain != null:
 			terrain.build(map)
@@ -92,6 +130,25 @@ func setup(m: MapData, seed_value: int = 1) -> void:
 	if Engine.physics_ticks_per_second != TICK_RATE:
 		push_warning("World: physics_ticks_per_second is %d, expected %d" % [
 			Engine.physics_ticks_per_second, TICK_RATE])
+
+
+## Creates every gameplay system (SYSTEM_STAGES order), registers it for its stage and collects
+## its hooks.
+func _install_systems() -> void:
+	for row: Array in SYSTEM_STAGES:
+		var sys: SimSystem = (row[2] as GDScript).new()
+		sys.name = String(row[0]).capitalize().replace(" ", "")
+		systems_root.add_child(sys)
+		sys.setup(self)
+		set(row[0], sys)
+		register_system(row[1], sys)
+		_add_hooks(sys)
+
+
+func _add_hooks(sys: SimSystem) -> void:
+	for h: StringName in sys.hooks():
+		if _hooks.has(h):
+			(_hooks[h] as Array).append(sys)
 
 
 func _physics_process(_delta: float) -> void:
@@ -155,11 +212,21 @@ func interpolation_fraction() -> float:
 
 # --- players -------------------------------------------------------------------------------
 
-func add_player(pid: int, team_id: int, faction: String = "", ai: bool = false) -> PlayerState:
+## Adds a player. `ai` = true installs an AiPlayer for it (stage `ai`, `difficulty` from
+## rules.ai) once the world is set up.
+func add_player(pid: int, team_id: int, faction: String = "", ai: bool = false,
+		difficulty: String = "normal") -> PlayerState:
 	assert(pid >= 0 and pid < MAX_PLAYERS, "player id out of range")
 	var p := PlayerState.make(pid, team_id, faction, ai)
 	players.append(p)
 	refresh_relations()
+	if ai and pid < PlayerState.NEUTRAL_HOSTILE and systems_root != null and map != null:
+		var brain := AiPlayer.new()
+		brain.name = "Ai%d" % pid
+		systems_root.add_child(brain)
+		brain.setup_player(self, pid, difficulty)
+		register_system(&"ai", brain)
+		ai_players.append(brain)
 	return p
 
 
@@ -218,27 +285,40 @@ func is_ally(a: int, b: int) -> bool:
 
 # --- entities ------------------------------------------------------------------------------
 
-func spawn_unit(def_id: String, pid: int, p: Vector3, facing: float = 0.0) -> Unit:
+## Spawns an entity. Structures snap to their footprint and block pathing (unless the def says
+## blocks_pathing false); mobile units snap to the nearest walkable cell. `opts`:
+##   under_construction: bool   construction site (no food provided until completed)
+##   hp_fraction: float          start HP as a fraction of max (sites: rules.economy.build_start_hp)
+##   food_reserved: bool         Production already counted the unit's food when training began
+func spawn_unit(def_id: String, pid: int, p: Vector3, facing: float = 0.0, opts: Dictionary = {}) -> Unit:
 	var d := Defs.unit(def_id)
 	if d.is_empty():
 		return null
 	var u := Unit.new()
 	var spot := p
-	if d["kind"] != "unit":
+	if d["kind"] != "unit" and d["kind"] != "item":
 		var fp: Array = d["footprint"]
 		var size := Vector2i(int(fp[0]), int(fp[1]))
 		spot = Grid.snap_to_footprint(p, size)
 		u.footprint = Grid.footprint_rect(spot, size)
-	else:
+	elif d["kind"] == "unit":
 		var c := pathing.nearest_walkable(Grid.world_to_cell(p), false, SPAWN_SNAP_CELLS)
 		if c.x >= 0 and c != Grid.world_to_cell(p):
 			spot = Grid.cell_to_world(c)
 	u.facing = facing
 	u.setup(self, _next_id, def_id, pid, spot)
 	_next_id += 1
-	if u.footprint.size != Vector2i.ZERO:
+	u.under_construction = bool(opts.get("under_construction", false))
+	if u.under_construction:
+		u.build_progress = 0.0
+	if opts.has("hp_fraction"):
+		u.hp = maxf(1.0, u.max_hp * float(opts["hp_fraction"]))
+	if u.footprint.size != Vector2i.ZERO and bool(d.get("blocks_pathing", true)):
 		pathing.set_footprint_rect(u.footprint, true)
-	_count_food(u, 1)
+	if not bool(opts.get("food_reserved", false)):
+		_count_food(u, 1)
+	elif not u.under_construction:
+		_count_food(u, 1, false)
 	entities[u.id] = u
 	unit_list.append(u)
 	spatial.insert(u)
@@ -249,6 +329,8 @@ func spawn_unit(def_id: String, pid: int, p: Vector3, facing: float = 0.0) -> Un
 		u.add_child(v)
 		v.setup(u)
 		u.view = v
+	for s: SimSystem in _hooks[&"spawned"]:
+		s.on_unit_spawned(u)
 	Events.unit_spawned.emit(u)
 	return u
 
@@ -281,10 +363,67 @@ func mark_dead(u: Unit, killer: Unit) -> void:
 	_dead.append([u, killer])
 
 
+## Takes a living entity out of the sim at once without a death (a picked-up item, a cancelled
+## site, a unit replaced by a transform): spatial hash, ids, footprint, food; no corpse, no
+## unit_died. It stops ticking at once (alive = false); unit_list drops it and the node is
+## freed in this tick's cleanup (safe to call from any stage, the units loop included).
+func remove_unit(u: Unit) -> void:
+	if not entities.has(u.id):
+		return
+	u.alive = false
+	if not u.hidden:
+		spatial.remove(u)
+	entities.erase(u.id)
+	if u.footprint.size != Vector2i.ZERO and bool(u.def.get("blocks_pathing", true)):
+		pathing.set_footprint_rect(u.footprint, false)
+	_count_food(u, -1)
+	for s: SimSystem in _hooks[&"removed"]:
+		s.on_unit_removed(u)
+	_removed.append(u)
+	u.visible = false
+
+
+## Hides a unit inside something (a gold mine, a garrison): out of the spatial hash, so it is
+## neither targeted, collided with nor drawn; it keeps its id and orders. Showing it again
+## re-inserts it at its position.
+func set_hidden(u: Unit, hide: bool) -> void:
+	if u.hidden == hide or not u.alive:
+		return
+	u.hidden = hide
+	if hide:
+		spatial.remove(u)
+	else:
+		spatial.insert(u)
+		u.reset_physics_interpolation()
+	u.visible = not hide
+
+
+## Food bookkeeping for systems: Production reserves food when training starts (used) and
+## Construction adds a finished site's food (cap).
+func adjust_food(pid: int, used_delta: int, cap_delta: int) -> void:
+	var p := player(pid)
+	if p == null or (used_delta == 0 and cap_delta == 0):
+		return
+	p.food_used += used_delta
+	p.food_cap += cap_delta
+	Events.resources_changed.emit(pid)
+
+
+## Called by Unit.take_damage after HP changed (systems' on_unit_damaged hooks).
+func notify_damaged(u: Unit, amount: float, src: Unit) -> void:
+	for s: SimSystem in _hooks[&"damaged"]:
+		s.on_unit_damaged(u, amount, src)
+
+
 ## Dead units leave the simulation here (end of tick): out of the spatial hash, id table and
 ## unit list, footprint freed, food released, `unit_died` emitted. The node stays as a corpse
 ## (UnitView plays topple + sink) until `Unit.decay_ticks()` have passed, then it is freed.
 func _cleanup() -> void:
+	if not _removed.is_empty():
+		for u in _removed:
+			unit_list.erase(u)
+			u.queue_free()
+		_removed.clear()
 	if not _dead.is_empty():
 		var dead := _dead
 		_dead = []
@@ -300,12 +439,15 @@ func _cleanup() -> void:
 
 
 func _remove_dead(u: Unit, killer: Unit) -> void:
-	spatial.remove(u)
+	if not u.hidden:
+		spatial.remove(u)
 	entities.erase(u.id)
 	unit_list.erase(u)
-	if u.footprint.size != Vector2i.ZERO:
+	if u.footprint.size != Vector2i.ZERO and bool(u.def.get("blocks_pathing", true)):
 		pathing.set_footprint_rect(u.footprint, false)
 	_count_food(u, -1)
+	for s: SimSystem in _hooks[&"died"]:
+		s.on_unit_died(u, killer)
 	Events.unit_died.emit(u, killer)
 	_corpses.append(u)
 
@@ -314,13 +456,17 @@ func corpse_count() -> int:
 	return _corpses.size()
 
 
-## Food bookkeeping on spawn (+1) and removal (-1); the economy system will own the rest.
-func _count_food(u: Unit, sign_value: int) -> void:
+## Food bookkeeping on spawn (+1) and removal (-1): used food for mobile units (heroes
+## included), provided food for finished structures. `with_used` false skips the used part
+## (Production reserved it already).
+func _count_food(u: Unit, sign_value: int, with_used: bool = true) -> void:
 	var p := player(u.player_id)
 	if p == null:
 		return
-	var used := int((u.def.get("cost", {}) as Dictionary).get("food", 0)) if u.is_mobile() else 0
-	var provided := int(u.def.get("food_provided", 0))
+	var used := int((u.def.get("cost", {}) as Dictionary).get("food", 0)) if u.is_mobile() and with_used else 0
+	if u.def.get("food_from_source", false):
+		used = 0
+	var provided := int(u.def.get("food_provided", 0)) if not u.under_construction else 0
 	if used == 0 and provided == 0:
 		return
 	p.food_used += sign_value * used
@@ -328,7 +474,7 @@ func _count_food(u: Unit, sign_value: int) -> void:
 	Events.resources_changed.emit(p.id)
 
 
-## Economy hook for GATHER orders (see `gather_handler`).
+## Legacy economy hook for GATHER orders (see `gather_handler`).
 func on_gather_reached(worker: Unit, resource: Unit) -> void:
 	if gather_handler.is_valid():
 		gather_handler.call(worker, resource)
@@ -353,12 +499,19 @@ func _apply_commands() -> void:
 
 
 func _apply_command(cmd: Dictionary) -> void:
-	var t: int = Order.type_from_string(str(cmd.get("type", "")))
+	var type_name := str(cmd.get("type", ""))
+	if SYSTEM_COMMANDS.has(type_name):
+		_apply_system_command(cmd, type_name)
+		return
+	var t: int = Order.type_from_string(type_name)
 	if t < 0:
 		push_warning("World: unknown command type '%s'" % cmd.get("type"))
 		return
 	var us := _command_units(cmd)
 	if us.is_empty():
+		return
+	if t == Order.Type.CAST and not us[0].is_mobile():
+		abilities.handle_command(cmd, us)      # building abilities (Levy Horn, Sound the Gong)
 		return
 	var target: int = int(cmd.get("target", 0))
 	var target_unit := get_unit(target)
@@ -372,13 +525,16 @@ func _apply_command(cmd: Dictionary) -> void:
 	var offsets: Array[Vector3] = []
 	if target == 0 and t in [Order.Type.MOVE, Order.Type.ATTACK_MOVE, Order.Type.PATROL, Order.Type.SMART]:
 		offsets = _formation_offsets(us, pos)
+	var tree := int(cmd.get("tree", -1))
+	if tree < 0 and target == 0 and t in [Order.Type.SMART, Order.Type.GATHER] and cmd.has("pos"):
+		tree = doodads.nearest_tree(pos, TREE_CLICK_RADIUS)
 	var group: GroupPath = GroupPath.new() if us.size() > 1 else null
 	for i in us.size():
 		var u := us[i]
 		var ut := t as Order.Type
 		var tid := target
 		if t == Order.Type.SMART:
-			ut = resolve_smart(u, target_unit)
+			ut = resolve_smart(u, target_unit) if target_unit != null else resolve_smart_point(u, tree)
 			if ut == Order.Type.MOVE:
 				tid = 0
 		var goal := pos
@@ -389,7 +545,21 @@ func _apply_command(cmd: Dictionary) -> void:
 			o.group_path = group
 		o.def_id = str(cmd.get("def", ""))
 		o.ability = str(cmd.get("ability", ""))
+		o.slot = int(cmd.get("slot", -1))
+		var extra: Variant = cmd.get("data", {})
+		if extra is Dictionary:
+			o.data = (extra as Dictionary).duplicate()
+		if ut == Order.Type.GATHER and tid == 0 and tree >= 0:
+			o.data["tree"] = tree
 		u.issue_order(o, queue)
+
+
+## Routes a building / player command to its system (SYSTEM_COMMANDS).
+func _apply_system_command(cmd: Dictionary, type_name: String) -> void:
+	var sys: SimSystem = get(SYSTEM_COMMANDS[type_name])
+	if sys == null:
+		return
+	sys.handle_command(cmd, _command_units(cmd))
 
 
 func _command_units(cmd: Dictionary) -> Array[Unit]:
@@ -402,20 +572,49 @@ func _command_units(cmd: Dictionary) -> Array[Unit]:
 	return out
 
 
-## Right-click resolution for one unit: producing structures set their rally point; enemies
-## are attacked (followed by units without a weapon); workers gather resources (others walk
-## there); mobile allies are followed; allied structures and the ground are a move (a FOLLOW
-## on a building would never complete).
+## Right-click resolution for one unit (rules §18.2): producing structures set their rally
+## point; enemies are attacked (followed by units without a weapon); items are picked up by
+## those who may carry them; workers gather resources, return cargo to an own drop-off, help
+## build an own site, enter an own garrison with a free slot and repair own damaged buildings or
+## mechanical units; mobile allies are followed; everything else (allied or neutral structures,
+## shops, the ground) is a move — a FOLLOW on a building would never complete.
 func resolve_smart(u: Unit, target: Unit) -> Order.Type:
 	if u.can_train():
 		return Order.Type.RALLY
 	if target == null or target == u:
 		return Order.Type.MOVE
+	if target.is_item:
+		return Order.Type.PICKUP_ITEM if items.can_pickup(u, target) else Order.Type.MOVE
 	if target.is_resource:
-		return Order.Type.GATHER if u.is_worker else Order.Type.MOVE
+		return Order.Type.GATHER if u.can_gather() else Order.Type.MOVE
 	if is_enemy(u.player_id, target.player_id):
 		return Order.Type.ATTACK if u.can_attack() else Order.Type.FOLLOW
+	if target.player_id == u.player_id and u.is_worker:
+		if target.under_construction:
+			return Order.Type.BUILD if construction.can_order_build(u, _site_order(target)) else Order.Type.MOVE
+		if u.can_gather() and Economy.carry_kind(u) != "" and economy.accepts_cargo(target, u):
+			return Order.Type.RETURN_RESOURCES
+		if target.has_flag("garrison") and construction.can_enter(u, target):
+			return Order.Type.ENTER
+	if is_ally(u.player_id, target.player_id) and u.repair_ability() != "" and construction.can_repair(u, target):
+		return Order.Type.REPAIR
 	return Order.Type.FOLLOW if target.is_mobile() else Order.Type.MOVE
+
+
+## Right-click on the ground: rally for producing structures, gather for workers when a living
+## tree lies under the click (`tree` index, -1 = none), else move.
+func resolve_smart_point(u: Unit, tree: int) -> Order.Type:
+	if u.can_train():
+		return Order.Type.RALLY
+	if tree >= 0 and u.can_gather():
+		return Order.Type.GATHER
+	return Order.Type.MOVE
+
+
+static func _site_order(site: Unit) -> Order:
+	var o := Order.make(Order.Type.BUILD, site.pos, site.id)
+	o.def_id = site.def_id
+	return o
 
 
 ## Keeps a compact group's shape (classic RTS style) instead of funnelling everyone into one point.

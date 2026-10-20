@@ -1,10 +1,14 @@
 class_name Unit
 extends Node3D
-## Every game object with an id (units, buildings, mines, critters). Simulation state lives in
-## plain fields (`pos`, `facing`, ...) and is advanced only by `sim_tick` from the fixed World
-## tick; the Node3D transform is written once per tick so physics interpolation smooths it.
+## Every game object with an id (units, heroes, buildings, mines, critters, ground items).
+## Simulation state lives in plain fields (`pos`, `facing`, ...) and is advanced only by
+## `sim_tick` from the fixed World tick; the Node3D transform is written once per tick so physics
+## interpolation smooths it.
 ##
-## Order state machine (one `current` order + shift queue) with combat behaviour:
+## Orders: one `current` order + a shift queue. Each order type's per-tick behaviour lives in its
+## own stateless handler under src/entities/orders/ (OrderHandlers.of(type); the no-order
+## behaviour is orders/idle.gd). This file keeps the shared machinery the handlers drive
+## ("handler API" below): path following, steering, acquisition, chasing, the attack swing.
 ## - idle units auto-acquire enemies within `acquire_range`, chase them up to `leash_range` from
 ##   their guard position and walk back when leashed (creeps always return to their camp);
 ## - HOLD attacks only what is already in weapon range and never moves;
@@ -12,6 +16,11 @@ extends Node3D
 ## - ATTACK_MOVE / PATROL follow their path, engage anything acquired on the way, then resume.
 ## An attack is a swing: wind-up (damage point) -> hit or projectile -> backswing. The weapon
 ## cooldown starts with the swing. All timers are integer tick counts (exact, deterministic).
+##
+## Stats: base values come from the def; systems add modifiers per source with
+## set_modifiers(source, mods) (tech upgrades, hero attributes, items, buffs) and the unit
+## recomputes its live stats (recompute_stats). Statuses (stun, root, silence, disarm,
+## invulnerable, cannot_die, hidden ...) arrive the same way as mods["status"].
 
 const ARRIVE_EPS := 0.2
 const WAYPOINT_EPS := 0.45
@@ -34,6 +43,10 @@ const SKIP_TICKS := 90           ## how long a given-up target is ignored by acq
 const HOME_EPS := 1.5            ## creeps further than this from camp walk back when calm
 const FOLLOW_DIST := 1.2
 const GATHER_REACH := 0.8
+## Modifier keys whose totals take the largest value instead of the sum (rules §7.4).
+const MAX_STACK_KEYS: Array[String] = ["miss_chance", "evasion"]
+const STATUS_FLAGS: Array[String] = ["stun", "root", "silence", "disarm", "invulnerable",
+	"cannot_die", "hidden", "invisible", "sleep", "taunt", "ignore_slows", "no_displace"]
 
 static var _scan_buf: Array = []
 static var _help_buf: Array = []
@@ -46,32 +59,63 @@ var player_id: int = 0
 var team: int = 0
 var world: World
 
-# stats (from def)
+# stats (from def, then modifiers)
 var hp: float = 1.0
 var max_hp: float = 1.0
 var mana: float = 0.0
 var max_mana: float = 0.0
+var hp_regen: float = 0.0        ## HP/s (applied by the buffs system; rules §9)
+var mana_regen: float = 0.0
 var armor: float = 0.0
 var armor_type: String = "unarmored"
 var radius: float = 0.4
 ## Centre-to-edge reach for target queries: footprint half-diagonal for structures, else radius.
 var target_radius: float = 0.4
 var speed: float = 0.0
-var sight: float = 10.0
+var sight: float = 10.0          ## day sight (m)
+var sight_night: float = 10.0
 var turn_rate: float = 12.0
+var level: int = 1               ## XP / bounty level (rules §4.4); heroes: their hero level
 var is_building: bool = false
 var is_hero: bool = false
 var is_worker: bool = false
 var is_resource: bool = false
 var is_flying: bool = false
 var is_invulnerable: bool = false
+var is_item: bool = false        ## a ground item entity (ItemSystem.spawn_item)
+var is_summoned: bool = false
+var is_mechanical: bool = false
 var attack: Dictionary = {}
 var abilities: Array = []
-var buffs: Array = []
+var buffs: Array = []            ## buff records (BuffSystem): {id, source, remaining, rank, data}
 var carry_gold: int = 0
 var carry_lumber: int = 0
+## Hero state (HeroSystem): {hero_id, level, xp, skill_points, ranks: {ability: rank},
+## attr_bonus: {str, agi, int}}. Empty for non-heroes.
 var hero: Dictionary = {}
+## 6 slots (heroes only): null or {"id": item id, "charges": int}. ItemSystem owns the contents.
 var inventory: Array = []
+var item_id: String = ""         ## ground items: the item this entity carries
+var item_charges: int = -1
+var camp_id: String = ""         ## creeps: their camp instance id (CreepSystem)
+var under_construction: bool = false   ## Construction: site still building (no food, no function)
+var build_progress: float = 1.0  ## 0..1 while under construction
+var garrison: Array[int] = []    ## unit ids inside (garrison buildings)
+var hidden: bool = false         ## out of the spatial hash (in a mine, garrisoned); World.set_hidden
+var lifetime_ticks: int = -1     ## summons: ticks left (-1 = permanent)
+var autocast: Dictionary = {}    ## ability id -> bool (AbilitySystem)
+var cooldowns: Dictionary = {}   ## ability / item group id -> tick when ready (AbilitySystem, ItemSystem)
+
+# statuses (from modifier sources, see recompute_stats)
+var stunned: bool = false
+var rooted: bool = false
+var silenced: bool = false
+var disarmed: bool = false
+var cannot_die: bool = false
+var status: Dictionary = {}      ## every active status flag -> true
+## Summed modifiers of every source after recompute_stats (combat reads damage_pct,
+## damage_taken_pct, miss_chance, evasion, crit, ...).
+var mod_totals: Dictionary = {}
 
 # weapon (from def.attack; timings converted to ticks)
 var attack_type: String = ""
@@ -104,35 +148,37 @@ var footprint: Rect2i = Rect2i()
 var push_accum: Vector3 = Vector3.ZERO
 var view: Node3D = null
 
-# movement
+# movement (handler API reads `arrived`)
 var path: PackedVector3Array = PackedVector3Array()
 var path_i: int = 0
+var arrived: bool = false         ## current path finished (consumed by the order logic)
 var _need_path: bool = false
-var _arrived: bool = false        ## current path finished (consumed by the order logic)
 var _goal: Vector3 = Vector3.ZERO
 var _stall: int = 0
 var _repaths: int = 0
-var _patrol_from: Vector3 = Vector3.ZERO
 var _nbuf: Array = []
 var _group: GroupPath = null      ## shared path of the current order (first path request only)
 var _group_try: bool = false      ## a matching base may still be derived from
 var _decay_ticks: int = -1        ## cached corpse lifetime (see decay_ticks)
 
-# combat
+# combat / order state shared with the handlers
+var engage_id: int = 0            ## auto-acquired target (idle / hold / attack-move / patrol)
+var engage_dist: float = 0.0      ## edge distance when engaged (retaliation can start far away)
+var guard_pos: Vector3 = Vector3.ZERO
+var returning: bool = false       ## walking back to the guard position after a leash
+var resume_path: bool = false     ## attack-move must re-path to its goal after a fight
+var patrol_from: Vector3 = Vector3.ZERO
+var blocked_ticks: int = 0
+var _home: Vector3 = Vector3.ZERO
 var _cooldown: int = 0            ## ticks until the weapon is ready
 var _swing: int = -1              ## ticks into the current swing, -1 = not swinging
 var _swing_target: int = 0
 var _swing_fired: bool = false
-var _engage_id: int = 0           ## auto-acquired target (idle / hold / attack-move / patrol)
-var _engage_dist: float = 0.0     ## edge distance when engaged (retaliation can start far away)
-var _guard_pos: Vector3 = Vector3.ZERO
-var _home: Vector3 = Vector3.ZERO
-var _returning: bool = false
-var _resume: bool = false         ## attack-move must re-path to its goal after a fight
 var _repath_cd: int = 0
-var _blocked: int = 0
 var _skip_id: int = 0
 var _skip_ticks: int = 0
+var _base: Dictionary = {}        ## stats before modifiers (def values; heroes: set_base_stats)
+var _mods: Dictionary = {}        ## source -> modifier dictionary
 
 
 func setup(w: World, uid: int, did: String, pid: int, p: Vector3) -> void:
@@ -151,7 +197,7 @@ func setup(w: World, uid: int, did: String, pid: int, p: Vector3) -> void:
 		pos.y = w.map.height_at(p.x, p.z)
 	prev_pos = pos
 	_home = pos
-	_guard_pos = pos
+	guard_pos = pos
 	_commit_transform()
 
 
@@ -159,26 +205,41 @@ func _apply_def() -> void:
 	max_hp = float(def.get("hp", 1))
 	hp = max_hp
 	max_mana = float(def.get("mana", 0))
-	mana = max_mana
+	mana = minf(max_mana, float(def.get("mana_start", max_mana))) if float(def.get("mana_start", -1.0)) >= 0.0 \
+		else max_mana
+	hp_regen = maxf(0.0, float(def.get("hp_regen", 0.0)))
+	mana_regen = maxf(0.0, float(def.get("mana_regen", 0.0)))
 	armor = float(def.get("armor", 0))
 	armor_type = str(def.get("armor_type", "unarmored"))
 	radius = float(def.get("radius", 0.4))
 	speed = float(def.get("speed", 0.0))
 	sight = float(def.get("sight", 10.0))
+	sight_night = float(def.get("sight_night", sight))
+	if sight_night < 0.0:
+		sight_night = sight
 	turn_rate = float(def.get("turn_rate", 12.0))
 	leash_range = float(def.get("leash", 14.0))
+	level = maxi(0, int(def.get("level", 1)))
 	var kind: String = def.get("kind", "unit")
 	var f: Array = def.get("flags", [])
 	is_building = kind == "building"
 	is_resource = kind == "resource"
+	is_item = kind == "item"
 	is_worker = f.has("worker")
 	is_hero = f.has("hero")
-	is_flying = f.has("flying")
+	is_flying = f.has("flying") or f.has("air")
 	is_invulnerable = f.has("invulnerable")
+	is_summoned = f.has("summoned")
+	is_mechanical = f.has("mechanical")
 	attack = def.get("attack", {})
 	abilities = (def.get("abilities", []) as Array).duplicate()
 	inventory.resize(INVENTORY_SLOTS)
 	_apply_attack()
+	_base = {"max_hp": max_hp, "max_mana": max_mana, "armor": armor, "speed": speed, "sight": sight,
+		"sight_night": sight_night, "damage_min": damage_min, "damage_max": damage_max,
+		"attack_range": attack_range, "cooldown": float(attack.get("cooldown", 1.0)),
+		"damage_point": float(attack.get("damage_point", 0.4)), "backswing": float(attack.get("backswing", 0.4)),
+		"hp_regen": hp_regen, "mana_regen": mana_regen}
 
 
 func _apply_attack() -> void:
@@ -204,6 +265,10 @@ func is_mobile() -> bool:
 	return speed > 0.0 and not is_building and not is_resource
 
 
+func is_structure() -> bool:
+	return footprint.size != Vector2i.ZERO
+
+
 func is_large() -> bool:
 	return radius > Pathing.LARGE_RADIUS
 
@@ -217,11 +282,28 @@ func is_creep() -> bool:
 
 
 func can_attack() -> bool:
-	return alive and damage_max > 0
+	return alive and damage_max > 0 and not disarmed
 
 
 func can_train() -> bool:
-	return is_building and not (def.get("trains", []) as Array).is_empty()
+	return is_building and not under_construction and not (def.get("trains", []) as Array).is_empty()
+
+
+## Workers that gather (their card carries Gather).
+func can_gather() -> bool:
+	return is_worker and abilities.has("cmd_gather")
+
+
+## Id of this unit's repair ability (an ability with effect "repair"), "" when it cannot repair.
+func repair_ability() -> String:
+	for a: Variant in abilities:
+		if str(Defs.abilities.get(str(a), {}).get("effect", "")) == "repair":
+			return str(a)
+	return ""
+
+
+func has_flag(flag: String) -> bool:
+	return (def.get("flags", []) as Array).has(flag)
 
 
 ## Unit the weapon is busy with (swing or engagement), 0 = none. For UI/AI, read-only.
@@ -230,7 +312,7 @@ func combat_target_id() -> int:
 		return _swing_target
 	if current != null and current.type == Order.Type.ATTACK:
 		return current.target_id
-	return _engage_id
+	return engage_id
 
 
 ## Interpolated display position (for fx/UI drawn in _process).
@@ -270,6 +352,11 @@ func edge_distance(o: Unit) -> float:
 	return maxf(Grid.flat_dist(pos, o.pos) - radius - o.radius, 0.0)
 
 
+## Distance from this unit's edge to a ground point.
+func edge_distance_to_point(p: Vector3) -> float:
+	return maxf(Grid.flat_dist(pos, p) - radius, 0.0)
+
+
 ## Swing progress 0..1 for animation (-1 when not attacking). Visual only.
 func swing_progress() -> float:
 	var total := damage_point_ticks + backswing_ticks
@@ -281,6 +368,10 @@ func swing_progress() -> float:
 func damage_point_ratio() -> float:
 	var total := damage_point_ticks + backswing_ticks
 	return float(damage_point_ticks) / total if total > 0 else 0.0
+
+
+func is_swinging() -> bool:
+	return _swing >= 0
 
 
 ## Seconds since death, interpolated between ticks (visual only).
@@ -299,6 +390,109 @@ func decay_ticks() -> int:
 	return _decay_ticks
 
 
+# --- stats & modifiers ---------------------------------------------------------------------
+
+## Replaces one source's modifiers and recomputes the live stats. `source` is the owning
+## system's key ("tech", "hero", "items", "buffs", ...); an empty dict removes the source.
+## Keys (all optional, additive across sources unless noted): max_hp, max_hp_pct, max_mana,
+## armor, damage (flat, min and max), damage_pct, attack_speed_pct, move_speed (flat m/s),
+## move_speed_pct, range, sight, hp_regen, mana_regen, miss_chance / evasion (max wins),
+## crit ({chance, multiplier}, max multiplier wins), damage_taken_pct ({attack type: pct}),
+## status (Array of STATUS_FLAGS).
+func set_modifiers(source: StringName, mods: Dictionary) -> void:
+	if mods.is_empty():
+		_mods.erase(source)
+	else:
+		_mods[source] = mods
+	recompute_stats()
+
+
+func modifiers(source: StringName) -> Dictionary:
+	return _mods.get(source, {})
+
+
+## Overwrites base stats (keys of `_base`: max_hp, max_mana, armor, speed, sight, sight_night,
+## damage_min, damage_max, attack_range, cooldown, damage_point, backswing, hp_regen,
+## mana_regen). Used by HeroSystem on level-up and by transforms; then recomputes.
+func set_base_stats(stats: Dictionary) -> void:
+	_base.merge(stats, true)
+	recompute_stats()
+
+
+func base_stat(key: String, fallback: Variant = 0.0) -> Variant:
+	return _base.get(key, fallback)
+
+
+## Live stats = base + every modifier source. Missing HP/mana are kept when the maximum grows
+## (rules §6.2 level-up rule); speed is clamped to combat.move_speed_clamp for mobile units and
+## attack timings are divided by the attack-speed factor (clamped, rules §7.5).
+func recompute_stats() -> void:
+	var t := {}
+	var st := {}
+	for src: StringName in _mods:
+		var m: Dictionary = _mods[src]
+		for k: String in m:
+			var v: Variant = m[k]
+			if k == "status":
+				for s: Variant in v:
+					st[str(s)] = true
+			elif k == "damage_taken_pct":
+				var dt: Dictionary = t.get_or_add(k, {})
+				for at: String in v:
+					dt[at] = float(dt.get(at, 0.0)) + float(v[at])
+			elif k == "crit":
+				var c: Dictionary = t.get("crit", {})
+				if float((v as Dictionary).get("multiplier", 0.0)) > float(c.get("multiplier", 0.0)):
+					t["crit"] = v
+			elif MAX_STACK_KEYS.has(k):
+				t[k] = maxf(float(t.get(k, 0.0)), float(v))
+			elif v is float or v is int:
+				t[k] = float(t.get(k, 0.0)) + float(v)
+	mod_totals = t
+	status = st
+	var old_max_hp := max_hp
+	var old_max_mana := max_mana
+	max_hp = maxf(1.0, (float(_base["max_hp"]) + float(t.get("max_hp", 0.0))) * (1.0 + float(t.get("max_hp_pct", 0.0)) / 100.0))
+	max_mana = maxf(0.0, float(_base["max_mana"]) + float(t.get("max_mana", 0.0)))
+	if max_hp > old_max_hp:
+		hp += max_hp - old_max_hp
+	hp = minf(hp, max_hp)
+	if max_mana > old_max_mana:
+		mana += max_mana - old_max_mana
+	mana = minf(mana, max_mana)
+	armor = float(_base["armor"]) + float(t.get("armor", 0.0))
+	hp_regen = float(_base["hp_regen"]) + float(t.get("hp_regen", 0.0))
+	mana_regen = float(_base["mana_regen"]) + float(t.get("mana_regen", 0.0))
+	sight = float(_base["sight"]) + float(t.get("sight", 0.0))
+	sight_night = float(_base["sight_night"]) + float(t.get("sight", 0.0))
+	var base_speed := float(_base["speed"])
+	if base_speed > 0.0 and not is_building:
+		var slow := float(t.get("move_speed_pct", 0.0))
+		if st.has("ignore_slows"):
+			slow = maxf(slow, 0.0)
+		var spd_clamp: Array = Defs.combat.get("move_speed_clamp", [0.0, 100.0])
+		speed = clampf((base_speed + float(t.get("move_speed", 0.0))) * (1.0 + slow / 100.0),
+			float(spd_clamp[0]), float(spd_clamp[1]))
+	if not attack.is_empty():
+		var flat := int(t.get("damage", 0.0))
+		damage_min = int(_base["damage_min"]) + flat
+		damage_max = int(_base["damage_max"]) + flat
+		attack_range = float(_base["attack_range"]) + float(t.get("range", 0.0))
+		var asc: Array = Defs.combat.get("attack_speed_clamp", [0.2, 5.0])
+		var factor := clampf(1.0 + float(t.get("attack_speed_pct", 0.0)) / 100.0, float(asc[0]), float(asc[1]))
+		cooldown_ticks = maxi(1, _to_ticks(float(_base["cooldown"]) / factor))
+		damage_point_ticks = _to_ticks(float(_base["damage_point"]) / factor)
+		backswing_ticks = _to_ticks(float(_base["backswing"]) / factor)
+	stunned = st.has("stun") or st.has("sleep")
+	rooted = st.has("root")
+	silenced = st.has("silence")
+	disarmed = st.has("disarm")
+	cannot_die = st.has("cannot_die")
+	is_invulnerable = (def.get("flags", []) as Array).has("invulnerable") or st.has("invulnerable")
+	if stunned:
+		cancel_swing()
+
+
 # --- orders --------------------------------------------------------------------------------
 
 func issue_order(o: Order, queue: bool = false) -> void:
@@ -310,18 +504,30 @@ func issue_order(o: Order, queue: bool = false) -> void:
 			rally_id = o.target_id
 			Events.order_issued.emit(self, o)
 		return
-	if not is_mobile():
+	var h := OrderHandlers.of(o.type)
+	if h.is_instant():
+		if h.can_start(self, o):
+			h.apply_instant(self, o)
+			Events.order_issued.emit(self, o)
+		return
+	if not is_mobile() and not (h.allows_immobile() and can_attack() and not is_resource):
 		return
 	if o.type == Order.Type.ATTACK and o.target_id == 0:
 		o.type = Order.Type.ATTACK_MOVE
+		h = OrderHandlers.of(o.type)
 	if o.type == Order.Type.STOP:
 		orders.clear()
-		_cancel_swing()
-		_returning = false
-		_finish_current(false)
+		cancel_swing()
+		returning = false
+		finish_order(false)
 		Events.order_issued.emit(self, o)
 		return
+	if not h.can_start(self, o):
+		return
 	if queue and current != null:
+		var cap := int(Defs.rule("controls.shift_queue_max", 32))
+		if orders.size() + 1 >= cap:
+			return
 		orders.append(o)
 	else:
 		orders.clear()
@@ -331,35 +537,33 @@ func issue_order(o: Order, queue: bool = false) -> void:
 
 func clear_orders() -> void:
 	orders.clear()
-	_finish_current(false)
+	finish_order(false)
 
 
 func _start(o: Order) -> void:
 	if not (o.type == Order.Type.ATTACK and o.target_id == _swing_target):
-		_cancel_swing()
+		cancel_swing()
+	if current != null:
+		var old := current
+		current = null
+		OrderHandlers.of(old.type).exit(self, old)
 	current = o
 	holding = false
-	_engage_id = 0
-	_returning = false
-	_resume = false
-	_blocked = 0
+	engage_id = 0
+	returning = false
+	resume_path = false
+	blocked_ticks = 0
 	_repath_cd = 0
-	_stop_moving()
+	stop_moving()
 	_group = o.group_path
 	_group_try = _group != null
-	match o.type:
-		Order.Type.HOLD:
-			holding = true
-		Order.Type.PATROL:
-			_patrol_from = pos
-			_begin_move(o.target_pos)
-		Order.Type.ATTACK, Order.Type.FOLLOW, Order.Type.GATHER:
-			pass                      # chase their target unit every tick
-		_:
-			_begin_move(_order_goal(o))
+	OrderHandlers.of(o.type).enter(self, o)
 
 
-func _order_goal(o: Order) -> Vector3:
+# --- handler API (used by src/entities/orders/*.gd) ----------------------------------------
+
+## Where an order heads: its target unit's position when it has one, else its point.
+func order_goal(o: Order) -> Vector3:
 	if o.target_id != 0 and world != null:
 		var t := world.get_unit(o.target_id)
 		if t != null:
@@ -367,21 +571,22 @@ func _order_goal(o: Order) -> Vector3:
 	return o.target_pos
 
 
-func _begin_move(goal: Vector3) -> void:
+## Starts walking to `goal` (path requested on the next follow_path call).
+func begin_move(goal: Vector3) -> void:
 	_goal = goal
 	_need_path = true
-	_arrived = false
+	arrived = false
 	path.clear()
 	path_i = 0
 	_stall = 0
 	_repaths = 0
 
 
-func _stop_moving() -> void:
+func stop_moving() -> void:
 	path.clear()
 	path_i = 0
 	_need_path = false
-	_arrived = false
+	arrived = false
 	_stall = 0
 
 
@@ -389,19 +594,30 @@ func _on_path_end() -> void:
 	path.clear()
 	path_i = 0
 	_need_path = false
-	_arrived = true
+	arrived = true
 
 
-func _finish_current(advance: bool = true) -> void:
-	current = null
+## Ends the current order (exit hook, state reset) and starts the next queued one when
+## `advance` is true.
+func finish_order(advance: bool = true) -> void:
+	if current != null:
+		var old := current
+		current = null
+		OrderHandlers.of(old.type).exit(self, old)
 	holding = false
-	_engage_id = 0
-	_resume = false
+	engage_id = 0
+	resume_path = false
 	_group = null
-	_stop_moving()
-	_guard_pos = pos
+	stop_moving()
+	guard_pos = pos
 	if advance and not orders.is_empty():
 		_start(orders.pop_front())
+
+
+## Walks back to `p` as part of the idle behaviour (leash / creep camp return).
+func return_to(p: Vector3) -> void:
+	returning = true
+	begin_move(p)
 
 
 # --- simulation ----------------------------------------------------------------------------
@@ -411,13 +627,32 @@ func sim_tick(dt: float) -> void:
 	if not alive:
 		return
 	_tick_timers()
+	if lifetime_ticks > 0:
+		lifetime_ticks -= 1
+		if lifetime_ticks == 0:
+			die(null)
+			return
+	if hidden:
+		return
 	if not is_mobile():
+		# structures and immobile summons with a weapon (towers, the Grand Bombard) shoot in place
+		if can_attack() and not under_construction and not stunned:
+			if _swing >= 0:
+				_advance_swing(dt)
+			else:
+				_think(dt)
+			if not is_building:
+				_commit_transform()
 		return
 	var desired := Vector3.ZERO
-	if _swing >= 0:
+	if stunned:
+		desired = Vector3.ZERO
+	elif _swing >= 0:
 		_advance_swing(dt)
 	else:
 		desired = _think(dt)
+	if rooted:
+		desired = Vector3.ZERO
 	_steer_and_move(desired, dt)
 	_update_stall(desired, dt)
 	_commit_transform()
@@ -437,147 +672,35 @@ func _tick_timers() -> void:
 ## Order logic for one tick; returns the desired velocity.
 func _think(dt: float) -> Vector3:
 	if current == null:
-		return _idle(dt)
-	match current.type:
-		Order.Type.HOLD:
-			return _hold(dt)
-		Order.Type.ATTACK:
-			return _attack_target(dt)
-		Order.Type.ATTACK_MOVE, Order.Type.PATROL:
-			return _attack_move(dt)
-		Order.Type.FOLLOW:
-			return _follow(dt)
-		Order.Type.GATHER:
-			return _gather(dt)
-	return _move(dt)
-
-
-func _move(dt: float) -> Vector3:
-	var d := _follow_path(dt)
-	if _arrived:
-		_finish_current()
-	return d
-
-
-func _idle(dt: float) -> Vector3:
-	if _returning:
-		var d := _follow_path(dt)
-		if _arrived:
-			_returning = false
-			_stop_moving()
-			_guard_pos = pos
-		return d
-	var t := _engaged()
-	if t == null:
-		t = _scan(acquire_range)
-		if t == null:
-			_settle()
-			return Vector3.ZERO
-		_engage(t)
-	if Grid.flat_dist(pos, _guard_pos) > leash_range or _lost(t):
-		_give_up(t)
-		_return_to(_guard_pos)
-		return Vector3.ZERO
-	return _fight(t, dt, true)
+		return OrderHandlers.idle().tick(self, null, dt)
+	return OrderHandlers.of(current.type).tick(self, current, dt)
 
 
 ## Calm idle unit: guard position follows it; creeps walk back to their camp.
-func _settle() -> void:
+func settle() -> void:
 	if is_creep():
-		_guard_pos = _home
+		guard_pos = _home
 		if Grid.flat_dist(pos, _home) > HOME_EPS and (world.tick_count + id) % SCAN_TICKS == 0:
-			_return_to(_home)
-	elif _engage_id == 0:
-		_guard_pos = pos
+			return_to(_home)
+	elif engage_id == 0:
+		guard_pos = pos
 
 
-func _hold(dt: float) -> Vector3:
-	var t := _engaged()
-	if t != null and edge_distance(t) > attack_range:
-		_engage_id = 0
-		t = null
-	if t == null:
-		t = _scan(attack_range)
-		if t == null:
-			return Vector3.ZERO
-		_engage_id = t.id
-	return _fight(t, dt, false)
+## Camp / spawn position creeps return to (CreepSystem may move it).
+func home_pos() -> Vector3:
+	return _home
 
 
-func _attack_target(dt: float) -> Vector3:
-	var t := world.get_unit(current.target_id)
-	if t == null or not t.alive or t == self:
-		_finish_current()
-		return Vector3.ZERO
-	if not can_attack():
-		return _chase_move(t, dt)
-	return _fight(t, dt, true)
-
-
-func _attack_move(dt: float) -> Vector3:
-	var t := _engaged()
-	if t != null and _lost(t):
-		_give_up(t)
-		t = null
-	if t == null:
-		t = _scan(acquire_range)
-		if t != null:
-			_engage(t)
-			_resume = true
-	if t != null:
-		return _fight(t, dt, true)
-	if _resume:
-		_resume = false
-		_begin_move(current.target_pos)
-	var d := _follow_path(dt)
-	if _arrived:
-		if current.type == Order.Type.PATROL:
-			var back := _patrol_from
-			_patrol_from = current.target_pos
-			current.target_pos = back
-			_begin_move(back)
-		else:
-			_finish_current()
-	return d
-
-
-## Keeps close to an ally. A follower that is hit fights back (see _on_attacked), then
-## resumes following.
-func _follow(dt: float) -> Vector3:
-	var t := world.get_unit(current.target_id)
-	if t == null or not t.alive:
-		_finish_current()
-		return Vector3.ZERO
-	var e := _engaged()
-	if e != null:
-		if not _lost(e):
-			return _fight(e, dt, true)
-		_give_up(e)
-	if edge_distance(t) <= FOLLOW_DIST:
-		_stop_moving()
-		return Vector3.ZERO
-	return _chase_move(t, dt)
-
-
-## Gather stub until economy.gd exists: walk to the resource, then hand over to
-## World.gather_handler (economy hook) and complete.
-func _gather(dt: float) -> Vector3:
-	var t := world.get_unit(current.target_id)
-	if t == null or not t.alive:
-		_finish_current()
-		return Vector3.ZERO
-	if edge_distance(t) <= GATHER_REACH:
-		world.on_gather_reached(self, t)
-		_finish_current()
-		return Vector3.ZERO
-	return _chase_move(t, dt)
+func set_home(p: Vector3) -> void:
+	_home = p
+	guard_pos = p
 
 
 # --- targeting -----------------------------------------------------------------------------
 
 func is_valid_target(o: Unit) -> bool:
-	return o != self and o.alive and not o.is_resource and not o.is_invulnerable \
-		and world.is_enemy(player_id, o.player_id)
+	return o != self and o.alive and not o.is_resource and not o.is_invulnerable and not o.is_item \
+		and not o.hidden and world.is_enemy(player_id, o.player_id)
 
 
 ## Closest valid enemy whose edge is within `r` (units preferred over structures, ties by id;
@@ -591,7 +714,7 @@ func find_target(r: float) -> Unit:
 	var best_score := INF
 	world.spatial.query_hostile(pos, r + radius, hostile, _scan_buf)
 	for o: Unit in _scan_buf:
-		if not o.alive or o.id == _skip_id or o.is_invulnerable or o.is_resource:
+		if not o.alive or o.id == _skip_id or o.is_invulnerable or o.is_resource or o.is_item or o.hidden:
 			continue
 		var d := edge_distance(o)
 		if d > r:
@@ -611,7 +734,7 @@ func find_target(r: float) -> Unit:
 ## unreachable plateau or across water is ignored instead of chased into a wall. Ranged and
 ## flying units can fight across terrain, so everything counts for them.
 func _can_reach(o: Unit, edge: float) -> bool:
-	if not projectile.is_empty() or is_flying or edge <= attack_range:
+	if not projectile.is_empty() or is_flying or edge <= attack_range or not is_mobile():
 		return true
 	var rect := o.footprint if o.footprint.size != Vector2i.ZERO \
 		else Rect2i(Grid.world_to_cell(o.pos), Vector2i.ONE)
@@ -619,68 +742,64 @@ func _can_reach(o: Unit, edge: float) -> bool:
 
 
 ## Throttled acquisition (every SCAN_TICKS, staggered by id so scans spread over ticks).
-func _scan(r: float) -> Unit:
+func scan(r: float) -> Unit:
 	if r <= 0.0 or not can_attack() or (world.tick_count + id) % SCAN_TICKS != 0:
 		return null
 	return find_target(r)
 
 
-func _engaged() -> Unit:
-	if _engage_id == 0:
+## The auto-acquired target, or null (also clears an invalid one).
+func engaged() -> Unit:
+	if engage_id == 0:
 		return null
-	var t := world.get_unit(_engage_id)
+	var t := world.get_unit(engage_id)
 	if t == null or not is_valid_target(t):
-		_engage_id = 0
-		_blocked = 0
+		engage_id = 0
+		blocked_ticks = 0
 		return null
 	return t
 
 
-func _engage(t: Unit) -> void:
-	_engage_id = t.id
-	_engage_dist = edge_distance(t)
-	_blocked = 0
+func engage(t: Unit) -> void:
+	engage_id = t.id
+	engage_dist = edge_distance(t)
+	blocked_ticks = 0
 	_repath_cd = 0
-	_returning = false
+	returning = false
 	_group = null
-	_stop_moving()
+	stop_moving()
 
 
 ## An auto-acquired target escaped or could not be reached.
-func _lost(t: Unit) -> bool:
-	return _blocked > BLOCKED_TICKS or edge_distance(t) > maxf(acquire_range, _engage_dist) + CHASE_SLACK
+func is_lost(t: Unit) -> bool:
+	return blocked_ticks > BLOCKED_TICKS or edge_distance(t) > maxf(acquire_range, engage_dist) + CHASE_SLACK
 
 
-func _give_up(t: Unit) -> void:
-	if _blocked > BLOCKED_TICKS:
+func give_up(t: Unit) -> void:
+	if blocked_ticks > BLOCKED_TICKS:
 		_skip_id = t.id
 		_skip_ticks = SKIP_TICKS
-	_engage_id = 0
-	_blocked = 0
-	_stop_moving()
+	engage_id = 0
+	blocked_ticks = 0
+	stop_moving()
 
 
-func _return_to(p: Vector3) -> void:
-	_returning = true
-	_begin_move(p)
-
-
-## Fight back when hit while idle, attack-moving, patrolling or following; creeps also wake
-## their camp. A target just given up on (unreachable or stuck) and, for melee units, one they
-## cannot walk to are ignored, so a unit under fire from a cliff keeps doing its job.
+## Fight back when hit while idle or under an order whose handler accepts retaliation
+## (attack-move, patrol, follow); creeps also wake their camp. A target just given up on
+## (unreachable or stuck) and, for melee units, one they cannot walk to are ignored, so a unit
+## under fire from a cliff keeps doing its job.
 func _on_attacked(src: Unit) -> void:
-	if acquire_range <= 0.0 or not can_attack() or not is_valid_target(src) or _engage_id != 0:
+	if acquire_range <= 0.0 or not can_attack() or not is_valid_target(src) or engage_id != 0:
 		return
-	if src.id == _skip_id or (_returning and is_creep()):
+	if src.id == _skip_id or (returning and is_creep()):
 		return
-	if current != null and current.type != Order.Type.ATTACK_MOVE and current.type != Order.Type.PATROL \
-			and current.type != Order.Type.FOLLOW:
+	if current != null and not OrderHandlers.of(current.type).accepts_retaliation(self, current):
 		return
 	if not _can_reach(src, edge_distance(src)):
 		return
-	_engage(src)
+	engage(src)
 	if current != null:
-		_resume = true
+		resume_path = true
 	if is_creep():
 		_call_for_help(src)
 
@@ -690,50 +809,54 @@ func _call_for_help(src: Unit) -> void:
 	world.spatial.query_radius(pos, r, _help_buf)
 	for m: Unit in _help_buf:
 		if m != self and m.alive and m.player_id == player_id and m.current == null \
-				and m._engage_id == 0 and not m._returning and m.can_attack():
-			m._engage(src)
+				and m.engage_id == 0 and not m.returning and m.can_attack():
+			m.engage(src)
 	_help_buf.clear()
 
 
 # --- attacking -----------------------------------------------------------------------------
 
 ## Attacks `t` when in weapon range (turning to face it first); otherwise chases it if allowed.
-func _fight(t: Unit, dt: float, can_chase: bool) -> Vector3:
+func fight(t: Unit, dt: float, can_chase: bool) -> Vector3:
 	if edge_distance(t) <= attack_range:
-		_stop_moving()
-		_blocked = 0
-		if _face(t.pos, dt) and _cooldown == 0:
+		stop_moving()
+		blocked_ticks = 0
+		if face(t.pos, dt) and _cooldown == 0:
 			_begin_swing(t)
 		return Vector3.ZERO
-	if not can_chase:
+	if not can_chase or not is_mobile():
 		return Vector3.ZERO
 	if velocity.length_squared() < speed * speed * 0.0625:
-		_blocked += 1
+		blocked_ticks += 1
 	else:
-		_blocked = maxi(_blocked - 1, 0)
-	return _chase_move(t, dt)
+		blocked_ticks = maxi(blocked_ticks - 1, 0)
+	return chase_move(t, dt)
 
 
 ## Moves towards a (possibly moving) unit. Paths are re-requested at most every REPATH_TICKS
 ## and only when the target drifted; at a stale goal the unit steers straight at the target.
 ## A close target in plain sight (the usual case in a melee) needs no path query at all.
-func _chase_move(t: Unit, dt: float) -> Vector3:
-	var goal := t.pos
+func chase_move(t: Unit, dt: float) -> Vector3:
+	return chase_point(t.pos, dt)
+
+
+## chase_move for a fixed point (gather sites, item pickups, cast targets).
+func chase_point(goal: Vector3, dt: float) -> Vector3:
 	var no_path := path.is_empty() and not _need_path
-	if _repath_cd == 0 and (no_path or _arrived or Grid.flat_dist(_goal, goal) > REPATH_DIST):
+	if _repath_cd == 0 and (no_path or arrived or Grid.flat_dist(_goal, goal) > REPATH_DIST):
 		_repath_cd = REPATH_TICKS
 		if Grid.flat_dist(pos, goal) <= DIRECT_CHASE and world.pathing.line_of_walk(pos, goal, is_large()):
-			_stop_moving()
+			stop_moving()
 			_goal = goal
 		else:
-			_begin_move(goal)
-	var d := _follow_path(dt)
+			begin_move(goal)
+	var d := follow_path(dt)
 	if d == Vector3.ZERO and not _need_path:
-		d = _steer_direct(goal, dt)
+		d = steer_direct(goal, dt)
 	return d
 
 
-func _steer_direct(goal: Vector3, dt: float) -> Vector3:
+func steer_direct(goal: Vector3, dt: float) -> Vector3:
 	var to := Vector3(goal.x - pos.x, 0.0, goal.z - pos.z)
 	var l := to.length()
 	if l < 0.05:
@@ -741,8 +864,10 @@ func _steer_direct(goal: Vector3, dt: float) -> Vector3:
 	return to / l * minf(speed, l / dt)
 
 
-## Turns towards `p`; true once facing it within FACE_TOLERANCE.
-func _face(p: Vector3, dt: float) -> bool:
+## Turns towards `p`; true once facing it within FACE_TOLERANCE. Structures never rotate.
+func face(p: Vector3, dt: float) -> bool:
+	if is_building:
+		return true
 	var dx := p.x - pos.x
 	var dz := p.z - pos.z
 	if dx * dx + dz * dz < 1e-6:
@@ -765,11 +890,11 @@ func _advance_swing(dt: float) -> void:
 	var t := world.get_unit(_swing_target)
 	var valid := t != null and t.alive
 	if valid:
-		_face(t.pos, dt)
+		face(t.pos, dt)
 	_swing += 1
 	if not _swing_fired:
 		if not valid:
-			_cancel_swing()
+			cancel_swing()
 			return
 		if _swing >= damage_point_ticks:
 			_release(t)
@@ -785,17 +910,24 @@ func _release(t: Unit) -> void:
 
 
 ## Interrupting a wind-up wastes nothing (the weapon is ready again); a backswing just ends.
-func _cancel_swing() -> void:
+func cancel_swing() -> void:
 	if _swing >= 0 and not _swing_fired:
 		_cooldown = 0
 	_swing = -1
 	_swing_fired = false
 
 
+## Ticks until the weapon is ready (0 = ready). Read-only for UI/AI.
+func weapon_cooldown_ticks() -> int:
+	return _cooldown
+
+
 # --- movement ------------------------------------------------------------------------------
 
-func _follow_path(dt: float) -> Vector3:
-	if _arrived:
+## Follows the current path (requesting it first if needed); returns the desired velocity.
+## Sets `arrived` when the path ends.
+func follow_path(dt: float) -> Vector3:
+	if arrived:
 		return Vector3.ZERO
 	if _need_path:
 		if not _request_path():
@@ -817,7 +949,7 @@ func _follow_path(dt: float) -> Vector3:
 		return Vector3.ZERO
 	if not last and dist < WAYPOINT_EPS:
 		path_i += 1
-		return _follow_path(dt)
+		return follow_path(dt)
 	var spd := speed
 	if last:
 		spd = minf(speed, dist / dt)
@@ -880,7 +1012,7 @@ func _steer_and_move(desired: Vector3, dt: float) -> void:
 		else:
 			sep += nrm * overlap
 	var vel := desired
-	if not holding:
+	if not holding and not rooted and not stunned:
 		vel += sep * SEPARATION_GAIN + push_accum * PUSH_GAIN
 	push_accum = Vector3.ZERO
 	vel = vel.limit_length(speed * 1.25)
@@ -894,7 +1026,7 @@ func _steer_and_move(desired: Vector3, dt: float) -> void:
 ## Moving units shove idle, calm allies of the same player out of the way (never fighters).
 func _can_push(n: Unit) -> bool:
 	return n.player_id == player_id and n.current == null and not n.holding \
-		and n._engage_id == 0 and n._swing < 0 and not n._returning
+		and n.engage_id == 0 and n._swing < 0 and not n.returning
 
 
 func _turn_towards(dir: Vector3, dt: float) -> void:
@@ -984,24 +1116,39 @@ func teleport(p: Vector3) -> void:
 func take_damage(amount: float, src: Unit = null) -> void:
 	if not alive or is_invulnerable:
 		return
-	hp = maxf(hp - amount, 0.0)
+	hp = maxf(hp - amount, 1.0 if cannot_die else 0.0)
 	Events.unit_damaged.emit(self, amount, src)
+	if world != null:
+		world.notify_damaged(self, amount, src)
 	if hp <= 0.0:
 		die(src)
 	elif src != null and src.alive:
 		_on_attacked(src)
 
 
+## Restores HP (healing is never rounded; capped at max_hp). Returns the amount healed.
+func heal(amount: float) -> float:
+	if not alive or amount <= 0.0:
+		return 0.0
+	var before := hp
+	hp = minf(max_hp, hp + amount)
+	return hp - before
+
+
 func die(killer: Unit = null) -> void:
 	if not alive:
 		return
 	alive = false
+	if current != null:
+		var old := current
+		current = null
+		OrderHandlers.of(old.type).exit(self, old)
 	orders.clear()
 	current = null
 	holding = false
 	_swing = -1
-	_engage_id = 0
-	_stop_moving()
+	engage_id = 0
+	stop_moving()
 	velocity = Vector3.ZERO
 	prev_pos = pos
 	if world != null:

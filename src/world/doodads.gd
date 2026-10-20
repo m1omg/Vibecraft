@@ -48,6 +48,10 @@ func tree_pos(i: int) -> Vector3:
 	return p
 
 
+func tree_alive(i: int) -> bool:
+	return i >= 0 and i < trees.size() and alive[i] == 1
+
+
 ## Tree index covering a pathing cell, or -1.
 func tree_at_cell(c: Vector2i) -> int:
 	var i: int = _index.get(Vector2i(c.x >> 1, c.y >> 1), -1)

@@ -420,19 +420,17 @@
     "trains": [],
     "research": [],
     "abilities": ["clans_unload_all"],
-    "garrison": {
-      "slots": 3,
-      "accepts": ["clans_yurtwright"],
-      "attack_per_occupant": {
-        "type": "pierce",
-        "damage": [10, 13],
-        "cooldown": 1.8,
-        "range": 9.4,
-        "targets": ["ground", "air"],
-        "projectile": {"speed": 18.0, "arc": 0.1, "model": "sling_stone"}
-      },
-      "eject_hp_fraction": 0.5
-    }
+    "garrison": 3,
+    "garrison_accepts": ["clans_yurtwright"],
+    "garrison_attack": {
+      "type": "pierce",
+      "damage": [10, 13],
+      "cooldown": 1.8,
+      "range": 9.4,
+      "targets": ["ground", "air"],
+      "projectile": {"speed": 18.0, "arc": 0.1, "model": "sling_stone"}
+    },
+    "garrison_eject_hp": 0.5
   },
   "clans_grapple_yard": {
     "name": "Grapple Yard",
