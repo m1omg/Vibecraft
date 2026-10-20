@@ -469,5 +469,67 @@
   "note": "",
   "url": "https://app-uploads.krea.ai/audio/26ed805f-24cd-45f3-ae73-271aa65933eb.mp3",
   "result": "ready_01: ok 2.94s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "e447b161-e28f-4d5a-af40-493e41d1c864",
+  "tier": "a",
+  "speaker": "hookgunner",
+  "category": "what",
+  "items": [
+   [
+    "what",
+    1
+   ],
+   [
+    "what",
+    2
+   ],
+   [
+    "what",
+    3
+   ]
+  ],
+  "voice_id": "SOYHLrjzK2X1ezoPC6cr",
+  "model_id": "eleven_v4",
+  "prompt": "[loud] Say again? Ringing.\n\nWho's whispering?\n\nSpeak into this ear.",
+  "chars": 67,
+  "cost": 4.963,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/hookgunner/what_e447b161.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/ded87874-2dbf-40a3-9e94-74e9ebb32946.mp3",
+  "result": "what_01: ok 0.84s; what_02: ok 1.391s atempo 1.124; what_03: ok 1.16s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "b885f560-47e8-42cf-96f0-c4d1280c9270",
+  "tier": "a",
+  "speaker": "hookgunner",
+  "category": "yes",
+  "items": [
+   [
+    "yes",
+    1
+   ],
+   [
+    "yes",
+    2
+   ],
+   [
+    "yes",
+    3
+   ]
+  ],
+  "voice_id": "SOYHLrjzK2X1ezoPC6cr",
+  "model_id": "eleven_v4",
+  "prompt": "[loud] Walk the goat? Going.\n\nLeft? Right. Going.\n\nBake a cake? Fine.",
+  "chars": 69,
+  "cost": 5.1111,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/hookgunner/yes_b885f560.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/c0d0eb6b-fbbe-412b-baba-f2e5c401607a.mp3",
+  "result": "SUSPECT SPLIT (line lengths do not follow the text; run vo_asr_split.py): yes_01: ok 0.9s; yes_02: REJECTED 1.74s atempo 1.15; yes_03: ok 1.2s"
  }
 ]
