@@ -11,6 +11,8 @@ const TEST_DEFS := {
 			"damage_point": 0.45, "backswing": 0.45, "acquire": 8.0}},
 	"test_glb_croft": {"name": "T Croft", "kind": "building", "model": "buildings/kingdom_croft",
 		"hp": 500, "radius": 2.0, "footprint": [8, 8], "height": 3.5, "armor_type": "fortified"},
+	"test_glb_grappler": {"name": "T Grappler", "kind": "unit", "model": "units/clans_grappler",
+		"hp": 400, "radius": 0.45, "speed": 4.0, "height": 1.8, "armor_type": "medium"},
 	"clans_hero_skymirror": {"name": "T Skymirror", "kind": "unit", "hp": 500, "radius": 0.5,
 		"speed": 4.7, "height": 2.15, "flags": ["hero"], "armor_type": "hero"},
 }
@@ -193,7 +195,10 @@ func test_instance_uniforms_team_rim_and_latched_flash() -> void:
 	var v := u.view as UnitView
 	assert_eq(v.instance_param(&"team_color"), Color("#2EAE3A"), "team colour slot")
 	var rim: Color = v.instance_param(&"rim_col")
-	assert_near(rim.g, Color("#2EAE3A").g * 0.6, 0.001, "rim = team colour x 0.6")
+	var deficit := AssetLibrary.team_deficit(v.model_path)
+	assert_near(rim.g, Color("#2EAE3A").g * lerpf(UnitView.RIM_GAIN, UnitView.RIM_GAIN_LOW_COVERAGE, deficit),
+		0.001, "rim = team colour x 0.6, more for an under-covered model")
+	assert_near(rim.a, v.rim_base(), 0.0001, "rim base strength")
 	assert_eq((mine.view as UnitView).instance_param(&"team_color"), Color.WHITE, "neutrals carry no team colour")
 	v.set_selected(true)
 	assert_true(float(v.instance_param(&"rim_boost")) > 0.0, "selection boosts the rim")
@@ -205,6 +210,78 @@ func test_instance_uniforms_team_rim_and_latched_flash() -> void:
 	assert_eq(f.y, 0.5, "strength")
 	v.flash(0.3)
 	assert_eq((v.instance_param(&"flash") as Vector4).y, 0.5, "a re-hit inside the window keeps the max")
+
+
+## Art bible §3.1 stopgap: a model whose team areas cover less of its silhouette than the
+## bible's 10 % (assets/models/units/team_coverage.json) gets a stronger, brighter, wider team
+## rim; a model inside the range keeps the normal one.
+func test_under_covered_models_get_a_stronger_team_rim() -> void:
+	var w := _visual_world()
+	w.player(0).color = Color("#2EAE3A")
+	var low := w.spawn_unit("test_glb_infantry", 0, Vector3(20, 0, 20)).view as UnitView
+	var ok := w.spawn_unit("test_glb_grappler", 0, Vector3(24, 0, 20)).view as UnitView
+	assert_lt(AssetLibrary.team_coverage(low.model_path), AssetLibrary.TEAM_COVERAGE_MIN, "the Pavisier mask is under-covered")
+	assert_lt(AssetLibrary.TEAM_COVERAGE_MIN - 0.0001, AssetLibrary.team_coverage(ok.model_path), "the Grappler mask is in range")
+	assert_eq(AssetLibrary.team_deficit(ok.model_path), 0.0, "no deficit in range")
+	assert_near(ok.rim_base(), UnitView.RIM_UNIT, 0.0001, "normal rim in range")
+	assert_lt(UnitView.RIM_UNIT + 0.1, low.rim_base(), "stronger rim when under-covered")
+	assert_lt(Color("#2EAE3A").g * UnitView.RIM_GAIN + 0.01, (low.instance_param(&"rim_col") as Color).g, "brighter rim colour")
+	var mat := (low.body.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D).get_surface_override_material(0) as ShaderMaterial
+	assert_lt(float(mat.get_shader_parameter("rim_power")), 2.2, "wider rim on the under-covered model")
+	assert_eq(AssetLibrary.team_deficit("res://assets/models/units/not_measured.glb"), 0.0, "unmeasured models: no change")
+
+
+## tools/assets/team_coverage.gd (the asset check behind check_team_coverage.gd): the shader's
+## team weight, a synthetic model with a known team share, and team_coverage.json in sync with
+## the unit models (every GLB measured; a re-measure matches the stored number).
+func test_team_coverage_check() -> void:
+	var tc: GDScript = load("res://tools/assets/team_coverage.gd")
+	assert_eq(float(tc.call("team_weight", 0.0, 1.0, 0.0, 1.0)), 1.0, "magenta key")
+	assert_eq(float(tc.call("team_weight", 1.0, 0.5, 0.5, 0.5)), 1.0, "mask")
+	assert_eq(float(tc.call("team_weight", 0.0, 0.48, 0.12, 0.18)), 0.0, "burgundy is not team")
+	# a 1 x 3 x 1 m box whose UV v runs top (0) to bottom (1); the mask is white on its top third
+	var pos := PackedVector3Array()
+	var uv := PackedVector2Array()
+	var idx := PackedInt32Array()
+	var corners := [Vector3(-0.5, 0, -0.5), Vector3(0.5, 0, -0.5), Vector3(0.5, 0, 0.5), Vector3(-0.5, 0, 0.5)]
+	for i in 4:
+		var a: Vector3 = corners[i]
+		var b: Vector3 = corners[(i + 1) % 4]
+		var base := pos.size()
+		for p: Vector3 in [a, b, b + Vector3(0, 3, 0), a + Vector3(0, 3, 0)]:
+			pos.append(p)
+			uv.append(Vector2(0.5, 1.0 - p.y / 3.0))
+		idx.append_array(PackedInt32Array([base, base + 1, base + 2, base, base + 2, base + 3]))
+	var top := pos.size()
+	for p: Vector3 in corners:
+		pos.append(p + Vector3(0, 3, 0))
+		uv.append(Vector2(0.5, 0.0))
+	idx.append_array(PackedInt32Array([top, top + 1, top + 2, top, top + 2, top + 3]))
+	var mask := Image.create(1, 3, false, Image.FORMAT_L8)
+	mask.set_pixel(0, 0, Color.WHITE)
+	var m: Dictionary = tc.call("measure_mesh", pos, uv, idx, mask, null)
+	assert_true(float(m["coverage"]) > 0.4 and float(m["coverage"]) < 0.7, "top third + roof seen from the RTS pitch (%.3f)" % float(m["coverage"]))
+	assert_near(float(m["upper"]), float(m["coverage"]), 0.02, "all of it in the upper third")
+	var none: Dictionary = tc.call("measure_mesh", pos, uv, idx, Image.create(1, 3, false, Image.FORMAT_L8), null)
+	assert_eq(float(none["coverage"]), 0.0, "no team colour")
+	var v: Dictionary = tc.call("verdict", {"coverage": 0.12, "upper": 0.03}, "unit")
+	assert_true(v["ok"], "12 % with an upper area passes")
+	v = tc.call("verdict", {"coverage": 0.05, "upper": 0.03}, "unit")
+	assert_false(v["ok"], "5 % fails")
+	v = tc.call("verdict", {"coverage": 0.17, "upper": 0.03}, "hero")
+	assert_true(v["ok"], "heroes may reach 18 %")
+	v = tc.call("verdict", {"coverage": 0.09, "upper": 0.03}, "worker")
+	assert_true(v["ok"], "workers from 8 %")
+	v = tc.call("verdict", {"coverage": 0.12, "upper": 0.0}, "unit")
+	assert_false(v["ok"], "an upper-third area is required")
+	# the stored measurements follow the assets
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AssetLibrary.TEAM_COVERAGE))
+	var models: Dictionary = data["models"]
+	for f in DirAccess.get_files_at("res://assets/models/units/"):
+		if f.ends_with(".glb"):
+			assert_true(models.has(f.get_basename()), "team_coverage.json measures %s (run tools/assets/check_team_coverage.gd -- --write)" % f)
+	var again: Dictionary = tc.call("measure_model", "res://assets/models/units/kingdom_infantry.glb")
+	assert_near(float(again["coverage"]), float(models["kingdom_infantry"]["coverage"]), 0.002, "stored coverage is current")
 
 
 func test_structures_scale_to_data_footprint() -> void:

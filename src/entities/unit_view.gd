@@ -38,6 +38,12 @@ const DEFAULT_STRIDE := 0.7      ## m/s for a 1.75 m model when the manifest has
 const RIM_UNIT := 0.35
 const RIM_HERO := 0.55
 const RIM_CAP := 0.6
+## Team-rim base strength and colour gain of a model with no team colour at all (stopgap for
+## under-covered masks, AssetLibrary.team_deficit; a model at the bible's floor gets the normal
+## RIM_UNIT / RIM_HERO and team colour x 0.6).
+const RIM_LOW_COVERAGE := 0.8
+const RIM_GAIN := 0.6
+const RIM_GAIN_LOW_COVERAGE := 0.95
 const SELECT_BOOST := 0.2
 const HOVER_BOOST := 0.12
 const FLASH_END := Color(1.0, 0.353, 0.282)   ## #FF5A48
@@ -79,6 +85,7 @@ var _move: float = 0.0
 var _anim: AnimationPlayer
 var _clips: Dictionary = {}               ## logical state -> clip name present in the model
 var _entry: Dictionary = {}               ## unit manifest entry
+var _team_deficit: float = 0.0            ## AssetLibrary.team_deficit of the model (0 = enough team colour)
 var _clip: String = ""                    ## clip currently playing
 var _geoms: Array[GeometryInstance3D] = []
 var _params: Dictionary = {}              ## last value written per instance uniform
@@ -116,6 +123,8 @@ func setup(u: Unit) -> void:
 	if model_path.is_empty() or not _load_model(model_path):
 		model_path = ""
 		_add_placeholder(d)
+	elif not is_structure:
+		_team_deficit = AssetLibrary.team_deficit(model_path)
 	_init_instance_params()
 	if not is_structure and not u.is_item:
 		juice = BodyJuice.new(self)
@@ -446,12 +455,23 @@ func _update_rim(force: bool = false) -> void:
 		return
 	var neutral := unit.player_id >= PlayerState.NEUTRAL_HOSTILE
 	var tc := team_color()
-	var base := 0.0 if neutral else (RIM_HERO if unit.is_hero else RIM_UNIT)
-	var rc := Color(0.5, 0.5, 0.46, 0.0) if neutral else Color(tc.r * 0.6, tc.g * 0.6, tc.b * 0.6, base)
+	var base := rim_base()
+	var gain := lerpf(RIM_GAIN, RIM_GAIN_LOW_COVERAGE, _team_deficit)
+	var rc := Color(0.5, 0.5, 0.46, 0.0) if neutral else Color(tc.r * gain, tc.g * gain, tc.b * gain, base)
 	_set_param(&"rim_col", rc, force)
 	var boost := (SELECT_BOOST if selected else 0.0) + (HOVER_BOOST if hovered else 0.0) + _rim_pulse
 	boost = minf(boost, maxf(RIM_CAP - base, 0.0) + SELECT_BOOST)
 	_set_param(&"rim_boost", boost, force)
+
+
+## Team-rim base strength (bible §3.1 rule 9): units 0.35, heroes 0.55, neutrals none. A model
+## whose team areas cover less of its silhouette than the bible's floor (team_coverage.json)
+## gets up to RIM_LOW_COVERAGE so its owner still reads at the default zoom.
+func rim_base() -> float:
+	if unit == null or unit.player_id >= PlayerState.NEUTRAL_HOSTILE:
+		return 0.0
+	var base := RIM_HERO if unit.is_hero else RIM_UNIT
+	return lerpf(base, maxf(base, RIM_LOW_COVERAGE), _team_deficit)
 
 
 func _set_param(p: StringName, v: Variant, force: bool = false) -> void:

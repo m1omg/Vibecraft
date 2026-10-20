@@ -18,6 +18,7 @@ paid generation API.
 | `vc_bpy.py` | (library) | shared Blender helpers: import/export, actions/NLA, retarget math |
 | `preview/` | Godot | tiny separate Godot project used by `render_preview.py` (`inspect.gd`, `turntable.gd`) |
 | `tests/` | bpy / bash | synthetic rigged characters and props, retarget checker, `run_all.sh` end-to-end test, `test_autorig.sh` |
+| `assets/check_team_coverage.gd` | Godot (headless) | **team-colour check**: measures every unit model's team share of its visible silhouette from the game camera (software raster of the rest pose, 8 yaws, the shader's mask + magenta key) and fails models outside the art bible §3.1 range (units 10–15 %, workers ≥ 8 %, heroes ≤ 18 %, a team area in the upper third). `-- --write` refreshes `assets/models/units/team_coverage.json` (the game strengthens the team rim of under-covered models from it); see "Team-colour check" |
 | `music/` | python3 + fluidsynth + ffmpeg | **composed music**: `score.py` composition API, `synths.py` numpy instruments, `palette.py`, `render.py` stems → mix → master → Ogg (see "Music toolkit") |
 
 `bpy` = Blender as a Python module: `/opt/bpyenv/v313/bin/python` (bpy 5.2 LTS, Pillow, numpy).
@@ -559,3 +560,22 @@ from behind) and joint overlays (`debug/`).
 * Vertex-colour-only models (some Hunyuan/Tripo outputs) pass through untested.
 * `seamless` cross-fades; strongly structured textures (bricks, tiles) can show ghosting in the
   blend band — use a smaller `--blend` or fix by hand.
+
+## Team-colour check
+
+```
+godot --headless --path . -s tools/assets/check_team_coverage.gd            # report, exit 1 on failures
+godot --headless --path . -s tools/assets/check_team_coverage.gd -- --write # + team_coverage.json
+godot --headless --path . -s tools/assets/check_team_coverage.gd -- --only=kingdom_infantry
+```
+
+`tools/assets/team_coverage.gd` rasterises each rigged unit GLB in its rest pose from the RTS
+camera pitch (−56°, orthographic, eight yaws, depth-tested, 160 px) and evaluates the unit
+shader's team weight per visible pixel (`<model>_team.png` through smoothstep(0.45, 0.8), plus the
+magenta key on the albedo). It prints the silhouette share (`coverage`), the share in the upper
+third of the model height (`upper`) and the plain mask texel share (`texel`), and fails a model
+outside the art bible §3.1 range: 10–15 % for units, 8–15 % for workers, 10–18 % for heroes, and at
+least 0.5 % of the silhouette in the upper third. Rerun it with `--write` after replacing a model
+or its mask: `test_visual.gd::test_team_coverage_check` fails when `team_coverage.json` misses a
+model or is out of date. Until a failing model is repainted, the game compensates for a low share
+with a stronger, brighter and wider team rim (architecture §7, `AssetLibrary.team_deficit`).

@@ -16,6 +16,13 @@ const STRUCTURE_SHADER := preload("res://src/render/structure.gdshader")
 const FOLIAGE_SHADER := preload("res://src/render/foliage.gdshader")
 const UNIT_MANIFEST := "res://assets/models/units/manifest.json"
 const BUILDING_MANIFEST := "res://assets/models/buildings/manifest.json"
+## Team-colour share of each unit model's visible silhouette (tools/assets/check_team_coverage.gd
+## --write); models below the art bible's minimum get a stronger, wider team rim (stopgap).
+const TEAM_COVERAGE := "res://assets/models/units/team_coverage.json"
+## Bible §3.1 rule 1 floor for a unit (workers 8 %); below it the rim compensates.
+const TEAM_COVERAGE_MIN := 0.10
+## Rim of a model with no team colour at all (scaled down to the normal rim at TEAM_COVERAGE_MIN).
+const LOW_COVERAGE_RIM_POWER := 1.4
 const MODEL_DIRS: Array[String] = ["units", "buildings", "neutral", "doodads"]
 const EMISSIVE_TAGS: Array[String] = ["GLOW", "LAMP", "EMBER", "GLYPH"]
 
@@ -24,6 +31,7 @@ static var _materials: Dictionary = {}       ## "kind|instance id of source mate
 static var _model_info: Dictionary = {}      ## path -> {aabb, height, clips}
 static var _unit_manifest: Dictionary = {}
 static var _building_manifest: Dictionary = {}
+static var _team_coverage: Dictionary = {}
 static var _manifests_loaded := false
 static var _prepared_anims: Dictionary = {}  ## Animation instance id -> true
 ## Every ShaderMaterial created here, for the per-frame shared uniforms (RenderAtmos).
@@ -88,15 +96,34 @@ static func _load_manifests() -> void:
 	if _manifests_loaded:
 		return
 	_manifests_loaded = true
-	for pair: Array in [[UNIT_MANIFEST, "u"], [BUILDING_MANIFEST, "b"]]:
+	for pair: Array in [[UNIT_MANIFEST, "u"], [BUILDING_MANIFEST, "b"], [TEAM_COVERAGE, "t"]]:
 		if not FileAccess.file_exists(pair[0]):
 			continue
 		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(pair[0]))
 		if data is Dictionary:
 			if pair[1] == "u":
 				_unit_manifest = data
+			elif pair[1] == "t":
+				_team_coverage = (data as Dictionary).get("models", {})
 			else:
 				_building_manifest = data
+
+
+## Measured team-colour share of a unit model's silhouette, -1 when unknown (structures,
+## placeholders, models the coverage check has not measured yet).
+static func team_coverage(path: String) -> float:
+	_load_manifests()
+	var e: Dictionary = _team_coverage.get(path.get_file().get_basename(), {})
+	return float(e.get("coverage", -1.0))
+
+
+## 0 for a model whose team areas meet the bible's floor (or is unmeasured), up to 1 for a model
+## with no team colour at all: how much the team rim has to make up (UnitView, AssetLibrary).
+static func team_deficit(path: String) -> float:
+	var cov := team_coverage(path)
+	if cov < 0.0:
+		return 0.0
+	return clampf((TEAM_COVERAGE_MIN - cov) / TEAM_COVERAGE_MIN, 0.0, 1.0)
 
 
 ## Bounds and clip list of a model (computed once per path from a throwaway instance).
@@ -149,6 +176,7 @@ static func instantiate(path: String, kind: String) -> Node3D:
 	var mask_path := path.get_basename() + "_team.png"
 	if ResourceLoader.exists(mask_path):
 		mask = load(mask_path) as Texture2D
+	var deficit := team_deficit(path) if kind == "unit" else 0.0
 	for mi: MeshInstance3D in inst.find_children("*", "MeshInstance3D", true, false):
 		if mi.mesh == null:
 			continue
@@ -156,6 +184,9 @@ static func instantiate(path: String, kind: String) -> Node3D:
 			var src := mi.mesh.surface_get_material(s)
 			var m := convert_material(src, kind, mask)
 			if m != null:
+				# under-covered models: a wider team rim (stopgap until the mask is repainted)
+				if deficit > 0.0 and m is ShaderMaterial and (m as ShaderMaterial).shader == UNIT_SHADER:
+					(m as ShaderMaterial).set_shader_parameter("rim_power", lerpf(2.2, LOW_COVERAGE_RIM_POWER, deficit))
 				mi.set_surface_override_material(s, m)
 	var ap := inst.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if ap != null:
@@ -258,4 +289,5 @@ static func clear_cache() -> void:
 	shader_materials.clear()
 	_manifests_loaded = false
 	_unit_manifest = {}
+	_team_coverage = {}
 	_building_manifest = {}

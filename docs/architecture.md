@@ -375,8 +375,11 @@ A def with `model_depleted` (Gold Seam) swaps to that model on `Events.mine_depl
 imported material is converted once
 (cached per source material) to the shared painterly shaders in `src/render/`: `unit.gdshader`
 (wrap-Lambert + soft two-band key, no specular, model-space value gradient, team colour from the
-`<model>_team.png` texel mask + magenta key or a grey `TEAM` surface multiplied, team-colour rim,
-energy-conserving latched hit flash, corpse team-colour ebb, night unit fill), `structure.gdshader`
+`<model>_team.png` texel mask + magenta key or a grey `TEAM` surface multiplied, team-colour rim
+(units 0.35, heroes 0.55, team colour × 0.6; a model whose measured team share of its silhouette,
+`assets/models/units/team_coverage.json` from `tools/assets/check_team_coverage.gd`, is below the
+art bible's 10 % gets up to 0.8, × 0.95 and a wider rim (`AssetLibrary.team_deficit`), a stopgap
+until its mask is repainted), energy-conserving latched hit flash, corpse team-colour ebb, night unit fill), `structure.gdshader`
 (same + vertex AO, `GLOW/LAMP/EMBER/GLYPH` emission × `glow_energy`, construction reveal) and
 `foliage.gdshader` (`SWAY` surfaces). Per-instance values are **instance uniforms in a fixed slot
 map** (`src/render/unit_uniforms.gdshaderinc`, juice bible R4: 0 `flash` (t0 on the fx clock,

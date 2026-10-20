@@ -1,0 +1,114 @@
+{
+  "_doc": "Team-colour share of each unit model's visible silhouette from the game camera (art bible §3.1). Visual only: UnitView strengthens the team rim of models below their minimum.",
+  "generator": "tools/assets/check_team_coverage.gd",
+  "models": {
+    "clans_grappler": {
+      "coverage": 0.1075,
+      "kind": "unit",
+      "max": 0.150000005960464,
+      "min": 0.100000001490116,
+      "ok": true,
+      "texel": 0.1011,
+      "upper_third": 0.0743
+    },
+    "clans_gustcaller": {
+      "coverage": 0.2481,
+      "kind": "unit",
+      "max": 0.150000005960464,
+      "min": 0.100000001490116,
+      "ok": false,
+      "texel": 0.1715,
+      "upper_third": 0.2116
+    },
+    "clans_hero_uncut": {
+      "coverage": 0.0421,
+      "kind": "hero",
+      "max": 0.180000007152557,
+      "min": 0.100000001490116,
+      "ok": false,
+      "texel": 0.058,
+      "upper_third": 0.0098
+    },
+    "clans_javelineer": {
+      "coverage": 0.0652,
+      "kind": "unit",
+      "max": 0.150000005960464,
+      "min": 0.100000001490116,
+      "ok": false,
+      "texel": 0.0744,
+      "upper_third": 0.0445
+    },
+    "clans_skymirror": {
+      "coverage": 0.2743,
+      "kind": "hero",
+      "max": 0.180000007152557,
+      "min": 0.100000001490116,
+      "ok": false,
+      "texel": 0.1179,
+      "upper_third": 0.2504
+    },
+    "clans_yurtwright": {
+      "coverage": 0.1255,
+      "kind": "worker",
+      "max": 0.150000005960464,
+      "min": 0.0799999982118607,
+      "ok": true,
+      "texel": 0.1178,
+      "upper_third": 0.1074
+    },
+    "kingdom_firewright": {
+      "coverage": 0.0137,
+      "kind": "hero",
+      "max": 0.180000007152557,
+      "min": 0.100000001490116,
+      "ok": false,
+      "texel": 0.0022,
+      "upper_third": 0.0137
+    },
+    "kingdom_hodman": {
+      "coverage": 0.0425,
+      "kind": "worker",
+      "max": 0.150000005960464,
+      "min": 0.0799999982118607,
+      "ok": false,
+      "texel": 0.0497,
+      "upper_third": 0.0293
+    },
+    "kingdom_hookgunner": {
+      "coverage": 0.0472,
+      "kind": "unit",
+      "max": 0.150000005960464,
+      "min": 0.100000001490116,
+      "ok": false,
+      "texel": 0.0438,
+      "upper_third": 0.032
+    },
+    "kingdom_infantry": {
+      "coverage": 0.0419,
+      "kind": "unit",
+      "max": 0.150000005960464,
+      "min": 0.100000001490116,
+      "ok": false,
+      "texel": 0.0417,
+      "upper_third": 0.0151
+    },
+    "kingdom_linden_sister": {
+      "coverage": 0.1019,
+      "kind": "unit",
+      "max": 0.150000005960464,
+      "min": 0.100000001490116,
+      "ok": true,
+      "texel": 0.0524,
+      "upper_third": 0.0839
+    },
+    "kingdom_wheel_marshal": {
+      "coverage": 0.382,
+      "kind": "hero",
+      "max": 0.180000007152557,
+      "min": 0.100000001490116,
+      "ok": false,
+      "texel": 0.3998,
+      "upper_third": 0.131
+    }
+  }
+}
