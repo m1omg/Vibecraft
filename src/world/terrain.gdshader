@@ -1,6 +1,6 @@
 shader_type spatial;
 // Greenvale terrain (art bible §6.1, research README §2): the 7-tile ladder (Texture2DArray, slices in
-// draw order 0 scree .. 6 thick meadow) blended WC3-style with an ordered 16-case CORNER MASK, not
+// draw order 0 scree .. 6 thick meadow) blended reference-RTS style with an ordered 16-case CORNER MASK, not
 // soft splats. The corners are the tile centres around the fragment (dual grid of `tile_info`); for
 // every ladder slot present, in draw order, the 4-bit mask "corner slot >= L" is interpolated over
 // the dual cell and thresholded at 0.5 against world-space noise (amplitude 0.35 tile, ~1.7 cycles

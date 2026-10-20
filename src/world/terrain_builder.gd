@@ -3,7 +3,7 @@ extends Node3D
 ## Builds the terrain as chunked ArrayMeshes (CHUNK_TILES x CHUNK_TILES tiles per chunk): tile tops
 ## (2x2 subdivided) at their corner heights, cliff walls with noise bulges (UV2.x = 1, UV2.y = height
 ## fraction up the wall for the painted lip and dark foot) and the water plane.
-## Ground look (terrain.gdshader): the Greenvale 7-tile ladder (TerrainTextures) blended WC3-style
+## Ground look (terrain.gdshader): the Greenvale 7-tile ladder (TerrainTextures) blended reference-RTS style
 ## with a 16-case corner mask on the dual grid of tile centres. Per-tile data lives in `tile_info`
 ## (RG8, nearest): R = ladder slot (0 scree .. 6 thick meadow), G = 8 connectivity bits (+x, -x,
 ## +z, -z, then the 4 diagonals) so textures never blend across a cliff wall. `paint_tiles()`

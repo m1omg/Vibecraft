@@ -4,7 +4,7 @@ extends RefCounted
 ## The camera rig keeps its own behaviour (src/input/rts_camera.gd); these are the numbers it is
 ## configured with by main.gd.
 
-const PITCH_DEG := -56.0             ## WC3 angle of attack 304 deg
+const PITCH_DEG := -56.0             ## the reference RTS camera angle of attack (research README §1)
 const FOV_DEG := 55.0                ## vertical, KEEP_HEIGHT
 const DEFAULT_DISTANCE := 25.8       ## 1650 gu
 const MIN_DISTANCE := 18.75          ## 1200 gu
