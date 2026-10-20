@@ -156,7 +156,8 @@ func test_opening_cue_at_match_start_and_end_sequence() -> void:
 	assert_eq(Audio.ui_faction, "kingdom", "the UI material follows the local faction")
 	Audio.match_started("clans", 1)
 	assert_eq(Audio.ui_faction, "clans", "clans UI material")
-	assert_false(Audio.has_music("opening_clans"), "no clans cue yet")
+	assert_true(Audio.has_music("opening_clans"), "the clans opening cue is recorded")
+	assert_eq(Audio.music_id, "opening_clans", "the clans opening cue plays at match start")
 	Audio.match_started("kingdom", 0)
 	# the end: the signal arrives inside the tick and only records; _process ducks over 1.2 s
 	Events.match_ended.emit(0, "annihilation")
@@ -170,7 +171,7 @@ func test_opening_cue_at_match_start_and_end_sequence() -> void:
 	Audio.clock_override = 101.3
 	Audio._process(0.0)
 	assert_near(Audio.duck_db("SFX"), -10.0, 0.01, "SFX −10 dB after 1.2 s")
-	assert_eq(Audio.music_id, "", "the music has faded out")
+	assert_eq(Audio.music_id, "victory_kingdom", "the music faded out and the victory stinger followed at 600 ms")
 	assert_near(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("SFX")), -10.0, 0.01, "the bus follows")
 	Audio.match_started("kingdom", 0)
 	assert_eq(Audio.duck_db("SFX"), 0.0, "a new match lifts the end ducks")
