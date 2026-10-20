@@ -2,7 +2,7 @@
 // (juice bible Appendix A, R4). A variant set through set_surface_override_material or an
 // overlay in material_overlay reads the same slots, so UnitView writes each value once.
 //
-//   0  flash       (t0 fx_time s, strength 0..1, duration s, spare)  latched hit flash (R25)
+//   0  flash       (t0 fx_time s, strength 0..1, duration s, hold s)  latched hit flash (R25)
 //   1  flash_tint  rgb = tint the flash fades to (default #FF5A48)
 //   2  rim_boost   extra team-rim strength: hover / select / kill-confirm (cap 0.6)
 //   3  team_sat    team-colour saturation (1 live, 0.2 after the corpse ebb)
@@ -32,15 +32,17 @@ instance uniform vec4 team_color : instance_index(13) = vec4(1.0, 1.0, 1.0, 1.0)
 
 const vec3 FLASH_PEAK = vec3(1.0, 0.965, 0.925);   // #FFF6EC
 
-// Latched flash curve: 0-30 ms at full strength in the peak tint, then out_quad to 0 while the
-// tint slides to flash_tint. Returns vec4(tint, f).
+// Latched flash curve: the hold (flash.w seconds; 0 = the default 30 ms) at full strength in
+// the peak tint, then out_quad to 0 while the tint slides to flash_tint. Returns vec4(tint, f).
+// The death beat holds 60 ms (MaterialFlash.death_beat).
 vec4 vc_flash_curve() {
 	float age = fx_time - flash.x;
-	float dur = max(flash.z, 0.04);
+	float hold = flash.w > 0.0 ? flash.w : 0.03;
+	float dur = max(flash.z, hold + 0.01);
 	if (age < 0.0 || age > dur || flash.y <= 0.0) {
 		return vec4(0.0);
 	}
-	float k = clamp((age - 0.03) / (dur - 0.03), 0.0, 1.0);
+	float k = clamp((age - hold) / (dur - hold), 0.0, 1.0);
 	float f = 1.0 - k * (2.0 - k);   // 1 - out_quad(k)
 	return vec4(mix(FLASH_PEAK, flash_tint.rgb, k), f * flash.y);
 }

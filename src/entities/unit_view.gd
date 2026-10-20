@@ -86,6 +86,10 @@ var _mesh: GeometryInstance3D             ## placeholder mesh
 var _fall_dir: float = 1.0
 var _driven_t: float = -1.0
 var _skipped: float = 0.0                 ## animation time owed while off-screen
+var _rim_pulse: float = 0.0
+## Body juice composer (src/fx/body_juice.gd): lean, push-off, stop plant, banking, nods, acks,
+## knockback, hit-stop remap, stride dust, death contact. Mobile units only; writes `rig`.
+var juice: BodyJuice
 
 
 func setup(u: Unit) -> void:
@@ -113,6 +117,8 @@ func setup(u: Unit) -> void:
 		model_path = ""
 		_add_placeholder(d)
 	_init_instance_params()
+	if not is_structure and not u.is_item:
+		juice = BodyJuice.new(self)
 	if not str(d.get("model_depleted", "")).is_empty():
 		Events.mine_depleted.connect(_on_mine_depleted)
 
@@ -120,15 +126,16 @@ func setup(u: Unit) -> void:
 # --- public hooks --------------------------------------------------------------------------
 
 ## Latched hit flash (CMB-17): written once, the shader evaluates the curve on the fx clock.
-## Called by Vfx on `unit_damaged`.
-func flash(strength: float = 1.0, tint: Color = FLASH_END, duration: float = -1.0) -> void:
+## `hold` = seconds at the peak (0: the shader's default 30 ms; the death beat holds 60 ms).
+## Called through MaterialFlash (Vfx) on hits and deaths.
+func flash(strength: float = 1.0, tint: Color = FLASH_END, duration: float = -1.0, hold: float = 0.0) -> void:
 	var dur := duration if duration > 0.0 else (0.1 if unit != null and unit.is_hero else 0.08)
 	var cur: Vector4 = _params.get(&"flash", Vector4(-100.0, 0.0, 0.08, 0.0))
 	var now := RenderAtmos.now()
 	# a re-hit inside the window takes the max strength
-	if now - cur.x < cur.z:
+	if now - cur.x < cur.z and now >= cur.x:
 		strength = maxf(strength, cur.y)
-	_set_param(&"flash", Vector4(now, clampf(strength, 0.0, 1.0), dur, 0.0))
+	_set_param(&"flash", Vector4(now, clampf(strength, 0.0, 1.0), dur, maxf(hold, 0.0)))
 	_set_param(&"flash_tint", tint)
 
 
@@ -140,6 +147,12 @@ func set_selected(on: bool) -> void:
 
 func set_hovered(on: bool) -> void:
 	hovered = on
+	_update_rim()
+
+
+## Transient rim boost (CMB-09 target flash, SEL-02 hover fade); 0 clears it. Capped with the rest.
+func set_rim_pulse(v: float) -> void:
+	_rim_pulse = maxf(v, 0.0)
 	_update_rim()
 
 
@@ -226,8 +239,10 @@ func _process(delta: float) -> void:
 	var spd := unit.velocity.length()
 	if unit.speed > 0.0:
 		target = clampf(spd / unit.speed, 0.0, 1.0)
-	_move = move_toward(_move, target, delta * 6.0)
+	_move = Juice.damp(_move, target, 9.0, delta)
 	var swing := unit.swing_progress()
+	if juice != null:
+		juice.compose(delta)
 	if _anim != null:
 		# off-screen rigs skip the skeleton work; looping clips catch up when seen again
 		if not on_screen():
@@ -243,7 +258,9 @@ func _drive_clips(delta: float, swing: float, spd: float) -> void:
 	var hint := _hint()
 	if swing >= 0.0 and _clips.has("attack"):
 		var total := (unit.damage_point_ticks + unit.backswing_ticks) * World.DT
-		_drive("attack", strike_clip_time("attack", swing, unit.damage_point_ratio(), total), delta)
+		# CMB-16: anticipation warp + visual hit-stop; the strike frame lands on the damage tick
+		var phase := juice.remap_swing(swing) if juice != null else swing
+		_drive("attack", strike_clip_time("attack", phase, unit.damage_point_ratio(), total), delta)
 		return
 	if hint == "cast" and _clips.has("cast"):
 		var cp := _progress("cast_progress")
@@ -332,19 +349,25 @@ func _procedural_motion(swing: float) -> void:
 	var breathe := 1.0 + 0.025 * sin(_t * 2.2) * (1.0 - _move)
 	body.position = Vector3(0.0, bob, 0.0)
 	body.scale = Vector3(1.0, breathe, 1.0)
-	body.rotation = Vector3(-0.14 * _move, 0.0, sin(stride) * 0.05 * _move)
+	# the forward lean, push-off and stop plant live in the rig (BodyJuice)
+	var lean := 0.0 if juice != null else -0.14 * _move
+	body.rotation = Vector3(lean, 0.0, sin(stride) * 0.05 * _move)
 	if swing >= 0.0:
 		_animate_swing(swing)
 
 
-## Strike curve peaks at the damage point: melee lunges forward, ranged leans back to draw.
+## Strike pose (CMB-16 placeholder mapping): melee P from the shared anticipation curve (load,
+## snap, hold on the damage tick, recover): pitch 0.5·P rad forward, offset 0.22·P·h; ranged
+## leans back to draw, peaking at the damage point.
 func _animate_swing(swing: float) -> void:
 	var dp := maxf(unit.damage_point_ratio(), 0.05)
-	var s := smoothstep(0.0, dp, swing) if swing < dp else 1.0 - smoothstep(dp, 1.0, swing)
 	if unit.projectile.is_empty():
-		body.rotation.x = -0.5 * s
-		body.position.z = -0.22 * s * height
+		var pose := juice.swing_pose(swing) if juice != null else \
+			(smoothstep(0.0, dp, swing) if swing < dp else 1.0 - smoothstep(dp, 1.0, swing))
+		body.rotation.x = -0.5 * pose
+		body.position.z = -0.22 * pose * height
 	else:
+		var s := smoothstep(0.0, dp, swing) if swing < dp else 1.0 - smoothstep(dp, 1.0, swing)
 		body.rotation.x = 0.16 * s
 		body.position.z = 0.05 * s * height
 
@@ -352,17 +375,21 @@ func _animate_swing(swing: float) -> void:
 ## Death clip from the sim death time (plays once, holds the last frame), corpse team-colour ebb
 ## (CMB-31: from 0.7 s over 1.4 s, feet to head) and the sink before the World frees the corpse.
 func _animate_death(delta: float) -> void:
-	var t := unit.dead_time()
+	var t_dead := unit.dead_time()
 	var decay := unit.decay_ticks() * World.DT
-	var sink := clampf((t - (decay - SINK_TIME)) / SINK_TIME, 0.0, 1.0)
-	var ebb := clampf((t - 0.7) / 1.4, 0.0, 1.0)
+	var sink := clampf((t_dead - (decay - SINK_TIME)) / SINK_TIME, 0.0, 1.0)
+	var ebb := clampf((t_dead - 0.7) / 1.4, 0.0, 1.0)
+	# CMB-30 death beat: the pose freezes for 60 ms (the flash holds white), then the fall
+	var t := maxf(t_dead - FeelConstants.c().death_beat_ms / 1000.0, 0.0)
+	if juice != null:
+		juice.compose_dead(death_contact_time())
 	var top := model_height() * model_scale + 0.2
 	_set_param(&"team_sat", lerpf(1.0, 0.2, ebb))
 	_set_param(&"sat_front", -1.0 if ebb <= 0.0 else top * (0.5 - 0.5 * cos(PI * ebb)))
 	_set_param(&"rim_col", Color(0, 0, 0, 0))
 	if _anim != null and _clips.has("death"):
 		var length := _anim.get_animation(_clips["death"]).length
-		_drive("death", minf(t * 1.15, length), delta)
+		_drive("death", minf(t * death_rate(), length), delta)
 		body.position.y = -sink * height * 0.6
 		return
 	var f := clampf(t / TOPPLE_TIME, 0.0, 1.0)
@@ -370,6 +397,23 @@ func _animate_death(delta: float) -> void:
 	body.scale = Vector3.ONE
 	body.rotation = Vector3(PI * 0.5 * fall, 0.0, 0.25 * fall * _fall_dir)
 	body.position = Vector3(0.0, 0.14 * height * fall - sink * height * 0.5, 0.0)
+
+
+## Death clip playback rate: the body lands (manifest `death_settle_s`) about 0.75 s after the
+## death beat, so falls read as quick and heavy (CMB-30), clamped to 1.15-3x.
+func death_rate() -> float:
+	var settle := float(_entry.get("death_settle_s", 0.0))
+	if settle <= 0.0:
+		return 1.15
+	return clampf(settle / 0.75, 1.15, 3.0)
+
+
+## Seconds after the death beat when the body touches the ground (contact dust, body fall).
+func death_contact_time() -> float:
+	if _anim != null and _clips.has("death"):
+		var settle := float(_entry.get("death_settle_s", _anim.get_animation(_clips["death"]).length * 0.8))
+		return settle / death_rate()
+	return TOPPLE_TIME
 
 
 func _animate_structure_death() -> void:
@@ -405,7 +449,7 @@ func _update_rim(force: bool = false) -> void:
 	var base := 0.0 if neutral else (RIM_HERO if unit.is_hero else RIM_UNIT)
 	var rc := Color(0.5, 0.5, 0.46, 0.0) if neutral else Color(tc.r * 0.6, tc.g * 0.6, tc.b * 0.6, base)
 	_set_param(&"rim_col", rc, force)
-	var boost := (SELECT_BOOST if selected else 0.0) + (HOVER_BOOST if hovered else 0.0)
+	var boost := (SELECT_BOOST if selected else 0.0) + (HOVER_BOOST if hovered else 0.0) + _rim_pulse
 	boost = minf(boost, maxf(RIM_CAP - base, 0.0) + SELECT_BOOST)
 	_set_param(&"rim_boost", boost, force)
 
