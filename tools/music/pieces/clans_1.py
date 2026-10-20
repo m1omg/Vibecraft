@@ -4,19 +4,22 @@
 
 Form (78 bars). Intro 1-8: a bowed gong blooms; the overtone chant traces the Gong-Ring's outline (A, E, D) in its
 whistle; jaw-harp pulses thicken from halves to the gallop; a two-string drone and a fiddle pickup. A 9-24: the
-two-string fiddle states the theme over the canter, built on the Gong-Ring (bars 9-10, falling A-G-D, held E
-resolving to D), an 8-bar period (half cadence on A in bar 12, sequence up a fourth in 13-14, cadence in 16);
-second period 17-24: the fiddle climbs to the Dorian B and E, the lute answers with the motif diminished (19-20).
-B 25-40: off the drone onto a moving bass (F C G Am); the high fiddle sings the motif INVERTED and augmented
-(A-B-E, held D), the tenor fiddle answers with the motif in the gaps, two bronze horns call and answer in falling
-fifths and rising fourths, the chant swells with them; claps and stamps on the 4/4 backbeat against the triplet
-hand drum in 33-40; climax on A5 in bar 38, the held E5 of bar 40 resolves to D at bar 41 (the motif's held second
-at the scale of the form). Interlude 41-48: wind, bowed gong, the lute in fragments of the motif, the tenor fiddle
-plays the motif in RETROGRADE, rising to A, the note the theme starts on. A' 49-68: the theme in octaves (fiddle
-and two-string) with full percussion; second period as a three-way dialogue; 65-68 a stretto: the motif enters in
-canon a bar apart at three pitch levels over an A pedal with horns and chant. Outro 69-78: the gong lands on D,
-the motif augmented x1.5 in the tenor, the lute and a far fiddle echo, the drums thin to a heartbeat, ritardando,
-a last struck gong in the open D fifth. Orchestration arc (voices): about 4 -> 9 -> 12 -> 7 -> 15 -> 8.
+two-string fiddle states the theme over the canter, built on the Gong-Ring (bars 9-10, falling A-G-D in a
+long-short-long rhythm, held E resolving to D), answered by a zig-zag rise (D-E-G-F-A, bar 11): an 8-bar period
+(half cadence on A in bar 12, sequence up a fourth in 13-14, cadence in 16); second period 17-24: the fiddle climbs
+to the Dorian B and E, the lute answers with the motif diminished (19-20). B 25-40: off the drone onto a moving
+bass (F C G Am); the high fiddle sings the motif INVERTED and augmented (A-B-E, held D), the tenor fiddle answers
+with the motif in the gaps, two bronze horns call and answer in falling fifths and rising fourths, the chant swells
+with them (kept under the horns); claps and stamps on the 4/4 backbeat against the triplet hand drum in 33-40;
+climax on A5 in bar 38, carried by a bowed gong on A and the two-string drone swelling under two short horn calls;
+the held E5 of bar 40 resolves to D at bar 41 (the motif's held second at the scale of the form). Interlude 41-48:
+wind, bowed gong, the lute in fragments of the motif, the tenor fiddle plays the motif in RETROGRADE, rising to A,
+the note the theme starts on. A' 49-68: the theme in octaves (fiddle and two-string) with full percussion; second
+period as a three-way dialogue; 65-68 a stretto: the motif enters in canon a bar apart at three pitch levels over
+an A pedal that swells in the bowed gong and the drone while the horns only call short. Outro 69-78: the gong lands
+on D, the motif augmented x1.5 in the tenor, the lute and a far fiddle echo, the drums thin to a heartbeat,
+ritardando, the open D fifth tapers away and a last struck gong on the final beat rings out as the tail.
+Orchestration arc (voices): about 4 -> 9 -> 12 -> 7 -> 15 -> 8.
 Render: python3 tools/music/render.py tools/music/pieces/clans_1.py --out assets/audio/music/clans_1.ogg --length-check
 """
 import os
@@ -35,7 +38,7 @@ def build():
     p = Piece("clans_1", seed=101, bpm=92, meter=(4, 4), key="D", mode="dorian")
     p.mix = {k: dict(v) for k, v in P.MIX_CLANS.items()}
     p.mix["master"]["lowshelf"] = (110, -1.5)                    # the drones and the deep drum share the low end
-    p.kind, p.tail_s, p.length_range = "track", 2.6, (200.0, 220.0)
+    p.kind, p.tail_s, p.length_range = "track", 4.5, (200.0, 220.0)
 
     gong = p.track("gong", P.GONG)
     gsm = p.track("gong_small", P.GONG_SMALL)
@@ -89,15 +92,16 @@ def build():
     flo.curve(intro.b(5), intro.b(8), 25, 88)
     hand.pattern(intro.b(6), 2, {"doum": "x.....o.....", "tek": "...g.....g.."}, vel=56)
     deep.roll(intro.b(7, 2), 2.0, "tek", vel0=26, vel1=84, rate=1 / 6.0, accent_end=False)
-    fid.play(M("0:1~s 2:2/3 3:1/3"), intro.b(7, 2), vel=66, art="legato")
+    fid.play(M("0:1~s 1:2/3 2:1/3"), intro.b(7, 2), vel=66, art="legato")
     fid.curve(intro.b(7, 2), intro.b(8), 70, 100)
 
     # ================================================================= A (bars 9-24): the theme
-    per1 = M("4:1~gu 3:1 0:2 | 1:8/3~s 0:4/3 | 0:2/3 2:1/3 3:1 4:1 6:1 | 5:1~m 4:3 |"
-             "7:1~gu 6:1 3:2 | 4:8/3~s 3:4/3 | 4:1 2:2/3 1:1/3 0:1 1:1 | 0:3~lm r:1", bar=4, name="theme_a")
-    per2a = M("4:2/3 5:1/3 6:1 7:2~s | 8:1~m 7:1 4:2", bar=4)
+    # the head long-short-long (A held, G short, D), the answer zig-zags up (D E G F A) to the half cadence
+    per1 = M("4:3/2~gu 3:1/2 0:2 | 1:8/3~s 0:4/3 | 0:2/3 1:1/3 3:1 2:1 4:1 | 5:1~m 4:2 6:1 |"
+             "7:3/2~gu 6:1/2 3:2 | 4:8/3~s 3:4/3 | 4:1 2:2/3 1:1/3 0:1 1:1 | 0:3~lm r:1", bar=4, name="theme_a")
+    per2a = M("4:2/3 6:1/3 5:1 7:2~s | 8:1~m 7:1 4:2", bar=4)
     per2b = M("3:1 4:2/3 5:1/3 6:2 | 7:1 6:2/3 5:1/3 4:2 | 4:1 3:1 0:1 1:1~s | 0:4~lm", bar=4)
-    lute_ans = M("7:2/3 6:1/3 4:2/3 3:1/3 0:2 | 1:2/3 2:1/3 1:1~gu 0:2", bar=4)       # the motif diminished
+    lute_ans = M("7:2/3 6:1/3 4:2/3 3:1/3 0:2 | 1:2/3 -1:1/3 1:1~gu 0:2", bar=4)      # the motif diminished
     fid.play(per1, A.b(0), vel=84, art="legato", dyn="arch")
     fid.play(per2a, A.b(8), vel=90, art="legato", dyn="cresc")
     lead.play(lute_ans, A.b(10), vel=90, dyn="arch")
@@ -157,9 +161,9 @@ def build():
     fhi.curve(B.b(16), I.b(1, 2), 104, 40)
     fhi.note(I.b(0), "D5", 6.0, vel=72, art="slide")               # the held E resolves to D
     # tenor fiddle: the motif in the gaps of the high line (call and response), contrary motion
-    ten1 = M("r:4 | 4:1 3:1 0:2 | 1:3~s 0:1 | 2:2/3 1:1/3 0:1 -1:2 | r:4 | 3:2 5:2 | 4:2 3:1 2:1 | 1:4~s",
+    ten1 = M("r:4 | 4:3/2 3:1/2 0:2 | 1:3~s 0:1 | -2:2/3 -1:1/3 0:1 2:2 | r:4 | 3:2 5:2 | 4:2 3:1 2:1 | 1:4~s",
              bar=4)
-    ten2 = M("r:4 | -1:2 0:1 1:1 | 3:2 2:1 1:1 | 0:4 | 2:2 4:2 | 4:1~gu 3:1 0:2 | 1:3~s 0:1 | -1:2 -3:2",
+    ten2 = M("r:4 | -1:2 0:1 1:1 | 3:2 2:1 1:1 | 0:4 | 2:2 4:2 | 4:3/2~gu 3:1/2 0:2 | 1:3~s 0:1 | -1:2 -3:2",
              bar=4)
     fid.play(ten1, B.b(0), octave=-1, vel=78, art="legato")
     fid.play(ten2, B.b(8), octave=-1, vel=84, art="legato")
@@ -172,8 +176,9 @@ def build():
         root = _n(r)
         flo.chord(B.b(i), [root, root + 7], 4.1, vel=72 if i < 8 else 80, art="tenuto")
     flo.curve(B.b(0), B.b(8), 80, 92)
-    flo.curve(B.b(8), B.b(14), 92, 106)
-    flo.curve(B.b(14), B.b(16), 106, 84)
+    flo.curve(B.b(8), B.b(14), 92, 104)
+    flo.curve(B.b(14), B.b(15, 3), 104, 124)
+    flo.curve(B.b(15, 3), B.b(16), 124, 90)
     # horns: two-note calls, falling fifths answered by rising fourths; overlapping in the second phrase
     calls = [(hrn1, 0, ["C3", "F2"], [3, 5]), (hrn2, 2, ["G2", "C3"], [3, 5]), (hrn1, 4, ["D3", "G2"], [3, 5]),
              (hrn2, 6, ["E2", "A2"], [3, 5]), (hrn1, 8, ["C3", "F2"], [2, 6]), (hrn2, 9, ["G2", "C3"], [2, 6]),
@@ -182,10 +187,11 @@ def build():
     for h, bar, ps, ds in calls:
         h.notes_seq(B.b(bar), ps, ds, vel=74 + (6 if bar >= 8 else 0), art="legato")
         h.swell(B.b(bar), B.b(bar, sum(ds)), 42, 112 if bar >= 8 else 104, peak=0.42)
-    hrn1.notes_seq(B.b(14), ["E3"], [8.0], vel=80, art="legato")
-    hrn2.notes_seq(B.b(14), ["A2"], [8.0], vel=78, art="legato")
-    hrn1.swell(B.b(14), B.b(16), 40, 110, peak=0.6)
-    hrn2.swell(B.b(14), B.b(16), 40, 106, peak=0.6)
+    # the climax (bars 39-40): two short calls that end before the bar line; the bowed gong and the drone swell
+    hrn1.notes_seq(B.b(14), ["E3", "A2"], [1.5, 2.0], vel=80, art="legato")
+    hrn2.notes_seq(B.b(15), ["A2", "E2"], [1.5, 2.0], vel=76, art="legato")
+    hrn1.swell(B.b(14), B.b(14, 3.5), 44, 102, peak=0.4)
+    hrn2.swell(B.b(15), B.b(15, 3.5), 40, 96, peak=0.4)
     # the chant swells with the horns, on the bass roots, its whistle on chord tones
     ch_b = [(0, "F2", 8, ["o", "a", "o"], [None, 8, 6]), (2, "C3", 8, ["o", "a", "o"], [None, 6, 8]),
             (4, "G2", 8, ["o", "a", "e"], [None, 8, 9]), (6, "A2", 8, ["a", "o", "u"], [None, 9, 8]),
@@ -197,8 +203,8 @@ def build():
     chant.curve(B.b(0), B.b(1), 30, 70)
     chant.curve(B.b(1), B.b(7), 70, 104)
     chant.curve(B.b(7), B.b(8), 104, 82)
-    chant.curve(B.b(8), B.b(14), 82, 122)
-    chant.curve(B.b(14), B.b(16), 122, 70)
+    chant.curve(B.b(8), B.b(14), 82, 108)
+    chant.curve(B.b(14), B.b(16), 108, 70)
     # lute: rolling triplet arpeggios (phrase 1), the canter (phrase 2)
     for i, r in enumerate(["F3", "F3", "C3", "C3", "G3", "G3", "A2", "A2"]):
         E.gallop_fifths(lute, B.b(i), _n(r), vel=62, shape="sparse")
@@ -223,7 +229,7 @@ def build():
     gong.note(B.b(8), D2, 1, vel=104)
     for bar, beat, v in ((3, 3, 62), (7, 2, 66), (11, 3, 70), (13, 2, 74)):
         gsm.note(B.b(bar, beat), "A3", 1, vel=v)
-    gong.note(B.b(14), D2, 8.0, vel=74, stroke="bowed")
+    gong.note(B.b(13, 2), A2, 10.0, vel=96, stroke="bowed")                       # the climax swell
 
     # ================================================================= INTERLUDE (bars 41-48): wind
     wind.note(I.b(0), 60, 12.0, vel=96, fc=600, fc_to=1250, whistle=0.45)
@@ -235,7 +241,8 @@ def build():
     chant.curve(I.b(0), I.b(1), 70, 50)
     chant.curve(I.b(1), I.b(5), 50, 76)
     chant.curve(I.b(5), I.b(8), 76, 40)
-    lead.play(M("r:4 | 4:1 3:1 r:2 | r:1 4:2/3 3:1/3 0:2 | r:4 | 7:1~gu 6:1 3:2 | 4:3 3:1 | r:4 | r:4", bar=4),
+    lead.play(M("r:4 | 4:3/2 3:1/2 r:2 | r:1 4:2/3 3:1/3 0:2 | r:4 | 7:3/2~gu 6:1/2 3:2 | 4:3 3:1 | r:4 | r:4",
+                bar=4),
               I.b(0), vel=72, dyn="dim")
     fid.play(M("0:3/2 1:3~s 0:3/2 3:1 4:5~s"), I.b(5), octave=-1, vel=70, art="legato")
     fid.curve(I.b(5), I.b(7), 60, 100)
@@ -269,7 +276,7 @@ def build():
     fhi.curve(A2s.b(12), A2s.b(16), 106, 120)
     fid.curve(A2s.b(8), A2s.b(16), 100, 112)
     # stretto (bars 65-68): the motif in canon a bar apart at three levels, over an A pedal
-    gr = gong_ring(rhythm=(1.0, 1.0, 2.0, 8 / 3, 4 / 3))
+    gr = gong_ring(rhythm=(1.5, 0.5, 2.0, 8 / 3, 4 / 3))
     fhi.play(gr.transpose(3).ornament(0, "grace_up").ornament(3, "slide"), A2s.b(16), vel=100, art="legato")
     lead.play(gr.transpose(-3), A2s.b(17), vel=96)
     fid.play(gr.transpose(-3).ornament(3, "slide"), A2s.b(18), octave=-1, vel=92, art="legato")
@@ -293,7 +300,9 @@ def build():
     flo.chord(A2s.b(16), ["D2", "A2"], 8.1, vel=82, art="tenuto")
     flo.chord(A2s.b(18), ["A2", "E3"], 8.2, vel=86, art="tenuto")
     flo.curve(A2s.b(0), A2s.b(16), 92, 104)
-    flo.curve(A2s.b(16), A2s.b(20), 104, 116)
+    flo.curve(A2s.b(16), A2s.b(18), 104, 108)
+    flo.curve(A2s.b(18), A2s.b(19, 3), 108, 127)                               # the pedal swells, not the horns
+    flo.curve(A2s.b(19, 3), A2s.b(20), 127, 112)
     # horns: sustained swells under the period ends, then the pedal
     hrn1.notes_seq(A2s.b(6), ["A2", "D2"], [3.0, 5.0], vel=76, art="legato")
     hrn1.swell(A2s.b(6), A2s.b(8), 40, 108, peak=0.45)
@@ -301,10 +310,10 @@ def build():
     hrn2.swell(A2s.b(12), A2s.b(14), 40, 104, peak=0.45)
     hrn1.notes_seq(A2s.b(14), ["E3", "A2"], [3.0, 5.0], vel=78, art="legato")
     hrn1.swell(A2s.b(14), A2s.b(16), 40, 108, peak=0.45)
-    hrn1.notes_seq(A2s.b(18), ["A2"], [8.0], vel=84, art="legato")
-    hrn2.notes_seq(A2s.b(18), ["E2"], [8.0], vel=82, art="legato")
-    hrn1.swell(A2s.b(18), A2s.b(20), 40, 118, peak=0.75)
-    hrn2.swell(A2s.b(18), A2s.b(20), 40, 114, peak=0.75)
+    hrn1.notes_seq(A2s.b(18), ["E3", "A2"], [1.5, 2.0], vel=82, art="legato")      # short calls over the pedal
+    hrn2.notes_seq(A2s.b(19), ["A2", "E2"], [1.5, 2.0], vel=78, art="legato")
+    hrn1.swell(A2s.b(18), A2s.b(18, 3.5), 44, 104, peak=0.4)
+    hrn2.swell(A2s.b(19), A2s.b(19, 3.5), 40, 98, peak=0.4)
     # chant: out for period 1, swells into the stretto and the pedal
     chant.note(A2s.b(8), D2, 16.3, vel=78, vowels=["o", "a", "o", "a"], overtones=[None, 8, 9, 12])
     chant.note(A2s.b(12), "G2", 8.3, vel=78, vowels=["o", "a"], overtones=[None, 8])
@@ -313,8 +322,8 @@ def build():
     chant.note(A2s.b(18), A2, 8.5, vel=90, vowels=["o", "a", "a"], overtones=[None, 8, 12])
     chant.curve(A2s.b(8), A2s.b(9), 30, 80)
     chant.curve(A2s.b(9), A2s.b(16), 80, 100)
-    chant.curve(A2s.b(16), A2s.b(19, 2), 100, 126)
-    chant.curve(A2s.b(19, 2), A2s.b(20), 126, 100)
+    chant.curve(A2s.b(16), A2s.b(19, 2), 100, 110)
+    chant.curve(A2s.b(19, 2), A2s.b(20), 110, 96)
     E.jaw(jaw, p, A2s.bar0, 16, ks, grid="x.xo.xx.xo.x", vel=66)
     E.jaw(jaw, p, A2s.bar0 + 16, 4, ks, grid="xgxxgxxgxxgx", vel=64, fade=(1.0, 1.2))
     # drums: full
@@ -349,7 +358,7 @@ def build():
     for bar, beat, v in ((3, 0, 70), (7, 2, 72), (11, 2, 74), (15, 2, 78), (17, 0, 78), (18, 0, 82),
                          (19, 0, 86)):
         gsm.note(A2s.b(bar, beat), "A3", 1, vel=v)
-    gong.note(A2s.b(18, 2), A2, 6.0, vel=72, stroke="bowed")
+    gong.note(A2s.b(17, 2), A2, 10.0, vel=96, stroke="bowed")                    # the pedal's swell
 
     # ================================================================= OUTRO (bars 69-78)
     gong.note(out.b(0), D2, 1, vel=116)
@@ -360,13 +369,14 @@ def build():
     chant.curve(out.b(8), out.b(10), 50, 30)
     flo.drone(out.b(0), out.b(8), [D2, A2], vel=76)
     flo.curve(out.b(0), out.b(8), 104, 70)
-    flo.chord(out.b(8), ["D2", "A2", "D3"], 9.0, vel=74, art="exact")
-    flo.curve(out.b(8), out.b(10, 3), 76, 40)
-    slow = gong_ring().augment(1.5).ornament(3, "slide").ornament(0, "grace_up")
+    flo.chord(out.b(8), ["D2", "A2", "D3"], 8.0, vel=74, art="exact")
+    flo.curve(out.b(8), out.b(9), 76, 60)
+    flo.curve(out.b(9), out.b(10), 60, 20)                                      # the fifth tapers away
+    slow = gong_ring(rhythm=(1.5, 0.5, 2.0, 3.0, 1.5)).augment(1.5).ornament(3, "slide").ornament(0, "grace_up")
     fid.play(slow, out.b(1), vel=80, art="legato", dyn="dim")
     fid.curve(out.b(0), out.b(1), 90, 104)
     fid.curve(out.b(1), out.b(4), 104, 80)
-    lead.play(M("4:1 3:1 0:2~gu | r:4"), out.b(4), octave=-1, vel=80)
+    lead.play(M("4:3/2 3:1/2 0:2~gu | r:4"), out.b(4), octave=-1, vel=80)
     lute.chord(out.b(6), ["D3", "A3", "D4"], 6.0, vel=60, strum=0.04, art="ring")
     lute.chord(out.b(8), ["D3", "A3", "D4", "A4"], 8.0, vel=66, strum=0.05, art="ring")
     fhi.play(M("1:3~s 0:5"), out.b(6), vel=64, art="legato")
@@ -383,7 +393,7 @@ def build():
     hand.pattern(out.b(0), 4, {"tek": "..g..g..g..g|..g.....g..."}, vel=54)
     gsm.note(out.b(3, 2), "A3", 1, vel=54)
     gong.note(out.b(6), D2, 8.0, vel=58, stroke="bowed")
-    gong.note(out.b(8), D2, 1, vel=90)
+    gong.note(out.b(9), D2, 1, vel=90, decay=11.0)                              # the last gong: its ring is the tail
     return p
 
 
