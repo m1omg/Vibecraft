@@ -120,20 +120,7 @@ func _boot_slice(map: MapData) -> void:
 func _boot_battlefield(map: MapData) -> void:
 	world.setup(map, map_seed)
 	_setup_view()
-	var sc := Defs.scenario(scenario)
-	var taken: Array = []
-	for p: Dictionary in sc.get("players", []):
-		var pid := int(p["slot"])
-		var fid := str(p["faction"])
-		var ps := world.add_player(pid, pid, fid, false)
-		ps.is_ai = str(p.get("control", "")) == BattlefieldScenario.AI_CONTROL
-		ps.color = PlayerState.colour_for(fid, taken)
-		taken.append(ps.color)
-		var fac := Defs.faction(fid)
-		ps.gold = int(fac.get("start_gold", 0))
-		ps.lumber = int(fac.get("start_lumber", 0))
-	world.add_player(PlayerState.NEUTRAL_HOSTILE, PlayerState.NEUTRAL_HOSTILE)
-	world.add_player(PlayerState.NEUTRAL_PASSIVE, PlayerState.NEUTRAL_PASSIVE)
+	BattlefieldScenario.add_players(world, scenario)
 	world.local_player_id = 0
 	_spawn_map_neutrals(map)
 	battle = BattlefieldScenario.new()

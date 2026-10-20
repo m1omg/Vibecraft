@@ -4,8 +4,8 @@ extends SimSystem
 ## scenarios.json, data/SCHEMA.md §15; docs/architecture.md §4 "Scenarios"). Main boots it for
 ## `scenario = "battlefield"`. Stage: ai (registered by setup_match).
 ## Responsibilities:
-##   - setup_match(): the scenario's players (colours, start resources), Gold Seams and neutral
-##     buildings come from Main; this adds every player's finished structures (snapped to the
+##   - add_players() / setup_match(): the scenario's players (colours, start resources; Gold
+##     Seams and neutral buildings come from Main), then every player's finished structures (snapped to the
 ##     nearest legal, free spot), unit groups in rows facing `face`, heroes raised to
 ##     `hero_level`, and the listed creep camps
 ##   - the opponent of every player whose control is "scenario_ai": `guard` groups hold their
@@ -21,7 +21,7 @@ extends SimSystem
 ## random stream, so a match replays identically.
 ## Signals: ended(winner) (also Events.match_ended), Events.notification(pid, "wave", text) and
 ##   Events.alert_raised(pid, pos) when the wave starts marching.
-## Called by: Main (setup_match, wave_eta, camera_start), the HUD objective line, tests.
+## Called by: Main (add_players, setup_match, wave_eta, camera_start; the objective line), tests.
 
 signal ended(winner: int)
 
@@ -44,8 +44,28 @@ var _next_think: int = 0
 var _buf: Array = []
 
 
+## Adds the scenario's players (team = slot, faction colour preference, faction start
+## resources; `scenario_ai` seats are marked is_ai but get no AiPlayer: this system plays them)
+## plus the two neutral players, and makes slot 0 the local player.
+static func add_players(w: World, id: String) -> void:
+	var taken: Array = []
+	for p: Dictionary in Defs.scenario(id).get("players", []):
+		var pid := int(p["slot"])
+		var fid := str(p["faction"])
+		var ps := w.add_player(pid, pid, fid, false)
+		ps.is_ai = str(p.get("control", "")) == AI_CONTROL
+		ps.color = PlayerState.colour_for(fid, taken)
+		taken.append(ps.color)
+		var fac := Defs.faction(fid)
+		ps.gold = int(fac.get("start_gold", 0))
+		ps.lumber = int(fac.get("start_lumber", 0))
+	w.add_player(PlayerState.NEUTRAL_HOSTILE, PlayerState.NEUTRAL_HOSTILE)
+	w.add_player(PlayerState.NEUTRAL_PASSIVE, PlayerState.NEUTRAL_PASSIVE)
+	w.local_player_id = 0
+
+
 ## Spawns the scenario's structures, groups and camps on an already set up World whose players
-## exist (Main adds them), and registers this system for the `ai` stage.
+## exist (add_players), and registers this system for the `ai` stage.
 func setup_match(w: World, id: String) -> void:
 	setup(w)
 	scenario_id = id

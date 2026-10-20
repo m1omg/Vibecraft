@@ -181,7 +181,7 @@ func test_command_card_button_enters_targeting() -> void:
 	sel.select_units(army)
 	await tree.process_frame
 	var card := hud.card
-	assert_eq(card.buttons[3].text, "Attack\n[R]", "attack button shows its hotkey")
+	assert_eq(card.buttons[3].text, "Attack\n[A]", "attack button shows its Classic hotkey")
 	assert_false(card.buttons[3].disabled, "enabled with own units selected")
 	assert_true(card.buttons[7].disabled, "empty slots disabled")
 	var b := card.buttons[3]
