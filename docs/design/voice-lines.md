@@ -38,7 +38,7 @@ speech recognition); **rejected** = generated but over the cap after `atempo` 1.
 - Budget: the full slice script (371 lines) costs about 1,200 CU at this price; the 300 CU cap of this pass buys the P0
   acknowledgement set first (task tier a), then annoyed runs (tier b), then advisor alerts (tier c).
 
-**Totals:** 363 lines written; 24 shipped, 2 rejected and waiting for a retake, 337 not generated.
+**Totals:** 363 lines written; 35 shipped, 3 rejected and waiting for a retake, 325 not generated.
 
 ## Casting
 
@@ -106,8 +106,8 @@ Notes: mech: 01 = Plant Pavise on; 02 = off.
 | pavisier | `yes` | 2 | Step and plant. | 3 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/yes_02.ogg` | shipped |
 | pavisier | `yes` | 3 | Carrying the wall over. | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/yes_03.ogg` | not generated |
 | pavisier | `yes` | 4 | Where you point. | 3 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/yes_04.ogg` | shipped |
-| pavisier | `attack` | 1 | Shield first, sharp second! | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/attack_01.ogg` | not generated |
-| pavisier | `attack` | 2 | Wall, forward! | 2 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/attack_02.ogg` | not generated |
+| pavisier | `attack` | 1 | Shield first, sharp second! | 4 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/attack_01.ogg` | shipped |
+| pavisier | `attack` | 2 | Wall, forward! | 2 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/attack_02.ogg` | shipped |
 | pavisier | `attack` | 3 | Square into them! | 3 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/attack_03.ogg` | not generated |
 | pavisier | `warcry` | 1 | HOLD THE BOARDS! | 3 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/warcry_01.ogg` | not generated |
 | pavisier | `annoyed` | 1 | You're knocking on a wall. Walls don't open. | 8 | `TX3LPaxmHKxFdv7VOQHJ` | `assets/audio/voice/kingdom/pavisier/annoyed_01.ogg` | not generated |
@@ -125,7 +125,7 @@ Notes: mech: the first Braced Shot plant after a move order (at most 1 per 20 s)
 
 | Speaker | Category | # | Text | Words | Voice id | File | Status |
 |---|---|---|---|---|---|---|---|
-| hookgunner | `ready` | 1 | Match lit, barrel clean. Did someone speak? | 7 | `SOYHLrjzK2X1ezoPC6cr` | `assets/audio/voice/kingdom/hookgunner/ready_01.ogg` | not generated |
+| hookgunner | `ready` | 1 | Match lit, barrel clean. Did someone speak? | 7 | `SOYHLrjzK2X1ezoPC6cr` | `assets/audio/voice/kingdom/hookgunner/ready_01.ogg` | shipped |
 | hookgunner | `what` | 1 | Say again? Ringing. | 3 | `SOYHLrjzK2X1ezoPC6cr` | `assets/audio/voice/kingdom/hookgunner/what_01.ogg` | not generated |
 | hookgunner | `what` | 2 | Who's whispering? | 2 | `SOYHLrjzK2X1ezoPC6cr` | `assets/audio/voice/kingdom/hookgunner/what_02.ogg` | not generated |
 | hookgunner | `what` | 3 | Speak into this ear. | 4 | `SOYHLrjzK2X1ezoPC6cr` | `assets/audio/voice/kingdom/hookgunner/what_03.ogg` | not generated |
@@ -342,17 +342,17 @@ Notes: mech: Shove (at most 1 per 10 s).
 
 | Speaker | Category | # | Text | Words | Voice id | File | Status |
 |---|---|---|---|---|---|---|---|
-| grappler | `ready` | 1 | Hm-hm. The ring is drawn. | 5 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/ready_01.ogg` | not generated |
-| grappler | `what` | 1 | The Grappler attends. | 3 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/what_01.ogg` | not generated |
-| grappler | `what` | 2 | Big shoulders, small patience. | 4 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/what_02.ogg` | not generated |
-| grappler | `what` | 3 | Yes? I was stretching. | 4 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/what_03.ogg` | not generated |
+| grappler | `ready` | 1 | Hm-hm. The ring is drawn. | 5 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/ready_01.ogg` | shipped |
+| grappler | `what` | 1 | The Grappler attends. | 3 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/what_01.ogg` | shipped |
+| grappler | `what` | 2 | Big shoulders, small patience. | 4 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/what_02.ogg` | rejected (regenerate) |
+| grappler | `what` | 3 | Yes? I was stretching. | 4 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/what_03.ogg` | shipped |
 | grappler | `what` | 4 | Someone to lift? | 3 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/what_04.ogg` | not generated |
-| grappler | `yes` | 1 | Slowly. Surely. | 2 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/yes_01.ogg` | not generated |
-| grappler | `yes` | 2 | Respectfully, yes. | 2 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/yes_02.ogg` | not generated |
-| grappler | `yes` | 3 | A fair hold. | 3 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/yes_03.ogg` | not generated |
+| grappler | `yes` | 1 | Slowly. Surely. | 2 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/yes_01.ogg` | shipped |
+| grappler | `yes` | 2 | Respectfully, yes. | 2 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/yes_02.ogg` | shipped |
+| grappler | `yes` | 3 | A fair hold. | 3 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/yes_03.ogg` | shipped |
 | grappler | `yes` | 4 | Walking. | 1 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/yes_04.ogg` | not generated |
-| grappler | `attack` | 1 | Meet the ground, guest. | 4 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/attack_01.ogg` | not generated |
-| grappler | `attack` | 2 | Excuse my grip. | 3 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/attack_02.ogg` | not generated |
+| grappler | `attack` | 1 | Meet the ground, guest. | 4 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/attack_01.ogg` | shipped |
+| grappler | `attack` | 2 | Excuse my grip. | 3 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/attack_02.ogg` | shipped |
 | grappler | `attack` | 3 | Pardon. A throw. | 3 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/attack_03.ogg` | not generated |
 | grappler | `warcry` | 1 | INTO THE GRASS! | 3 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/warcry_01.ogg` | not generated |
 | grappler | `annoyed` | 1 | You lay a hand on my arm. That is how a bout begins. | 13 | `pNInz6obpgDQGcFmaJgB` | `assets/audio/voice/clans/grappler/annoyed_01.ogg` | not generated |

@@ -242,7 +242,19 @@ def post_params(spk):
     return post, tail
 
 
-def process_job(script, job, keep=None, analyse=False, noise_db=-40.0):
+def suspect_split(script, job, rep):
+    """Flag a split whose line lengths do not follow the text lengths (a merged or broken take)."""
+    spk = script["speakers"][job["speaker"]]
+    items = job_items(job)
+    texts = [spk["lines"][c][n - 1] for c, n in items]
+    durs = [r.get("raw_s") for r in rep["lines"]]
+    if len(durs) != len(texts) or len(texts) < 2 or any(d is None for d in durs):
+        return False
+    rate = sum(durs) / max(1, sum(len(t) for t in texts))
+    return any(not (0.5 <= d / max(0.05, rate * len(t)) <= 1.8) for d, t in zip(durs, texts))
+
+
+def process_job(script, job, keep=None, analyse=False, noise_db=-40.0, cuts=None):
     spk = script["speakers"][job["speaker"]]
     items = job_items(job)
     out_dir, _ = speaker_dirs(job["speaker"], spk)
@@ -251,8 +263,9 @@ def process_job(script, job, keep=None, analyse=False, noise_db=-40.0):
     post, tail = post_params(spk)
     max_s = [cap_for(script, c)[1] for c, _ in items]
     gaps = [MAX_GAP.get(c, DEFAULT_GAP) for c, _ in items]
+    cuts = cuts or job.get("cuts")
     rep = vo_split.run(raw, names, len(names), None if analyse else out_dir, max_s, post, tail, -18.0, noise_db, 0.35,
-                       1.15, 5, analyse, set(keep) if keep else None, gaps)
+                       1.15, 5, analyse, set(keep) if keep else None, gaps, cuts)
     if not analyse:
         with open(os.path.splitext(raw)[0] + ".report.json", "w") as f:
             json.dump(rep, f, indent=1)
@@ -404,6 +417,7 @@ def main(argv=None):
     pr.add_argument("--keep")
     pr.add_argument("--analyse", action="store_true")
     pr.add_argument("--noise-db", type=float, default=-40.0)
+    pr.add_argument("--cuts", help="comma-separated cut times in seconds (stored on the job)")
     fe = sub.add_parser("fetch", help="download a completed job's result URL, then process it")
     fe.add_argument("job_id")
     fe.add_argument("url")
@@ -469,7 +483,20 @@ def main(argv=None):
     if a.cmd == "process":
         j = find_job(jobs, a.job_id)
         keep = [int(k) for k in a.keep.split(",")] if a.keep else None
-        rep = process_job(script, j, keep, a.analyse, noise_db=a.noise_db)
+        cuts = [float(t) for t in a.cuts.split(",")] if a.cuts else None
+        if cuts and not a.analyse:
+            j["cuts"] = cuts
+            save_jobs(jobs)
+        rep = process_job(script, j, keep, a.analyse, noise_db=a.noise_db, cuts=cuts)
+        if not a.analyse:
+            summ = summarize(rep)
+            if cuts:
+                summ = "re-split at speech-recognition cuts " + ",".join(f"{t:.2f}" for t in cuts) + ": " + summ
+            j["result"] = summ
+            save_jobs(jobs)
+            ledger_upsert(j, summ)
+            print(summ)
+            return 0
         print(json.dumps(rep, indent=1))
         return 0 if rep["found"] == len(job_items(j)) else 2
     if a.cmd == "fetch":
@@ -487,6 +514,8 @@ def main(argv=None):
             return 0
         rep = process_job(script, j)
         summ = summarize(rep)
+        if suspect_split(script, j, rep):
+            summ = "SUSPECT SPLIT (line lengths do not follow the text; run vo_asr_split.py): " + summ
         if rep["found"] != len(job_items(j)):
             summ = f"SPLIT MISMATCH: found {rep['found']} of {len(job_items(j))}"
         j["result"] = summ

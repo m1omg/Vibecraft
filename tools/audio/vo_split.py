@@ -82,7 +82,7 @@ def silent_runs(edb, noise_db):
     return runs
 
 
-def analyse(x, noise_db, min_sil, expect=None):
+def analyse(x, noise_db, min_sil, expect=None, cuts=None):
     edb = env_db(x)
     voiced = np.flatnonzero(edb >= noise_db)
     if len(voiced) == 0:
@@ -90,6 +90,12 @@ def analyse(x, noise_db, min_sil, expect=None):
     first, last = voiced[0], voiced[-1]
     internal = [(a, b) for (a, b) in silent_runs(edb, noise_db) if a > first and b <= last]
     pauses = sorted(internal, key=lambda r: r[1] - r[0], reverse=True)
+    if cuts:
+        # explicit cut times (seconds), e.g. from speech-recognition alignment (vo_asr_split.py)
+        cf = [first] + [int(round(t * SR / HOP)) for t in cuts] + [last + 1]
+        return {"segments": [(cf[i], cf[i + 1]) for i in range(len(cf) - 1)],
+                "pauses": [((a * HOP) / SR, (b - a) * HOP / SR) for a, b in sorted(internal)],
+                "used": [], "shortest_used_s": None, "longest_left_s": None, "edb": edb, "cuts": list(cuts)}
     if expect:
         used = pauses[: max(0, expect - 1)]
     else:
@@ -235,11 +241,11 @@ def probe_duration(path):
 
 
 def run(raw, names=None, expect=None, out_dir=None, max_s=None, post="", tail=0.0, lufs=-18.0, noise_db=-40.0,
-        min_sil=0.35, max_tempo=1.15, quality=5, analyse_only=False, keep=None, max_gap=None):
+        min_sil=0.35, max_tempo=1.15, quality=5, analyse_only=False, keep=None, max_gap=None, cuts=None):
     x = decode(raw)
     if expect is None and names:
         expect = len(names)
-    an = analyse(x, noise_db, min_sil, expect)
+    an = analyse(x, noise_db, min_sil, expect, cuts)
     segs = an["segments"]
     report = {
         "raw": raw,
@@ -249,6 +255,7 @@ def run(raw, names=None, expect=None, out_dir=None, max_s=None, post="", tail=0.
         "pauses": [(round(t, 2), round(d, 2)) for t, d in an["pauses"]],
         "shortest_pause_used_s": None if an.get("shortest_used_s") is None else round(an["shortest_used_s"], 2),
         "longest_pause_left_s": round(an.get("longest_left_s") or 0.0, 2),
+        "cuts": cuts,
         "lines": [],
     }
     if analyse_only or not out_dir:
@@ -313,13 +320,14 @@ def main(argv=None):
     ap.add_argument("--max-gap", type=float, help="shorten internal pauses longer than this (seconds) inside a line")
     ap.add_argument("--quality", type=int, default=5, help="libvorbis -q:a")
     ap.add_argument("--keep", help="comma-separated 1-based line numbers to export (others skipped)")
+    ap.add_argument("--cuts", help="comma-separated cut times in seconds (overrides the pause search)")
     ap.add_argument("--analyse", action="store_true", help="print the pause map only")
     ap.add_argument("--report", help="write the JSON report here instead of stdout")
     a = ap.parse_args(argv)
     names = a.names.split(",") if a.names else None
     keep = {int(k) for k in a.keep.split(",")} if a.keep else None
     rep = run(a.raw, names, a.expect, a.out_dir, a.max_s, a.post, a.tail, a.lufs, a.noise_db, a.min_sil, a.max_tempo,
-              a.quality, a.analyse, keep, a.max_gap)
+              a.quality, a.analyse, keep, a.max_gap, [float(t) for t in a.cuts.split(",")] if a.cuts else None)
     txt = json.dumps(rep, indent=1)
     if a.report:
         with open(a.report, "w") as f:

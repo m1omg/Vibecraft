@@ -299,5 +299,175 @@
   "note": "",
   "url": "https://app-uploads.krea.ai/audio/6829caa7-0c1d-4d65-b2e8-d3978be65aa5.mp3",
   "result": "yes_01: ok 1.389s atempo 1.095; yes_02: ok 1.15s; yes_04: ok 0.72s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "e6d66f57-8dfb-4169-a8fb-7e98f51fbcee",
+  "tier": "a",
+  "speaker": "pavisier",
+  "category": "attack",
+  "items": [
+   [
+    "attack",
+    1
+   ],
+   [
+    "attack",
+    2
+   ]
+  ],
+  "voice_id": "TX3LPaxmHKxFdv7VOQHJ",
+  "model_id": "eleven_v4",
+  "prompt": "[shouts] Shield first, sharp second!\n\nWall, forward!",
+  "chars": 52,
+  "cost": 3.8519,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/pavisier/attack_e6d66f57.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/0c22ec91-23f3-4a29-8167-6fe681288552.mp3",
+  "result": "attack_01: ok 1.58s atempo 1.11; attack_02: ok 0.91s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "da473175-ec6f-4134-8d22-dd8b20c9416d",
+  "tier": "a",
+  "speaker": "grappler",
+  "category": "ready",
+  "items": [
+   [
+    "ready",
+    1
+   ]
+  ],
+  "voice_id": "pNInz6obpgDQGcFmaJgB",
+  "model_id": "eleven_v4",
+  "prompt": "[formal] Hm-hm. The ring is drawn.",
+  "chars": 34,
+  "cost": 2.5185,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/clans/grappler/ready_da473175.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/cf6d822c-f8ae-4114-91b5-6cb67d9fdee9.mp3",
+  "result": "ready_01: ok 2.24s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "4aa0d813-0d02-4b4d-b5a7-2854fab67ad4",
+  "tier": "a",
+  "speaker": "grappler",
+  "category": "what",
+  "items": [
+   [
+    "what",
+    1
+   ],
+   [
+    "what",
+    2
+   ],
+   [
+    "what",
+    3
+   ]
+  ],
+  "voice_id": "pNInz6obpgDQGcFmaJgB",
+  "model_id": "eleven_v4",
+  "prompt": "[formal] The Grappler attends.\n\nBig shoulders, small patience.\n\nYes? I was stretching.",
+  "chars": 86,
+  "cost": 6.3704,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/clans/grappler/what_4aa0d813.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/d41e7d4a-2459-4755-8295-d052a9b17b67.mp3",
+  "result": "re-split at speech-recognition cuts 1.44,3.83: what_01: ok 1.3s; what_02: REJECTED 1.813s atempo 1.15; what_03: ok 1.3s",
+  "cuts": [
+   1.44,
+   3.83
+  ]
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "76e796e2-a1c6-4b0c-abbd-0ea5698dd014",
+  "tier": "a",
+  "speaker": "grappler",
+  "category": "yes",
+  "items": [
+   [
+    "yes",
+    1
+   ],
+   [
+    "yes",
+    2
+   ],
+   [
+    "yes",
+    3
+   ]
+  ],
+  "voice_id": "pNInz6obpgDQGcFmaJgB",
+  "model_id": "eleven_v4",
+  "prompt": "[formal] Slowly. Surely.\n\nRespectfully, yes.\n\nA fair hold.",
+  "chars": 58,
+  "cost": 4.2963,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/clans/grappler/yes_76e796e2.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/1302f838-b8dc-42e3-b241-2ad360c4b08a.mp3",
+  "result": "re-split at speech-recognition cuts 2.04,3.87: yes_01: ok 1.31s; yes_02: ok 1.396s atempo 1.066; yes_03: ok 0.89s",
+  "cuts": [
+   2.04,
+   3.87
+  ]
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "f14ef8b2-d364-4e20-8266-1e7fbacb7b87",
+  "tier": "a",
+  "speaker": "grappler",
+  "category": "attack",
+  "items": [
+   [
+    "attack",
+    1
+   ],
+   [
+    "attack",
+    2
+   ]
+  ],
+  "voice_id": "pNInz6obpgDQGcFmaJgB",
+  "model_id": "eleven_v4",
+  "prompt": "[amused] Meet the ground, guest.\n\nExcuse my grip.",
+  "chars": 49,
+  "cost": 3.6296,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/clans/grappler/attack_f14ef8b2.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/e15c066d-58e7-4ad0-bb51-d82b65613e0d.mp3",
+  "result": "attack_01: ok 1.584s atempo 1.11; attack_02: ok 1.01s"
+ },
+ {
+  "date": "2026-10-20",
+  "job_id": "9a87de51-79ee-40a9-a51f-9b4f28f09e1d",
+  "tier": "a",
+  "speaker": "hookgunner",
+  "category": "ready",
+  "items": [
+   [
+    "ready",
+    1
+   ]
+  ],
+  "voice_id": "SOYHLrjzK2X1ezoPC6cr",
+  "model_id": "eleven_v4",
+  "prompt": "[loud] Match lit, barrel clean. Did someone speak?",
+  "chars": 50,
+  "cost": 3.7037,
+  "status": "completed",
+  "raw": "assets_src/audio/voice/kingdom/hookgunner/ready_9a87de51.mp3",
+  "note": "",
+  "url": "https://app-uploads.krea.ai/audio/26ed805f-24cd-45f3-ae73-271aa65933eb.mp3",
+  "result": "ready_01: ok 2.94s"
  }
 ]

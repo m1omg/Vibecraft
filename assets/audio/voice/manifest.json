@@ -49,6 +49,10 @@
      "res://assets/audio/voice/kingdom/pavisier/yes_01.ogg",
      "res://assets/audio/voice/kingdom/pavisier/yes_02.ogg",
      "res://assets/audio/voice/kingdom/pavisier/yes_04.ogg"
+    ],
+    "attack": [
+     "res://assets/audio/voice/kingdom/pavisier/attack_01.ogg",
+     "res://assets/audio/voice/kingdom/pavisier/attack_02.ogg"
     ]
    }
   },
@@ -59,7 +63,11 @@
     "kingdom_hookgunner"
    ],
    "voice_id": "SOYHLrjzK2X1ezoPC6cr",
-   "categories": {}
+   "categories": {
+    "ready": [
+     "res://assets/audio/voice/kingdom/hookgunner/ready_01.ogg"
+    ]
+   }
   },
   "linden_sister": {
    "faction": "kingdom",
@@ -137,7 +145,24 @@
     "clans_grappler"
    ],
    "voice_id": "pNInz6obpgDQGcFmaJgB",
-   "categories": {}
+   "categories": {
+    "ready": [
+     "res://assets/audio/voice/clans/grappler/ready_01.ogg"
+    ],
+    "what": [
+     "res://assets/audio/voice/clans/grappler/what_01.ogg",
+     "res://assets/audio/voice/clans/grappler/what_03.ogg"
+    ],
+    "yes": [
+     "res://assets/audio/voice/clans/grappler/yes_01.ogg",
+     "res://assets/audio/voice/clans/grappler/yes_02.ogg",
+     "res://assets/audio/voice/clans/grappler/yes_03.ogg"
+    ],
+    "attack": [
+     "res://assets/audio/voice/clans/grappler/attack_01.ogg",
+     "res://assets/audio/voice/clans/grappler/attack_02.ogg"
+    ]
+   }
   },
   "javelineer": {
    "faction": "clans",

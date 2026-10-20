@@ -1,0 +1,46 @@
+{
+ "raw": "/tmp/vc_audio/assets_src/audio/voice/clans/grappler/ready_da473175.mp3",
+ "raw_s": 2.8,
+ "expect": 1,
+ "found": 1,
+ "pauses": [
+  [
+   0.68,
+   0.01
+  ],
+  [
+   0.7,
+   0.04
+  ],
+  [
+   0.76,
+   0.39
+  ],
+  [
+   2.37,
+   0.01
+  ],
+  [
+   2.45,
+   0.02
+  ]
+ ],
+ "shortest_pause_used_s": null,
+ "longest_pause_left_s": 0.39,
+ "lines": [
+  {
+   "n": 1,
+   "name": "ready_01",
+   "start": 0.14,
+   "raw_s": 2.35,
+   "tight_s": 2.25,
+   "tempo": 1.0,
+   "final_s": 2.24,
+   "lufs_in": -24.4,
+   "peak_dbfs": -3.6,
+   "file": "/tmp/vc_audio/assets/audio/voice/clans/grappler/ready_01.ogg",
+   "ogg_s": 2.24,
+   "status": "ok"
+  }
+ ]
+}
