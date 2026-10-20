@@ -93,5 +93,43 @@
   "format": "Ogg Vorbis q6, 48 kHz stereo",
   "determinism": "MIDI rebuilt byte-identical",
   "listening_check": "pending: bible 10.1 two-reviewer listening check before release"
+ },
+ "menu": {
+  "piece": "Menu, \"Two Roads\"",
+  "file": "res://assets/audio/music/menu.ogg",
+  "length_s": 104.9,
+  "kind": "loop",
+  "key_tempo": "D Dorian, 80 BPM, 4/4",
+  "source": "tools/music/pieces/menu.py",
+  "generator": "composed in Python (tools/music: score.py, render.py); FluidSynth 2.3 with FluidR3_GM (MIT) and numpy synths; no paid generation",
+  "seed": 1105,
+  "midi_sha256": "d5fa3a74459c9fcc0d26c25641a3c6308a2e8b3ceecdab334ea03f0e5c001bc2",
+  "ogg_sha256": "19b4dd6a9535153643996e409196780ebd39840a3cc653e00114473d2377f6b4",
+  "integrated_lufs": -15.9,
+  "true_peak_dbtp": -2.6,
+  "loudness_range_lu": 10.2,
+  "loop": "seamless: the tail after the loop point is crossfaded (3 s, equal power) into the head; import loop=true; the player fades it in on a cold start (MUS-01)",
+  "format": "Ogg Vorbis q6, 48 kHz stereo",
+  "determinism": "MIDI rebuilt byte-identical; Ogg re-rendered from scratch (no stem cache) byte-identical",
+  "listening_check": "pending: bible 10.1 two-reviewer listening check before release"
+ },
+ "score": {
+  "piece": "End-screen bed, \"Two Roads (score)\"",
+  "file": "res://assets/audio/music/score.ogg",
+  "length_s": 76.16,
+  "kind": "loop",
+  "key_tempo": "D Dorian, 72 BPM, 6/8",
+  "source": "tools/music/pieces/score_bed.py",
+  "generator": "composed in Python (tools/music: score.py, render.py); FluidSynth 2.3 with FluidR3_GM (MIT) and numpy synths; no paid generation",
+  "seed": 1175,
+  "midi_sha256": "f522f70f7d2ddef46034c7f3ad52938bcbf524750eaa92a792bf0347f0f6504c",
+  "ogg_sha256": "dbcebda74afd20e359a6ce0d2a54d20390bd9f94e6371d64becbe85b4e9e3b27",
+  "integrated_lufs": -15.8,
+  "true_peak_dbtp": -2.3,
+  "loudness_range_lu": 10.2,
+  "loop": "seamless: the tail after the loop point is crossfaded (3 s, equal power) into the head; import loop=true; it enters under the stinger's crossfade",
+  "format": "Ogg Vorbis q6, 48 kHz stereo",
+  "determinism": "MIDI rebuilt byte-identical; Ogg re-rendered from scratch (no stem cache) byte-identical",
+  "listening_check": "pending: bible 10.1 two-reviewer listening check before release"
  }
 }
