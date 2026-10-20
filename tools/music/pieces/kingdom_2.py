@@ -370,7 +370,7 @@ def build():
     timp.note(B(81, 2), "G2", 4, vel=96)
     boom.hit(B(81, 2), "boom", vel=92)
     boom.hit(B(83, 1), "boom2", vel=56)                         # one far answer from the hills
-    p.set_end(B(84, 4))
+    p.set_end(B(84, 1))                     # the chord has decayed by here; the tail is the room
     return p
 
 
