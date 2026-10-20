@@ -109,6 +109,26 @@ def find_takes(x, hop, thresh_db, tail_db, min_silence, min_len, pre_ms, post_ms
     return merged, env_db, top
 
 
+def split_onsets(segs, env_db, top, hop, onset_db, min_take):
+    """Split takes at strong new onsets inside them (overlapping tails): a rise of >= onset_db within 30 ms
+    to within 20 dB of the loudest frame, at least min_take seconds after the previous split."""
+    out = []
+    look = max(1, int(0.03 * SR / hop))
+    for s, e in segs:
+        a, b = s // hop, e // hop
+        cuts = []
+        last = a
+        for i in range(a + look, min(b, len(env_db))):
+            lo = env_db[i - look:i].min()
+            if env_db[i] - lo >= onset_db and env_db[i] > top - 20 and (i - last) * hop >= min_take * SR:
+                cuts.append(i - look)
+                last = i
+        bounds = [s] + [c * hop for c in cuts] + [e]
+        for k in range(len(bounds) - 1):
+            out.append([bounds[k], bounds[k + 1]])
+    return out
+
+
 def highpass(y, fc):
     """Zero-phase FFT high-pass (brick-wall with a short cosine ramp); good enough for analysis."""
     n = len(y)
@@ -210,6 +230,8 @@ def main():
     ap.add_argument("--thresh-db", type=float, default=-35.0, help="onset threshold relative to the loudest 5 ms frame")
     ap.add_argument("--tail-db", type=float, default=-50.0, help="tail threshold relative to the loudest frame")
     ap.add_argument("--min-silence", type=float, default=0.25, help="gaps shorter than this stay inside one take (s)")
+    ap.add_argument("--onset-db", type=float, default=0.0, help="also split takes at new onsets rising this many dB in 30 ms (0 = off)")
+    ap.add_argument("--cuts", default="", help="comma list of times (s) where a take is split by hand (overlapping events)")
     ap.add_argument("--pre-ms", type=float, default=8.0)
     ap.add_argument("--post-ms", type=float, default=30.0)
     ap.add_argument("--fade-in-ms", type=float, default=5.0)
@@ -229,6 +251,17 @@ def main():
     x = decode(a.src)
     hop = int(0.005 * SR)
     segs, env_db, top = find_takes(x, hop, a.thresh_db, a.tail_db, a.min_silence, a.min_len, a.pre_ms, a.post_ms)
+    if a.onset_db > 0:
+        segs = split_onsets(segs, env_db, top, hop, a.onset_db, max(0.25, a.min_len))
+    for c in sorted(float(v) for v in a.cuts.split(",") if v.strip()):
+        k = int(c * SR)
+        new = []
+        for s0, e0 in segs:
+            if s0 < k < e0:
+                new += [[s0, k], [k, e0]]
+            else:
+                new.append([s0, e0])
+        segs = new
     rows = []
     for i, (s, e) in enumerate(segs):
         y = x[s:e]

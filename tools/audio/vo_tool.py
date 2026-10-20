@@ -44,8 +44,16 @@ DOC = os.path.join(ROOT, "docs/design/voice-lines.md")
 CU_PER_CHAR = 2.0 / 27.0
 MODEL_ID = "eleven_v4"
 
-# Separator between lines inside one request. Probe batch (hodman what, 2026-10-20) decides; see voice-lines.md.
-SEP = os.environ.get("VO_SEP", "\n\n[long pause]\n\n").encode().decode("unicode_escape") if os.environ.get("VO_SEP") else "\n\n[long pause]\n\n"
+# Separator between lines inside one request, chosen by the probe batch (hodman what, job 10192392, 2026-10-20):
+# "[long pause]" gave a 0.99 s gap, "[pause]" 0.63 s and a bare blank line 0.60 s, against 0.39-0.46 s breaths inside
+# two-sentence lines. The splitter uses the N-1 longest pauses for N expected lines and every split is checked with
+# speech recognition (tools/audio/vo_asr_check.py), so the 2-character blank line is enough and saves 14 characters
+# (1.04 CU) per line against "[long pause]".
+SEP = "\n\n"
+# Pause inside a line is tightened to at most this many seconds (vo_split --max-gap). Acks must land in 1.4 s.
+MAX_GAP = {"what": 0.15, "yes": 0.15, "attack": 0.15, "warcry": 0.15, "need_mana": 0.15, "pack_full": 0.15, "ab_q": 0.15,
+           "ab_w": 0.15, "ab_e": 0.15, "ultimate_shout": 0.15, "death_word": 0.35, "annoyed": 0.45}
+DEFAULT_GAP = 0.3
 
 CAT_ORDER = ["ready", "what", "yes", "attack", "warcry", "annoyed", "built", "mech", "need_mana", "pack_full", "ab_q",
              "ab_w", "ab_e", "ultimate_shout", "levelup_a", "levelup_6", "rival", "death_word",
@@ -199,8 +207,9 @@ def process_job(script, job, keep=None, analyse=False, names=None, noise_db=-40.
         names = [file_name(cat, n) for n in idx]
     post, tail = post_params(spk)
     max_s = cap_for(script, cat)[1]
+    gap = MAX_GAP.get(cat, DEFAULT_GAP)
     rep = vo_split.run(raw, names, len(names), None if analyse else out_dir, max_s, post, tail, -18.0, noise_db, 0.35,
-                       1.15, 5, analyse, set(keep) if keep else None)
+                       1.15, 5, analyse, set(keep) if keep else None, gap)
     rep_path = os.path.splitext(raw)[0] + ".report.json"
     if not analyse:
         with open(rep_path, "w") as f:
@@ -223,7 +232,9 @@ def mix_unison(script, job_a, job_b, keep=None, offset_ms=14.0, noise_db=-40.0):
         an = vo_split.analyse(x, noise_db, 0.35, len(j["lines"]))
         if len(an["segments"]) != len(j["lines"]):
             raise SystemExit(f"{j['job_id']}: found {len(an['segments'])} lines, expected {len(j['lines'])}")
-        segs.append([vo_split.trim(x[a * vo_split.HOP: b * vo_split.HOP], noise_db) for a, b in an["segments"]])
+        gap = MAX_GAP.get(cat, DEFAULT_GAP)
+        segs.append([vo_split.tighten(vo_split.trim(x[a * vo_split.HOP: b * vo_split.HOP], noise_db), noise_db, gap)
+                     for a, b in an["segments"]])
     rows = []
     off = int(offset_ms / 1000 * vo_split.SR)
     for k, n in enumerate(job_a["lines"]):

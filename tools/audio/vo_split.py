@@ -7,7 +7,8 @@ One ElevenLabs request reads several lines of one speaker and one category, sepa
      runs of at least --min-sil seconds (default 0.35) are candidate cut points. With --expect N the N-1 LONGEST
      internal pauses are used, so a short breath inside a line ("Mm? Mind the mortar.") never splits it; the
      report gives the margin between the shortest pause used and the longest pause left inside a line;
-  3. trims each line (40 ms kept before the first and 90 ms after the last voiced frame);
+  3. trims each line (40 ms kept before the first and 90 ms after the last voiced frame) and, with --max-gap,
+     shortens every pause inside the line to that length (acks: 0.15 s), cut mid-pause with a 10 ms crossfade;
   4. applies the speaker's post-chain (--post, an ffmpeg filter string), with --tail seconds of padding for
      reverbs, then trims the tail again;
   5. applies a 5 ms fade-in and a 20 ms fade-out, measures integrated loudness (ffmpeg ebur128) and gains the
@@ -119,6 +120,41 @@ def trim(x, noise_db, pre=0.04, post=0.09):
     return x[a:b]
 
 
+def tighten(x, noise_db, max_gap):
+    """Shorten every internal pause (frames below noise_db) longer than max_gap seconds to max_gap.
+
+    Acks must land inside 1.4 s (art bible 8.2); a TTS read of "Thirty years. One Agnes." can hold a 0.45 s breath
+    between the sentences. The cut is made in the middle of the pause with a 10 ms crossfade, so the breath edges stay.
+    """
+    if not max_gap or len(x) == 0:
+        return x
+    edb = env_db(x)
+    runs = [(a, b) for (a, b) in silent_runs(edb, noise_db) if a > 0 and b < len(edb)]
+    keep = int(max_gap / (HOP / SR))
+    out = []
+    pos = 0
+    xf = int(0.010 * SR)
+    for a, b in runs:
+        if b - a <= keep:
+            continue
+        mid_a = (a + keep // 2) * HOP
+        mid_b = (b - (keep - keep // 2)) * HOP
+        out.append(x[pos:mid_a])
+        pos = mid_b
+    out.append(x[pos:])
+    if len(out) == 1:
+        return x
+    y = out[0]
+    for seg in out[1:]:
+        n = min(xf, len(y), len(seg))
+        if n > 0:
+            ramp = np.linspace(0.0, 1.0, n)
+            y = np.concatenate([y[:-n], y[-n:] * (1 - ramp) + seg[:n] * ramp, seg[n:]])
+        else:
+            y = np.concatenate([y, seg])
+    return y
+
+
 def ffmpeg_filter(x, filt):
     with tempfile.TemporaryDirectory() as td:
         src = os.path.join(td, "in.wav")
@@ -199,7 +235,7 @@ def probe_duration(path):
 
 
 def run(raw, names=None, expect=None, out_dir=None, max_s=None, post="", tail=0.0, lufs=-18.0, noise_db=-40.0,
-        min_sil=0.35, max_tempo=1.15, quality=5, analyse_only=False, keep=None):
+        min_sil=0.35, max_tempo=1.15, quality=5, analyse_only=False, keep=None, max_gap=None):
     x = decode(raw)
     if expect is None and names:
         expect = len(names)
@@ -229,6 +265,9 @@ def run(raw, names=None, expect=None, out_dir=None, max_s=None, post="", tail=0.
             continue
         seg = trim(x[a * HOP: b * HOP], noise_db)
         row["raw_s"] = round(len(seg) / SR, 3)
+        if max_gap:
+            seg = tighten(seg, noise_db, max_gap)
+            row["tight_s"] = round(len(seg) / SR, 3)
         tempo = 1.0
         y, l = process_line(seg, post, tail, noise_db, tempo, lufs, max_tempo)
         dur = len(y) / SR
@@ -265,6 +304,7 @@ def main(argv=None):
     ap.add_argument("--noise-db", type=float, default=-40.0)
     ap.add_argument("--min-sil", type=float, default=0.35)
     ap.add_argument("--max-tempo", type=float, default=1.15)
+    ap.add_argument("--max-gap", type=float, help="shorten internal pauses longer than this (seconds) inside a line")
     ap.add_argument("--quality", type=int, default=5, help="libvorbis -q:a")
     ap.add_argument("--keep", help="comma-separated 1-based line numbers to export (others skipped)")
     ap.add_argument("--analyse", action="store_true", help="print the pause map only")
@@ -273,7 +313,7 @@ def main(argv=None):
     names = a.names.split(",") if a.names else None
     keep = {int(k) for k in a.keep.split(",")} if a.keep else None
     rep = run(a.raw, names, a.expect, a.out_dir, a.max_s, a.post, a.tail, a.lufs, a.noise_db, a.min_sil, a.max_tempo,
-              a.quality, a.analyse, keep)
+              a.quality, a.analyse, keep, a.max_gap)
     txt = json.dumps(rep, indent=1)
     if a.report:
         with open(a.report, "w") as f:

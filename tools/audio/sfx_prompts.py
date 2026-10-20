@@ -48,7 +48,7 @@ WRAPPERS = {
 def fmt_num(x):
     if isinstance(x, (int, float)):
         s = ("%.2f" % x).rstrip("0").rstrip(".")
-        return s
+        return "1.0" if s == "1" else s
     return str(x)
 
 
