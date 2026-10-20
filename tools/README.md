@@ -15,6 +15,7 @@ paid generation API.
 | `kits/doodads.py` | bpy | procedural Greenvale doodads, trees + LODs and neutral structures (see "Procedural doodad kit") |
 | `kits/lineup.py` | python3 + Godot | line-up render of the kit at the real RTS camera |
 | `kits/buildings.py` | bpy | procedural faction buildings: every [SLICE] kingdom / clans building + the T2 hall add-ons (see "Procedural building kit") |
+| `kits/siege.py` | bpy | procedural siege vehicles: the Bombard Wagon and the Sling-Cart as multi-node GLBs (see "Procedural siege kit") |
 | `vc_bpy.py` | (library) | shared Blender helpers: import/export, actions/NLA, retarget math |
 | `preview/` | Godot | tiny separate Godot project used by `render_preview.py` (`inspect.gd`, `turntable.gd`) |
 | `tests/` | bpy / bash | synthetic rigged characters and props, retarget checker, `run_all.sh` end-to-end test, `test_autorig.sh` |
@@ -288,6 +289,32 @@ shell-domed kiosks, four felt-banner masts, a second gong; 6.5 m). Parent them w
 Known limits: `mathutils.noise.noise_vector()` is clock-seeded per process (use scalar `noise()` or call
 `noise.seed_set()` for deterministic jitter); bmesh `bevel` emits vertices in a run-dependent order (the kit
 chamfers by sweeping a profile and the writer sorts vertices and triangles canonically).
+
+## Procedural siege kit (`tools/kits/siege.py`)
+
+The wheeled siege units (slice-plan 2.5 D1 / D2) built from the building kit's parts, swatches and shared
+sheets, so they share the faction atlas and the TEAM sheet in VRAM (image URIs `../buildings/textures/...`).
+
+```bash
+$PY tools/kits/siege.py                                   # assets/models/vehicles/<id>.glb (~10 s each)
+$PY tools/kits/siege.py --only clans_sling_cart --out-dir /tmp/x
+python3 tools/render_preview.py assets/models/vehicles/kingdom_bombard_wagon.glb -o sheet.png --team-color "#2EAE3A"
+godot --headless --path . -s tools/assets/check_team_coverage.gd -- --only=kingdom_bombard_wagon
+```
+
+* **Bombard Wagon** (2.55 m, 1.65 m tall, ~5.3k tris): a plank cart on two big iron-shod spoked wheels with
+  team-painted felloes, team side boards, a fat warm-bronze bombard on a timber cradle with a team canvas
+  hood over the breech, a push bar and two crew in kettle hats with team plumes (team coverage 11.9 %).
+* **Sling-Cart** (2.46 m, arm tip 2.8 m, ~3.8k tris): a low lattice cart, a tall throwing arm on an A-frame
+  with a team rope-wrap and a team felt sling hanging at rest (a traction engine: haul ropes from the short
+  end, no counterweight box), a team felt hood over the clay-pot rack, a team felt blanket, two Tormai crew in
+  teal coats and felt caps with team bands (10.9 %). No spikes, skulls or hide (slice-plan D2 art rules).
+* **Nodes** (`buildings_lib.export_glb_nodes`): the body, `Wheel_L/R` (pivot on the axle), `Barrel` (pivot on
+  the trunnions) or `Arm` (pivot on the A-frame), `Crew_A/B` (hips) and `Crew_*_Leg_L/R` (hip joints); every
+  node's origin is its pivot and its glTF extras carry its role (`radius_m`, `recoil_m`). AO is baked over all
+  nodes in the rest pose. The game animates them procedurally (`src/fx/vehicle_rig.gd`).
+* The model is centred on its length (the unit's circle and picking sit on its position); the front faces
+  -Z; deterministic like the building kit.
 
 ## Free auto-rig
 

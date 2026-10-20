@@ -122,11 +122,13 @@ src/
                 missile_fx.gd + trail.gdshader (release tells, trails, stuck missiles),
                 body_juice.gd (unit body composer), order_markers.gd (CMB-08..11, rally flag),
                 camera_juice.gd (CAM-05 trauma + kick), selection_circles.gd (rings, hover),
-                health_bars.gd + health_bar.gdshader (ghost bar), fx_textures.gd, proc_mesh.gd
+                health_bars.gd + health_bar.gdshader (ghost bar), fx_textures.gd, proc_mesh.gd,
+                vehicle_rig.gd (procedural motion of multi-node siege models)
 data/           see data/SCHEMA.md: factions, units, buildings, heroes, abilities, buffs, items,
                 upgrades, shops, creep_camps, doodads, scenarios (.json), strings/en.json,
                 maps/*.json, test_defs.json (tests only)
-assets/         models/ textures/ icons/ audio/{sfx,voice,music,ambience}/ ui/
+assets/         models/{units,vehicles,buildings,neutral,doodads}/ textures/ icons/
+                audio/{sfx,voice,music,ambience}/ ui/
 tools/          python asset tooling (bpy, image processing), asset manifest,
                 maps/build_slice_map.py (writes data/maps/slice.json from the sketch + brief),
                 ip/check_banned_terms.py, ip/check_value_echo.py,
@@ -410,7 +412,14 @@ weapon-hand speed; the wind-up start is pulled in so it never plays faster than 
 0.6×), so the strike frame lands exactly on the sim damage point at any frame rate. Death plays once
 from `dead_time()` and holds; the team colour ebbs from 0.7 s over 1.4 s (feet to head) and the body
 sinks over the last 1.5 s before removal. Off-screen rigs skip skeleton work (frustum sphere test) and
-loops catch up when seen. Models without clips fall back to procedural motion (bob/lean, lunge or
+loops catch up when seen. **Vehicles** (`assets/models/vehicles/`, built by `tools/kits/siege.py`:
+the Bombard Wagon, the Sling-Cart) have no skeleton: their moving parts are child nodes at their
+pivots (`Wheel_*`, `Barrel`, `Arm`, `Crew_*`, `Crew_*_Leg_*`) and `VehicleRig` (`src/fx/vehicle_rig.gd`,
+`UnitView.vehicle`) animates them: wheels roll by the distance the display position travels along
+the facing (the same at any frame rate), the crew's legs swing and bodies bob on that phase, the
+barrel's recoil latches on the fx clock at the sim's damage point (40 ms back, 0.12 s hold, 0.8 s out
+to battery) and the throwing arm cocks, whips to the release on the damage point and settles.
+Other models without clips fall back to procedural motion (bob/lean, lunge or
 draw peaking at the damage point, topple + sink; structures sink and tilt).
 `src/render/unit_manifest_builder.gd` regenerates the unit manifest (clip lengths, stride speed from
 `tools/autorig.py`'s QA `stance_speed_mps` when its logs are given, else measured from the toe bones;
@@ -422,7 +431,8 @@ is `arc × flight distance`, carries the base damage rolled at launch, and on ar
 applies it (a projectile whose target died lands harmlessly). Its transform is written once per
 tick (physics interpolated); on arrival it is committed at the impact point and the node stays
 one more tick (`landed`) so the interpolated arrow visibly reaches the target before `Combat`
-frees it. Visuals are a placeholder arrow mesh.
+frees it. Visuals are procedural meshes per projectile `model` id (arrow, javelin, bullet, iron
+bombard ball, lidded clay pot, coal lump, arcane bolt, ice pellet).
 
 ## 6. Movement & pathing
 

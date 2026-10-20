@@ -97,6 +97,9 @@ var _rim_pulse: float = 0.0
 ## Body juice composer (src/fx/body_juice.gd): lean, push-off, stop plant, banking, nods, acks,
 ## knockback, hit-stop remap, stride dust, death contact. Mobile units only; writes `rig`.
 var juice: BodyJuice
+## Multi-node vehicle models (tools/kits/siege.py: wheels, crew legs, a recoiling barrel) animate
+## procedurally instead of the humanoid bob (src/fx/vehicle_rig.gd); null for everything else.
+var vehicle: VehicleRig
 
 
 func setup(u: Unit) -> void:
@@ -259,6 +262,9 @@ func _process(delta: float) -> void:
 			return
 		_drive_clips(delta + _skipped, swing, spd)
 		_skipped = 0.0
+		return
+	if vehicle != null:
+		vehicle.update(unit, _move, delta)
 		return
 	_procedural_motion(swing)
 
@@ -514,6 +520,7 @@ func _load_model(path: String) -> bool:
 	else:
 		_entry = AssetLibrary.unit_entry(path)
 		model_scale = float(unit.def.get("model_scale", unit.def.get("scale", 1.0)))
+		vehicle = VehicleRig.find(model)
 	model.scale = Vector3.ONE * model_scale
 	body.add_child(model)
 	for g: GeometryInstance3D in model.find_children("*", "GeometryInstance3D", true, false):
