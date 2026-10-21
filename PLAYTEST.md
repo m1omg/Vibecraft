@@ -32,8 +32,8 @@ then F5 again.
   stays visible but dark; enemy buildings you saw stay as "ghosts" where you last saw them.
 - **Neutral creeps** sit at camps around the map. They leave you alone unless you get close.
 - **Goal:** destroy **every enemy building**. You lose when you have no buildings left (units do
-  not count). If you lose your last hall, you have **120 s** to finish a new one, or all your
-  buildings are revealed to the enemy.
+  not count). If you lose your last hall, you have **120 s** to finish a new one (a countdown
+  appears at the top right), or all your buildings are revealed to the enemy.
 - The **Normal** computer usually attacks around 7–9 minutes. **Easy** waits until at least 10
   minutes with a bigger army. **Hard** builds a little faster and attacks sooner.
 
