@@ -458,6 +458,20 @@ func modifiers(source: StringName) -> Dictionary:
 	return _mods.get(source, {})
 
 
+## Tech building upgrades (rules §5.1: Moot Hall -> Walled Burg, Lookout -> Gun Tower): becomes
+## `did` in place, keeping its HP fraction, footprint, orders and modifier sources.
+func transform_to(did: String) -> void:
+	var hp_frac := hp / maxf(max_hp, 0.001)
+	def_id = did
+	def = Defs.unit(did)
+	name = "%s_%d" % [did, id]
+	var fp := footprint
+	_apply_def()
+	footprint = fp
+	recompute_stats()
+	hp = clampf(hp_frac * max_hp, 1.0, max_hp)
+
+
 ## Overwrites base stats (keys of `_base`: max_hp, max_mana, armor, speed, sight, sight_night,
 ## damage_min, damage_max, attack_range, cooldown, damage_point, backswing, hp_regen,
 ## mana_regen). Used by HeroSystem on level-up and by transforms; then recomputes.

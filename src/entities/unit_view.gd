@@ -100,6 +100,7 @@ var juice: BodyJuice
 ## Multi-node vehicle models (tools/kits/siege.py: wheels, crew legs, a recoiling barrel) animate
 ## procedurally instead of the humanoid bob (src/fx/vehicle_rig.gd); null for everything else.
 var vehicle: VehicleRig
+var _shown_def: String = ""              ## the def whose model is shown (structures reload on a change)
 
 
 func setup(u: Unit) -> void:
@@ -122,6 +123,7 @@ func setup(u: Unit) -> void:
 	height = float(d.get("height", 1.5)) * float(d.get("scale", 1.0))
 	_t = float(u.id) * 1.37
 	_fall_dir = 1.0 if u.id % 2 == 0 else -1.0
+	_shown_def = u.def_id
 	model_path = AssetLibrary.model_path(d, u.def_id)
 	if model_path.is_empty() or not _load_model(model_path):
 		model_path = ""
@@ -450,6 +452,8 @@ func _animate_structure_death() -> void:
 
 ## Construction reveal: `build_progress` (0..1) when the sim publishes it, 1 otherwise.
 func _update_structure() -> void:
+	if unit.def_id != _shown_def and not _shown_def.is_empty():
+		_reload_model()      # upgraded in place (Tech: hall tier, Lookout -> Gun Tower)
 	var bp: Variant = unit.get("build_progress")
 	var p := clampf(float(bp), 0.0, 1.0) if bp != null else 1.0
 	_set_param(&"variant_a", Vector4(p, 0.0, 0.0, 0.0))
@@ -594,6 +598,16 @@ func _on_mine_depleted(mine: Node) -> void:
 	var p := AssetLibrary.model_path({"model": str(unit.def.get("model_depleted", ""))}, "")
 	if p.is_empty() or p == model_path:
 		return
+	_swap_model(p)
+
+
+## The unit's def changed (a building upgrade): the view loads the new def's model.
+func _reload_model() -> void:
+	_shown_def = unit.def_id
+	_swap_model(AssetLibrary.model_path(unit.def, unit.def_id))
+
+
+func _swap_model(p: String) -> void:
 	for c in body.get_children():
 		body.remove_child(c)
 		c.queue_free()
@@ -604,7 +618,7 @@ func _on_mine_depleted(mine: Node) -> void:
 	_clip = ""
 	_geoms.clear()
 	model_path = p
-	if not _load_model(p):
+	if p.is_empty() or not _load_model(p):
 		model_path = ""
 		_add_placeholder(unit.def)
 	_init_instance_params()

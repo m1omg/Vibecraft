@@ -42,6 +42,8 @@ signal queue_changed(building: Node)
 signal production_stalled(building: Node, reason: String)
 signal research_started(player_id: int, id: String, building: Node)
 signal tier_changed(player_id: int, tier: int)
+## A building became its upgrade in place (Tech: hall tiers, tower upgrades); views reload.
+signal building_upgraded(building: Node, from_def: String)
 # heroes / abilities / buffs (C)
 signal xp_gained(hero: Node, amount: float)
 signal ability_learned(hero: Node, ability_id: String, rank: int)
