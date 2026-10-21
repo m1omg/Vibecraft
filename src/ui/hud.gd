@@ -55,6 +55,14 @@ var _shake_t0: Dictionary = {}       ## kind -> real time of the last shake
 var _ghosts: Dictionary = {}         ## kind -> Label (the shortfall ghost)
 var _ghost_t0: Dictionary = {}       ## kind -> real time the ghost dropped
 var _food_capped_t := 0.0
+## ECO-13 odometers: kind -> [from, to, t0, dur] (shown = from..to on QUART/OUT over dur).
+var _odo: Dictionary = {}
+var _odo_fx: Dictionary = {}         ## kind -> [t0, colour, length, punch scale, drop px]
+## ECO-15: the shown upkeep tier and when it last flipped.
+var _upkeep_shown := -1
+var _upkeep_prev := 0
+var _upkeep_flip_t0 := -10.0
+var _upkeep_label_text := ""
 
 @onready var gold_label: Label = %Gold
 @onready var lumber_label: Label = %Lumber
@@ -229,14 +237,13 @@ func _refresh_top() -> void:
 	var p := world.player(player_id)
 	if p == null:
 		return
-	_set_text(gold_label, "Gold  %d" % p.gold)
-	_set_text(lumber_label, "Lumber  %d" % p.lumber)
+	_odometer("gold", p.gold, gold_label, "Gold  %d", Color(1, 0.86, 0.35))
+	_odometer("lumber", p.lumber, lumber_label, "Lumber  %d", Color(0.62, 0.9, 0.45))
 	var cap := mini(p.food_cap, int(Defs.rule("economy.food_cap", 100)))
 	_set_text(food_label, "Food  %d / %d" % [p.food_used, cap])
 	var capped := p.food_used >= cap
 	food_label.add_theme_color_override("font_color", FOOD_CAPPED if capped else FOOD_COLOR)
-	_set_text(upkeep_label, upkeep_text(p.food_used))
-	upkeep_label.add_theme_color_override("font_color", UPKEEP_COLORS[clampi(upkeep_tier(p.food_used), 0, UPKEEP_COLORS.size() - 1)])
+	_upkeep(upkeep_tier(p.food_used), p.food_used)
 	var hour := DayNight.hour_at(world.time)
 	var phase := "Day" if hour >= DayNight.DAWN and hour < DayNight.DUSK else "Night"
 	_set_text(clock_label, "%s  %02d:%02d" % [phase, int(hour), int(fmod(hour, 1.0) * 60.0)])
@@ -249,6 +256,88 @@ static func upkeep_tier(food_used: int) -> int:
 		if food_used >= int((Defs.upkeep[i] as Dictionary).get("food", 0)):
 			t = i
 	return t
+
+
+## ECO-13: the counter rolls to the sim value (dur 150–450 ms by the size of the change); an
+## unusual gain (more than 20) punches and flashes warm, a spend flashes coral and dips 4 px.
+## Retargeting starts from the shown value, so a stream of deposits never flickers.
+func _odometer(kind: String, value: int, label: Label, fmt: String, base: Color) -> void:
+	var now := HudTooltip.now()
+	var o: Array = _odo.get(kind, [float(value), float(value), now, 0.15])
+	var shown := _odo_value(o, now)
+	if int(o[1]) != value:
+		var delta := value - int(o[1])
+		o = [shown, float(value), now, clampf(0.12 + 0.006 * absf(delta), 0.15, 0.45)]
+		if delta > 20:
+			var st := clampf((delta - 20.0) / 180.0, 0.0, 1.0)
+			_odo_fx[kind] = [now, Color("#FFF4C2"), 0.12, 1.04 + 0.12 * st, 0.0]
+		elif delta < 0 and not _draining(kind):
+			_odo_fx[kind] = [now, Color("#FF9A7A"), 0.16, 1.0, 4.0]
+	_odo[kind] = o
+	_set_text(label, fmt % roundi(_odo_value(o, now)))
+	var fx: Array = _odo_fx.get(kind, [])
+	var age := now - float(fx[0]) if not fx.is_empty() else 10.0
+	var col := base
+	var sc := 1.0
+	var dip := 0
+	if age < 0.25:
+		col = (fx[1] as Color).lerp(base, clampf(age / float(fx[2]), 0.0, 1.0))
+		sc = 1.0 + (float(fx[3]) - 1.0) * sin(PI * clampf(age / 0.18, 0.0, 1.0))
+		dip = roundi(float(fx[4]) * sin(PI * clampf(age / 0.2, 0.0, 1.0)))
+	label.add_theme_color_override("font_color", col)
+	label.pivot_offset = label.size * 0.5
+	label.scale = Vector2(sc, sc)
+	var box: MarginContainer = _counter_box.get(kind)
+	if box != null and box.get_theme_constant("margin_top") != dip:
+		box.add_theme_constant_override("margin_top", dip)
+		box.add_theme_constant_override("margin_bottom", -dip)
+
+
+static func _odo_value(o: Array, now: float) -> float:
+	return lerpf(float(o[0]), float(o[1]), Juice.out_quart((now - float(o[2])) / maxf(float(o[3]), 0.001)))
+
+
+## Continuous drains (the Hod Chain's carriers, repairs) roll the digits without the spend flash.
+func _draining(kind: String) -> bool:
+	if kind != "lumber" and kind != "gold":
+		return false
+	for u in world.unit_list:
+		if u.player_id == player_id and u.is_worker and u.current != null \
+				and (u.current.type == Order.Type.REPAIR or u.current.type == Order.Type.BUILD) and u.anim_hint == "work":
+			return true
+	return false
+
+
+## ECO-15: the upkeep label flips like a card when the tier changes (scale.x 1 → 0 in 110 ms,
+## the new text and colour, 0 → 1 in 130 ms), then pulses for 3 s; a rise is announced.
+func _upkeep(tier: int, food_used: int) -> void:
+	var now := HudTooltip.now()
+	if _upkeep_shown < 0:
+		_upkeep_shown = tier
+		_upkeep_label_text = upkeep_text(food_used)
+	elif tier != _upkeep_shown:
+		if tier > _upkeep_shown:
+			Events.notification.emit(player_id, "upkeep_up", Defs.text("notice_upkeep_up") % upkeep_text(food_used))
+		_upkeep_prev = _upkeep_shown
+		_upkeep_shown = tier
+		_upkeep_flip_t0 = now
+	var age := now - _upkeep_flip_t0
+	var sx := 1.0
+	if age < 0.11:
+		sx = 1.0 - Juice.in_quad(age / 0.11)
+	elif age < 0.24:
+		_upkeep_label_text = upkeep_text(food_used)
+		sx = Juice.out_back((age - 0.11) / 0.13)
+	else:
+		_upkeep_label_text = upkeep_text(food_used)
+	_set_text(upkeep_label, _upkeep_label_text)
+	upkeep_label.pivot_offset = upkeep_label.size * 0.5
+	upkeep_label.scale = Vector2(maxf(sx, 0.0), 1.0)
+	var a := 1.0
+	if age >= 0.24 and age < 3.24:
+		a = 0.8 + 0.2 * cos(TAU * 1.5 * (age - 0.24))
+	var col: Color = UPKEEP_COLORS[clampi(_upkeep_shown if age >= 0.11 else _upkeep_prev, 0, UPKEEP_COLORS.size() - 1)]
+	upkeep_label.add_theme_color_override("font_color", Color(col, a))
 
 
 static func upkeep_text(food_used: int) -> String:

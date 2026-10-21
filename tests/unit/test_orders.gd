@@ -224,8 +224,11 @@ func test_hud_shows_selected_unit_stats() -> void:
 	var p := mw.player(0)
 	assert_eq(hud.gold_label.text, "Gold  %d" % p.gold, "gold bound to PlayerState")
 	p.gold += 25
-	await tree.process_frame
-	assert_eq(hud.gold_label.text, "Gold  %d" % p.gold, "gold label follows PlayerState")
+	var t0 := Time.get_ticks_msec()
+	while hud.gold_label.text != "Gold  %d" % p.gold and Time.get_ticks_msec() - t0 < 2000:
+		await tree.process_frame
+	assert_eq(hud.gold_label.text, "Gold  %d" % p.gold, "gold label rolls to PlayerState (ECO-13)")
+	assert_lt(float(Time.get_ticks_msec() - t0), 1000.0, "within the odometer's roll")
 	assert_true(hud.food_label.text.begins_with("Food  %d / " % p.food_used), "food shown")
 	var archer: Unit = null
 	for u in mw.units_of_player(0):

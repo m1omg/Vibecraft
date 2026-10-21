@@ -357,6 +357,8 @@ func complete_site(site: Unit) -> void:
 	site.build_progress = 1.0
 	world.adjust_food(site.player_id, 0, int(site.def.get("food_provided", 0)))
 	Events.building_completed.emit(site)
+	Events.notification.emit(site.player_id, "building_done",
+		Defs.text("notice_building_done") % str(site.def.get("name", site.def_id)))
 	_release_builders(site.id)
 
 

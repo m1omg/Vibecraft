@@ -131,5 +131,64 @@ rec("sw_pierce","combat","derived",[{"max_ms":260,"fade_out_ms":70,"layers":[own
 rec("vox_death_clans","combat","derived",[{"layers":[own("combat/vox_death_kingdom_%02d.wav"%a,pitch=p)]}
     for a,p in ((1,0.72),(2,0.7),(3,0.74))],
     "placeholder until generated: our vox_death_kingdom takes (Seed Audio) pitched down to a deep-chested register")
+# economy and buildings (juice ECO-*/BLD-*, Playtest 2): CC0 impacts + procedural bowls, all ours to layer
+def bowl(f0,dec,dur,off=0,g=0,lp=0): d={"synth":"bowl","f0":f0,"decay":dec,"dur":dur,"offset_ms":off,"gain_db":g}; d.update({"lp":lp} if lp else {}); return d
+rec("bld_stamp","world","cc0",[{"layers":[
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%a,"pitch":0.75},
+    {"src":IS+"impactPlank_medium_00%d.ogg"%b,"pitch":0.8,"gain_db":-6,"offset_ms":15},
+    {"synth":"thump","f0":72,"f1":40,"decay":0.12,"dur":0.35,"gain_db":-6}]}
+    for a,b in ((0,1),(2,3),(4,0))],"site stamp: foundation thump (Kenney CC0) + procedural sub thump")
+rec("bld_hammer","world","cc0",[{"max_ms":260,"layers":[
+    {"src":IS+"impactWood_light_00%d.ogg"%a,"pitch":p,"len_ms":160},
+    {"src":IS+"impactPlank_medium_00%d.ogg"%b,"pitch":1.3,"len_ms":120,"hp":400,"gain_db":-12},
+    tick(2800,0,-15)]}
+    for a,b,p in ((0,0,1.0),(1,2,1.06),(2,4,0.96),(3,1,1.1),(4,3,1.02),(1,0,0.92))],"kingdom builder's hammer on timber (Kenney CC0 + procedural tick)")
+rec("bld_mallet","world","cc0",[{"max_ms":260,"layers":[
+    {"src":IS+"impactSoft_medium_00%d.ogg"%a,"pitch":1.2,"len_ms":160},
+    {"src":IS+"impactWood_light_00%d.ogg"%b,"pitch":0.8,"lp":1500,"len_ms":140,"gain_db":-6}]}
+    for a,b in ((0,1),(1,3),(2,0),(3,4))],"clans felt mallet on lattice (Kenney CC0)")
+rec("bld_complete","world","procedural",[{"layers":[
+    bowl(f0,1.2,1.6,0,0,6000), bowl(f0*1.5,0.9,1.3,90,-4,7000),
+    {"src":IS+"impactWood_light_00%d.ogg"%a,"pitch":1.2,"gain_db":-9,"len_ms":120},
+    tick(5000,90,-16)]}
+    for f0,a in ((523.25,0),(493.88,2))],"topping-out chime: two procedural bronze bowls a fifth apart + a wood knock (Kenney CC0)")
+rec("bld_tier_up","world","procedural",[{"layers":[
+    bowl(f0,1.8,2.4,0,0,5000), bowl(f0*1.5,1.5,2.2,120,-3,6000), bowl(f0*2,1.2,2.0,240,-5,7000),
+    {"synth":"rumble","dur":1.4,"lp":120,"decay":0.5,"attack":0.25,"gain_db":-12},
+    {"src":IS+"impactPlate_medium_00%d.ogg"%a,"pitch":0.8,"gain_db":-9}]}
+    for f0,a in ((261.63,0),(246.94,3))],"hall raised: three procedural bowls rising + a swell (procedural) + a plate ring (Kenney CC0)")
+rec("bld_collapse","world","cc0",[{"max_ms":2600,"fade_out_ms":400,"layers":[
+    {"src":IS+"impactPlank_medium_00%d.ogg"%a,"pitch":0.6},
+    {"src":IS+"impactWood_heavy_00%d.ogg"%b,"pitch":0.55,"offset_ms":60},
+    {"src":IS+"impactWood_heavy_00%d.ogg"%c,"pitch":0.7,"offset_ms":220,"gain_db":-4},
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%a,"pitch":0.6,"offset_ms":120,"gain_db":-2},
+    {"synth":"rumble","dur":1.8,"lp":140,"decay":0.6,"gain_db":-4},
+    {"synth":"noise","dur":1.4,"lp":2500,"hp":300,"decay":0.35,"attack":0.05,"gain_db":-13,"offset_ms":100}]}
+    for a,b,c in ((0,1,3),(2,4,0))],"cave-in: planks and beams (Kenney CC0) over a procedural rumble and debris hiss")
+rec("eco_chop","world","cc0",[{"max_ms":320,"layers":[
+    {"src":IS+"impactWood_heavy_00%d.ogg"%a,"pitch":p,"len_ms":220,"lp":4000},
+    {"src":IS+"impactPunch_medium_00%d.ogg"%b,"lp":1200,"gain_db":-8,"len_ms":160},
+    {"synth":"noise","dur":0.06,"hp":2000,"decay":0.01,"gain_db":-12}]}
+    for a,b,p in ((0,0,1.15),(1,2,1.2),(2,4,1.1),(3,1,1.25),(4,3,1.18))],"axe into green wood (Kenney CC0) + a procedural bark chip")
+rec("eco_tree_fall","world","cc0",[{"max_ms":2200,"fade_out_ms":300,"layers":[
+    {"src":IS+"impactPlank_medium_00%d.ogg"%a,"pitch":0.45,"reverse":True,"gain_db":-9,"lp":1800},
+    {"synth":"noise","dur":0.6,"lp":1400,"hp":180,"decay":0.25,"reverse":True,"gain_db":-10,"offset_ms":260},
+    {"src":IS+"impactWood_heavy_00%d.ogg"%b,"pitch":0.5,"offset_ms":820},
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%c,"pitch":0.55,"offset_ms":820,"gain_db":-2},
+    {"synth":"rumble","dur":0.8,"lp":130,"decay":0.3,"gain_db":-10,"offset_ms":820}]}
+    for a,b,c in ((1,0,2),(3,2,4))],"tree topple: a reversed plank groan and whoosh into a heavy thud (Kenney CC0 + procedural)")
+rec("eco_coin","world","cc0",[{"max_ms":420,"layers":[
+    {"src":IS+"impactMetal_light_00%d.ogg"%a,"pitch":p,"len_ms":240,"hp":1500,"fade_ms":60},
+    {"src":IS+"impactMetal_light_00%d.ogg"%b,"pitch":p*1.17,"len_ms":220,"hp":2000,"gain_db":-4,"offset_ms":55,"fade_ms":60},
+    tick(6000,0,-12)]}
+    for a,b,p in ((0,1,1.8),(2,3,1.9),(4,0,1.75),(1,4,2.0),(3,2,1.85))],"coins into the hall: two small metal clinks (Kenney CC0, pitched up) + tick")
+rec("eco_lumber_drop","world","cc0",[{"max_ms":520,"layers":[
+    {"src":IS+"impactPlank_medium_00%d.ogg"%a,"pitch":1.0,"len_ms":300},
+    {"src":IS+"impactWood_light_00%d.ogg"%b,"pitch":0.9,"offset_ms":70,"gain_db":-6,"len_ms":140},
+    {"src":IS+"impactWood_light_00%d.ogg"%c,"pitch":1.1,"offset_ms":130,"gain_db":-9,"len_ms":140}]}
+    for a,b,c in ((0,1,2),(2,3,4),(4,0,1))],"logs onto the pile (Kenney CC0)")
+rec("ui_research_done","ui","procedural",[{"layers":[
+    bowl(659.25,0.9,1.2,0,-2,7000), bowl(987.77,0.7,1.0,110,-6,8000), tick(4200,0,-14)]}
+    for _ in range(1)],"research done: two procedural bowls a fifth apart")
 json.dump({"_doc":"Recipes for tools/audio/build_layered_sfx.py: CC0 (Kenney, assets_src/audio/cc0/kenney, licence files beside them) and procedural placeholder takes. A take with a 'name' is a kit item: it is written as <id>_<name>_<nn>.wav.","recipes":R},open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)),'layered_recipes.json'),'w'),indent=1)
 print(len(R))

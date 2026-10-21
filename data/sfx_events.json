@@ -1,5 +1,5 @@
 {
- "_doc": "Audio event table (juice bible \u00a74.6, UCA-F3, AUD-02): read by the Audio autoload (src/autoload/audio.gd), never by the simulation. `families`: per sample family (assets/audio/sfx/manifest.json) the measured onset and peak (ms into the file; tools: measured from the wavs), bus, per-family voice cap and minimum start spacing. `events`: a game event maps to layers so code calls Audio.event(id, pos, ctx) once. Layer fields: family (a template or a list of templates, first existing wins; {key} is replaced from ctx), gain_db, when (ctx condition: key, !key, key>=n, key<n), pitch {base, per_mass, clamp, jitter} (jitter from a stateless hash of ctx.seed, never double jitter), align onset|peak|start (onset: the transient lands on the event frame), bus (overrides the family bus), no_cut_ms (cannot be stolen for that long), priority (overrides the event's). Missing families are silent no-ops. `defaults`: values for families not listed.",
+ "_doc": "Audio event table (juice bible §4.6, UCA-F3, AUD-02): read by the Audio autoload (src/autoload/audio.gd), never by the simulation. `families`: per sample family (assets/audio/sfx/manifest.json) the measured onset and peak (ms into the file; tools: measured from the wavs), bus, per-family voice cap and minimum start spacing. `events`: a game event maps to layers so code calls Audio.event(id, pos, ctx) once. Layer fields: family (a template or a list of templates, first existing wins; {key} is replaced from ctx), gain_db, when (ctx condition: key, !key, key>=n, key<n), pitch {base, per_mass, clamp, jitter} (jitter from a stateless hash of ctx.seed, never double jitter), align onset|peak|start (onset: the transient lands on the event frame), bus (overrides the family bus), no_cut_ms (cannot be stolen for that long), priority (overrides the event's). Missing families are silent no-ops. `defaults`: values for families not listed.",
  "defaults": {
   "onset_ms": 0,
   "peak_ms": 120,
@@ -396,6 +396,83 @@
    "bus": "Combat",
    "cap": 2,
    "spacing_ms": 250
+  },
+  "bld_stamp": {
+   "onset_ms": 1,
+   "peak_ms": 4,
+   "bus": "World",
+   "cap": 3,
+   "spacing_ms": 120
+  },
+  "bld_hammer": {
+   "onset_ms": 0,
+   "peak_ms": 4,
+   "bus": "World",
+   "cap": 4,
+   "spacing_ms": 70
+  },
+  "bld_mallet": {
+   "onset_ms": 1,
+   "peak_ms": 4,
+   "bus": "World",
+   "cap": 4,
+   "spacing_ms": 70
+  },
+  "bld_complete": {
+   "onset_ms": 1,
+   "peak_ms": 121,
+   "bus": "World",
+   "cap": 2,
+   "spacing_ms": 300
+  },
+  "bld_tier_up": {
+   "onset_ms": 2,
+   "peak_ms": 230,
+   "bus": "World",
+   "cap": 1,
+   "spacing_ms": 500
+  },
+  "bld_collapse": {
+   "onset_ms": 1,
+   "peak_ms": 47,
+   "bus": "World",
+   "cap": 2,
+   "spacing_ms": 300
+  },
+  "eco_chop": {
+   "onset_ms": 1,
+   "peak_ms": 3,
+   "bus": "World",
+   "cap": 4,
+   "spacing_ms": 60
+  },
+  "eco_tree_fall": {
+   "onset_ms": 756,
+   "peak_ms": 829,
+   "bus": "World",
+   "cap": 2,
+   "spacing_ms": 250
+  },
+  "eco_coin": {
+   "onset_ms": 0,
+   "peak_ms": 4,
+   "bus": "World",
+   "cap": 3,
+   "spacing_ms": 80
+  },
+  "eco_lumber_drop": {
+   "onset_ms": 1,
+   "peak_ms": 5,
+   "bus": "World",
+   "cap": 3,
+   "spacing_ms": 90
+  },
+  "ui_research_done": {
+   "onset_ms": 2,
+   "peak_ms": 117,
+   "bus": "UI",
+   "cap": 1,
+   "spacing_ms": 400
   }
  },
  "events": {

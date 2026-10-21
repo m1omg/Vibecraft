@@ -110,5 +110,6 @@
   "menu_computer": "Computer: %s",
   "menu_difficulty_easy": "Easy",
   "menu_difficulty_normal": "Normal",
-  "menu_difficulty_hard": "Hard"
+  "menu_difficulty_hard": "Hard",
+  "notice_upkeep_up": "%s: mined gold is now taxed more. Fewer mouths, more gold."
 }
