@@ -25,9 +25,14 @@ var always_show_health_bars: bool = true
 ## "grid" (the 4 x 3 card on Q W E R / A S D F / Z X C V); "" = rules.controls.hotkey_preset.
 var hotkey_preset: String = ""
 
+# Skirmish setup (main menu)
+var skirmish_faction: String = "kingdom"   ## the local player's faction; the computer plays the other
+var ai_difficulty: String = "normal"       ## rules.ai.<difficulty>: easy, normal, hard
+
 const _PERSISTED: Array[String] = [
 	"edge_pan_enabled", "edge_pan_margin_px", "edge_pan_speed", "key_pan_speed",
 	"drag_pan_speed", "zoom_step", "double_click_ms", "always_show_health_bars", "hotkey_preset",
+	"skirmish_faction", "ai_difficulty",
 ]
 
 ## action name -> Array of input descriptors. Descriptor: {"key": Key} or {"mouse": MouseButton}.

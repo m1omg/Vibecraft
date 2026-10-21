@@ -345,7 +345,27 @@
       ],
       "build_advanced": ["kingdom_collegium", "kingdom_wainwright_yard", "kingdom_curio_cabinet"],
       "colour_prefs": ["emerald", "tangerine", "turquoise", "lime", "violet", "forest", "pewter"],
-      "accent": "#F08A2A"
+      "accent": "#F08A2A",
+      "ai_opening": {
+        "_doc": "The slice AI's script (kingdom.md §10, Playtest 2 cut: no creeping, no shop). Supply is kept ahead by the AI's supply rule.",
+        "workers": 14,
+        "army": [["kingdom_pavisier", 2], ["kingdom_hookgunner", 2], ["kingdom_bombard_wagon", 1], ["kingdom_linden_sister", 1]],
+        "steps": [
+          {"at": 0, "build": "kingdom_oath_hall"},
+          {"at": 45, "build": "kingdom_drill_yard"},
+          {"at": 65, "hero": "kingdom_wheel_marshal"},
+          {"at": 110, "army": true},
+          {"at": 135, "build": "kingdom_foundry"},
+          {"at": 150, "build": "kingdom_timber_yard", "near": "trees"},
+          {"at": 225, "upgrade": "kingdom_walled_burg"},
+          {"at": 240, "research": "kingdom_corned_powder"},
+          {"at": 355, "hero": "kingdom_firewright"},
+          {"at": 355, "build": "kingdom_wainwright_yard"},
+          {"at": 390, "build": "kingdom_collegium"},
+          {"at": 420, "research": "kingdom_drawn_barrels"},
+          {"at": 460, "research": "kingdom_tempered_blades"}
+        ]
+      }
     },
     "clans": {
       "name": "faction_name_clans",
@@ -377,7 +397,27 @@
       ],
       "build_advanced": ["clans_mirror_yurt", "clans_tea_tent"],
       "colour_prefs": ["royal_blue", "cornflower", "lime", "emerald"],
-      "accent": "#E0A030"
+      "accent": "#E0A030",
+      "ai_opening": {
+        "_doc": "The slice AI's script (clans.md §10, Playtest 2 cut: no creeping, no shop). The clans push at 36 army food.",
+        "workers": 14,
+        "attack_food": 36,
+        "army": [["clans_grappler", 2], ["clans_javelineer", 3], ["clans_gustcaller", 1], ["clans_sling_cart", 1]],
+        "steps": [
+          {"at": 0, "build": "clans_naming_stones"},
+          {"at": 65, "hero": "clans_hero_uncut"},
+          {"at": 75, "build": "clans_grapple_yard"},
+          {"at": 140, "army": true},
+          {"at": 165, "build": "clans_casting_pit", "near": "trees"},
+          {"at": 255, "upgrade": "clans_banner_shell"},
+          {"at": 305, "build": "clans_grapple_yard"},
+          {"at": 385, "hero": "clans_hero_skymirror"},
+          {"at": 385, "build": "clans_mirror_yurt"},
+          {"at": 390, "research": "clans_up_atlatl"},
+          {"at": 450, "research": "clans_up_wrestle"},
+          {"at": 500, "research": "clans_up_packed_pots"}
+        ]
+      }
     }
   }
 }

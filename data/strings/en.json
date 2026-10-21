@@ -100,5 +100,15 @@
   "info_carrying_gold": "Carrying %d gold",
   "info_carrying_lumber": "Carrying %d lumber",
   "info_gold_left": "Gold left: %d",
-  "tip_more_food": "Gives %d more food."
+  "tip_more_food": "Gives %d more food.",
+  "notice_defeated": "Every building is lost. The match is over for us.",
+  "notice_cripple_started": "No hall stands. Raise one within %d s or our buildings will be laid bare to the enemy.",
+  "notice_cripple_revealed": "Without a hall our buildings stand revealed to the enemy.",
+  "menu_skirmish": "Skirmish",
+  "menu_skirmish_hint": "Start from one hall and five workers on Wether Downs, build a base, raise an army and bring down every enemy building. The computer builds and attacks too.",
+  "menu_play_as": "Play as %s",
+  "menu_computer": "Computer: %s",
+  "menu_difficulty_easy": "Easy",
+  "menu_difficulty_normal": "Normal",
+  "menu_difficulty_hard": "Hard"
 }

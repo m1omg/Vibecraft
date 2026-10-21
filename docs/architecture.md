@@ -262,6 +262,15 @@ group hunts. It issues only command dictionaries and uses no clock or RNG (deter
 Queries: `group(id, pid)`, `members(g)`, `wave_eta()`, `wave_marching()`, `camera_start(pid)`,
 `entity_count(pid)`, `is_over()`.
 
+The skirmish (Main scenario "slice", the menu's Skirmish with the faction and computer
+difficulty from `Settings.skirmish_faction` / `ai_difficulty`) has no scenario script: the
+`AiPlayer` plays the other side and `MatchRules` (`src/systems/match_rules.gd`, stage `ai`,
+twice a second) ends it (rules §17.1, §14.4): a player without any structure (sites count) is
+defeated (`PlayerState.defeated`, its units removed), the last team standing wins
+(`Events.match_ended(winner, "no_structures")`, Main shows the end banner); a player without a
+finished hall gets a 120 s countdown, then its structures are revealed to every enemy (renewed
+`Fog.reveal`s) until it finishes a hall again.
+
 ## 5. Entities
 
 `Unit` (`src/entities/unit.gd`, `class_name Unit extends Node3D`) represents **every** game object
@@ -664,7 +673,19 @@ requirements, ability unlocks. Each file's header documents the full contract.
   `creep_camps.json`, ring layout, guard positions, bounty) follow the same pattern; their
   headers document the API.
 - `AiPlayer` (`src/systems/ai/ai_player.gd`): one per AI seat, throttled `think()`, tuning from
-  `rules.ai.<difficulty>`, its own RNG; it issues only player commands.
+  `rules.ai.<difficulty>`, its own RNG; it issues only player commands (an APM cap drops
+  non-essential ones) and sees only through its own fog. Playtest 2 build-order opponent:
+  workers on gold (`gold_workers`) and the nearest tree line, trained up to
+  `worker_target()`; supply kept ahead (`supply_buffer_food`); the faction's
+  `ai_opening.steps` in order (build / hero / research / upgrade / army; due at `at` +
+  `build_slack`, the next step's cost reserved, a step blocked 45 s for other reasons skipped,
+  failed builds re-issued); building spots on rings around the hall (or the tree line) outside
+  the hall–seam lane with a 1 m walkable margin; the `army` mix, one item per building, inside the
+  upkeep cap; muster, defend (own units hit within 35 m of the hall), push at
+  `attack_threshold()` (the opening's `attack_food`, capped by the upkeep room beside the
+  workers) with attack-moves on the nearest enemy structure it has seen, retreat below
+  `army_retreat_hp`. `state`: build_up, army, defend, push. Creeping, abilities, items and
+  expansions come later.
 
 ## 11. Input, camera, UI
 

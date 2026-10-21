@@ -361,7 +361,10 @@ upgrades; the id equals the target building id).
   `start_lumber`, `recall_item`, `lumber_per_trip`, `chop_interval`, `fells_trees`,
   `workers_per_tree`, `max_builders`, `extra_builder_rate`, `extra_builder_lumber_per_s`,
   `build_verb`, `build_basic`, `build_advanced` (build menus; hotkeys validated),
-  `colour_prefs`, `accent`.
+  `colour_prefs`, `accent`, `ai_opening` (the AI's script, AiPlayer: `workers` to train, `army`
+  `[[unit id, weight]]` mix, optional `attack_food`, `steps` in order, each `{at: s}` plus one of
+  `build` (def; `near`: "hall" or "trees"), `hero`, `research`, `upgrade` (building-upgrade id)
+  or `army: true` (start army production)).
 
 ## 11. `doodads.json`
 

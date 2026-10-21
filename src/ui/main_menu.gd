@@ -1,13 +1,17 @@
 class_name MainMenu
 extends Control
 ## The game's first screen (project main scene): title over a painted downland at dusk (drawn
-## procedurally), and the modes available in this build: "Battlefield Sandbox" (Playtest 1) and
-## "Quit". Later milestones add more modes. Starting a mode shows a loading line for two frames,
-## then Main.start_match swaps in the match. UI only. The menu theme plays while it is up.
+## procedurally), and the modes available in this build: "Skirmish" (Playtest 2: one faction
+## against the other's computer on Wether Downs, from one hall and five workers; the faction and
+## the computer's difficulty toggle under it and persist in Settings; Enter starts it),
+## "Battlefield Sandbox" (Playtest 1) and "Quit". Starting a mode shows a loading line for two
+## frames, then Main.start_match swaps in the match. UI only. The menu theme plays while it is up.
 
 const SCENARIO := "battlefield"
+const SKIRMISH := "slice"
+const DIFFICULTIES: Array[String] = ["easy", "normal", "hard"]
 
-var buttons: Dictionary = {}         ## "battlefield" | "quit" -> Button
+var buttons: Dictionary = {}         ## "skirmish" | "battlefield" | "quit" -> Button
 var status: Label
 var _starting: bool = false
 
@@ -43,20 +47,42 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 12)
 	panel.add_child(box)
-	var start := UiStyle.button(Defs.text("menu_battlefield"), 24, 420.0)
+	var skirmish := UiStyle.button(Defs.text("menu_skirmish"), 24, 420.0)
+	skirmish.name = "Skirmish"
+	box.add_child(skirmish)
+	box.add_child(_hint(Defs.text("menu_skirmish_hint")))
+	var setup := HBoxContainer.new()
+	setup.add_theme_constant_override("separation", 10)
+	box.add_child(setup)
+	var faction := UiStyle.button("", 16, 205.0)
+	faction.name = "Faction"
+	setup.add_child(faction)
+	var level := UiStyle.button("", 16, 205.0)
+	level.name = "Difficulty"
+	setup.add_child(level)
+	faction.pressed.connect(func() -> void:
+		Settings.skirmish_faction = "clans" if Settings.skirmish_faction == "kingdom" else "kingdom"
+		Settings.save_settings()
+		_refresh_setup())
+	level.pressed.connect(func() -> void:
+		var i := DIFFICULTIES.find(Settings.ai_difficulty)
+		Settings.ai_difficulty = DIFFICULTIES[(i + 1) % DIFFICULTIES.size()]
+		Settings.save_settings()
+		_refresh_setup())
+	box.add_child(HSeparator.new())
+	var start := UiStyle.button(Defs.text("menu_battlefield"), 22, 420.0)
 	start.name = "Battlefield"
 	box.add_child(start)
-	var hint := UiStyle.label(Defs.text("menu_battlefield_hint"), 15, UiStyle.TEXT_DIM)
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.custom_minimum_size = Vector2(420, 0)
-	box.add_child(hint)
+	box.add_child(_hint(Defs.text("menu_battlefield_hint")))
 	box.add_child(HSeparator.new())
 	var quit := UiStyle.button(Defs.text("menu_quit"), 22, 420.0)
 	quit.name = "Quit"
 	box.add_child(quit)
 	status = UiStyle.label("", 20, UiStyle.TEXT_GOLD)
 	column.add_child(status)
-	buttons = {"battlefield": start, "quit": quit}
+	buttons = {"skirmish": skirmish, "battlefield": start, "quit": quit, "faction": faction, "difficulty": level}
+	_refresh_setup()
+	skirmish.pressed.connect(start_skirmish)
 	start.pressed.connect(start_battlefield)
 	quit.pressed.connect(func() -> void: get_tree().quit())
 	var footer := UiStyle.label("Playtest build  -  F10 in game opens the menu", 14, UiStyle.TEXT_DIM)
@@ -66,8 +92,32 @@ func _ready() -> void:
 	add_child(footer)
 
 
+## Skirmish setup labels: the faction played and the computer's difficulty (Settings).
+func _refresh_setup() -> void:
+	var fid := Settings.skirmish_faction if Settings.skirmish_faction in ["kingdom", "clans"] else "kingdom"
+	(buttons["faction"] as Button).text = Defs.text("menu_play_as") % Defs.text("faction_name_" + fid)
+	var diff := Settings.ai_difficulty if DIFFICULTIES.has(Settings.ai_difficulty) else "normal"
+	(buttons["difficulty"] as Button).text = Defs.text("menu_computer") % Defs.text("menu_difficulty_" + diff)
+
+
+func _hint(text: String) -> Label:
+	var hint := UiStyle.label(text, 15, UiStyle.TEXT_DIM)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.custom_minimum_size = Vector2(420, 0)
+	return hint
+
+
+## "Skirmish": loading line, then the match replaces this scene.
+func start_skirmish() -> void:
+	_start(SKIRMISH)
+
+
 ## "Battlefield Sandbox": loading line, then the match replaces this scene.
 func start_battlefield() -> void:
+	_start(SCENARIO)
+
+
+func _start(scenario: String) -> void:
 	if _starting:
 		return
 	_starting = true
@@ -76,11 +126,11 @@ func start_battlefield() -> void:
 	status.text = Defs.text("menu_loading")
 	await get_tree().process_frame
 	await get_tree().process_frame
-	Main.start_match(get_tree(), SCENARIO)
+	Main.start_match(get_tree(), scenario)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo \
 			and (event as InputEventKey).keycode in [KEY_ENTER, KEY_KP_ENTER]:
-		start_battlefield()
+		start_skirmish()
 		get_viewport().set_input_as_handled()
