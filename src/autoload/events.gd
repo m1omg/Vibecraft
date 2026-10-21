@@ -7,6 +7,9 @@ extends Node
 
 signal unit_spawned(u: Node)
 signal unit_died(u: Node, killer: Node)
+## A unit left the sim without dying (World.remove_unit: a cancelled site, a picked-up item, a
+## defeated player's units); it is freed at the end of the tick.
+signal unit_removed(u: Node)
 signal unit_damaged(u: Node, amount: float, src: Node)
 signal order_issued(u: Node, order: RefCounted)
 signal building_completed(u: Node)

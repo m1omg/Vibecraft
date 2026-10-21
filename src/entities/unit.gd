@@ -716,6 +716,8 @@ func sim_tick(dt: float) -> void:
 		_advance_swing(dt)
 	else:
 		desired = _think(dt)
+		if hidden:
+			return        # the order just took it inside (a Gold Seam, a garrison): no step this tick
 	if rooted:
 		desired = Vector3.ZERO
 	_steer_and_move(desired, dt)

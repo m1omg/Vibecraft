@@ -381,6 +381,7 @@ func remove_unit(u: Unit) -> void:
 		s.on_unit_removed(u)
 	_removed.append(u)
 	u.visible = false
+	Events.unit_removed.emit(u)
 
 
 ## Hides a unit inside something (a gold mine, a garrison): out of the spatial hash, so it is

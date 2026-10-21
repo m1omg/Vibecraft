@@ -235,3 +235,32 @@ func test_a_seam_runs_dry() -> void:
 			busy += 1
 	assert_eq(busy, 0, "the miners went idle")
 	assert_eq(w.player(0).gold - g0, 1520, "every last coin was delivered")
+
+
+## A miner hidden inside a seam stays out of the spatial hash even when its order hides it in
+## the middle of its tick (neighbours still push it); it comes back out exactly once. A stale
+## or doubled entry would outlive the unit and crash target queries once it is freed.
+func test_hidden_miners_stay_out_of_the_spatial_hash() -> void:
+	var w := make_world(flat_map(48, 48))
+	var b := _base(w)
+	var five := _workers(w, 5, 0, "kingdom_hodman", b["mine"].pos + Vector3(-4.0, 0, 0))
+	_mine_with(w, five, b["mine"])
+	var hidden_seen := 0
+	for t in 30 * 40:
+		w.step()
+		var entries := {}
+		for bucket: Array in w.spatial._buckets:
+			for o: Variant in bucket:
+				var iid: int = (o as Object).get_instance_id()
+				assert_false(entries.has(iid), "a unit is in the hash once (tick %d)" % w.tick_count)
+				entries[iid] = true
+		for u in five:
+			if u.hidden:
+				hidden_seen += 1
+				assert_eq(u.hash_bucket, -1, "a hidden miner is out of the hash (tick %d)" % w.tick_count)
+				assert_false(entries.has(u.get_instance_id()), "and out of every bucket")
+			else:
+				assert_true(entries.has(u.get_instance_id()), "a visible miner is in the hash")
+		if not failures.is_empty():
+			return
+	assert_true(hidden_seen > 0, "miners went inside")

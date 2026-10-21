@@ -38,6 +38,7 @@ func _ready() -> void:
 	for i in 10:
 		groups[i] = []
 	Events.unit_died.connect(_on_unit_died)
+	Events.unit_removed.connect(_on_unit_removed)
 	Events.fog_updated.connect(_on_fog_updated)
 
 
@@ -370,6 +371,12 @@ func _all_own(units: Array) -> bool:
 
 
 func _on_unit_died(u: Node, _killer: Node) -> void:
+	_on_unit_removed(u)
+
+
+## A unit that dies or leaves the sim (a cancelled site, a defeated player's units) drops out of
+## the selection and the control groups before it is freed.
+func _on_unit_removed(u: Node) -> void:
 	for n in 10:
 		(groups[n] as Array).erase(u)
 	if selected.has(u):

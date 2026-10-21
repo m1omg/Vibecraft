@@ -209,3 +209,20 @@ func test_repair_rate_and_cost() -> void:
 	var credit := croft.max_hp / (95.0 * 0.3)
 	assert_true(croft.hp <= croft.max_hp * 0.5 + credit + 0.5, "no gold: the repair waits (%.1f HP)" % croft.hp)
 	assert_true(hod.current != null and hod.current.type == Order.Type.REPAIR, "the worker waits on site")
+
+
+## A selected site that is cancelled (World.remove_unit) drops out of the selection and the
+## control groups at once (Events.unit_removed), before it is freed.
+func test_cancelled_site_leaves_the_selection() -> void:
+	var w := _world()
+	var sel := Selection.new()
+	track(sel)
+	tree.root.add_child(sel)
+	sel.setup(w, null, 0)
+	var site := w.construction.start_site(0, "kingdom_croft", Vector3(40, 0, 30))
+	sel.select_units([site])
+	sel.groups[1] = [site]
+	w.issue({"type": "cancel", "player": 0, "units": [site.id]})
+	w.step()
+	assert_true(sel.selected.is_empty(), "the cancelled site left the selection")
+	assert_true((sel.groups[1] as Array).is_empty(), "and its control group")

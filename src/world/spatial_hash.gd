@@ -73,14 +73,14 @@ func remove(u: Unit) -> void:
 	count -= 1
 
 
-## Call after changing u.pos.
+## Call after changing u.pos. Moves an entry between buckets only: a unit that is not in the
+## hash (hidden in a mine or a garrison, removed) stays out; insert() alone adds.
 func update(u: Unit) -> void:
 	var b := bucket_of(u.pos)
 	var old := u.hash_bucket
-	if b == old:
+	if b == old or old < 0:
 		return
-	if old >= 0:
-		_take(u, old)
+	_take(u, old)
 	_add(u, b)
 	u.hash_bucket = b
 
