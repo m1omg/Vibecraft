@@ -52,7 +52,21 @@ func _forget(u: Unit) -> void:
 
 # --- placement -----------------------------------------------------------------------------
 
-## Placement check for `def_id` centred at `pos` (snapped to the footprint grid).
+## Placement grid cell states (cell_states; the ghost's grid, juice BLD-02).
+const CELL_CONTEXT := 0       ## the border around the footprint (drawn for context only)
+const CELL_OK := 1
+const CELL_BLOCKED := 2       ## pathing (buildings, trees) or a foreign unit
+const CELL_TERRAIN := 3       ## not level: ramp, water, cliff step, map edge tile
+const CELL_UNEXPLORED := 4
+const CELL_RULE := 5          ## a hall within the 6.0 m gap of a Gold Seam
+const CELL_OUTSIDE := 6       ## off the map
+## Worst cell first -> can_place reason.
+const REASON_OF: Array = [[CELL_OUTSIDE, "out_of_bounds"], [CELL_TERRAIN, "not_flat"],
+	[CELL_BLOCKED, "blocked"], [CELL_UNEXPLORED, "unexplored"], [CELL_RULE, "too_close_to_mine"]]
+
+
+## Placement check for `def_id` centred at `pos` (snapped to the footprint grid): every
+## footprint cell must be OK (cell_states).
 ## Returns {ok: bool, reason: String (error key), rect: Rect2i (cells), pos: Vector3 (snapped)}.
 func can_place(pid: int, def_id: String, pos: Vector3) -> Dictionary:
 	var d := Defs.unit(def_id)
@@ -60,67 +74,110 @@ func can_place(pid: int, def_id: String, pos: Vector3) -> Dictionary:
 	if d.is_empty() or d.get("kind") != "building" or d.get("upgrade_only", false):
 		out["reason"] = "cannot_build"
 		return out
-	var fp: Array = d["footprint"]
-	var size := Vector2i(int(fp[0]), int(fp[1]))
-	var spot := Grid.snap_to_footprint(pos, size)
-	var rect := Grid.footprint_rect(spot, size)
-	out["rect"] = rect
-	out["pos"] = spot
-	var m := world.map
-	if rect.position.x < 0 or rect.position.y < 0 or rect.end.x > m.size_cells().x or rect.end.y > m.size_cells().y:
-		out["reason"] = "out_of_bounds"
-		return out
-	var t0 := Grid.cell_to_tile(rect.position)
-	var t1 := Grid.cell_to_tile(rect.end - Vector2i.ONE)
-	var lvl := m.level_at_tile(t0.x, t0.y)
-	for ty in range(t0.y, t1.y + 1):
-		for tx in range(t0.x, t1.x + 1):
-			var i := m.idx(tx, ty)
-			if m.ramp[i] > 0 or m.water[i] == 1 or m.is_boundary_tile(tx, ty) or m.cliff[i] != lvl:
-				out["reason"] = "not_flat"
-				return out
-	if not world.pathing.is_rect_free(rect) or _foreign_units_in(pid, rect):
-		out["reason"] = "blocked"
-		return out
-	if world.fog != null and not world.fog.is_explored(pid, spot):
-		out["reason"] = "unexplored"
-		return out
-	if (d.get("flags", []) as Array).has("town_hall") and _too_close_to_mine(rect):
-		out["reason"] = "too_close_to_mine"
-		return out
+	var cs := cell_states(pid, def_id, pos, 0)
+	out["rect"] = cs["rect"]
+	out["pos"] = cs["pos"]
+	var states: PackedByteArray = cs["states"]
+	for r: Array in REASON_OF:
+		if states.has(int(r[0])):
+			out["reason"] = str(r[1])
+			return out
 	out["ok"] = true
 	return out
 
 
-## Units of another player (or flying units of nobody) standing in the footprint block it; the
-## builder's own units are pushed out when the site starts (rules §4.6).
-func _foreign_units_in(pid: int, rect: Rect2i) -> bool:
+## The footprint of `def_id` snapped at `pos`, grown by `border` cells, cell by cell (rules §4.6:
+## level ground, free of buildings, trees and foreign units, explored, a hall 6.0 m from any
+## Gold Seam). Returns {rect: Rect2i (footprint), outer: Rect2i (with the border), pos: Vector3
+## (snapped centre), states: PackedByteArray (outer row-major, CELL_*)}. Reads only.
+func cell_states(pid: int, def_id: String, pos: Vector3, border: int = 2) -> Dictionary:
+	var d := Defs.unit(def_id)
+	var fp: Array = d.get("footprint", [1, 1])
+	var size := Vector2i(int(fp[0]), int(fp[1]))
+	var spot := Grid.snap_to_footprint(pos, size)
+	var rect := Grid.footprint_rect(spot, size)
+	var outer := rect.grow(border)
+	var states := PackedByteArray()
+	states.resize(outer.size.x * outer.size.y)
+	var m := world.map
+	var cells := m.size_cells()
+	var t0 := Grid.cell_to_tile(rect.position)
+	var lvl := m.level_at_tile(t0.x, t0.y) if rect.position.x >= 0 and rect.position.y >= 0 \
+		and rect.position.x < cells.x and rect.position.y < cells.y else -1
+	var units := _foreign_units_near(pid, rect)
+	var mines: Array[Rect2i] = []
+	if (d.get("flags", []) as Array).has("town_hall"):
+		for u in world.unit_list:
+			if u.has_flag("gold_mine") and u.footprint.size != Vector2i.ZERO:
+				mines.append(u.footprint)
+	var gap := float(Defs.rule("economy.hall_mine_gap", 6.0))
+	var fog := world.fog
+	for y in outer.size.y:
+		for x in outer.size.x:
+			var c := outer.position + Vector2i(x, y)
+			var i := y * outer.size.x + x
+			if not rect.has_point(c):
+				states[i] = CELL_CONTEXT
+			elif c.x < 0 or c.y < 0 or c.x >= cells.x or c.y >= cells.y:
+				states[i] = CELL_OUTSIDE
+			else:
+				var t := Grid.cell_to_tile(c)
+				var ti := m.idx(t.x, t.y)
+				if m.ramp[ti] > 0 or m.water[ti] == 1 or m.is_boundary_tile(t.x, t.y) or m.cliff[ti] != lvl:
+					states[i] = CELL_TERRAIN
+				elif not world.pathing.is_walkable(c) or _unit_in_cell(units, c):
+					states[i] = CELL_BLOCKED
+				elif fog != null and not fog.is_explored(pid, Grid.cell_to_world(c)):
+					states[i] = CELL_UNEXPLORED
+				elif _near_mine(mines, c, gap):
+					states[i] = CELL_RULE
+				else:
+					states[i] = CELL_OK
+	return {"rect": rect, "outer": outer, "pos": spot, "states": states}
+
+
+## Units of another player (or flying units of nobody) near `rect` that can block it, as
+## [Vector2 (x, z), half radius]; the builder's own units are pushed out when the site starts
+## (rules §4.6).
+func _foreign_units_near(pid: int, rect: Rect2i) -> Array:
 	var area := Rect2(rect.position.x * Grid.CELL, rect.position.y * Grid.CELL, rect.size.x * Grid.CELL,
 		rect.size.y * Grid.CELL)
+	var out: Array = []
 	for u in world.unit_list:
 		if not u.alive or u.hidden or u.is_flying or not u.is_mobile() or u.player_id == pid:
 			continue
-		if area.grow(u.radius * 0.5).has_point(Vector2(u.pos.x, u.pos.z)):
+		var p := Vector2(u.pos.x, u.pos.z)
+		if area.grow(u.radius * 0.5).has_point(p):
+			out.append([p, u.radius * 0.5])
+	return out
+
+
+static func _unit_in_cell(units: Array, c: Vector2i) -> bool:
+	for e: Array in units:
+		var r := Rect2(c.x * Grid.CELL, c.y * Grid.CELL, Grid.CELL, Grid.CELL).grow(float(e[1]))
+		if r.has_point(e[0]):
 			return true
 	return false
 
 
-func _too_close_to_mine(rect: Rect2i) -> bool:
-	var gap := float(Defs.rule("economy.hall_mine_gap", 6.0))
-	for u in world.unit_list:
-		if u.has_flag("gold_mine") and u.footprint.size != Vector2i.ZERO:
-			var dx := maxi(0, maxi(rect.position.x - u.footprint.end.x, u.footprint.position.x - rect.end.x))
-			var dz := maxi(0, maxi(rect.position.y - u.footprint.end.y, u.footprint.position.y - rect.end.y))
-			if Vector2(dx, dz).length() * Grid.CELL < gap - 1e-3:
-				return true
+## True when cell `c` lies within `gap` metres of a Gold Seam footprint.
+static func _near_mine(mines: Array[Rect2i], c: Vector2i, gap: float) -> bool:
+	for f in mines:
+		var dx := maxi(0, maxi(c.x - (f.end.x - 1), f.position.x - c.x) - 1)
+		var dz := maxi(0, maxi(c.y - (f.end.y - 1), f.position.y - c.y) - 1)
+		if Vector2(dx, dz).length() * Grid.CELL < gap - 1e-3:
+			return true
 	return false
 
 
-## BUILD order validation on issue (cost checked at order time, rules §4.6).
+## BUILD order validation on issue (cost checked at order time, rules §4.6; menus, tier and
+## requirements by Tech.can_build).
 func can_order_build(worker: Unit, o: Order) -> bool:
 	if o.target_id != 0:
 		var site := world.get_unit(o.target_id)
 		return site != null and site.under_construction and site.player_id == worker.player_id
+	if world.tech.can_build(worker.player_id, o.def_id) != "":
+		return false
 	if not can_place(worker.player_id, o.def_id, o.target_pos)["ok"]:
 		return false
 	var cost: Dictionary = Defs.unit(o.def_id).get("cost", {})

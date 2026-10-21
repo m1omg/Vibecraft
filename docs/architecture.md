@@ -673,7 +673,8 @@ requirements, ability unlocks. Each file's header documents the full contract.
   (arrow keys), `cam_zoom_in/out` (wheel, PgUp / PgDn), `cam_drag` (middle mouse), `select`
   (LMB), `command` (RMB), `queue_modifier` (shift), `cancel` (Esc), `menu` (F10), `jump_alert`
   (space), `subgroup_next` (tab; with shift it cycles back), `select_hero_1..3` (F1–F3),
-  `cycle_halls` (Backspace), `group_0..9` (digit keys; ctrl/shift read from event modifiers),
+  `cycle_halls` (Backspace), `idle_worker` (F8, backtick; ctrl = every idle worker),
+  `group_0..9` (digit keys; ctrl/shift read from event modifiers),
   `card_0..11` (command card grid Q W E R / A S D F / Z X C V, row-major).
 - `RtsCamera` (`extends Camera3D`): looks at a ground `focus` point from `distance` along a fixed
   pitch (-56°; `main.gd` applies `RenderProfile`: FOV 55° vertical `KEEP_HEIGHT`, distance
@@ -711,20 +712,46 @@ requirements, ability unlocks. Each file's header documents the full contract.
   Main Menu, Quit to Desktop; placeholder for juice HUD-11) and cancels a pending targeting mode.
   No pause over the end banner. `CommandInput` is pausable: no orders are given while paused
   (`activate_card`/`command_ground` refuse).
+- `CardModel` (`src/ui/card_model.gd`, static): the 4×3 card as data for the active subgroup
+  (`CommandInput.active_units()`) and page (rules §18.4): `CardModel.Entry` {slot, kind (order,
+  page, build, train, research, upgrade, rally, cancel, back), id, label, key (Classic letter),
+  action (rebindable unit-order action), targeted, state (READY, UNAFFORDABLE, LOCKED, CAPPED,
+  BUSY), reason (error key), cost, short (shortfall), level, missing (names)}. Unit card: slots
+  0–4 Move, Stop, Hold, Attack, Patrol; workers add 5 Build (B) and 6 Build Advanced (V) pages, 7
+  Gather (G), 8 Return Cargo (C, while carrying), 9 Repair. Build pages: the faction's
+  `build_basic` / `build_advanced` in data order, 11 Back (Esc). Building card: `trains`,
+  `research` (a completed line leaves its slot empty), `upgrades_to` in data order in slots 0–6,
+  8–10, 7 Rally (`rally: true`), 11 Cancel while something is queued; a site shows Cancel only.
+  States come from `Production.can_train` / `can_queue_research` and `Tech.can_build`.
+  `describe(...)` gives the tooltip lines.
 - `CommandInput` (`Node`, placed after `Selection` so it sees input first): right-click smart
-  command (ground → move, unit → smart target), shift-queue. Card (rules §18.4): slot 0 Move,
-  1 Stop, 2 Hold, 3 Attack (attack-move on the ground, attack on an enemy), 4 Patrol, shown only
-  when an own mobile unit is selected (`has_orderable()`). **Hotkey presets**
+  command (ground → move, unit → smart target, a production building → rally), shift-queue.
+  The card is `current_card()` (CardModel) on `page`. **Hotkey presets**
   (`Settings.active_hotkey_preset()`: `Settings.hotkey_preset`, else
-  `rules.controls.hotkey_preset`): **Classic** (default) uses the mnemonic actions `cmd_move` M,
-  `cmd_stop` S, `cmd_hold` H, `cmd_attack` A, `cmd_patrol` P ("A-click" attack-move); **Grid**
-  uses `card_0..11` by position (Q W E R / A S D F / Z X C V). `CommandInput.hotkey_action(slot)`
-  names the action of a slot under the active preset (the card's hotkey label reads it).
-  Targeted commands enter targeting mode (cross cursor, left-click confirms, right-click/Esc
-  cancels; attack-move confirmed on an enemy becomes an attack); shows a short order marker
-  ring. `activate_card(slot, shift)` is shared by hotkeys and HUD buttons; `command_ground(pos,
-  shift)` serves the minimap. Later: ability targeting and the build placement ghost
-  (green/red footprint).
+  `rules.controls.hotkey_preset`): **Classic** (default) uses each entry's letter (unit orders
+  through the mnemonic actions `cmd_move` M, `cmd_stop` S, `cmd_hold` H, `cmd_attack` A,
+  `cmd_patrol` P; "A-click" attack-move); **Grid** uses `card_0..11` by position (Q W E R /
+  A S D F / Z X C V). `slot_for_key(event)`; `hotkey_action(slot)` names a unit-order slot's
+  action. Targeted commands (move, attack, patrol, gather, repair, rally) enter targeting mode
+  (cross cursor, left-click confirms, right-click/Esc cancels; attack-move confirmed on an enemy
+  becomes an attack; gather needs a Gold Seam or a tree, repair a damaged own building or
+  machine, or helps build an own site); a build entry enters placement (`targeting == "place"`,
+  `placing`, the `BuildPlacement` ghost; a click sends the nearest worker of the subgroup, Shift
+  queues on the same worker and keeps placing). Esc leaves targeting, then a build page, then
+  presses the card's Cancel. Train goes to the selected building with the shortest queue.
+  `activate_card(slot, shift)` is shared by hotkeys and HUD buttons; `command_ground(pos,
+  shift)` serves the minimap (no placement there); `cancel_queue_slot(building, i)` serves the
+  queue panel. Refusals never reach the sim: deny sound, `denied(reason, short, slot)` and an
+  `error_*` notification.
+- `BuildPlacement` (`src/input/build_placement.gd`, under World, visual only; juice BLD-01/02):
+  the building's model (`UnitView.add_structure_parts` / `structure_fit`, a block when there is
+  none) in the 3-pass sketch material (`sketch_depth/fill/ink.gdshader`: depth prepass, paper
+  fill with sun-side hatching, inverted-hull ink; red ink and a crossing hatch when refused, grey
+  ink when unaffordable; 8-steps-a-second line boil) on an exact spring (ω 40, ζ 0.72) to the
+  snapped footprint, over a per-cell grid (`placement_grid.gdshader`, no depth test) built from
+  `Construction.cell_states` (footprint + a 2-cell border: OK, blocked, not level, unexplored, a
+  hall's Gold Seam gap). `Construction.can_place` is the same cell check, so the grid and the
+  rule never disagree (`test_hud`). `screen_override` lets tests and screenshots aim it.
 - **Juice runtime** (`src/fx/`, juice bible §4; visual only, never writes sim state, never reads
   `World.rng`; tests: `test_juice*.gd`). Rules: gameplay only in the 30 Hz tick, every juice
   curve a closed-form function of time (exact springs, `Juice.damp`, latched peaks, stateless
@@ -791,13 +818,25 @@ requirements, ability unlocks. Each file's header documents the full contract.
   cancels it, rules §18.1, `test_minimap_orders`), portrait panel (placeholder: type colour + initials;
   later a 3D SubViewport), selected-unit name + HP/mana/damage/range/cooldown/armor/speed text,
   multi-selection grid (coloured squares with initials + HP strip; click selects that unit,
-  shift-click removes it) and `CommandCard` (`command_card.gd`, 4×3 buttons with label +
-  hotkey, active targeting mode shown pressed). The bar and console have mouse filter STOP so
-  HUD clicks never reach world selection/commands; buttons never take keyboard focus.
-  `Hud.covers(screen_pos)` reports HUD areas. A notification line above the console shows the
-  local player's `Events.notification` text for 4.5 s (under attack, the war-band marching;
-  placeholder for juice NTF-*). The selected hero's title carries its level. Still to come: hero
-  portraits (left edge), idle worker button, chat area, tooltips, real art (original, no WC3 UI
+  shift-click removes it), a site's construction progress, a building's `QueuePanel`
+  (`queue_panel.gd`, HUD-09: 7 slots, the head's progress bar and time left, a slot waiting for
+  food greys with the loaf glyph, click = cancel that slot) and `CommandCard`
+  (`command_card.gd`, 4×3 `CardButton`s (`card_button.gd`, HUD-05: label, hotkey chip, locked =
+  desaturated + lock, unaffordable = hatch + short-resource glyph that wipes away when
+  affordable, capped chip, deny shake + red flash), refreshed 10 times a second; the armed
+  targeting mode or the building being placed shows pressed). Around the console: the
+  `IdleWorkerButton` (NTF-05: count badge, F8 / backtick next idle worker longest idle first,
+  round robin, Ctrl = all), the `ErrorLine` (HUD-06: `error_*` notifications, repeat = shake),
+  the `HudTooltip` (HUD-02: 250 ms dwell, 500 ms warm window, docked above the card's top-right
+  corner, cost row with shortfalls, description, requirements in red; rebuilt only when its
+  content changes) and the top bar's states (food amber at the cap, the upkeep tier's colour, a
+  refused cost shakes its counter and drops its shortfall under it). Glyphs (coin, log, loaf,
+  clock) are drawn by `UiGlyphs` until icon art exists. The bar and console have mouse filter
+  STOP so HUD clicks never reach world selection/commands; buttons never take keyboard focus.
+  `Hud.covers(screen_pos)` reports HUD areas. A notification line above the error line shows
+  the local player's other `Events.notification` text for 4.5 s (under attack, the war-band
+  marching, building done; placeholder for juice NTF-*). The selected hero's title carries its
+  level. Still to come: hero portraits (left edge), chat area, real art (original, no WC3 UI
   art).
 - Scenario UI (Main, battlefield only): an objective line under the top bar (goal + war-band
   countdown) and the `EndBanner` (`src/ui/end_banner.gd`: Victory / Defeat / Stalemate, battle

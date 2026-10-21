@@ -514,22 +514,8 @@ func _load_model(path: String) -> bool:
 	model = inst
 	model.name = "Model"
 	if is_structure:
-		model_scale = _structure_scale(path)
-		var addon_of := str(AssetLibrary.building_entry(path).get("addon_of", ""))
-		if not addon_of.is_empty():
-			# T2 hall upgrades are add-ons in the T1 hall's model space: show both
-			var base_path := AssetLibrary.model_path({}, addon_of)
-			var base := AssetLibrary.instantiate(base_path, "structure") if not base_path.is_empty() else null
-			if base != null:
-				base.name = "Base"
-				model.add_child(base)
-		# data add-ons (SCHEMA `model_addons`): drawn in the base model's space, so they share its scale
-		for a: Variant in unit.def.get("model_addons", []):
-			var ap := AssetLibrary.model_path({"model": str(a)}, "")
-			var add := AssetLibrary.instantiate(ap, "structure") if not ap.is_empty() else null
-			if add != null:
-				add.name = "Addon"
-				model.add_child(add)
+		model_scale = structure_fit(unit.def, path)
+		add_structure_parts(model, unit.def, path)
 	else:
 		_entry = AssetLibrary.unit_entry(path)
 		model_scale = float(unit.def.get("model_scale", unit.def.get("scale", 1.0)))
@@ -553,12 +539,31 @@ func _load_model(path: String) -> bool:
 	return true
 
 
+## A structure model's base (T2 hall upgrades are add-ons in the T1 hall's model space: both
+## show) and its data add-ons (SCHEMA `model_addons`, drawn in the base model's space, so they
+## share its scale), added under `model`. Shared with the build ghost (BuildPlacement).
+static func add_structure_parts(model: Node3D, d: Dictionary, path: String) -> void:
+	var addon_of := str(AssetLibrary.building_entry(path).get("addon_of", ""))
+	if not addon_of.is_empty():
+		var base_path := AssetLibrary.model_path({}, addon_of)
+		var base := AssetLibrary.instantiate(base_path, "structure") if not base_path.is_empty() else null
+		if base != null:
+			base.name = "Base"
+			model.add_child(base)
+	for a: Variant in d.get("model_addons", []):
+		var ap := AssetLibrary.model_path({"model": str(a)}, "")
+		var add := AssetLibrary.instantiate(ap, "structure") if not ap.is_empty() else null
+		if add != null:
+			add.name = "Addon"
+			model.add_child(add)
+
+
 ## Uniform scale that fits a structure model to its data footprint (sim footprint = mesh width).
-func _structure_scale(path: String) -> float:
-	var fp: Array = unit.def.get("footprint", [0, 0])
+static func structure_fit(d: Dictionary, path: String) -> float:
+	var fp: Array = d.get("footprint", [0, 0])
 	var fp_m := maxf(float(fp[0]), float(fp[1])) * Grid.CELL
-	if fp_m <= 0.0 or str(unit.def.get("model_fit", "footprint")) == "none":
-		return float(unit.def.get("model_scale", unit.def.get("scale", 1.0)))
+	if fp_m <= 0.0 or str(d.get("model_fit", "footprint")) == "none":
+		return float(d.get("model_scale", d.get("scale", 1.0)))
 	var entry := AssetLibrary.building_entry(path)
 	var model_fp := 0.0
 	if entry.has("footprint_m"):

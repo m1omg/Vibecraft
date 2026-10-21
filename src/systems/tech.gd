@@ -86,6 +86,26 @@ func requirements_met(pid: int, id: String) -> bool:
 	return missing_requirements(pid, id).is_empty()
 
 
+## "" when `pid` may start a `def_id` site: on its faction's build menus (factions.<id>.
+## build_basic / build_advanced), its hall tier reached (the first hall needs none) and its
+## `requires` met; else an error key (cannot_build, tier, requirements).
+func can_build(pid: int, def_id: String) -> String:
+	var d := Defs.unit(def_id)
+	if d.is_empty() or d.get("kind") != "building" or d.get("upgrade_only", false):
+		return "cannot_build"
+	var p := world.player(pid)
+	if p != null and p.faction != "":
+		var fac := Defs.faction(p.faction)
+		if fac.has("build_basic") and not (fac["build_basic"] as Array).has(def_id) \
+				and not (fac.get("build_advanced", []) as Array).has(def_id):
+			return "cannot_build"
+	if int(d.get("tier", 1)) > maxi(tier(pid), 1):
+		return "tier"
+	if not requirements_met(pid, def_id):
+		return "requirements"
+	return ""
+
+
 func _owns_finished(pid: int, def_id: String) -> bool:
 	var p := world.player(pid)
 	var tiers: Array = Defs.faction(p.faction).get("hall_tiers", []) if p != null and p.faction != "" else []
@@ -214,7 +234,11 @@ static func _add(mods: Dictionary, k: String, v: float) -> void:
 ## Damage a unit gains per weapon level: its def's `upgrade_damage`, else 10 % of its average
 ## damage, rounded, at least 1 (rules §5.4).
 static func upgrade_damage_of(u: Unit) -> float:
-	if u.def.has("upgrade_damage"):
-		return float(u.def["upgrade_damage"])
-	var dmg: Array = (u.def.get("attack", {}) as Dictionary).get("damage", [0, 0])
+	return upgrade_damage_for(u.def)
+
+
+static func upgrade_damage_for(d: Dictionary) -> float:
+	if d.has("upgrade_damage"):
+		return float(d["upgrade_damage"])
+	var dmg: Array = (d.get("attack", {}) as Dictionary).get("damage", [0, 0])
 	return maxf(1.0, roundf((float(dmg[0]) + float(dmg[1])) * 0.5 * 0.1))

@@ -50,6 +50,7 @@ static func default_actions() -> Dictionary:
 		"jump_alert": [{"key": KEY_SPACE}],
 		"subgroup_next": [{"key": KEY_TAB}],     # Shift+Tab cycles backwards (Selection)
 		"cycle_halls": [{"key": KEY_BACKSPACE}],
+		"idle_worker": [{"key": KEY_F8}, {"key": KEY_QUOTELEFT}],   # Ctrl selects every idle worker
 		"select_hero_1": [{"key": KEY_F1}],
 		"select_hero_2": [{"key": KEY_F2}],
 		"select_hero_3": [{"key": KEY_F3}],
