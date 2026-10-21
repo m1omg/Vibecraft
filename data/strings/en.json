@@ -111,5 +111,7 @@
   "menu_difficulty_easy": "Easy",
   "menu_difficulty_normal": "Normal",
   "menu_difficulty_hard": "Hard",
-  "notice_upkeep_up": "%s: mined gold is now taxed more. Fewer mouths, more gold."
+  "notice_upkeep_up": "%s: mined gold is now taxed more. Fewer mouths, more gold.",
+  "objective_cripple": "No hall stands. Raise one within %d:%02d or the enemy will see every building we have.",
+  "objective_cripple_revealed": "No hall stands: the enemy sees every building we have until we raise one."
 }

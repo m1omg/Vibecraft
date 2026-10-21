@@ -304,10 +304,26 @@ func _on_match_ended(winner: int) -> void:
 func _process(_delta: float) -> void:
 	if battle != null:
 		_set_objective()
+	elif match_rules != null:
+		_set_cripple_line()
 	var hour := DayNight.hour_at(world.time)
 	info.text = "FPS %d | tick %d | units %d | %02d:%02d | selected %d" % [
 		Engine.get_frames_per_second(), world.tick_count, world.unit_list.size(),
 		int(hour), int(fmod(hour, 1.0) * 60.0), selection.selected.size()]
+
+
+## Skirmish: while the local player has no finished hall, the objective line counts down to the
+## reveal (rules §14.4), then says the buildings are revealed.
+func _set_cripple_line() -> void:
+	var left := match_rules.cripple_left(world, world.local_player_id)
+	objective.visible = left >= 0.0 and match_rules.result.is_empty()
+	if not objective.visible:
+		return
+	var secs := ceili(left)
+	@warning_ignore("integer_division")
+	var t := Defs.text("objective_cripple") % [secs / 60, secs % 60] if secs > 0 else Defs.text("objective_cripple_revealed")
+	if objective.text != t:
+		objective.text = t
 
 
 func _set_objective() -> void:

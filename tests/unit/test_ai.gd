@@ -116,6 +116,9 @@ func test_defeat_victory_and_cripple_reveal() -> void:
 	for i in 30:
 		world.step()
 	assert_true(notes.has([0, "cripple_started"]), "the countdown starts and the player is told")
+	main._process(0.0)
+	assert_true(main.objective.visible and (main.objective.text.contains("2:00") or main.objective.text.contains("1:59")),
+		"the objective line counts down (%s)" % main.objective.text)
 	assert_false(world.player(0).defeated, "a site keeps the player in the match")
 	var enemy_sees := func() -> bool: return world.fog.can_see(1, croft)
 	assert_false(enemy_sees.call(), "the enemy cannot see the croft yet")
@@ -123,6 +126,8 @@ func test_defeat_victory_and_cripple_reveal() -> void:
 		world.step()
 	assert_true(notes.has([0, "cripple_revealed"]), "revealed after 120 s")
 	assert_true(enemy_sees.call(), "the enemy now sees our structures")
+	main._process(0.0)
+	assert_eq(main.objective.text, Defs.text("objective_cripple_revealed"), "and the line says so")
 	assert_true(ended.is_empty(), "the match goes on")
 	# defeat: the last structure falls
 	croft.take_damage(99999.0, null)
