@@ -20,6 +20,34 @@ extends SimSystem
 ##   (can_place for the ghost), Production (cancel of a site), AI.
 
 const BUILD_REACH := 1.0
+## A builder's hammer / mallet stroke (visual cadence of the work clip; progress is continuous).
+const STROKE_TICKS := 22
+
+## site id -> Array[int] of builder ids (the first is the main builder; extra builders join the
+## kingdom's Hod Chain). Progress is advanced once per site in sim_tick.
+var _builders: Dictionary = {}
+## repairer ids -> true (repair_started fires once per job).
+var _repairing: Dictionary = {}
+
+
+func hooks() -> Array[StringName]:
+	return [&"died", &"removed"]
+
+
+func on_unit_died(u: Unit, _killer: Unit) -> void:
+	_forget(u)
+
+
+func on_unit_removed(u: Unit) -> void:
+	_forget(u)
+
+
+func _forget(u: Unit) -> void:
+	if _builders.has(u.id):
+		_release_builders(u.id)
+	for sid: int in _builders:
+		(_builders[sid] as Array).erase(u.id)
+	_repairing.erase(u.id)
 
 
 # --- placement -----------------------------------------------------------------------------
@@ -51,7 +79,7 @@ func can_place(pid: int, def_id: String, pos: Vector3) -> Dictionary:
 			if m.ramp[i] > 0 or m.water[i] == 1 or m.is_boundary_tile(tx, ty) or m.cliff[i] != lvl:
 				out["reason"] = "not_flat"
 				return out
-	if not world.pathing.is_rect_free(rect):
+	if not world.pathing.is_rect_free(rect) or _foreign_units_in(pid, rect):
 		out["reason"] = "blocked"
 		return out
 	if world.fog != null and not world.fog.is_explored(pid, spot):
@@ -62,6 +90,19 @@ func can_place(pid: int, def_id: String, pos: Vector3) -> Dictionary:
 		return out
 	out["ok"] = true
 	return out
+
+
+## Units of another player (or flying units of nobody) standing in the footprint block it; the
+## builder's own units are pushed out when the site starts (rules §4.6).
+func _foreign_units_in(pid: int, rect: Rect2i) -> bool:
+	var area := Rect2(rect.position.x * Grid.CELL, rect.position.y * Grid.CELL, rect.size.x * Grid.CELL,
+		rect.size.y * Grid.CELL)
+	for u in world.unit_list:
+		if not u.alive or u.hidden or u.is_flying or not u.is_mobile() or u.player_id == pid:
+			continue
+		if area.grow(u.radius * 0.5).has_point(Vector2(u.pos.x, u.pos.z)):
+			return true
+	return false
 
 
 func _too_close_to_mine(rect: Rect2i) -> bool:
@@ -101,10 +142,47 @@ func builder_in_reach(worker: Unit, o: Order) -> bool:
 
 # --- sites ---------------------------------------------------------------------------------
 
-## The builder arrived: re-check, pay (rules.economy.build_pay "on_start"), push own units out,
-## start the site. Returns the site or null (the order then completes). Stub: null.
-func on_builder_arrived(_worker: Unit, _o: Order) -> Unit:
-	return null
+## The builder arrived: re-check the spot and the cost, pay (rules.economy.build_pay "on_start"),
+## push own units out, start the site. Returns the site or null (the order then completes; the
+## player hears why).
+func on_builder_arrived(worker: Unit, o: Order) -> Unit:
+	var pid := worker.player_id
+	var spot := can_place(pid, o.def_id, o.target_pos)
+	if not spot["ok"]:
+		_reject(pid, o.def_id, str(spot["reason"]))
+		return null
+	var cost: Dictionary = Defs.unit(o.def_id).get("cost", {})
+	if not world.economy.can_afford(pid, cost):
+		_reject(pid, o.def_id, "need_lumber" if world.economy.can_afford(pid, {"gold": int(cost.get("gold", 0))}) else "need_gold")
+		return null
+	world.economy.spend(pid, cost)
+	var rect: Rect2i = spot["rect"]
+	_push_out(pid, rect, worker)
+	var site := start_site(pid, o.def_id, spot["pos"], worker.facing)
+	if site == null:
+		world.economy.refund(pid, cost)
+		return null
+	_builders[site.id] = [worker.id]
+	Events.construction_started.emit(site, worker)
+	return site
+
+
+func _reject(pid: int, def_id: String, reason: String) -> void:
+	Events.placement_rejected.emit(pid, def_id, reason)
+	Events.notification.emit(pid, "error_" + reason, Defs.text("error_" + reason))
+
+
+## Own units standing in a new site's footprint step out to the nearest free cell beside it.
+func _push_out(pid: int, rect: Rect2i, _builder: Unit) -> void:
+	var area := Rect2(rect.position.x * Grid.CELL, rect.position.y * Grid.CELL, rect.size.x * Grid.CELL,
+		rect.size.y * Grid.CELL)
+	for u in world.unit_list:
+		if not u.alive or u.hidden or not u.is_mobile() or u.player_id != pid:
+			continue
+		if not area.grow(u.radius).has_point(Vector2(u.pos.x, u.pos.z)):
+			continue
+		var p := world.economy.approach_rect(rect, u.pos, u.radius + 0.1)
+		u.teleport(Grid.cell_to_world(world.pathing.nearest_walkable(Grid.world_to_cell(p))))
 
 
 ## Spawns an under-construction site (10 % HP, no food or function until complete).
@@ -112,27 +190,109 @@ func start_site(pid: int, def_id: String, pos: Vector3, facing: float = 0.0) -> 
 	var site := world.spawn_unit(def_id, pid, pos, facing, {"under_construction": true,
 		"hp_fraction": float(Defs.rule("economy.build_start_hp", 0.1))})
 	if site != null:
-		Events.construction_started.emit(site, null)
+		site.build_progress = 0.0
 	return site
 
 
-## An extra builder joins a site (kingdom Hod Chain). Stub: false.
-func join_site(_worker: Unit, _site: Unit, _o: Order) -> bool:
-	return false
+func _faction(pid: int) -> Dictionary:
+	var p := world.player(pid)
+	return Defs.faction(p.faction) if p != null and p.faction != "" else {}
 
 
-## One tick of building; the worker stays put. Calls worker.finish_order() when done. Stub.
-func build_tick(worker: Unit, _site: Unit, _o: Order, _dt: float) -> Vector3:
-	worker.finish_order()
+func max_builders(pid: int) -> int:
+	return maxi(1, int(_faction(pid).get("max_builders", 1)))
+
+
+## The builders currently on a site (ids, main builder first).
+func builders_of(site: Unit) -> Array:
+	return (_builders.get(site.id, []) as Array).duplicate()
+
+
+## A worker joins a site: the main builder of an abandoned site, or an extra builder while the
+## faction allows more (kingdom Hod Chain: up to 3; clans: one builder per site).
+func join_site(worker: Unit, site: Unit, _o: Order) -> bool:
+	if site == null or not site.alive or not site.under_construction or site.player_id != worker.player_id:
+		return false
+	var list: Array = _builders.get_or_add(site.id, [])
+	if list.has(worker.id):
+		return true
+	if list.size() >= max_builders(worker.player_id):
+		return false
+	list.append(worker.id)
+	return true
+
+
+## One tick of building for a worker on its site: it stays, faces the site and strikes; the
+## site's progress is advanced by sim_tick. Calls worker.finish_order() when it is not (or no
+## longer) a builder of the site.
+func build_tick(worker: Unit, site: Unit, _o: Order, dt: float) -> Vector3:
+	if not (_builders.get(site.id, []) as Array).has(worker.id):
+		if not join_site(worker, site, _o):
+			worker.end_work()
+			worker.finish_order()
+			return Vector3.ZERO
+	if worker.edge_distance(site) > BUILD_REACH + 0.5:
+		return worker.chase_point(world.economy.approach_point(site, worker), dt)
+	worker.stop_moving()
+	worker.face(site.pos, dt)
+	if worker.anim_hint != "work" or world.tick_count - worker.work_t0 >= worker.work_ticks:
+		worker.begin_work(STROKE_TICKS)
 	return Vector3.ZERO
 
 
-## A builder's BUILD order ended (done, replaced, died).
-func on_builder_left(_worker: Unit, _o: Order) -> void:
-	pass
+## A builder's BUILD order ended (done, replaced, died): it leaves the site.
+func on_builder_left(worker: Unit, o: Order) -> void:
+	worker.end_work()
+	var sid := int(o.data.get("site", o.target_id))
+	if _builders.has(sid):
+		(_builders[sid] as Array).erase(worker.id)
 
 
-## Finishes a site: function, food (World.adjust_food) and building_completed.
+func sim_tick(w: World, dt: float) -> void:
+	if _builders.is_empty():
+		return
+	var ids: Array = _builders.keys()
+	ids.sort()
+	for sid: int in ids:
+		var site := w.get_unit(sid)
+		if site == null or not site.alive or not site.under_construction:
+			_builders.erase(sid)
+			continue
+		var working := _working_builders(site)
+		if working <= 0:
+			continue
+		var fac := _faction(site.player_id)
+		var rate := 1.0 + float(fac.get("extra_builder_rate", 0.0)) * (working - 1)
+		var time := maxf(float(site.def.get("cost", {}).get("time", 1.0)), 0.1)
+		var step := rate * dt / time
+		var before := site.build_progress
+		site.build_progress = minf(1.0, before + step)
+		var gained := site.build_progress - before
+		site.hp = minf(site.max_hp, site.hp + site.max_hp * (1.0 - float(Defs.rule("economy.build_start_hp", 0.1))) * gained)
+		if site.build_progress >= 1.0:
+			complete_site(site)
+
+
+## Builders in reach this tick; extra builders (beyond the first) pay
+## factions.<id>.extra_builder_lumber_per_s and stop counting while the player cannot pay.
+func _working_builders(site: Unit) -> int:
+	var list: Array = _builders.get(site.id, [])
+	var per_s := float(_faction(site.player_id).get("extra_builder_lumber_per_s", 0.0))
+	var n := 0
+	for wid: int in list:
+		var b := world.get_unit(wid)
+		if b == null or not b.alive or b.current == null or b.current.type != Order.Type.BUILD:
+			continue
+		if b.edge_distance(site) > BUILD_REACH + 0.5:
+			continue
+		if n >= 1 and per_s > 0.0 and not world.economy.pay_fraction(site.player_id, "lumber", per_s * World.DT):
+			continue
+		n += 1
+	return n
+
+
+## Finishes a site: function, food (World.adjust_food) and building_completed; its builders go
+## idle (or on to their queued orders).
 func complete_site(site: Unit) -> void:
 	if not site.under_construction:
 		return
@@ -140,6 +300,17 @@ func complete_site(site: Unit) -> void:
 	site.build_progress = 1.0
 	world.adjust_food(site.player_id, 0, int(site.def.get("food_provided", 0)))
 	Events.building_completed.emit(site)
+	_release_builders(site.id)
+
+
+func _release_builders(sid: int) -> void:
+	var list: Array = _builders.get(sid, [])
+	_builders.erase(sid)
+	for wid: int in list:
+		var b := world.get_unit(wid)
+		if b != null and b.alive and b.current != null and b.current.type == Order.Type.BUILD:
+			b.end_work()
+			b.finish_order()
 
 
 ## Cancels a site: refunds rules.economy.build_cancel_refund of its cost and removes it.
@@ -148,6 +319,7 @@ func cancel_site(site: Unit) -> void:
 		return
 	world.economy.refund(site.player_id, site.def.get("cost", {}), float(Defs.rule("economy.build_cancel_refund", 0.75)))
 	Events.construction_cancelled.emit(site)
+	_release_builders(site.id)
 	world.remove_unit(site)
 
 
@@ -159,13 +331,36 @@ func can_repair(worker: Unit, target: Unit) -> bool:
 		and (target.is_structure() or target.is_mechanical) and target.hp < target.max_hp
 
 
-## One tick of repair (rules §4.8). Returns false when repair stops. Stub: false.
-func repair_tick(_worker: Unit, _target: Unit, _dt: float) -> bool:
-	return false
+## One tick of repair (rules §4.8): a full repair takes build time × repair_time_factor for one
+## repairer and costs repair_cost_factor of the build cost, pro rata to the HP restored, paid
+## through the fractional accumulator. Returns false when it stops (full HP, cannot pay).
+func repair_tick(worker: Unit, target: Unit, dt: float) -> bool:
+	if not can_repair(worker, target):
+		worker.end_work()
+		return false
+	if not _repairing.has(worker.id):
+		_repairing[worker.id] = true
+		Events.repair_started.emit(worker, target)
+	var cost: Dictionary = target.def.get("cost", {})
+	var time := maxf(float(cost.get("time", 30.0)), 1.0) * float(Defs.rule("economy.repair_time_factor", 1.5))
+	var frac := minf(dt / time, (target.max_hp - target.hp) / target.max_hp)
+	var k := float(Defs.rule("economy.repair_cost_factor", 0.3)) * frac
+	var eco := world.economy
+	if not eco.pay_fraction(worker.player_id, "gold", float(cost.get("gold", 0)) * k):
+		worker.end_work()
+		return true     # paused: waits for the money (the order stays)
+	if not eco.pay_fraction(worker.player_id, "lumber", float(cost.get("lumber", 0)) * k):
+		worker.end_work()
+		return true
+	target.hp = minf(target.max_hp, target.hp + target.max_hp * frac)
+	if worker.anim_hint != "work" or world.tick_count - worker.work_t0 >= worker.work_ticks:
+		worker.begin_work(STROKE_TICKS)
+	return target.hp < target.max_hp
 
 
-func on_repair_ended(_worker: Unit, _o: Order) -> void:
-	pass
+func on_repair_ended(worker: Unit, _o: Order) -> void:
+	worker.end_work()
+	_repairing.erase(worker.id)
 
 
 # --- garrison ------------------------------------------------------------------------------

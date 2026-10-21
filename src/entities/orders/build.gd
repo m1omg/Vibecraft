@@ -6,7 +6,7 @@ extends OrderHandler
 ##   Construction.join_site(worker, site, order) -> bool      extra builders (Hod Chain)
 ##   Construction.build_tick(worker, site, order, dt) -> Vector3   every tick while building;
 ##       construction calls worker.finish_order() when the site completes or is cancelled.
-## Stub behaviour until construction.gd implements sites: walk there and hand over.
+## A worker sent to help on an existing site walks to its near side.
 
 
 func can_start(u: Unit, o: Order) -> bool:
@@ -41,7 +41,7 @@ func tick(u: Unit, o: Order, dt: float) -> Vector3:
 			else:
 				u.finish_order()
 			return Vector3.ZERO
-		return u.chase_move(s, dt)
+		return u.chase_point(u.world.economy.approach_point(s, u), dt)
 	if con.builder_in_reach(u, o):
 		u.stop_moving()
 		var site := con.on_builder_arrived(u, o)

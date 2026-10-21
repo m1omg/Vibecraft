@@ -455,7 +455,11 @@ func approach_point(b: Unit, worker: Unit) -> Vector3:
 func approach_from(b: Unit, from: Vector3, body_radius: float) -> Vector3:
 	if b.footprint.size == Vector2i.ZERO:
 		return b.pos
-	var r := b.footprint
+	return approach_rect(b.footprint, from, body_radius)
+
+
+## approach_from for a footprint rectangle (cells).
+func approach_rect(r: Rect2i, from: Vector3, body_radius: float) -> Vector3:
 	var pad := body_radius + 0.05
 	var x0 := r.position.x * Grid.CELL
 	var z0 := r.position.y * Grid.CELL
