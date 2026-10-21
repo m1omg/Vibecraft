@@ -40,8 +40,8 @@
       "switch_resource_discards_load": true,
       "supply_stall_advisory": 8.0,
       "tree_retarget_radius": 8.0,
-      "gather_reach": 0.8,
-      "dropoff_reach": 0.6
+      "gather_reach": 0.25,
+      "dropoff_reach": 0.25
     },
     "regen": {"organic_hp": 0.25, "mechanical_hp": 0.0, "structure_hp": 0.0, "caster_mana": 0.65, "start_mana": 75},
     "daynight": {"cycle_length": 480.0, "dawn": 6.0, "dusk": 18.0, "sight_transition": 3.2},

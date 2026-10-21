@@ -1,8 +1,8 @@
 extends OrderHandler
 ## RETURN_RESOURCES / "Return Cargo" (owner: economy agent A). Walks the carried gold or lumber
 ## to a drop-off (o.target_id, else Economy.find_dropoff) and calls Economy.deposit on touching
-## its footprint. Completes afterwards (economy re-issues the previous gather order itself when
-## the real trip logic lands). Workers carrying nothing complete at once.
+## its footprint, then goes back to its last mine or tree (Economy.resume_gather) unless other
+## orders are queued. Workers carrying nothing complete at once.
 
 
 func can_start(u: Unit, _o: Order) -> bool:
@@ -25,5 +25,7 @@ func tick(u: Unit, o: Order, dt: float) -> Vector3:
 		u.stop_moving()
 		eco.deposit(u, b)
 		u.finish_order()
+		if u.current == null:
+			eco.resume_gather(u)    # back to the mine or tree it worked before
 		return Vector3.ZERO
-	return u.chase_move(b, dt)
+	return u.chase_point(eco.approach_point(b, u), dt)

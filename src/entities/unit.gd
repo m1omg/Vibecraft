@@ -109,6 +109,14 @@ var under_construction: bool = false   ## Construction: site still building (no 
 var build_progress: float = 1.0  ## 0..1 while under construction
 var garrison: Array[int] = []    ## unit ids inside (garrison buildings)
 var hidden: bool = false         ## out of the spatial hash (in a mine, garrisoned); World.set_hidden
+## Work animation published by Economy (chopping) and Construction (building, repairing) for the
+## view (visual readers work_progress / work_point_ratio / work_time); "" when not working.
+var anim_hint: String = ""
+var work_t0: int = -1            ## tick the current work stroke started
+var work_ticks: int = 0          ## stroke length in ticks
+## Economy: a worker on a gather trip; harvesting workers pass through each other (as in the
+## classic game), so a busy mine lane never jams.
+var harvesting: bool = false
 var lifetime_ticks: int = -1     ## summons: ticks left (-1 = permanent)
 var autocast: Dictionary = {}    ## ability id -> bool (AbilitySystem)
 var cooldowns: Dictionary = {}   ## ability / item group id -> tick when ready (AbilitySystem, ItemSystem)
@@ -382,6 +390,35 @@ func damage_point_ratio() -> float:
 
 func is_swinging() -> bool:
 	return _swing >= 0
+
+
+## Progress 0..1 of the current work stroke (chop, hammer), interpolated between ticks; -1 when
+## the unit is not working. Visual only (UnitView positions the work clip from it).
+func work_progress() -> float:
+	if anim_hint != "work" or work_t0 < 0 or work_ticks <= 0 or world == null:
+		return -1.0
+	return clampf((world.tick_count - work_t0 + _frac()) / float(work_ticks), 0.0, 1.0)
+
+
+## Where the stroke lands within it (the chop or hammer contact at the end of the stroke).
+func work_point_ratio() -> float:
+	return 0.92
+
+
+func work_time() -> float:
+	return work_ticks * World.DT
+
+
+## Starts (or restarts) a work stroke of `ticks` (Economy, Construction).
+func begin_work(ticks: int) -> void:
+	anim_hint = "work"
+	work_t0 = world.tick_count if world != null else 0
+	work_ticks = maxi(ticks, 1)
+
+
+func end_work() -> void:
+	anim_hint = ""
+	work_t0 = -1
 
 
 ## Seconds since death, interpolated between ticks (visual only).
@@ -1062,6 +1099,8 @@ func _steer_and_move(desired: Vector3, dt: float) -> void:
 		var min_d := radius + n.radius
 		var d2 := dx * dx + dz * dz
 		if d2 >= min_d * min_d or not n.alive or n.is_flying != is_flying or not n.is_mobile():
+			continue
+		if harvesting and n.harvesting:
 			continue
 		var d := sqrt(d2)
 		var nrm := Vector3(dx / d, 0.0, dz / d) if d > 0.0001 else Vector3(1.0 if id > n.id else -1.0, 0.0, 0.0)

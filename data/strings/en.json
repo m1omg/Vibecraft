@@ -34,5 +34,7 @@
   "objective_wave_in": "War-band marches in %d:%02d",
   "objective_wave_out": "The war-band is marching on your hall!",
   "notify_warband_marching": "A Tormai war-band is marching on our hall! (Space)",
-  "notify_under_attack": "Steel is drawn against us! (Space)"
+  "notify_under_attack": "Steel is drawn against us! (Space)",
+  "notice_mine_low": "This Gold Seam is running thin.",
+  "notice_mine_depleted": "A Gold Seam is worked out."
 }

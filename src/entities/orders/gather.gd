@@ -5,8 +5,8 @@ extends OrderHandler
 ##       on (it sets o.data["phase"]); false = the order completes.
 ##   Economy.gather_tick(worker, order, dt) -> Vector3   every tick while o.data has "phase"
 ##       (mine dwell, chopping, walking to the drop-off and back are economy's business).
-## The legacy World.gather_handler hook (tests) still wins when it is set.
-## Stub behaviour until economy.gd implements trips: walk there, call the hooks, complete.
+## The legacy World.gather_handler hook (tests) still wins when it is set. A mine is approached
+## on its near side (Economy.approach_point).
 
 
 func can_start(u: Unit, o: Order) -> bool:
@@ -41,7 +41,7 @@ func tick(u: Unit, o: Order, dt: float) -> Vector3:
 			i = next
 			o.data["tree"] = i
 		var tp := u.world.doodads.tree_pos(i)
-		if u.edge_distance_to_point(tp) <= reach + 0.5:
+		if u.edge_distance_to_point(tp) <= Economy.TREE_REACH:
 			u.stop_moving()
 			if not eco.on_gather_reached(u, o):
 				u.finish_order()
@@ -59,4 +59,4 @@ func tick(u: Unit, o: Order, dt: float) -> Vector3:
 		elif not eco.on_gather_reached(u, o):
 			u.finish_order()
 		return Vector3.ZERO
-	return u.chase_move(t, dt)
+	return u.chase_point(eco.approach_point(t, u), dt)
