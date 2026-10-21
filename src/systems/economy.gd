@@ -162,7 +162,7 @@ func upkeep_factor(pid: int) -> float:
 #           "to_dropoff" -> deposit -> "back" -> "queue" ...
 #   lumber: "chop" (1 lumber per chop_interval until lumber_per_trip) -> "to_dropoff" -> deposit
 #           -> "back" (to the tree, or the nearest living one within tree_retarget_radius) ...
-# The worker's last gather target is remembered, so Return Cargo goes back to work afterwards.
+# The worker's last gather target is remembered, so Return Cargo resumes it afterwards.
 
 ## A worker chops when its edge is this close to the tree's centre (the trunk fills a 1 m cell).
 const TREE_REACH := 0.8

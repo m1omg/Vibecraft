@@ -2,7 +2,7 @@ extends "res://tests/test_case.gd"
 ## The economy (src/systems/economy.gd, rules §4): the gold loop saturates at five workers on a
 ## seam 6 m from the hall (9–11 gold/s, a sixth adds < 0.5), one worker inside a seam at a time,
 ## lumber trips of the faction's size, felled trees and retargeting, the upkeep tax on mined
-## gold, switching resources drops the load, Return Cargo goes back to work, and a seam runs dry.
+## gold, switching resources drops the load, Return Cargo resumes the last job, and a seam runs dry.
 
 
 ## Moot Hall with a Gold Seam 6.0 m east of it (edge to edge), a tree line north of the hall.
