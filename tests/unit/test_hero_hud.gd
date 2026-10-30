@@ -90,6 +90,48 @@ func test_hero_card_and_the_learn_page() -> void:
 	assert_true(str(tip.get("lines", [])).contains(Defs.text("tip_rank") % [1, 3]), "the tooltip shows the rank")
 
 
+func _click(pos: Vector2) -> void:
+	for pressed in [true, false]:
+		var ev := InputEventMouseButton.new()
+		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.position = pos
+		ev.global_position = pos
+		ev.pressed = pressed
+		tree.root.push_input(ev, true)
+
+
+func test_casting_from_the_card() -> void:
+	var hero := _hero()
+	world.heroes.learn(hero, "kingdom_linden_balm")
+	hero.mana = hero.max_mana
+	var soldier: Unit = null
+	for u in world.unit_list:
+		if u.player_id == 0 and u.def_id == "kingdom_hodman":
+			soldier = u
+			break
+	soldier.take_damage(100.0, null)
+	sel.select_units([hero])
+	assert_eq(_entry(CardModel.ABILITY_ROW).state, CardModel.State.READY, "a learned ability is ready")
+	assert_true(_entry(CardModel.ABILITY_ROW).targeted, "Linden Balm needs a target")
+	_key(KEY_L)
+	assert_eq(commands.targeting, CommandInput.ABILITY_PREFIX + "kingdom_linden_balm", "L arms the cast")
+	var hp := soldier.hp
+	_click(main.camera.unproject_position(soldier.pos + Vector3(0, 0.8, 0)))
+	assert_eq(commands.targeting, "", "the target accepted")
+	for i in 60:
+		world.step()
+	assert_true(soldier.hp > hp + 50.0, "the Hodman was healed")
+	var e := _entry(CardModel.ABILITY_ROW)
+	assert_eq(e.state, CardModel.State.BUSY, "the button waits for its cooldown")
+	assert_true(e.cooldown_left > 3.0 and is_equal_approx(e.cooldown_total, 7.0), "with the sweep's numbers")
+	hero.mana = 5.0
+	for i in 240:
+		world.step()
+	hero.mana = 5.0
+	assert_eq(_entry(CardModel.ABILITY_ROW).state, CardModel.State.UNAFFORDABLE, "short of mana")
+	assert_eq(int(_entry(CardModel.ABILITY_ROW).short.get("mana", 0)), 75, "by 75")
+
+
 func test_hero_bar_slots_select_and_fallen() -> void:
 	var a := _hero()
 	var b := _hero("kingdom_firewright")

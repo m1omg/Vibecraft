@@ -20,6 +20,21 @@ func cast(_ctx: CastContext) -> bool:
 	return true
 
 
+## Channelled abilities: called every tick of the channel; return false to end it early.
+func channel_tick(_ctx: CastContext) -> bool:
+	return true
+
+
+## The channel ended (`interrupted`: by an order, a stun or death).
+func channel_end(_ctx: CastContext, _interrupted: bool) -> void:
+	pass
+
+
+## A buff this effect applied ran out and its def asks for an on_expire `effect` (Fuse Mark).
+func buff_expired(_world: World, _unit: Unit, _rec: Dictionary) -> void:
+	pass
+
+
 ## Helpers shared by effects -------------------------------------------------------------------
 
 ## Units within `r` of `p` that pass the ability's `targets` filter for `caster`.

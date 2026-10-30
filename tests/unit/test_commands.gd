@@ -195,6 +195,8 @@ func test_learn_and_cast_routes() -> void:
 	var w := _world()
 	var hero := w.spawn_unit("kingdom_wheel_marshal", 0, Vector3(20, 0, 20))
 	var ally := w.spawn_unit("kingdom_pavisier", 0, Vector3(24, 0, 20))
+	for u: Unit in [hero, ally]:
+		u.set_base_stats({"hp_regen": 0.0, "mana_regen": 0.0})   # exact numbers: no regeneration
 	assert_eq(int(hero.hero.get("skill_points", 0)), 1, "a new hero has one skill point")
 	assert_near(hero.max_hp, 675.0, 0.01, "level-1 stats from attributes")
 	_cmd(w, "move", [hero], {"pos": Vector3(21, 0, 26)})
@@ -211,7 +213,7 @@ func test_learn_and_cast_routes() -> void:
 	w.step()
 	assert_eq(_current(hero), Order.Type.CAST, "cast order")
 	run_until_idle(w, [hero], 200)
-	assert_near(ally.hp, before + 150.0, 0.01, "Linden Balm rank 1 heals 150 (stub casts at once)")
+	assert_near(ally.hp, before + 150.0, 0.01, "Linden Balm rank 1 heals 150")
 	assert_near(hero.mana, hero.max_mana - 80.0, 0.01, "mana spent")
 	assert_true(not w.abilities.is_ready(hero, "kingdom_linden_balm"), "cooldown running")
 	_cmd(w, "cast", [hero], {"ability": "kingdom_linden_balm", "target": ally.id})
@@ -226,6 +228,7 @@ func test_item_routes_pickup_use_drop_give() -> void:
 	var w := _world()
 	var hero := w.spawn_unit("kingdom_firewright", 0, Vector3(20, 0, 20))
 	var hero2 := w.spawn_unit("kingdom_wheel_marshal", 0, Vector3(20, 0, 26))
+	hero.set_base_stats({"hp_regen": 0.0, "mana_regen": 0.0})   # exact numbers: no regeneration
 	var pav := w.spawn_unit("kingdom_pavisier", 0, Vector3(23, 0, 20))
 	var potion := w.items.spawn_item("item_rosehip_draught", Vector3(26, 0, 20))
 	var berries := w.items.spawn_item("item_wild_strawberries", Vector3(26, 0, 23))

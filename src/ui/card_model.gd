@@ -38,7 +38,8 @@ const STATE_OF: Dictionary = {"": State.READY, "need_gold": State.UNAFFORDABLE,
 	"need_lumber": State.UNAFFORDABLE, "requirements": State.LOCKED, "tier": State.LOCKED,
 	"cannot_build": State.LOCKED, "cannot_train": State.LOCKED, "queue_full": State.CAPPED,
 	"hero_limit": State.CAPPED, "busy": State.BUSY, "not_learned": State.LOCKED,
-	"hero_level": State.LOCKED, "max_rank": State.CAPPED}
+	"hero_level": State.LOCKED, "max_rank": State.CAPPED, "cooldown": State.BUSY,
+	"need_mana": State.UNAFFORDABLE, "silenced": State.LOCKED, "cannot_cast": State.LOCKED}
 
 
 ## One card button.
@@ -60,6 +61,9 @@ class Entry:
 	                                 ## the rank a press learns; revive: the hero's level
 	var levels: int = 0              ## research: how many levels the line has; abilities: ranks
 	var uid: int = 0                 ## revive: the dead hero's unit id
+	var cooldown_left: float = 0.0   ## abilities: seconds of cooldown left (the sweep)
+	var cooldown_total: float = 0.0  ## abilities: the full cooldown in seconds
+	var passive: bool = false        ## passive and aura abilities: shown, never pressed
 	var missing: Array[String] = []  ## names of what is missing (LOCKED)
 	var hero: bool = false
 
@@ -68,7 +72,8 @@ class Entry:
 
 	## What a tooltip or a button redraw depends on (rebuilt only when this changes).
 	func signature() -> String:
-		return "%s|%s|%d|%s|%s|%s|%d" % [kind, id, state, reason, str(cost), str(short), level]
+		return "%s|%s|%d|%s|%s|%s|%d|%d" % [kind, id, state, reason, str(cost), str(short), level,
+			ceili(cooldown_left)]
 
 
 ## The card for `units` (own units of the active subgroup, lead first) on `page`: SLOTS entries,
@@ -172,9 +177,17 @@ static func _ability_entry(w: World, hero: Unit, aid: String, kind: String) -> E
 		e.cost["mana"] = mana
 	if kind == "ability":
 		e.level = rank
-		if rank <= 0:
-			e.state = State.LOCKED
-			e.reason = "not_learned"
+		var ab_type := str(ab.get("type", ""))
+		e.passive = ab_type == "passive" or ab_type == "aura"
+		e.targeted = ab_type == "target_unit" or ab_type == "target_point"
+		var err := "not_learned" if rank <= 0 else ("" if e.passive else w.abilities.cast_error(hero, aid, null, false))
+		e.reason = err
+		e.state = int(STATE_OF.get(err, State.LOCKED)) if err != "" else State.READY
+		if err == "need_mana":
+			e.short["mana"] = ceili(float(mana) - hero.mana)
+		if rank > 0 and not e.passive:
+			e.cooldown_left = w.abilities.cooldown_left(hero, aid)
+			e.cooldown_total = w.abilities.cooldown_total(hero, aid)
 		return e
 	e.level = rank + 1
 	var err := ""
@@ -383,6 +396,8 @@ static func describe(w: World, pid: int, e: Entry) -> Array[String]:
 			out.append_array(_upgrade_lines(e.id))
 		"ability", "learn":
 			out.append_array(ability_lines(e.id, maxi(e.level, 1)))
+			if e.passive and e.kind == "ability":
+				_add_text(out, "tip_passive")
 			if e.kind == "learn":
 				out.append(Defs.text("tip_learn_rank") % [e.level, e.levels])
 			elif e.level > 0:

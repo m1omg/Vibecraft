@@ -35,6 +35,7 @@ var player_id: int = 0
 ## "", a targeted order (move, attack_move, patrol, gather, repair, rally) or "place".
 var targeting: String = ""
 var page: String = CardModel.PAGE_MAIN
+const ABILITY_PREFIX := "ability:"   ## targeting mode of a unit or point ability: "ability:<id>"
 ## The building def being placed while targeting == "place".
 var placing: String = ""
 ## The placement ghost (visual only), made on first use.
@@ -83,6 +84,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		if slot >= 0:
 			activate_card(slot, k.shift_pressed)
 			get_viewport().set_input_as_handled()
+
+
+## While aiming an area ability, its area rides the cursor as a ground ring (one frame mark per
+## frame).
+func _process(_delta: float) -> void:
+	if not targeting.begins_with(ABILITY_PREFIX) or Vfx.instance == null or camera == null:
+		return
+	var us := active_units()
+	if us.is_empty():
+		return
+	var area := float(world.abilities.values_for(us[0], targeting.trim_prefix(ABILITY_PREFIX)).get("area", 0.0))
+	if area <= 0.0:
+		return
+	var g := camera.screen_to_ground(get_viewport().get_mouse_position())
+	if g != Vector3.INF:
+		var marks := Vfx.instance.marks
+		marks.add_frame(marks.ground_xf(g, area, 0), GroundMarks.Shape.RING, Color(0.55, 0.8, 1.0, 0.85), 0.05, 0.0)
 
 
 ## Input action that triggers a unit-order slot under the active preset ("" for other slots).
@@ -186,13 +204,69 @@ func activate_card(slot: int, shift: bool = false) -> bool:
 		"revive":
 			_issue_for([active_units()[0].id], {"type": "revive", "hero": e.uid})
 		"ability":
-			return false                          # casting arrives with the cast pipeline
+			return _activate_ability(e, shift)
 		"cancel":
 			var us := active_units()
 			if e.id == "site":
 				_issue_for(_ids(us), {"type": "cancel"})
 			else:
 				_issue_for([us[0].id], {"type": "cancel", "slot": -1})
+	return true
+
+
+## An ability button: instant abilities cast at once from the best caster of the subgroup; unit
+## and point abilities arm targeting ("ability:<id>"); passives and auras do nothing.
+func _activate_ability(e: CardModel.Entry, shift: bool) -> bool:
+	if e.passive:
+		return false
+	if not e.targeted:
+		var caster := _caster_for(e.id, null, Vector3.INF, false)
+		if caster == null:
+			_deny(world.abilities.cast_error(active_units()[0], e.id, null, false))
+			return false
+		_issue_for([caster.id], {"type": "cast", "ability": e.id, "queue": shift})
+		return true
+	_set_targeting(ABILITY_PREFIX + e.id)
+	return true
+
+
+## Smart casting: the unit of the active subgroup that can cast `ability_id` now (on `target`),
+## nearest to `at`; null when none can.
+func _caster_for(ability_id: String, target: Unit, at: Vector3 = Vector3.INF, need_target: bool = true) -> Unit:
+	var best: Unit = null
+	var best_d := INF
+	for u in active_units():
+		if world.abilities.cast_error(u, ability_id, target, need_target) != "":
+			continue
+		var d := 0.0 if at == Vector3.INF else Grid.flat_dist(u.pos, at)
+		if d < best_d:
+			best = u
+			best_d = d
+	return best
+
+
+## A targeted ability's click: a unit for unit-target abilities, else the ground point.
+func _cast_at(ability_id: String, target: Unit, ground: Vector3, shift: bool) -> bool:
+	var us := active_units()
+	if us.is_empty():
+		return false
+	if str(Defs.ability(ability_id).get("type", "")) == "target_unit":
+		var caster := _caster_for(ability_id, target, target.pos if target != null else Vector3.INF)
+		if caster == null:
+			_deny(world.abilities.cast_error(us[0], ability_id, target))
+			return false
+		_issue_for([caster.id], {"type": "cast", "ability": ability_id, "target": target.id, "queue": shift})
+		_marker(target.pos, Color(0.5, 0.75, 1.0))
+		return true
+	if ground == Vector3.INF:
+		_deny("invalid_target")
+		return false
+	var at := _caster_for(ability_id, null, ground)
+	if at == null:
+		_deny(world.abilities.cast_error(us[0], ability_id))
+		return false
+	_issue_for([at.id], {"type": "cast", "ability": ability_id, "pos": ground, "queue": shift})
+	_marker(ground, Color(0.5, 0.75, 1.0))
 	return true
 
 
@@ -314,6 +388,8 @@ func _issue_targeted(cmd: String, screen_pos: Vector2, shift: bool) -> bool:
 	if cmd == "place":
 		return _place_at(screen_pos, shift)
 	var target := selection.pick_unit(screen_pos)
+	if cmd.begins_with(ABILITY_PREFIX):
+		return _cast_at(cmd.trim_prefix(ABILITY_PREFIX), target, camera.screen_to_ground(screen_pos), shift)
 	match cmd:
 		"attack_move":
 			if target != null and (target.is_invulnerable or target.is_resource or target.is_item):
@@ -355,6 +431,8 @@ func _issue_targeted(cmd: String, screen_pos: Vector2, shift: bool) -> bool:
 
 ## A targeted order on a ground point (3D view or minimap). False when denied.
 func _issue_ground(cmd: String, ground: Vector3, shift: bool) -> bool:
+	if cmd.begins_with(ABILITY_PREFIX):
+		return _cast_at(cmd.trim_prefix(ABILITY_PREFIX), null, ground, shift)
 	match cmd:
 		"gather":
 			if world.doodads.nearest_tree(ground, World.TREE_CLICK_RADIUS) < 0:

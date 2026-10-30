@@ -1,16 +1,22 @@
 class_name Combat
 extends Node
-## Damage resolution and the projectile stage (docs/architecture.md §10).
-##   final = roll(min..max) x types[attack_type][armor_type] x armor_factor(armor)
-## with armor_factor = 1 - a*k / (1 + a*k) for a >= 0 and 2 - 0.94^(-a) below zero; the table
-## and k live in data/factions.json -> combat. Rolls use World.rng (seeded), so a fight replays
-## identically. Owned by World and registered for the `projectiles` stage.
+## Damage resolution and the projectile stage (docs/architecture.md §10; rules §7.4).
+##   attack = roll(min..max, flat bonuses included) x (1 + damage_pct) x crit
+##   final  = attack x types[attack_type][armor_type] x armor_factor(armor) x (1 + damage_taken_pct)
+## with armor_factor = 1 - a*k / (1 + a*k) for a >= 0 and 2 - 0.94^(-a) below zero (skipped for
+## Spell damage); the table and k live in data/factions.json -> combat. Crits and misses are
+## proc rolls (pseudo-random distribution per unit and source, rules §2.3); the attacker's
+## miss_chance (blindness) makes an attack deal nothing (Events.attack_missed). Rolls use
+## World.rng (seeded) and are only drawn when a chance exists, so a fight replays identically.
+## Owned by World and registered for the `projectiles` stage.
 
 const _NONE: Dictionary = {}         ## shared read-only default (no allocation per lookup)
 
 var world: World
 var projectiles: Array[Projectile] = []
 var _last_alert: Dictionary = {}     ## player id -> sim time of the last "under attack" alert
+var _prd: Dictionary = {}            ## "unit id:source" -> PRD failure counter N
+var last_crit: bool = false          ## the latest fire() crit (the combat text reads it)
 
 
 func setup(w: World) -> void:
@@ -38,21 +44,64 @@ func roll_damage(attacker: Unit) -> float:
 	return float(world.rng.randi_range(attacker.damage_min, attacker.damage_max))
 
 
-## Called by an attacker at its damage point: melee hits immediately, ranged launches a
-## projectile carrying the rolled base damage.
+## A proc roll for `u` from `source` at nominal chance `p` (rules §2.3): pseudo-random
+## distribution (chance min(1, C × N), N counting failures since the last success) unless
+## combat.proc_mode is "random". Draws from World.rng only when 0 < p < 1.
+func proc(u: Unit, source: String, p: float) -> bool:
+	if p <= 0.0:
+		return false
+	if p >= 1.0:
+		return true
+	var r := world.rng.randf()
+	if str(Defs.combat.get("proc_mode", "prd")) != "prd":
+		return r < p
+	var key := "%d:%s" % [u.id, source]
+	var n := int(_prd.get(key, 1))
+	if r < minf(1.0, Defs.prd_c(p) * n):
+		_prd[key] = 1
+		return true
+	_prd[key] = n + 1
+	return false
+
+
+## Called by an attacker at its damage point: the attack's damage (roll, percent bonuses, crit;
+## rules §7.4 steps 1–3), the attacker's buffs answer (breaks_on attack, on-attack riders), a
+## miss roll; then melee hits immediately and ranged launches a projectile carrying the damage.
 func fire(attacker: Unit, target: Unit) -> void:
 	var base := roll_damage(attacker)
+	var t := attacker.mod_totals
+	base *= 1.0 + float(t.get("damage_pct", 0.0)) / 100.0
+	last_crit = false
+	var crit: Dictionary = t.get("crit", _NONE)
+	if not crit.is_empty() and proc(attacker, "crit", float(crit.get("chance", 0.0))):
+		base *= float(crit.get("multiplier", 1.0))
+		last_crit = true
+	if world.buffs != null:
+		base += world.buffs.on_attack(attacker, target)
+	if proc(attacker, "miss", float(t.get("miss_chance", 0.0))):
+		Events.attack_missed.emit(attacker, target)
+		return
 	if attacker.projectile.is_empty():
 		hit(attacker, target, base, attacker.attack_type)
 	else:
 		launch(attacker, target, base)
 
 
-## Applies type/armor modifiers and deals the damage. Returns the final amount.
+## Applies the type and armour multipliers (armour skipped for Spell; Hardy creeps take Spell
+## as heroes) and the target's damage-taken modifiers, then deals the damage (rules §7.4 steps
+## 4–7). Returns the final amount.
 func hit(src: Unit, target: Unit, base: float, attack_type: String) -> float:
 	if target == null or not target.alive or target.is_invulnerable:
 		return 0.0
-	var dmg := compute_damage(base, attack_type, target.armor_type, target.armor)
+	var armor_type := target.armor_type
+	if attack_type == "spell" and target.status.has("hardy"):
+		armor_type = "hero"
+	var dmg := base * type_multiplier(attack_type, armor_type)
+	if attack_type != "spell":
+		dmg *= armor_factor(target.armor)
+	var taken: Dictionary = target.mod_totals.get("damage_taken_pct", _NONE)
+	if not taken.is_empty():
+		dmg *= maxf(0.0, 1.0 + (float(taken.get(attack_type, 0.0)) + float(taken.get("all", 0.0))) / 100.0)
 	_maybe_alert(target, src)
 	target.take_damage(dmg, src)
 	return dmg

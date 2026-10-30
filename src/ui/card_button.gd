@@ -35,6 +35,9 @@ var key_text: String = ""
 var chip: String = ""              ## capped reason chip
 var short_kind: String = ""        ## "gold" / "lumber" while unaffordable
 var progress: float = -1.0         ## 0..1 progress bar (queue slots), -1 = none
+var cd_left: float = 0.0           ## abilities: cooldown seconds left when the entry arrived
+var cd_total: float = 0.0
+var _cd_t0: float = 0.0            ## fx time the entry arrived (the sweep runs on the fx clock)
 var badge: String = ""             ## a glyph over the face (a queue slot waiting for food: "food")
 var face: Color = Color(0.2, 0.18, 0.15)
 var entry: CardModel.Entry         ## what the button shows (null = empty)
@@ -87,11 +90,29 @@ func show_entry(e: CardModel.Entry, key_label: String) -> void:
 	disabled = e == null
 	text = e.label if e != null else ""
 	key_text = key_label if e != null else ""
-	set_state(e.state if e != null else CardModel.State.READY,
-		"" if e == null or e.short.is_empty() else ("gold" if e.short.has("gold") else "lumber"),
-		_chip_for(e))
+	set_state(e.state if e != null else CardModel.State.READY, _short_of(e), _chip_for(e))
+	cd_left = e.cooldown_left if e != null else 0.0
+	cd_total = e.cooldown_total if e != null else 0.0
+	_cd_t0 = FxClock.fx_now
 	face = Hud.icon_color(e.id).darkened(0.45) if e != null and Defs.units.has(e.id) else Color(0.2, 0.18, 0.15)
 	_refresh_face()
+
+
+static func _short_of(e: CardModel.Entry) -> String:
+	if e == null or e.short.is_empty():
+		return ""
+	for k: String in ["gold", "lumber", "mana"]:
+		if e.short.has(k):
+			return k
+	return ""
+
+
+## Cooldown share still to run (1 = just started), from the fx clock: exact at any frame rate
+## and frozen while the game is paused.
+func cooldown_ratio() -> float:
+	if cd_total <= 0.0 or cd_left <= 0.0:
+		return 0.0
+	return clampf((cd_left - (FxClock.fx_now - _cd_t0)) / cd_total, 0.0, 1.0)
 
 
 static func _chip_for(e: CardModel.Entry) -> String:
@@ -153,7 +174,7 @@ func _process(_delta: float) -> void:
 	if t - _shake_t0 < SHAKE_S:
 		dx = JuiceCurves.shake(t - _shake_t0, SHAKE_PX, 0.08, SHAKE_S)
 	position.x = dx
-	if is_animating():
+	if is_animating() or cd_left > 0.0:
 		queue_redraw()
 
 
@@ -185,6 +206,9 @@ func _draw() -> void:
 		_draw_chip(chip, Vector2(size.x - 3, size.y - 3), true)
 	if key_text != "":
 		_draw_chip(key_text, Vector2(3, 2), false)
+	var cd := cooldown_ratio()
+	if cd > 0.0:
+		_draw_sweep(r, cd)
 	if progress >= 0.0:
 		var bar := Rect2(3, size.y - 7, size.x - 6, 4)
 		draw_rect(bar, BAR_BG)
@@ -192,6 +216,26 @@ func _draw() -> void:
 	var fa := FLASH.a * (1.0 - (t - _flash_t0) / FLASH_S)
 	if fa > 0.0:
 		draw_rect(r, Color(FLASH, fa))
+
+
+## The cooldown: a dark wedge over the share still to run, clockwise from 12 o'clock, shrinking
+## toward the end, plus the seconds left.
+func _draw_sweep(r: Rect2, ratio: float) -> void:
+	var c := r.get_center()
+	var rad := r.size.length() * 0.5
+	var pts := PackedVector2Array([c])
+	var start := -PI * 0.5 + TAU * (1.0 - ratio)
+	var steps := maxi(2, ceili(32.0 * ratio))
+	for i in steps + 1:
+		var a := start + TAU * ratio * float(i) / float(steps)
+		var p := c + Vector2(cos(a), sin(a)) * rad
+		pts.append(Vector2(clampf(p.x, 0.0, r.size.x), clampf(p.y, 0.0, r.size.y)))
+	draw_colored_polygon(pts, Color(0, 0, 0, 0.55))
+	var left := ceili(ratio * cd_total)
+	var font := get_theme_default_font()
+	var s := str(left)
+	var w := font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+	draw_string(font, c + Vector2(-w * 0.5, 6), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.95, 0.92, 0.85))
 
 
 func _draw_hatch(r: Rect2, from_x: float, alpha: float) -> void:

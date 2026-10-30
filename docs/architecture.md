@@ -632,14 +632,19 @@ requirements, ability unlocks. Each file's header documents the full contract.
 
 ## 10. Combat, abilities, heroes
 
-- `Combat` (`src/systems/combat.gd`) resolves damage:
-  `final = base_roll × types[attack_type][armor_type] × armor_factor` where
-  `armor_factor = 1 - (a*k)/(1+a*k)` for armor ≥ 0 (k = `armor_k` 0.06) and `2 - 0.94^(-a)`
-  below zero (type multiplier first, then armor). `base_roll` is an integer in
-  `[damage_min, damage_max]` drawn from `World.rng` (seeded) — the only randomness in combat, so a
-  fight replays identically for a seed regardless of frame rate (tested with visuals on).
-  Static helpers `type_multiplier`, `armor_factor`, `compute_damage`; `fire(attacker, target)`
-  (melee hit or `launch`), `hit(src, target, base, type)`; owns `projectiles`.
+- `Combat` (`src/systems/combat.gd`) resolves damage (rules §7.4): `fire(attacker, target)`
+  rolls `base_roll` (an integer in `[damage_min, damage_max]`, flat bonuses included) ×
+  (1 + `damage_pct`) × crit (`mod_totals.crit` {chance, multiplier}, a `proc` roll), adds the
+  attacker's buff answer (`BuffSystem.on_attack`: breaks_on attack, on-attack riders, a bonus),
+  rolls `miss_chance` (`Events.attack_missed`, no damage), then hits (melee) or `launch`es;
+  `hit(src, target, base, type)` applies `types[attack_type][armor_type] × armor_factor`
+  (skipped for Spell; Hardy creeps take Spell as heroes) × (1 + the target's
+  `damage_taken_pct` for that type or `all`). `armor_factor = 1 - (a*k)/(1+a*k)` for armor ≥ 0
+  (k = `armor_k` 0.06) and `2 - 0.94^(-a)` below zero. `proc(u, source, p)` is the
+  pseudo-random distribution of rules §2.3 (a failure counter per unit and source, C from
+  `Defs.prd_c`). All rolls draw from `World.rng` (seeded) and only when a chance exists, so a
+  fight replays identically for a seed regardless of frame rate (tested with visuals on). Static
+  helpers `type_multiplier`, `armor_factor`, `compute_damage`; owns `projectiles`.
 - `data/factions.json → combat` (rules.md §20.3): `armor_k`, `attack_types` (original names:
   `blade, pierce, siege, arcane, heroic, raw, spell`), `armor_types` (`light, medium, heavy,
   fortified, hero, unarmored, adamant`), the full `types` table, clamps, `defaults`
@@ -664,9 +669,24 @@ requirements, ability unlocks. Each file's header documents the full contract.
   `ctx.value(key, fallback)`, `ctx.allows(unit)` for the ability's target filter).
   `AbilitySystem` runs casts (`CAST` orders hand over through `can_order_cast`, `cast_range`,
   `begin_cast`, `cast_tick`, `cancel_cast`; structures cast through the `cast` command),
-  cooldowns (`Unit.cooldowns`), autocast and ground effects; `BuffSystem` owns `Unit.buffs`
-  and pushes their modifiers as the `buffs` source. Per-rank numbers: `Defs.ability_rank(id,
-  rank)`.
+  cooldowns (`Unit.cooldowns`), autocast and ground effects. Cast timing (rules §6.5): after
+  the walk into range and the turn, the wind-up (`cast_point`, default 0.3 s) spends nothing;
+  at the cast point the target is re-checked, mana and cooldown are spent and the effect runs
+  (`cast_now`); a `channel` ticks the effect's `channel_tick`; the backswing (default 0.5 s)
+  ends at any new order. A new order, a stun or silence in the wind-up cancels at no cost.
+  `cast_error(u, id, target, need_target)` names why not (not_learned, silenced, cooldown,
+  need_mana, bad_target, cannot_cast); `target_ok` applies the def's `targets` filter
+  (`CastContext.allows`), never an invulnerable or (unless `pierces_immunity`) spell-immune
+  enemy. Every 0.5 s learned auras re-apply their buff to the units their filter allows in
+  their area, lingering 2 s (the highest rank wins); learned passives are permanent buffs
+  with their rank's values. `BuffSystem` owns `Unit.buffs` and pushes their modifiers as the
+  `buffs` source (`crit` included): the same buff refreshes (a stronger or equal rank replaces
+  the values, a weaker one only keeps it alive), heroes and Hardy creeps get `hero_factor` /
+  `hero_duration`, periodic DoTs and HoTs tick every second, `breaks_on` damage / attack /
+  cast / item (`on_unit_damaged`, `on_attack`, `on_action`), sleepers wake on damage,
+  `on_expire` heals or calls the source effect's `buff_expired`, `dispel` all / selective;
+  natural regeneration (`Unit.hp_regen` / `mana_regen` × DT, rules §9) runs here for every
+  living unit. Per-rank numbers: `Defs.ability_rank(id, rank)`.
 - Heroes (`HeroSystem`, `data/heroes.json`): XP table and level cap 10, 3 normal abilities with
   3 ranks (hero levels 1/3/5, `HeroSystem.required_level`) + 1 ultimate at level 6, attributes
   (STR → hp/regen, AGI → armor/attack speed, INT → mana/regen; primary attr → damage) through
@@ -884,7 +904,12 @@ requirements, ability unlocks. Each file's header documents the full contract.
   badge, HP / mana / pouring XP bars, a "+N" skill pip, a flip on level-up, the fallen state
   with the revive timer; click selects, tooltips dock beside it). Hero cards: Learn (O) in slot
   7 while points are unspent opens `CardModel.PAGE_LEARN` (abilities at their bottom-row
-  places, rank gates, Back in slot 7); the main card shows the abilities by rank; an altar
+  places, rank gates, Back in slot 7); the main card shows the abilities by rank (ready,
+  waiting for the cooldown with a clockwise sweep and the seconds left, hatched with the mana
+  glyph when short of mana, locked until learned or while silenced; passives and auras are
+  shown, never pressed). Instant abilities cast from the best caster of the subgroup at once;
+  unit and point abilities arm `CommandInput.ABILITY_PREFIX + id` targeting (an area ability's
+  ring rides the cursor), the click casts from the nearest caster that can; an altar
   shows Revive in place of a dead hero's train button. The info panel shows "Title: Name -
   Level N", XP and STR / AGI / INT. Still to come: chat area, real art (original, no WC3 UI
   art).

@@ -85,6 +85,7 @@ func test_damage_point_and_cooldown_timing() -> void:
 	var w := make_world()
 	var a := w.spawn_unit("dummy_soldier", 0, Vector3(10, 0, 10))
 	var victim := w.spawn_unit("dummy_worker", 1, Vector3(10, 0, 9.0))   # straight ahead (-Z)
+	victim.set_base_stats({"hp_regen": 0.0})     # exact HP bookkeeping: no natural regeneration
 	_attack(w, a, victim)
 	for i in 100:
 		w.step()

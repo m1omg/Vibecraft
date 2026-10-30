@@ -171,7 +171,7 @@ func test_death_keeps_the_slot_and_the_altar_revives() -> void:
 	assert_eq(w.heroes.rank_of(back, first), 1, "skills kept")
 	assert_eq(int(back.cooldowns.get("probe", 0)), int(hero.cooldowns["probe"]), "cooldowns keep running")
 	assert_near(back.hp, back.max_hp, 0.01, "full HP")
-	assert_near(back.mana, minf(back.max_mana, 100.0), 0.01, "mana min(max, 100)")
+	assert_near(back.mana, minf(back.max_mana, 100.0), 0.1, "mana min(max, 100) (plus a tick of regeneration)")
 	assert_eq(w.player(0).food_used, 5, "the hero's food")
 
 
