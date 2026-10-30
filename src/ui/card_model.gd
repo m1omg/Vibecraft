@@ -9,6 +9,10 @@ extends RefCounted
 ## build_advanced in data order, with Back (Esc) in slot 11. Building card: train, research and
 ## building upgrades in data order (a fully researched line leaves its slot empty), Rally in
 ## slot 7, Cancel (Esc) in slot 11 while something is queued; a site shows Cancel only.
+## Heroes: Learn (O) in slot 7 while skill points are unspent, opening the Learn page (the four
+## abilities at their bottom-row places with the same letters, Back in slot 7); the main card
+## shows the abilities on the bottom row by rank, locked until learned. An altar shows Revive in
+## place of a dead hero's train button.
 ## Faction signatures (Levy Horn, Sound the Gong, the worker transforms) join the card when their
 ## effects exist.
 
@@ -18,7 +22,10 @@ const SLOTS := 12
 const PAGE_MAIN := "main"
 const PAGE_BASIC := "build_basic"
 const PAGE_ADVANCED := "build_advanced"
+const PAGE_LEARN := "learn"
 const RALLY_SLOT := 7
+const LEARN_SLOT := 7
+const ABILITY_ROW := 8           ## abilities.json `slot` 0..3 -> the bottom row (rules §18.4)
 const CANCEL_SLOT := 11
 ## Unit orders: slot, order, command ability (its name, its letter and the Classic action).
 const ORDERS: Array = [[0, "move", "cmd_move"], [1, "stop", "cmd_stop"], [2, "hold", "cmd_hold"],
@@ -30,14 +37,16 @@ const BUILDING_SLOTS: Array[int] = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10]
 const STATE_OF: Dictionary = {"": State.READY, "need_gold": State.UNAFFORDABLE,
 	"need_lumber": State.UNAFFORDABLE, "requirements": State.LOCKED, "tier": State.LOCKED,
 	"cannot_build": State.LOCKED, "cannot_train": State.LOCKED, "queue_full": State.CAPPED,
-	"hero_limit": State.CAPPED, "busy": State.BUSY}
+	"hero_limit": State.CAPPED, "busy": State.BUSY, "not_learned": State.LOCKED,
+	"hero_level": State.LOCKED, "max_rank": State.CAPPED}
 
 
 ## One card button.
 class Entry:
 	extends RefCounted
 	var slot: int = -1
-	var kind: String = ""            ## order, page, build, train, research, upgrade, rally, cancel, back
+	var kind: String = ""            ## order, page, build, train, research, upgrade, rally, cancel,
+	                                 ## back, ability, learn, revive
 	var id: String = ""              ## the order, page, def or upgrade id
 	var label: String = ""
 	var key: String = ""             ## Classic letter ("Esc" for Cancel and Back)
@@ -47,8 +56,10 @@ class Entry:
 	var reason: String = ""          ## error key when not READY (Defs.text("error_" + reason))
 	var cost: Dictionary = {}        ## gold, lumber, food, time
 	var short: Dictionary = {}       ## gold / lumber -> how much is missing
-	var level: int = 0               ## research: the level a press starts
-	var levels: int = 0              ## research: how many levels the line has
+	var level: int = 0               ## research: the level a press starts; ability: its rank; learn:
+	                                 ## the rank a press learns; revive: the hero's level
+	var levels: int = 0              ## research: how many levels the line has; abilities: ranks
+	var uid: int = 0                 ## revive: the dead hero's unit id
 	var missing: Array[String] = []  ## names of what is missing (LOCKED)
 	var hero: bool = false
 
@@ -69,10 +80,12 @@ static func build(w: World, pid: int, units: Array[Unit], page: String = PAGE_MA
 		return card
 	var lead := units[0]
 	if lead.is_mobile():
-		if lead.is_worker and page != PAGE_MAIN:
+		if lead.is_hero and page == PAGE_LEARN:
+			_learn_page(w, lead, card)
+		elif lead.is_worker and page != PAGE_MAIN and page != PAGE_LEARN:
 			_build_page(w, pid, page, card)
 		else:
-			_unit_card(lead, card)
+			_unit_card(w, lead, card)
 	elif lead.is_building:
 		_building_card(w, pid, lead, card)
 	return card
@@ -96,12 +109,15 @@ static func _command(slot: int, kind: String, id: String, ability_id: String) ->
 	return e
 
 
-static func _unit_card(lead: Unit, card: Array) -> void:
+static func _unit_card(w: World, lead: Unit, card: Array) -> void:
 	for o: Array in ORDERS:
 		var e := _command(int(o[0]), "order", str(o[1]), str(o[2]))
 		e.action = str(o[2])
 		e.key = action_letter(e.action, e.key)
 		card[e.slot] = e
+	if lead.is_hero:
+		_hero_card(w, lead, card)
+		return
 	if not lead.is_worker:
 		return
 	if lead.abilities.has("cmd_build_basic"):
@@ -115,6 +131,85 @@ static func _unit_card(lead: Unit, card: Array) -> void:
 	var rep := lead.repair_ability()
 	if rep != "":
 		card[9] = _command(9, "order", "repair", rep)
+
+
+## The hero's Learn button (while skill points are unspent) and its abilities on the bottom row.
+static func _hero_card(w: World, hero: Unit, card: Array) -> void:
+	if int(hero.hero.get("skill_points", 0)) > 0:
+		card[LEARN_SLOT] = _command(LEARN_SLOT, "page", PAGE_LEARN, "cmd_learn")
+	for aid: Variant in hero.def.get("hero_abilities", []):
+		var e := _ability_entry(w, hero, str(aid), "ability")
+		if e != null:
+			card[e.slot] = e
+
+
+## The Learn page: each ability at its bottom-row place (same letters), Back in slot 7.
+static func _learn_page(w: World, hero: Unit, card: Array) -> void:
+	for aid: Variant in hero.def.get("hero_abilities", []):
+		var e := _ability_entry(w, hero, str(aid), "learn")
+		if e != null:
+			card[e.slot] = e
+	var back := _entry(LEARN_SLOT, "back", "back")
+	back.label = Defs.text("card_back")
+	back.key = "Esc"
+	card[LEARN_SLOT] = back
+
+
+## A hero ability button: "ability" (its rank; locked until learned) or "learn" (the rank a
+## press learns; locked below the rank's hero level, capped at the last rank).
+static func _ability_entry(w: World, hero: Unit, aid: String, kind: String) -> Entry:
+	var ab := Defs.ability(aid)
+	var slot := ABILITY_ROW + int(ab.get("slot", 0))
+	if ab.is_empty() or slot < ABILITY_ROW or slot >= SLOTS:
+		return null
+	var e := _entry(slot, kind, aid)
+	e.label = str(ab.get("name", aid))
+	e.key = str(ab.get("hotkey", ""))
+	e.levels = Defs.ability_levels(aid)
+	var rank := w.heroes.rank_of(hero, aid)
+	var mana := int(Defs.ability_rank(aid, maxi(rank, 1)).get("mana", 0))
+	if mana > 0:
+		e.cost["mana"] = mana
+	if kind == "ability":
+		e.level = rank
+		if rank <= 0:
+			e.state = State.LOCKED
+			e.reason = "not_learned"
+		return e
+	e.level = rank + 1
+	var err := ""
+	if rank >= e.levels:
+		err = "max_rank"
+	elif not w.heroes.can_learn(hero, aid):
+		err = "hero_level"
+		e.missing.append(Defs.text("tip_hero_level") % HeroSystem.required_level(aid, rank + 1))
+	e.reason = err
+	e.state = int(STATE_OF.get(err, State.READY))
+	return e
+
+
+## The dead hero of type `def_id` waiting for revival (its unit id), 0 when none.
+static func _dead_hero_of(w: World, pid: int, def_id: String) -> int:
+	for hid in w.heroes.dead_heroes(pid):
+		if str(w.heroes.dead_record(hid).get("def_id", "")) == def_id:
+			return hid
+	return 0
+
+
+static func _revive_entry(w: World, pid: int, b: Unit, hid: int, slot: int) -> Entry:
+	var rec := w.heroes.dead_record(hid)
+	var did := str(rec.get("def_id", ""))
+	var d := Defs.unit(did)
+	var e := _entry(slot, "revive", did)
+	e.uid = hid
+	e.hero = true
+	e.label = Defs.text("revive_hero") % str(d.get("name", did))
+	e.key = str(d.get("hotkey", ""))
+	e.level = int((rec.get("hero", {}) as Dictionary).get("level", 1))
+	e.cost = w.heroes.revive_cost(hid).duplicate()
+	_shortfall(w, pid, e)
+	_set_state(w, pid, e, w.heroes.can_revive(b, hid), 1)
+	return e
 
 
 static func _build_page(w: World, pid: int, page: String, card: Array) -> void:
@@ -146,7 +241,9 @@ static func _building_card(w: World, pid: int, b: Unit, card: Array) -> void:
 	var n := 0
 	for did: Variant in b.def.get("trains", []):
 		if n < BUILDING_SLOTS.size():
-			card[BUILDING_SLOTS[n]] = _train_entry(w, pid, b, str(did), BUILDING_SLOTS[n])
+			var dead := _dead_hero_of(w, pid, str(did))
+			card[BUILDING_SLOTS[n]] = _revive_entry(w, pid, b, dead, BUILDING_SLOTS[n]) if dead != 0 \
+				else _train_entry(w, pid, b, str(did), BUILDING_SLOTS[n])
 		n += 1
 	for uid: Variant in b.def.get("research", []):
 		if n < BUILDING_SLOTS.size():
@@ -284,7 +381,42 @@ static func describe(w: World, pid: int, e: Entry) -> Array[String]:
 				out.append(Defs.text("tip_level") % [e.level, e.levels])
 		"upgrade":
 			out.append_array(_upgrade_lines(e.id))
+		"ability", "learn":
+			out.append_array(ability_lines(e.id, maxi(e.level, 1)))
+			if e.kind == "learn":
+				out.append(Defs.text("tip_learn_rank") % [e.level, e.levels])
+			elif e.level > 0:
+				out.append(Defs.text("tip_rank") % [e.level, e.levels])
+			else:
+				_add_text(out, "tip_not_learned")
+		"revive":
+			out.append(Defs.text("tip_revive") % e.level)
 	return out
+
+
+## An ability's tooltip lines at `rank`: its description (data/strings `ability_<id>`, filled
+## with the rank's numbers when it has placeholders) and its cooldown, range and area.
+static func ability_lines(aid: String, rank: int) -> Array[String]:
+	var out: Array[String] = []
+	var v := Defs.ability_rank(aid, rank)
+	var key := "ability_" + aid
+	if Defs.strings.has(key):
+		out.append(Defs.text(key).format(v))
+	var parts: Array[String] = []
+	if float(v.get("cooldown", 0.0)) > 0.0:
+		parts.append(Defs.text("tip_cooldown") % _num(float(v["cooldown"])))
+	if float(v.get("range", 0.0)) > 0.0:
+		parts.append(Defs.text("tip_range") % _num(float(v["range"])))
+	if float(v.get("area", 0.0)) > 0.0:
+		parts.append(Defs.text("tip_area") % _num(float(v["area"])))
+	if not parts.is_empty():
+		out.append("  ·  ".join(parts))
+	return out
+
+
+## A number for a tooltip: whole numbers without decimals, others with up to two.
+static func _num(x: float) -> String:
+	return str(roundi(x)) if is_equal_approx(x, roundf(x)) else String.num(x, 2)
 
 
 static func _add_text(out: Array[String], key: String) -> void:

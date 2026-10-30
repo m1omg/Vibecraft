@@ -48,11 +48,19 @@ func _pick_name(u: Unit, hid: String) -> String:
 	return str(names[absi(hash([world.rng.seed, u.id])) % names.size()])
 
 
-## "Title: Name" (rules §6.1), or the def name when the hero has no proper name.
+## "Title: Name" (rules §6.1); a name that already starts with the title ("Firewright Vit
+## Sootwick") stands alone; the title alone when the hero has no proper name.
 static func display_name(u: Unit) -> String:
-	var title := str(Defs.heroes.get(str(u.hero.get("hero_id", u.def_id)), {}).get("title", u.def.get("name", u.def_id)))
-	var proper := str(u.hero.get("proper_name", ""))
-	return "%s: %s" % [title, proper] if proper != "" else title
+	return title_and_name(u.hero if not u.hero.is_empty() else {"hero_id": u.def_id})
+
+
+static func title_and_name(hero: Dictionary) -> String:
+	var d: Dictionary = Defs.heroes.get(str(hero.get("hero_id", "")), {})
+	var title := str(d.get("title", d.get("name", hero.get("hero_id", ""))))
+	var proper := str(hero.get("proper_name", ""))
+	if proper == "":
+		return title
+	return proper if proper.begins_with(title + " ") else "%s: %s" % [title, proper]
 
 
 ## Kill XP (rules §6.3–§6.4) and the dead hero's record for revival.
@@ -179,19 +187,25 @@ func add_xp(u: Unit, amount: float, _flat: bool = false) -> void:
 		Events.hero_level_up.emit(u)
 
 
+## Hero level that rank `rank` of `ability_id` needs (rules §6.5): normal ranks 1 / 3 / 5, the
+## ultimate 6.
+static func required_level(ability_id: String, rank: int) -> int:
+	if Defs.ability(ability_id).get("ultimate", false):
+		return int(Defs.rule("heroes.ultimate_level", 6))
+	var gates: Array = Defs.rule("heroes.rank_levels", [1, 3, 5])
+	return int(gates[clampi(rank, 1, gates.size()) - 1])
+
+
 ## Can `u` put a point into `ability_id` now (point available, in its kit, rank gate)?
 func can_learn(u: Unit, ability_id: String) -> bool:
 	if not u.is_hero or int(u.hero.get("skill_points", 0)) <= 0:
 		return false
 	if not (u.def.get("hero_abilities", []) as Array).has(ability_id):
 		return false
-	var a := Defs.ability(ability_id)
 	var next := rank_of(u, ability_id) + 1
 	if next > Defs.ability_levels(ability_id):
 		return false
-	var need := int(Defs.rule("heroes.ultimate_level", 6)) if a.get("ultimate", false) \
-		else int((Defs.rule("heroes.rank_levels", [1, 3, 5]) as Array)[mini(next, 3) - 1])
-	return level_of(u) >= need
+	return level_of(u) >= required_level(ability_id, next)
 
 
 func learn(u: Unit, ability_id: String) -> bool:

@@ -178,6 +178,15 @@ func activate_card(slot: int, shift: bool = false) -> bool:
 					break
 		"rally":
 			_set_targeting("rally")
+		"learn":
+			var hero := active_units()[0]
+			_issue_for([hero.id], {"type": "learn", "ability": e.id})
+			if int(hero.hero.get("skill_points", 0)) <= 1:
+				set_page(CardModel.PAGE_MAIN)     # that was the last point
+		"revive":
+			_issue_for([active_units()[0].id], {"type": "revive", "hero": e.uid})
+		"ability":
+			return false                          # casting arrives with the cast pipeline
 		"cancel":
 			var us := active_units()
 			if e.id == "site":

@@ -124,5 +124,17 @@
   "hero_revive_hint": "Revive it at your altar.",
   "notice_hero_died": "Your hero %s has fallen.",
   "notice_hero_revived": "%s has returned.",
-  "notice_hero_level": "%s reached level %d."
+  "notice_hero_level": "%s reached level %d.",
+  "tip_learn": "Spend a skill point on one of the hero's abilities.",
+  "tip_hero_level": "Hero level %d",
+  "tip_rank": "Rank %d of %d",
+  "tip_learn_rank": "Learns rank %d of %d.",
+  "tip_not_learned": "Not learned yet: spend a skill point with Learn.",
+  "tip_revive": "Brings the hero back at level %d with its skills and items.",
+  "tip_cooldown": "Cooldown %s s",
+  "tip_range": "Range %s m",
+  "tip_area": "Area %s m",
+  "error_not_learned": "That ability is not learned yet.",
+  "error_hero_level": "The hero's level is too low.",
+  "error_max_rank": "That ability is at its highest rank."
 }

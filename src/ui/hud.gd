@@ -45,6 +45,7 @@ var error_line: ErrorLine
 var tooltip: HudTooltip
 var queue_panel: QueuePanel
 var idle_button: IdleWorkerButton
+var hero_bar: HeroBar
 ## A site's construction progress: label and bar (selection panel).
 var progress_row: HBoxContainer
 var progress_label: Label
@@ -140,6 +141,9 @@ func _ready() -> void:
 	idle_button.offset_top = -206.0 - 8.0 - IdleWorkerButton.SIZE.y
 	idle_button.offset_bottom = -206.0 - 8.0
 	$Root.add_child(idle_button)
+	hero_bar = HeroBar.new()
+	hero_bar.position = Vector2(10, 64)
+	$Root.add_child(hero_bar)
 	for kind: String in ["gold", "lumber", "food"]:
 		_wrap_counter(kind)
 	tooltip = HudTooltip.new()
@@ -156,6 +160,7 @@ func setup(w: World, sel: Selection, cmd: CommandInput, cam: RtsCamera, pid: int
 	card.setup(cmd, sel)
 	queue_panel.commands = cmd
 	idle_button.setup(w, sel, cam, pid)
+	hero_bar.setup(w, sel, pid)
 	menu_button.pressed.connect(_on_menu_pressed)
 	Events.selection_changed.connect(_on_selection_changed)
 	Events.notification.connect(_on_notification)
@@ -169,6 +174,11 @@ func setup(w: World, sel: Selection, cmd: CommandInput, cam: RtsCamera, pid: int
 	idle_button.hover_changed.connect(func(b: IdleWorkerButton, on: bool) -> void:
 		if on:
 			tooltip.hover(b, b.tooltip_content(), b.get_global_rect())
+		else:
+			tooltip.unhover(b))
+	hero_bar.hover_changed.connect(func(b: Control, on: bool) -> void:
+		if on:
+			tooltip.hover(b, hero_bar.tooltip_for((b as HeroBar.Slot).index), b.get_global_rect(), true)
 		else:
 			tooltip.unhover(b))
 	_refresh_top()
@@ -399,6 +409,8 @@ func _refresh_info() -> void:
 		return
 	if _units.size() == 1:
 		if lead != null:
+			if lead.is_hero:
+				_set_text(name_label, _title(lead))   # the level changes while selected
 			var t := unit_stats(lead)
 			var extra := cargo_line(lead, world)
 			if extra != "":
@@ -414,7 +426,7 @@ func _refresh_info() -> void:
 func _title(u: Unit) -> String:
 	var t := str(u.def.get("name", u.def_id))
 	if u.is_hero:
-		t += "  -  Level %d hero" % u.level
+		t = "%s  -  Level %d" % [HeroSystem.display_name(u), u.level]
 	if world != null and u.player_id != player_id:
 		if u.player_id == PlayerState.NEUTRAL_HOSTILE:
 			t += "  (hostile)"
@@ -426,9 +438,20 @@ func _title(u: Unit) -> String:
 
 
 static func unit_stats(u: Unit) -> String:
-	var lines: Array[String] = ["HP  %d / %d" % [ceili(u.hp), roundi(u.max_hp)]]
+	var head := "HP  %d / %d" % [ceili(u.hp), roundi(u.max_hp)]
 	if u.max_mana > 0.0:
-		lines.append("Mana  %d / %d" % [floori(u.mana), roundi(u.max_mana)])
+		head += "      Mana  %d / %d" % [floori(u.mana), roundi(u.max_mana)]
+	var lines: Array[String] = [head]
+	if u.is_hero and not u.hero.is_empty():
+		var lv := int(u.hero.get("level", 1))
+		var st := Defs.hero_stats(str(u.hero.get("hero_id", u.def_id)), lv, u.hero.get("attr_bonus", {}))
+		var parts: Array[String] = []
+		if lv < int(Defs.rule("heroes.level_cap", 10)):
+			parts.append("XP  %d / %d" % [floori(float(u.hero.get("xp", 0.0))), roundi(Defs.xp_for_level(lv + 1))])
+		if not st.is_empty():
+			parts.append("STR %d   AGI %d   INT %d" % [int(st["str"]), int(st["agi"]), int(st["int"])])
+		if not parts.is_empty():
+			lines.append("      ".join(parts))
 	if u.damage_max > 0:
 		lines.append("Damage  %d - %d  (%s)" % [u.damage_min, u.damage_max, u.attack_type])
 		lines.append("Range  %.1f m    Cooldown  %.2f s" % [u.attack_range, u.cooldown_ticks * World.DT])

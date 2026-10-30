@@ -209,6 +209,16 @@ func queue_revive(building: Unit, hid: int, cost: Dictionary) -> bool:
 	return true
 
 
+## Seconds until dead hero `hid` is back: the time left once its revive runs, the full time
+## while it waits in a queue; -1 when no revive is queued.
+func revive_left(hid: int) -> float:
+	for bid: int in _queues:
+		for e: Dictionary in _queues[bid]:
+			if e["kind"] == "revive" and int(e.get("hero", 0)) == hid:
+				return maxf(0.0, float(int(e["total"]) - int(e["ticks"])) * World.DT)
+	return -1.0
+
+
 ## True while dead hero `hid` is queued for revival anywhere.
 func is_reviving(hid: int) -> bool:
 	for bid: int in _queues:

@@ -5,7 +5,7 @@ extends PanelContainer
 ## next shows at once (sweeping the card reads like flipping pages); it hides 80 ms after the
 ## pointer leaves. Docked, never following the cursor: above the command card's top-right corner
 ## (right-aligned, 8 px gap, never over the card), above other console elements.
-## Content: a title with a hotkey chip; a cost row (gold, lumber, food, time) where an
+## Content: a title with a hotkey chip; a cost row (gold, lumber, food, mana, time) where an
 ## unaffordable value is red with its shortfall, "125 (-35)"; description lines; requirement
 ## lines in red. The HUD re-sends the content 10 times a second and the panel is rebuilt only
 ## when it changes; a cost that becomes affordable flashes warm for 150 ms. Motion: α 0→1 and
@@ -21,7 +21,7 @@ const WIDTH := 300.0
 const RED := Color("#FF6A5A")
 const IVORY := Color(0.95, 0.92, 0.85)
 const FLASH := Color("#FFF4C2")
-const COST_KINDS: Array[String] = ["gold", "lumber", "food", "time"]
+const COST_KINDS: Array[String] = ["gold", "lumber", "food", "mana", "time"]
 
 ## The control the tooltip belongs to (null = none).
 var target: Control
@@ -29,6 +29,7 @@ var target: Control
 var content: Dictionary = {}
 
 var _dock: Rect2
+var _right := false                 ## dock beside the target (top-left elements) instead of above
 var _hover_t0 := -10.0
 var _leave_t0 := -10.0
 var _closed_t := -10.0
@@ -93,11 +94,13 @@ static func now() -> float:
 	return Time.get_ticks_usec() / 1000000.0
 
 
-## The pointer entered `c`: show `c_content` docked above `dock` (global rect) after the dwell,
-## or at once inside the warm window.
-func hover(c: Control, c_content: Dictionary, dock: Rect2) -> void:
+## The pointer entered `c`: show `c_content` docked above `dock` (global rect; `right`: beside
+## it, top-aligned, for elements at the top of the screen) after the dwell, or at once inside the
+## warm window.
+func hover(c: Control, c_content: Dictionary, dock: Rect2, right: bool = false) -> void:
 	target = c
 	_dock = dock
+	_right = right
 	_leave_t0 = -10.0
 	set_content(c_content)
 	if visible or now() - _closed_t < WARM_S:
@@ -177,6 +180,8 @@ func _process(_delta: float) -> void:
 	var u := clampf((t - _shown_t0) / IN_S, 0.0, 1.0)
 	modulate.a = Juice.out_quad(u)
 	var at := Vector2(_dock.end.x - size.x, _dock.position.y - GAP - size.y)
+	if _right:
+		at = Vector2(_dock.end.x + GAP, _dock.position.y)
 	var vp := get_viewport_rect().size
 	at.x = clampf(at.x, 4.0, maxf(4.0, vp.x - size.x - 4.0))
 	at.y = maxf(at.y, 4.0)

@@ -222,20 +222,36 @@ func _key(k: InputEventKey) -> void:
 ## Own living heroes in training order (F1–F3).
 func own_heroes() -> Array[Unit]:
 	var out: Array[Unit] = []
-	for u in world.unit_list:
-		if u.alive and u.is_hero and u.player_id == player_id:
-			out.append(u)
-	out.sort_custom(func(a: Unit, b: Unit) -> bool: return a.id < b.id)
+	for i in hero_count():
+		var h := hero_at(i)
+		if h != null:
+			out.append(h)
 	return out
 
 
-## F1–F3: selects the n-th hero (0-based); pressing the same key again within the double-click
-## time centres the camera on it. Returns false when there is no such hero.
+## Heroes the player has acquired, dead ones included (the hero bar's buttons).
+func hero_count() -> int:
+	var p := world.player(player_id)
+	return p.heroes.size() if p != null else 0
+
+
+## The living hero in hero-bar slot `n` (acquisition order, PlayerState.heroes), or null when
+## that hero is dead or there is no such slot.
+func hero_at(n: int) -> Unit:
+	var p := world.player(player_id)
+	if p == null or n < 0 or n >= p.heroes.size():
+		return null
+	var h := world.get_unit(int(p.heroes[n]))
+	return h if h != null and h.alive else null
+
+
+## F1–F3 and the hero bar: selects the hero in slot n (0-based, acquisition order); pressing
+## again within the double-click time centres the camera on it. False when that hero is dead or
+## there is no such slot.
 func select_hero(n: int) -> bool:
-	var heroes := own_heroes()
-	if n < 0 or n >= heroes.size():
+	var h := hero_at(n)
+	if h == null:
 		return false
-	var h := heroes[n]
 	var now := Time.get_ticks_msec()
 	if _last_hero == n and now - _last_hero_ms < Settings.double_click_ms and selected.size() == 1 \
 			and selected[0] == h:

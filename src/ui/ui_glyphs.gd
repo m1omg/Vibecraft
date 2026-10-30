@@ -1,7 +1,7 @@
 class_name UiGlyphs
 extends RefCounted
 ## Small resource glyphs drawn with canvas primitives until the UI icon art exists (art bible
-## §11): a coin (gold), a log (lumber), a loaf (food), a clock (time). Shapes, not just colour
+## §11): a coin (gold), a log (lumber), a loaf (food), a drop (mana), a clock (time). Shapes, not just colour
 ## (juice HUD-05), so they read for colour-blind players too. Used by card buttons, the tooltip
 ## cost row, the queue panel and the top bar.
 
@@ -10,6 +10,7 @@ const LUMBER := Color(0.55, 0.38, 0.2)
 const LUMBER_END := Color(0.78, 0.6, 0.38)
 const FOOD := Color(0.86, 0.62, 0.36)
 const TIME := Color(0.78, 0.8, 0.84)
+const MANA := Color(0.35, 0.6, 1.0)
 const OUTLINE := Color(0.1, 0.07, 0.03)
 
 
@@ -32,6 +33,15 @@ static func draw(ci: CanvasItem, kind: String, at: Vector2, r: float = 5.0, s: f
 			ci.draw_rect(lr, FOOD)
 			ci.draw_circle(at - Vector2(r * 0.4, r * 0.45), r * 0.55, FOOD)
 			ci.draw_circle(at + Vector2(r * 0.4, -r * 0.45), r * 0.55, FOOD)
+		"mana":
+			var tip := at + Vector2(0, -r * 1.25)
+			ci.draw_colored_polygon(PackedVector2Array([tip + Vector2(0, -1.0 * s),
+				at + Vector2(-r - 1.0 * s, r * 0.1), at + Vector2(r + 1.0 * s, r * 0.1)]), OUTLINE)
+			ci.draw_circle(at + Vector2(0, r * 0.25), r * 0.85 + 1.0 * s, OUTLINE)
+			ci.draw_colored_polygon(PackedVector2Array([tip, at + Vector2(-r * 0.85, r * 0.15),
+				at + Vector2(r * 0.85, r * 0.15)]), MANA)
+			ci.draw_circle(at + Vector2(0, r * 0.25), r * 0.85, MANA)
+			ci.draw_circle(at + Vector2(-r * 0.3, r * 0.1), r * 0.25, MANA.lightened(0.45))
 		"time":
 			ci.draw_circle(at, r + 1.0 * s, OUTLINE)
 			ci.draw_circle(at, r, TIME)

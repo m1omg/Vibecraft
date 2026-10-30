@@ -132,6 +132,8 @@ func test_proper_name_and_title() -> void:
 	var names: Array = Defs.hero("kingdom_wheel_marshal")["proper_names"]
 	assert_true(names.has(hero.hero["proper_name"]), "a name from the list")
 	assert_true(HeroSystem.display_name(hero).begins_with("Wheel Marshal: "), "Title: Name")
+	var fw := w.spawn_unit("kingdom_firewright", 0, Vector3(22, 0, 20))
+	assert_eq(HeroSystem.display_name(fw), str(fw.hero["proper_name"]), "a name that carries the title stands alone")
 
 
 func test_death_keeps_the_slot_and_the_altar_revives() -> void:
