@@ -1,31 +1,45 @@
 class_name CommandInput
 extends Node
-## Turns right-clicks and command-card hotkeys into command dictionaries for World.issue().
-## Right-click = smart command (move / attack / gather / follow resolved by the World;
-## right-clicking a unit outside the selection targets it),
-## shift = queue. Targeting mode (move/attack/patrol hotkeys) waits for a left-click; right-click
-## or Esc cancels. Must sit after Selection in the tree so it sees input first.
-## Hotkeys follow the active preset (Settings.active_hotkey_preset(), rules §18.4): Classic =
-## the mnemonic `cmd_*` actions (M move, S stop, H hold, A attack, P patrol; "A-click" =
-## attack-move, or attack when the click lands on an enemy), Grid = `card_0..11` by position.
+## Turns right-clicks, the command card and its hotkeys into command dictionaries for World.issue()
+## (rules §18). Right-click = smart command (move / attack / gather / follow / rally resolved by
+## the World; right-clicking a unit outside the selection targets it), shift = queue.
+## The card is CardModel's for the active subgroup and `page` (the worker's build pages). Targeted
+## entries (move, attack, patrol, gather, repair, rally) wait for a left-click; a building entry
+## enters placement ("place", the BuildPlacement ghost); right-click or Esc cancels. Esc on a
+## build page goes back, otherwise it presses the card's Cancel. Hotkeys follow the active preset
+## (Settings.active_hotkey_preset(), rules §18.4): Classic = the entry's letter (unit orders
+## through the rebindable `cmd_*` actions: M move, S stop, H hold, A attack, P patrol; "A-click"
+## = attack-move, or attack on an enemy), Grid = `card_0..11` by position.
+## Refused presses and clicks never reach the sim: the deny sound plays, `denied` fires (the HUD
+## shakes the button and the counter) and the error line explains (Events.notification error_*).
+## Must sit after Selection in the tree so it sees input first.
 
 signal targeting_changed(mode: String)
+signal page_changed(page: String)
+## A refused press or click: error key, shortfall {gold, lumber} and the card slot (-1 = none).
+signal denied(reason: String, short: Dictionary, slot: int)
 
-## Default command card layout (QWER / ASDF / ZXCV grid slots 0..11).
+## Unit orders by card slot and their Classic actions (CommandCard.hotkey_label).
 const CARD: Dictionary = {0: "move", 1: "stop", 2: "hold", 3: "attack_move", 4: "patrol"}
-const LABELS: Dictionary = {"move": "Move", "stop": "Stop", "hold": "Hold",
-	"attack_move": "Attack", "patrol": "Patrol"}
-const TARGETED: Array[String] = ["move", "attack_move", "patrol"]
-## Classic preset: command -> input action (mnemonic letter, Settings.default_actions()).
 const CLASSIC_ACTIONS: Dictionary = {"move": "cmd_move", "stop": "cmd_stop", "hold": "cmd_hold",
 	"attack_move": "cmd_attack", "patrol": "cmd_patrol"}
+## Refusals that are a locked or capped button (the dull "disabled" deny); the rest are errors.
+const DISABLED_REASONS: Array[String] = ["requirements", "tier", "cannot_build", "cannot_train",
+	"queue_full", "hero_limit", "busy", "maxed"]
 const MARKER_SHADER := preload("res://src/fx/ring.gdshader")
 
 var world: World
 var camera: RtsCamera
 var selection: Selection
 var player_id: int = 0
+## "", a targeted order (move, attack_move, patrol, gather, repair, rally) or "place".
 var targeting: String = ""
+var page: String = CardModel.PAGE_MAIN
+## The building def being placed while targeting == "place".
+var placing: String = ""
+## The placement ghost (visual only), made on first use.
+var placement: BuildPlacement
+var _place_worker: int = 0           ## the worker Shift-placed buildings queue on
 
 
 func setup(w: World, cam: RtsCamera, sel: Selection, pid: int) -> void:
@@ -33,6 +47,13 @@ func setup(w: World, cam: RtsCamera, sel: Selection, pid: int) -> void:
 	camera = cam
 	selection = sel
 	player_id = pid
+	if not Events.selection_changed.is_connected(_on_selection_changed):
+		Events.selection_changed.connect(_on_selection_changed)
+
+
+func _exit_tree() -> void:
+	if Events.selection_changed.is_connected(_on_selection_changed):
+		Events.selection_changed.disconnect(_on_selection_changed)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -47,59 +68,178 @@ func _unhandled_input(event: InputEvent) -> void:
 				_smart(mb.position, mb.shift_pressed)
 			get_viewport().set_input_as_handled()
 		elif mb.button_index == MOUSE_BUTTON_LEFT and targeting != "":
-			# a denied click (off the map, an untargetable unit) keeps the targeting mode, as in
-			# the reference: the player retries without pressing the hotkey again
+			# a denied click (off the map, an untargetable unit, a blocked spot) keeps the mode, as
+			# in the reference: the player retries without pressing the hotkey again
 			if _issue_targeted(targeting, mb.position, mb.shift_pressed) and not mb.shift_pressed:
 				_set_targeting("")
 			get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo:
-		if event.is_action_pressed("cancel") and targeting != "":
-			_set_targeting("")
-			get_viewport().set_input_as_handled()
-			return
-		for slot: int in CARD:
-			var action := hotkey_action(slot)
-			if not action.is_empty() and event.is_action_pressed(action):
-				activate_card(slot, (event as InputEventKey).shift_pressed)
+		var k := event as InputEventKey
+		if k.is_action_pressed("cancel"):
+			if escape():
 				get_viewport().set_input_as_handled()
-				return
+			return
+		var slot := slot_for_key(k)
+		if slot >= 0:
+			activate_card(slot, k.shift_pressed)
+			get_viewport().set_input_as_handled()
 
 
-## Input action that triggers a card slot under the active preset ("" for an empty slot).
+## Input action that triggers a unit-order slot under the active preset ("" for other slots).
 static func hotkey_action(slot: int) -> String:
 	if Settings.active_hotkey_preset() == "grid":
 		return "card_%d" % slot
 	return str(CLASSIC_ACTIONS.get(CARD.get(slot, ""), ""))
 
 
-## Command card slot pressed (hotkey or HUD button): targeted commands enter targeting mode,
-## the others are issued at once. Returns false when the slot is empty, nothing is selected or
-## the game is paused (no orders while paused; the HUD stays clickable).
+# --- the card ------------------------------------------------------------------------------
+
+## Own living units of the active subgroup, lead first (whose card is shown).
+func active_units() -> Array[Unit]:
+	var out: Array[Unit] = []
+	if selection == null:
+		return out
+	var sub := selection.active_subgroup_def()
+	for u in selection.selected:
+		if u.alive and u.player_id == player_id and u.def_id == sub:
+			out.append(u)
+	return out
+
+
+## The card now (CardModel entries, null for empty slots).
+func current_card() -> Array:
+	return CardModel.build(world, player_id, active_units(), page)
+
+
+func set_page(p: String) -> void:
+	if p == page:
+		return
+	page = p
+	page_changed.emit(p)
+
+
+## The card slot a key press triggers (-1 = none): Grid by position, Classic by letter (unit
+## orders by their rebindable actions).
+func slot_for_key(k: InputEventKey) -> int:
+	var card := current_card()
+	var grid := Settings.active_hotkey_preset() == "grid"
+	var letter := OS.get_keycode_string(k.keycode if k.keycode != KEY_NONE else k.physical_keycode)
+	for i in card.size():
+		var e: CardModel.Entry = card[i]
+		if e == null or e.key == "Esc":
+			continue
+		if grid:
+			if k.is_action_pressed("card_%d" % i):
+				return i
+		elif e.action != "":
+			if k.is_action_pressed(e.action):
+				return i
+		elif e.key != "" and e.key == letter:
+			return i
+	return -1
+
+
+## Card slot pressed (hotkey or HUD button). Returns false when nothing happened: an empty slot,
+## the game paused (no orders while paused; the HUD stays clickable) or a refused entry (then
+## the deny plays and `denied` fires).
 func activate_card(slot: int, shift: bool = false) -> bool:
-	var cmd: String = CARD.get(slot, "")
-	if cmd.is_empty() or not has_orderable() or not can_process():
+	if not can_process() or world == null:
 		return false
-	if TARGETED.has(cmd):
-		_set_targeting(cmd)
-	else:
-		_issue({"type": cmd, "queue": shift})
+	var card := current_card()
+	var e: CardModel.Entry = card[slot] if slot >= 0 and slot < card.size() else null
+	if e == null:
+		return false
+	if not e.usable():
+		_deny(e.reason, e.short, slot, e.missing)
+		return false
+	match e.kind:
+		"order":
+			if e.targeted:
+				_set_targeting(e.id)
+			elif e.id == "return":
+				_issue_for(_ids(active_units()), {"type": "return", "queue": shift})
+			else:
+				_issue({"type": e.id, "queue": shift})
+		"page":
+			set_page(e.id)
+		"back":
+			set_page(CardModel.PAGE_MAIN)
+		"build":
+			begin_placement(e.id)
+		"train":
+			var b := _least_busy(active_units())
+			if b == null:
+				return false
+			_issue_for([b.id], {"type": "train", "def": e.id, "queue": shift})
+		"research", "upgrade":
+			for b in active_units():
+				if world.production.can_queue_research(b, e.id) == "":
+					_issue_for([b.id], {"type": "research", "def": e.id})
+					break
+		"rally":
+			_set_targeting("rally")
+		"cancel":
+			var us := active_units()
+			if e.id == "site":
+				_issue_for(_ids(us), {"type": "cancel"})
+			else:
+				_issue_for([us[0].id], {"type": "cancel", "slot": -1})
 	return true
 
 
+## Esc: leaves targeting or placement, then a build page, then presses the card's Cancel.
+## False when there was nothing to escape.
+func escape() -> bool:
+	if targeting != "":
+		_set_targeting("")
+		return true
+	if page != CardModel.PAGE_MAIN:
+		set_page(CardModel.PAGE_MAIN)
+		return true
+	var card := current_card()
+	if card[CardModel.CANCEL_SLOT] != null:
+		return activate_card(CardModel.CANCEL_SLOT)
+	return false
+
+
+## Cancels entry `index` of a building's queue (queue panel click; full refund).
+func cancel_queue_slot(building: Unit, index: int) -> void:
+	if building != null and can_process():
+		_issue_for([building.id], {"type": "cancel", "slot": index})
+
+
+## The selected building with the shortest queue (ties: selection order), null when none can take
+## more (sites, upgrades running).
+func _least_busy(units: Array[Unit]) -> Unit:
+	var best: Unit = null
+	var best_n := 1 << 30
+	for b in units:
+		if b.under_construction or world.production.is_upgrading(b):
+			continue
+		var n := world.production.queue_of(b).size()
+		if n < best_n:
+			best_n = n
+			best = b
+	return best
+
+
+# --- targeting -----------------------------------------------------------------------------
+
 ## Ground point chosen outside the 3D view (minimap): confirms targeting, else a smart move.
+## Placement cannot use the minimap.
 func command_ground(ground: Vector3, shift: bool = false) -> void:
 	if selection.selected_ids().is_empty() or not can_process():
 		return
+	if targeting == "place":
+		return
 	if targeting != "":
-		_issue({"type": targeting, "pos": ground, "queue": shift})
-		if not shift:
+		if _issue_ground(targeting, ground, shift) and not shift:
 			_set_targeting("")
 		return
 	_issue({"type": "smart", "pos": ground, "queue": shift})
 
 
-## True when the selection holds an own mobile unit (the unit card applies; structures alone
-## have no Move / Stop / Hold / Attack / Patrol).
+## True when the selection holds an own mobile unit.
 func has_orderable() -> bool:
 	if selection == null:
 		return false
@@ -114,11 +254,35 @@ func cancel_targeting() -> void:
 		_set_targeting("")
 
 
+## Placement mode for building `def_id` (the ghost follows the cursor).
+func begin_placement(def_id: String) -> void:
+	placing = def_id
+	_place_worker = 0
+	_set_targeting("place")
+
+
 func _set_targeting(mode: String) -> void:
 	targeting = mode
+	if mode != "place":
+		placing = ""
 	selection.enabled = mode == ""
-	Input.set_default_cursor_shape(Input.CURSOR_CROSS if mode != "" else Input.CURSOR_ARROW)
+	Input.set_default_cursor_shape(Input.CURSOR_CROSS if mode != "" and mode != "place" else Input.CURSOR_ARROW)
+	if mode == "place":
+		if placement == null:
+			placement = BuildPlacement.new()
+			placement.name = "BuildPlacement"
+			world.add_child(placement)
+			placement.setup(world, camera, player_id)
+		placement.begin(placing)
+	elif placement != null:
+		placement.end()
 	targeting_changed.emit(mode)
+
+
+func _on_selection_changed(_units: Array) -> void:
+	if targeting == "place":
+		_set_targeting("")
+	set_page(CardModel.PAGE_MAIN)
 
 
 func _smart(screen_pos: Vector2, shift: bool) -> void:
@@ -138,34 +302,162 @@ func _smart(screen_pos: Vector2, shift: bool) -> void:
 
 ## Returns false when the click was denied (the deny sound plays, nothing is issued).
 func _issue_targeted(cmd: String, screen_pos: Vector2, shift: bool) -> bool:
+	if cmd == "place":
+		return _place_at(screen_pos, shift)
 	var target := selection.pick_unit(screen_pos)
-	if cmd == "attack_move" and target != null and (target.is_invulnerable or target.is_resource or target.is_item):
-		Audio.deny("error")          # "unable to target": Gold Seams, invulnerable units
-		return false
-	if cmd == "attack_move" and target != null and world.is_enemy(player_id, target.player_id):
-		_issue({"type": "attack", "target": target.id, "queue": shift})
-		return true
+	match cmd:
+		"attack_move":
+			if target != null and (target.is_invulnerable or target.is_resource or target.is_item):
+				_deny("invalid_target")          # "unable to target": Gold Seams, invulnerable units
+				return false
+			if target != null and world.is_enemy(player_id, target.player_id):
+				_issue({"type": "attack", "target": target.id, "queue": shift})
+				return true
+		"gather":
+			if target != null:
+				if not target.is_resource:
+					_deny("gather_target")
+					return false
+				_issue_for(_ids(active_units()), {"type": "gather", "target": target.id, "queue": shift})
+				_marker(target.pos, Color(1, 0.9, 0.3))
+				return true
+		"repair":
+			var us := active_units()
+			if target != null and not us.is_empty() and target.under_construction \
+					and target.player_id == player_id:
+				_issue_for(_ids(us), {"type": "smart", "target": target.id, "queue": shift})   # help build
+				return true
+			if target == null or us.is_empty() or not world.construction.can_repair(us[0], target):
+				_deny("repair_target")
+				return false
+			_issue_for(_ids(us), {"type": "repair", "target": target.id, "queue": shift})
+			_marker(target.pos, Color(1, 0.9, 0.3))
+			return true
+		"rally":
+			if target != null:
+				_issue_for(_ids(active_units()), {"type": "rally", "target": target.id})
+				return true
 	var ground := camera.screen_to_ground(screen_pos)
 	if ground == Vector3.INF:
-		Audio.deny("error")
+		_deny("invalid_target")
 		return false
-	_issue({"type": cmd, "pos": ground, "queue": shift})
+	return _issue_ground(cmd, ground, shift)
+
+
+## A targeted order on a ground point (3D view or minimap). False when denied.
+func _issue_ground(cmd: String, ground: Vector3, shift: bool) -> bool:
+	match cmd:
+		"gather":
+			if world.doodads.nearest_tree(ground, World.TREE_CLICK_RADIUS) < 0:
+				_deny("gather_target")
+				return false
+			_issue_for(_ids(active_units()), {"type": "gather", "pos": ground, "queue": shift})
+		"repair":
+			_deny("repair_target")
+			return false
+		"rally":
+			_issue_for(_ids(active_units()), {"type": "rally", "pos": ground})
+		_:
+			_issue({"type": cmd, "pos": ground, "queue": shift})
 	_marker(ground, Color(1.0, 0.3, 0.2) if cmd == "attack_move" else Color(0.3, 1.0, 0.35))
 	return true
 
 
+## Placement click: the nearest selected worker (Shift: the same worker again, queued) is sent to
+## build at the snapped spot. Refused (kept in placement) when the spot is invalid or the cost
+## cannot be met; the ghost shakes.
+func _place_at(screen_pos: Vector2, shift: bool) -> bool:
+	var ground := camera.screen_to_ground(screen_pos)
+	var err := world.tech.can_build(player_id, placing)
+	var short := {}
+	if err == "":
+		var cost: Dictionary = Defs.unit(placing).get("cost", {})
+		var p := world.player(player_id)
+		if p.gold < int(cost.get("gold", 0)):
+			short["gold"] = int(cost.get("gold", 0)) - p.gold
+			err = "need_gold"
+		if p.lumber < int(cost.get("lumber", 0)):
+			short["lumber"] = int(cost.get("lumber", 0)) - p.lumber
+			err = "need_lumber" if err == "" else err
+	var spot := {}
+	if err == "":
+		if ground == Vector3.INF:
+			err = "cannot_build"
+		else:
+			spot = world.construction.can_place(player_id, placing, ground)
+			if not spot["ok"]:
+				err = str(spot["reason"])
+	var worker := _builder_for(spot.get("pos", ground), shift) if err == "" else null
+	if err == "" and worker == null:
+		err = "cannot_build"
+	if err != "":
+		_deny(err, short)
+		if placement != null:
+			placement.refuse()
+		return false
+	_issue_for([worker.id], {"type": "build", "def": placing, "pos": spot["pos"], "queue": shift})
+	if placement != null:
+		placement.stamp()
+	_place_worker = worker.id if shift else 0
+	if not shift:
+		set_page(CardModel.PAGE_MAIN)
+	return true
+
+
+## The worker that builds at `at`: with Shift the one already chosen this placement, else the
+## nearest worker of the active subgroup.
+func _builder_for(at: Vector3, shift: bool) -> Unit:
+	var us := active_units()
+	if shift and _place_worker != 0:
+		for u in us:
+			if u.id == _place_worker:
+				return u
+	var best: Unit = null
+	var best_d := INF
+	for u in us:
+		if not u.is_worker:
+			continue
+		var d := Grid.flat_dist(u.pos, at)
+		if d < best_d:
+			best_d = d
+			best = u
+	return best
+
+
+## A refused press or click: deny sound, `denied` (button and counter shake) and the error line.
+func _deny(reason: String, short: Dictionary = {}, slot: int = -1, missing: Array[String] = []) -> void:
+	Audio.deny("disabled" if DISABLED_REASONS.has(reason) else "error")
+	denied.emit(reason, short, slot)
+	var text := Defs.text("error_" + reason) if Defs.strings.has("error_" + reason) else Defs.text("error_cannot_train")
+	if text.contains("%s"):
+		text = text % ", ".join(missing)
+	Events.notification.emit(player_id, "error_" + reason, text)
+
+
+static func _ids(units: Array[Unit]) -> Array:
+	var out: Array = []
+	for u in units:
+		out.append(u.id)
+	return out
+
+
 func _issue(cmd: Dictionary) -> void:
-	cmd["player"] = player_id
-	cmd["units"] = selection.selected_ids()
-	if (cmd["units"] as Array).is_empty():
+	_issue_for(selection.selected_ids(), cmd)
+
+
+func _issue_for(ids: Array, cmd: Dictionary) -> void:
+	if ids.is_empty():
 		return
+	cmd["player"] = player_id
+	cmd["units"] = ids
 	world.issue(cmd)
-	var first := world.get_unit(cmd["units"][0])
-	Audio.play_voice(first, ack_category(cmd))
+	var first := world.get_unit(ids[0])
+	if first != null and first.is_mobile():
+		Audio.play_voice(first, ack_category(cmd))
 
 
 ## AUD-03: the ack an order asks for: Attack for attack, attack-move and a smart order on an
-## enemy; Yes for everything else (move, patrol, stop, hold, follow).
+## enemy; Yes for everything else (move, patrol, stop, hold, follow, build, gather).
 func ack_category(cmd: Dictionary) -> String:
 	var type := str(cmd.get("type", ""))
 	if type in ["attack", "attack_move"]:

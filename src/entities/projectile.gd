@@ -99,21 +99,44 @@ func _add_visual(model: String) -> void:
 	add_child(mi)
 
 
-## Placeholder arrow pointing down -Z (looking_at forward).
+## Procedural missile meshes by the projectile `model` id (pointing down -Z, looking_at forward):
+## arrows and javelins are shafts with a head and fletching, bullets a lead ball, bombard balls an
+## iron ball, clay pots a lidded terracotta pot, bolts and pellets small coloured orbs. Visual only.
 static func _mesh(model: String) -> Mesh:
 	if _meshes.has(model):
 		return _meshes[model]
-	var shaft := BoxMesh.new()
-	shaft.size = Vector3(0.07, 0.07, 0.9)
-	var tip := BoxMesh.new()
-	tip.size = Vector3(0.13, 0.13, 0.18)
-	var fletch := BoxMesh.new()
-	fletch.size = Vector3(0.22, 0.03, 0.18)
-	var parts := [
-		{"mesh": shaft, "xform": ProcMesh.at(Vector3.ZERO), "color": Color(0.55, 0.40, 0.24)},
-		{"mesh": tip, "xform": ProcMesh.at(Vector3(0, 0, -0.5), Vector3.ONE, PI * 0.25), "color": Color(0.85, 0.87, 0.9)},
-		{"mesh": fletch, "xform": ProcMesh.at(Vector3(0, 0, 0.38)), "color": Color(0.95, 0.95, 0.9)},
-	]
+	var parts: Array = []
+	match model:
+		"bombard_ball":
+			parts = [{"mesh": ProcMesh.sphere(0.13, 10, 6), "xform": ProcMesh.at(Vector3.ZERO), "color": Color(0.17, 0.17, 0.19)}]
+		"bullet":
+			parts = [{"mesh": ProcMesh.sphere(0.05, 6, 4), "xform": ProcMesh.at(Vector3.ZERO), "color": Color(0.35, 0.35, 0.38)}]
+		"clay_pot":
+			parts = [
+				{"mesh": ProcMesh.sphere(0.13, 10, 6), "xform": ProcMesh.at(Vector3.ZERO, Vector3(1.0, 0.9, 1.0)), "color": Color(0.66, 0.42, 0.22)},
+				{"mesh": ProcMesh.cylinder(0.06, 0.07, 0.07, 8), "xform": ProcMesh.at(Vector3(0, 0.12, 0)), "color": Color(0.55, 0.34, 0.18)},
+				{"mesh": ProcMesh.cylinder(0.075, 0.075, 0.025, 8), "xform": ProcMesh.at(Vector3(0, 0.165, 0)), "color": Color(0.85, 0.62, 0.2)},
+			]
+		"coal_lump":
+			parts = [{"mesh": ProcMesh.sphere(0.09, 6, 4), "xform": ProcMesh.at(Vector3.ZERO, Vector3(1.2, 0.8, 1.0)), "color": Color(0.12, 0.1, 0.09)}]
+		"arcane_bolt":
+			parts = [{"mesh": ProcMesh.sphere(0.1, 8, 5), "xform": ProcMesh.at(Vector3.ZERO), "color": Color(0.72, 0.95, 0.62)}]
+		"ice_pellet":
+			parts = [{"mesh": ProcMesh.sphere(0.08, 8, 5), "xform": ProcMesh.at(Vector3.ZERO), "color": Color(0.78, 0.9, 1.0)}]
+		_:
+			var length := 1.25 if model == "javelin" else 0.9
+			var shaft := BoxMesh.new()
+			shaft.size = Vector3(0.07, 0.07, length)
+			var tip := BoxMesh.new()
+			tip.size = Vector3(0.13, 0.13, 0.18)
+			var fletch := BoxMesh.new()
+			fletch.size = Vector3(0.22, 0.03, 0.18)
+			parts = [
+				{"mesh": shaft, "xform": ProcMesh.at(Vector3.ZERO), "color": Color(0.55, 0.40, 0.24)},
+				{"mesh": tip, "xform": ProcMesh.at(Vector3(0, 0, -length * 0.55), Vector3.ONE, PI * 0.25), "color": Color(0.85, 0.87, 0.9)},
+			]
+			if model != "javelin":
+				parts.append({"mesh": fletch, "xform": ProcMesh.at(Vector3(0, 0, 0.38)), "color": Color(0.95, 0.95, 0.9)})
 	var m := ProcMesh.merge(parts)
 	_meshes[model] = m
 	return m

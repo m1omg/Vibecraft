@@ -7,7 +7,8 @@ audio and text.
 
 The essentials:
 
-- Dev branch `claude/clever-heisenberg-i8649y`: commit and push there. No PR unless asked.
+- Dev branch `claude/clever-heisenberg-i8649y`: commit and push there (Playtest 2, built on `claude/bold-johnson-kpuvf2`, is
+  merged in). No PR unless asked.
 - Before every commit, all tests must pass:
   `godot --headless --path . --import`, then `godot --headless --path . -s tests/run_tests.gd`.
 - Before every commit, `python3 tools/ip/check_banned_terms.py` must find no banned terms.

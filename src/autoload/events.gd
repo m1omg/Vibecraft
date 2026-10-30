@@ -7,6 +7,9 @@ extends Node
 
 signal unit_spawned(u: Node)
 signal unit_died(u: Node, killer: Node)
+## A unit left the sim without dying (World.remove_unit: a cancelled site, a picked-up item, a
+## defeated player's units); it is freed at the end of the tick.
+signal unit_removed(u: Node)
 signal unit_damaged(u: Node, amount: float, src: Node)
 signal order_issued(u: Node, order: RefCounted)
 signal building_completed(u: Node)
@@ -42,6 +45,8 @@ signal queue_changed(building: Node)
 signal production_stalled(building: Node, reason: String)
 signal research_started(player_id: int, id: String, building: Node)
 signal tier_changed(player_id: int, tier: int)
+## A building became its upgrade in place (Tech: hall tiers, tower upgrades); views reload.
+signal building_upgraded(building: Node, from_def: String)
 # heroes / abilities / buffs (C)
 signal xp_gained(hero: Node, amount: float)
 signal ability_learned(hero: Node, ability_id: String, rank: int)

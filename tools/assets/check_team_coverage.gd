@@ -11,6 +11,8 @@ extends SceneTree
 ## runtime because autoload names are not visible to -s scripts at compile time.
 
 const UNIT_DIR := "res://assets/models/units/"
+## Kit vehicles (tools/kits/siege.py) are measured too: their TEAM surfaces count in full.
+const VEHICLE_DIR := "res://assets/models/vehicles/"
 const OUT := "res://assets/models/units/team_coverage.json"
 
 
@@ -32,15 +34,19 @@ func _run() -> void:
 	var models := {}
 	var failed := 0
 	print("%-24s %-6s %9s %8s %8s  %s" % ["model", "kind", "coverage", "upper", "texel", "verdict"])
-	var files := Array(DirAccess.get_files_at(UNIT_DIR))
-	files.sort()
-	for f: String in files:
+	var files: Array = []
+	for dir: String in [UNIT_DIR, VEHICLE_DIR]:
+		for f: String in DirAccess.get_files_at(dir):
+			files.append(dir + f)
+	files.sort_custom(func(a: String, b: String) -> bool: return a.get_file() < b.get_file())
+	for path: String in files:
+		var f := path.get_file()
 		if not f.ends_with(".glb"):
 			continue
 		var id := f.get_basename()
 		if not only.is_empty() and not only.has(id):
 			continue
-		var m: Dictionary = tc.call("measure_model", UNIT_DIR + f)
+		var m: Dictionary = tc.call("measure_model", path)
 		if m.is_empty():
 			continue
 		var kind := str(kinds.get(id, "unit"))

@@ -1870,8 +1870,49 @@ def export_glb(path, aid, parts, H, cfg: Bake, sheets, extras=None, glow_factor=
     sheets: {"atlas": Sheet, "team": Sheet, "glow": Sheet}. piping: (pal_swatch, (u, v)) = the atlas
     palette swatch and the UV of the neutral piping colour (TEAM borders are re-mapped there)."""
     bake(parts, H, cfg)
-    routed = {g: [] for g in GROUP_ORDER}
     stats = {"materials": [], "team_piping_tris": 0}
+    mats, prims = [], []
+    _assemble(aid, parts, sheets, piping, mats, prims, stats)
+    tris = _write_glb(path, aid, prims, mats, extras or {}, glow_factor)
+    stats["materials"] = [{"name": m["name"], "texture": m["sheet"].uri, "texture_px": list(m["sheet"].size),
+                           "swatches": m["swatches"]} for m in mats]
+    stats["tris"] = tris
+    return stats
+
+
+def export_glb_nodes(path, aid, nodes, H, cfg: Bake, sheets, extras=None, glow_factor=GLOW_DAY, piping=None,
+                     uri_prefix=""):
+    """Like export_glb, for a model in several named nodes (moving parts: wheels, a barrel, legs).
+    nodes: [(name, pivot_xyz_build_space, parts, node_extras)]. AO is baked over every part together
+    in the rest pose; each node's vertices are then stored relative to its pivot, and the node is
+    translated to the pivot (glTF space), so the game can rotate it about its own origin. Materials
+    are shared by every node. uri_prefix is prepended to the sheet URIs (a GLB outside the buildings
+    folder: "../buildings/")."""
+    bake([p for (_, _, ps, _) in nodes for p in ps], H, cfg)
+    stats = {"materials": [], "team_piping_tris": 0}
+    mats, meshes = [], []
+    for name, pivot, ps, nex in nodes:
+        piv = np.asarray(pivot, float)
+        moved = []
+        for p in ps:
+            q = p.copy()
+            q.v = p.v - piv
+            q.cn, q.col, q.hn = p.cn, p.col, p.hn
+            moved.append(q)
+        prims = []
+        _assemble(aid, moved, sheets, piping, mats, prims, stats)
+        meshes.append((name, [float(x) for x in _to_gltf(piv[None, :])[0]], prims, nex or {}))
+    tris = _write_glb(path, aid, None, mats, extras or {}, glow_factor, meshes=meshes, uri_prefix=uri_prefix)
+    stats["materials"] = [{"name": m["name"], "texture": uri_prefix + m["sheet"].uri, "texture_px": list(m["sheet"].size),
+                           "swatches": m["swatches"]} for m in mats]
+    stats["tris"] = tris
+    return stats
+
+
+def _assemble(aid, parts, sheets, piping, mats, prims, stats):
+    """Routes baked parts into the material groups and appends one primitive per group to `prims`
+    ((material index, pos, nor, uv0, uv1, col)); materials are looked up or appended in `mats`."""
+    routed = {g: [] for g in GROUP_ORDER}
     for p in parts:
         M = len(p.t)
         uv = p.uv[..., ::-1].copy() if p.uvrot else p.uv.copy()
@@ -1890,7 +1931,6 @@ def export_glb(path, aid, parts, H, cfg: Bake, sheets, extras=None, glow_factor=
                 stats["team_piping_tris"] += len(border)
         else:
             routed[g].append((p.sw, A, p.faceted))
-    mats, prims = [], []
     dummy = not routed["glow"]
     for g in GROUP_ORDER:
         sel = routed[g]
@@ -1936,22 +1976,26 @@ def export_glb(path, aid, parts, H, cfg: Bake, sheets, extras=None, glow_factor=
             uv1.append(A[..., 12:14].reshape(-1, 2))
             uv0.append(uvA.reshape(-1, 2))
         name = aid if g == "atlas" else f"{aid}_{g.upper()}"
-        mats.append({"name": name, "sheet": sh, "group": g, "swatches": sws})
+        mi = next((i for i, m in enumerate(mats) if m["name"] == name), -1)
+        if mi < 0:
+            mats.append({"name": name, "sheet": sh, "group": g, "swatches": sws})
+            mi = len(mats) - 1
+        else:
+            for k in sws:
+                if k not in mats[mi]["swatches"]:
+                    mats[mi]["swatches"].append(k)
         if dummy and g == "atlas":
             # hidden first primitive (see GROUP_ORDER): one 1 mm triangle inside the base
             dp = np.array([[0.0, 0.0, 0.02], [0.001, 0.0, 0.02], [0.0, 0.001, 0.02]])
-            prims.append((len(mats) - 1, dp, np.tile([0.0, 0.0, 1.0], (3, 1)), np.tile(uv0[0][:1], (3, 1)),
+            prims.append((mi, dp, np.tile([0.0, 0.0, 1.0], (3, 1)), np.tile(uv0[0][:1], (3, 1)),
                           np.zeros((3, 2)), np.ones((3, 4))))
-        prims.append((len(mats) - 1, np.concatenate(pos), np.concatenate(nor), np.concatenate(uv0),
+        prims.append((mi, np.concatenate(pos), np.concatenate(nor), np.concatenate(uv0),
                       np.concatenate(uv1), np.concatenate(col)))
-    tris = _write_glb(path, aid, prims, mats, extras or {}, glow_factor)
-    stats["materials"] = [{"name": m["name"], "texture": m["sheet"].uri, "texture_px": list(m["sheet"].size),
-                           "swatches": m["swatches"]} for m in mats]
-    stats["tris"] = tris
-    return stats
 
 
-def _write_glb(path, aid, prims, mats, extras, glow_factor):
+def _write_glb(path, aid, prims, mats, extras, glow_factor, meshes=None, uri_prefix=""):
+    """One mesh in one node (prims), or several named nodes under a root (meshes: [(name,
+    translation, prims, node extras)])."""
     bin_chunks = bytearray()
     buffer_views, accessors = [], []
 
@@ -1981,7 +2025,7 @@ def _write_glb(path, aid, prims, mats, extras, glow_factor):
     for m in mats:
         sh = m["sheet"]
         if sh.uri not in tex_of:
-            gl_images.append({"uri": sh.uri, "mimeType": sh.mime, "name": sh.name})
+            gl_images.append({"uri": uri_prefix + sh.uri, "mimeType": sh.mime, "name": sh.name})
             textures.append({"sampler": 0, "source": len(gl_images) - 1})
             tex_of[sh.uri] = len(textures) - 1
         m["image"] = tex_of[sh.uri]
@@ -2006,9 +2050,17 @@ def _write_glb(path, aid, prims, mats, extras, glow_factor):
                           "multiplies albedo_color by the player colour")
         md["extras"] = ex
         materials.append(md)
-    prims_out = []
     total_tris = 0
-    for (mi, pos, nor, uv0, uv1, col) in prims:
+
+    def mesh_prims(prims):
+        nonlocal total_tris
+        prims_out = []
+        for (mi, pos, nor, uv0, uv1, col) in prims:
+            prims_out.append(_prim(mi, pos, nor, uv0, uv1, col))
+        return prims_out
+
+    def _prim(mi, pos, nor, uv0, uv1, col):
+        nonlocal total_tris
         P = _to_gltf(pos).astype(np.float32)
         N = _to_gltf(nrm(nor)).astype(np.float32)
         rows = np.concatenate([P, N, uv0.astype(np.float32), uv1.astype(np.float32), col.astype(np.float32)], axis=1)
@@ -2039,16 +2091,35 @@ def _write_glb(path, aid, prims, mats, extras, glow_factor):
             ind = add_acc(ind_arr.astype(np.uint16), 5123, "SCALAR", 34963)
         else:
             ind = add_acc(ind_arr.astype(np.uint32), 5125, "SCALAR", 34963)
-        prims_out.append({"attributes": attrs, "indices": ind, "material": int(mi), "mode": 4})
-    node = {"name": aid, "mesh": 0}
-    if extras:
-        node["extras"] = extras
+        return {"attributes": attrs, "indices": ind, "material": int(mi), "mode": 4}
+
+    if meshes is None:
+        node = {"name": aid, "mesh": 0}
+        if extras:
+            node["extras"] = extras
+        gl_nodes = [node]
+        gl_meshes = [{"name": aid, "primitives": mesh_prims(prims)}]
+        scene_nodes = [0]
+    else:
+        root = {"name": aid, "children": list(range(1, len(meshes) + 1))}
+        if extras:
+            root["extras"] = extras
+        gl_nodes, gl_meshes = [root], []
+        for name, tr, mprims, nex in meshes:
+            n = {"name": name, "mesh": len(gl_meshes)}
+            if any(abs(x) > 1e-9 for x in tr):
+                n["translation"] = [round(float(x), 6) for x in tr]
+            if nex:
+                n["extras"] = nex
+            gl_nodes.append(n)
+            gl_meshes.append({"name": name, "primitives": mesh_prims(mprims)})
+        scene_nodes = [0]
     gltf = {
         "asset": {"version": "2.0", "generator": "Vibecraft tools/kits/buildings.py"},
         "scene": 0,
-        "scenes": [{"name": aid, "nodes": [0]}],
-        "nodes": [node],
-        "meshes": [{"name": aid, "primitives": prims_out}],
+        "scenes": [{"name": aid, "nodes": scene_nodes}],
+        "nodes": gl_nodes,
+        "meshes": gl_meshes,
         "materials": materials,
         "textures": textures,
         "images": gl_images,

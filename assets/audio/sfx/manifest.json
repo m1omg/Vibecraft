@@ -4,6 +4,37 @@
   "res://assets/audio/sfx/ranged/atk_herb_mote_02.wav",
   "res://assets/audio/sfx/ranged/atk_herb_mote_03.wav"
  ],
+ "bld_collapse": [
+  "res://assets/audio/sfx/world/bld_collapse_01.wav",
+  "res://assets/audio/sfx/world/bld_collapse_02.wav"
+ ],
+ "bld_complete": [
+  "res://assets/audio/sfx/world/bld_complete_01.wav",
+  "res://assets/audio/sfx/world/bld_complete_02.wav"
+ ],
+ "bld_hammer": [
+  "res://assets/audio/sfx/world/bld_hammer_01.wav",
+  "res://assets/audio/sfx/world/bld_hammer_02.wav",
+  "res://assets/audio/sfx/world/bld_hammer_03.wav",
+  "res://assets/audio/sfx/world/bld_hammer_04.wav",
+  "res://assets/audio/sfx/world/bld_hammer_05.wav",
+  "res://assets/audio/sfx/world/bld_hammer_06.wav"
+ ],
+ "bld_mallet": [
+  "res://assets/audio/sfx/world/bld_mallet_01.wav",
+  "res://assets/audio/sfx/world/bld_mallet_02.wav",
+  "res://assets/audio/sfx/world/bld_mallet_03.wav",
+  "res://assets/audio/sfx/world/bld_mallet_04.wav"
+ ],
+ "bld_stamp": [
+  "res://assets/audio/sfx/world/bld_stamp_01.wav",
+  "res://assets/audio/sfx/world/bld_stamp_02.wav",
+  "res://assets/audio/sfx/world/bld_stamp_03.wav"
+ ],
+ "bld_tier_up": [
+  "res://assets/audio/sfx/world/bld_tier_up_01.wav",
+  "res://assets/audio/sfx/world/bld_tier_up_02.wav"
+ ],
  "bombard_fire": [
   "res://assets/audio/sfx/ranged/bombard_fire_01.wav",
   "res://assets/audio/sfx/ranged/bombard_fire_02.wav",
@@ -39,6 +70,29 @@
   "res://assets/audio/sfx/ranged/claypot_hit_02.wav",
   "res://assets/audio/sfx/ranged/claypot_hit_03.wav",
   "res://assets/audio/sfx/ranged/claypot_hit_04.wav"
+ ],
+ "eco_chop": [
+  "res://assets/audio/sfx/world/eco_chop_01.wav",
+  "res://assets/audio/sfx/world/eco_chop_02.wav",
+  "res://assets/audio/sfx/world/eco_chop_03.wav",
+  "res://assets/audio/sfx/world/eco_chop_04.wav",
+  "res://assets/audio/sfx/world/eco_chop_05.wav"
+ ],
+ "eco_coin": [
+  "res://assets/audio/sfx/world/eco_coin_01.wav",
+  "res://assets/audio/sfx/world/eco_coin_02.wav",
+  "res://assets/audio/sfx/world/eco_coin_03.wav",
+  "res://assets/audio/sfx/world/eco_coin_04.wav",
+  "res://assets/audio/sfx/world/eco_coin_05.wav"
+ ],
+ "eco_lumber_drop": [
+  "res://assets/audio/sfx/world/eco_lumber_drop_01.wav",
+  "res://assets/audio/sfx/world/eco_lumber_drop_02.wav",
+  "res://assets/audio/sfx/world/eco_lumber_drop_03.wav"
+ ],
+ "eco_tree_fall": [
+  "res://assets/audio/sfx/world/eco_tree_fall_01.wav",
+  "res://assets/audio/sfx/world/eco_tree_fall_02.wav"
  ],
  "fall_armoured": [
   "res://assets/audio/sfx/combat/fall_armoured_01.wav",
@@ -219,6 +273,9 @@
  "ui_order_kingdom_patrol": [
   "res://assets/audio/sfx/ui/ui_order_kingdom_patrol_01.wav",
   "res://assets/audio/sfx/ui/ui_order_kingdom_patrol_02.wav"
+ ],
+ "ui_research_done": [
+  "res://assets/audio/sfx/ui/ui_research_done_01.wav"
  ],
  "ui_select_clans_bundle": [
   "res://assets/audio/sfx/ui/ui_select_clans_bundle_01.wav",

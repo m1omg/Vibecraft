@@ -97,6 +97,10 @@ var _rim_pulse: float = 0.0
 ## Body juice composer (src/fx/body_juice.gd): lean, push-off, stop plant, banking, nods, acks,
 ## knockback, hit-stop remap, stride dust, death contact. Mobile units only; writes `rig`.
 var juice: BodyJuice
+## Multi-node vehicle models (tools/kits/siege.py: wheels, crew legs, a recoiling barrel) animate
+## procedurally instead of the humanoid bob (src/fx/vehicle_rig.gd); null for everything else.
+var vehicle: VehicleRig
+var _shown_def: String = ""              ## the def whose model is shown (structures reload on a change)
 
 
 func setup(u: Unit) -> void:
@@ -119,6 +123,7 @@ func setup(u: Unit) -> void:
 	height = float(d.get("height", 1.5)) * float(d.get("scale", 1.0))
 	_t = float(u.id) * 1.37
 	_fall_dir = 1.0 if u.id % 2 == 0 else -1.0
+	_shown_def = u.def_id
 	model_path = AssetLibrary.model_path(d, u.def_id)
 	if model_path.is_empty() or not _load_model(model_path):
 		model_path = ""
@@ -235,6 +240,15 @@ func strike_hit_time(state: String) -> float:
 func _process(delta: float) -> void:
 	if unit == null:
 		return
+	# fog of war (rules §14.1): enemies only while the local player sees them, structures once
+	# seen (ghosts); nothing else runs for a hidden view
+	var fog := unit.world.fog if unit.world != null else null
+	if fog != null and fog.enabled:
+		var show := fog.shows(unit.world.local_player_id, unit)
+		if visible != show:
+			visible = show
+		if not show:
+			return
 	if is_structure:
 		_update_structure()
 		if not unit.alive:
@@ -259,6 +273,9 @@ func _process(delta: float) -> void:
 			return
 		_drive_clips(delta + _skipped, swing, spd)
 		_skipped = 0.0
+		return
+	if vehicle != null:
+		vehicle.update(unit, _move, delta)
 		return
 	_procedural_motion(swing)
 
@@ -435,6 +452,8 @@ func _animate_structure_death() -> void:
 
 ## Construction reveal: `build_progress` (0..1) when the sim publishes it, 1 otherwise.
 func _update_structure() -> void:
+	if unit.def_id != _shown_def and not _shown_def.is_empty():
+		_reload_model()      # upgraded in place (Tech: hall tier, Lookout -> Gun Tower)
 	var bp: Variant = unit.get("build_progress")
 	var p := clampf(float(bp), 0.0, 1.0) if bp != null else 1.0
 	_set_param(&"variant_a", Vector4(p, 0.0, 0.0, 0.0))
@@ -495,25 +514,12 @@ func _load_model(path: String) -> bool:
 	model = inst
 	model.name = "Model"
 	if is_structure:
-		model_scale = _structure_scale(path)
-		var addon_of := str(AssetLibrary.building_entry(path).get("addon_of", ""))
-		if not addon_of.is_empty():
-			# T2 hall upgrades are add-ons in the T1 hall's model space: show both
-			var base_path := AssetLibrary.model_path({}, addon_of)
-			var base := AssetLibrary.instantiate(base_path, "structure") if not base_path.is_empty() else null
-			if base != null:
-				base.name = "Base"
-				model.add_child(base)
-		# data add-ons (SCHEMA `model_addons`): drawn in the base model's space, so they share its scale
-		for a: Variant in unit.def.get("model_addons", []):
-			var ap := AssetLibrary.model_path({"model": str(a)}, "")
-			var add := AssetLibrary.instantiate(ap, "structure") if not ap.is_empty() else null
-			if add != null:
-				add.name = "Addon"
-				model.add_child(add)
+		model_scale = structure_fit(unit.def, path)
+		add_structure_parts(model, unit.def, path)
 	else:
 		_entry = AssetLibrary.unit_entry(path)
 		model_scale = float(unit.def.get("model_scale", unit.def.get("scale", 1.0)))
+		vehicle = VehicleRig.find(model)
 	model.scale = Vector3.ONE * model_scale
 	body.add_child(model)
 	for g: GeometryInstance3D in model.find_children("*", "GeometryInstance3D", true, false):
@@ -533,12 +539,31 @@ func _load_model(path: String) -> bool:
 	return true
 
 
+## A structure model's base (T2 hall upgrades are add-ons in the T1 hall's model space: both
+## show) and its data add-ons (SCHEMA `model_addons`, drawn in the base model's space, so they
+## share its scale), added under `model`. Shared with the build ghost (BuildPlacement).
+static func add_structure_parts(model: Node3D, d: Dictionary, path: String) -> void:
+	var addon_of := str(AssetLibrary.building_entry(path).get("addon_of", ""))
+	if not addon_of.is_empty():
+		var base_path := AssetLibrary.model_path({}, addon_of)
+		var base := AssetLibrary.instantiate(base_path, "structure") if not base_path.is_empty() else null
+		if base != null:
+			base.name = "Base"
+			model.add_child(base)
+	for a: Variant in d.get("model_addons", []):
+		var ap := AssetLibrary.model_path({"model": str(a)}, "")
+		var add := AssetLibrary.instantiate(ap, "structure") if not ap.is_empty() else null
+		if add != null:
+			add.name = "Addon"
+			model.add_child(add)
+
+
 ## Uniform scale that fits a structure model to its data footprint (sim footprint = mesh width).
-func _structure_scale(path: String) -> float:
-	var fp: Array = unit.def.get("footprint", [0, 0])
+static func structure_fit(d: Dictionary, path: String) -> float:
+	var fp: Array = d.get("footprint", [0, 0])
 	var fp_m := maxf(float(fp[0]), float(fp[1])) * Grid.CELL
-	if fp_m <= 0.0 or str(unit.def.get("model_fit", "footprint")) == "none":
-		return float(unit.def.get("model_scale", unit.def.get("scale", 1.0)))
+	if fp_m <= 0.0 or str(d.get("model_fit", "footprint")) == "none":
+		return float(d.get("model_scale", d.get("scale", 1.0)))
 	var entry := AssetLibrary.building_entry(path)
 	var model_fp := 0.0
 	if entry.has("footprint_m"):
@@ -578,6 +603,16 @@ func _on_mine_depleted(mine: Node) -> void:
 	var p := AssetLibrary.model_path({"model": str(unit.def.get("model_depleted", ""))}, "")
 	if p.is_empty() or p == model_path:
 		return
+	_swap_model(p)
+
+
+## The unit's def changed (a building upgrade): the view loads the new def's model.
+func _reload_model() -> void:
+	_shown_def = unit.def_id
+	_swap_model(AssetLibrary.model_path(unit.def, unit.def_id))
+
+
+func _swap_model(p: String) -> void:
 	for c in body.get_children():
 		body.remove_child(c)
 		c.queue_free()
@@ -588,7 +623,7 @@ func _on_mine_depleted(mine: Node) -> void:
 	_clip = ""
 	_geoms.clear()
 	model_path = p
-	if not _load_model(p):
+	if p.is_empty() or not _load_model(p):
 		model_path = ""
 		_add_placeholder(unit.def)
 	_init_instance_params()

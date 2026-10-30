@@ -122,11 +122,13 @@ src/
                 missile_fx.gd + trail.gdshader (release tells, trails, stuck missiles),
                 body_juice.gd (unit body composer), order_markers.gd (CMB-08..11, rally flag),
                 camera_juice.gd (CAM-05 trauma + kick), selection_circles.gd (rings, hover),
-                health_bars.gd + health_bar.gdshader (ghost bar), fx_textures.gd, proc_mesh.gd
+                health_bars.gd + health_bar.gdshader (ghost bar), fx_textures.gd, proc_mesh.gd,
+                vehicle_rig.gd (procedural motion of multi-node siege models)
 data/           see data/SCHEMA.md: factions, units, buildings, heroes, abilities, buffs, items,
                 upgrades, shops, creep_camps, doodads, scenarios (.json), strings/en.json,
                 maps/*.json, test_defs.json (tests only)
-assets/         models/ textures/ icons/ audio/{sfx,voice,music,ambience}/ ui/
+assets/         models/{units,vehicles,buildings,neutral,doodads}/ textures/ icons/
+                audio/{sfx,voice,music,ambience}/ ui/
 tools/          python asset tooling (bpy, image processing), asset manifest,
                 maps/build_slice_map.py (writes data/maps/slice.json from the sketch + brief),
                 ip/check_banned_terms.py, ip/check_value_echo.py,
@@ -259,6 +261,15 @@ alert, so Space jumps to it) and then hunts; when the enemy has no fighting unit
 group hunts. It issues only command dictionaries and uses no clock or RNG (deterministic).
 Queries: `group(id, pid)`, `members(g)`, `wave_eta()`, `wave_marching()`, `camera_start(pid)`,
 `entity_count(pid)`, `is_over()`.
+
+The skirmish (Main scenario "slice", the menu's Skirmish with the faction and computer
+difficulty from `Settings.skirmish_faction` / `ai_difficulty`) has no scenario script: the
+`AiPlayer` plays the other side and `MatchRules` (`src/systems/match_rules.gd`, stage `ai`,
+twice a second) ends it (rules §17.1, §14.4): a player without any structure (sites count) is
+defeated (`PlayerState.defeated`, its units removed), the last team standing wins
+(`Events.match_ended(winner, "no_structures")`, Main shows the end banner); a player without a
+finished hall gets a 120 s countdown, then its structures are revealed to every enemy (renewed
+`Fog.reveal`s) until it finishes a hall again.
 
 ## 5. Entities
 
@@ -410,7 +421,14 @@ weapon-hand speed; the wind-up start is pulled in so it never plays faster than 
 0.6×), so the strike frame lands exactly on the sim damage point at any frame rate. Death plays once
 from `dead_time()` and holds; the team colour ebbs from 0.7 s over 1.4 s (feet to head) and the body
 sinks over the last 1.5 s before removal. Off-screen rigs skip skeleton work (frustum sphere test) and
-loops catch up when seen. Models without clips fall back to procedural motion (bob/lean, lunge or
+loops catch up when seen. **Vehicles** (`assets/models/vehicles/`, built by `tools/kits/siege.py`:
+the Bombard Wagon, the Sling-Cart) have no skeleton: their moving parts are child nodes at their
+pivots (`Wheel_*`, `Barrel`, `Arm`, `Crew_*`, `Crew_*_Leg_*`) and `VehicleRig` (`src/fx/vehicle_rig.gd`,
+`UnitView.vehicle`) animates them: wheels roll by the distance the display position travels along
+the facing (the same at any frame rate), the crew's legs swing and bodies bob on that phase, the
+barrel's recoil latches on the fx clock at the sim's damage point (40 ms back, 0.12 s hold, 0.8 s out
+to battery) and the throwing arm cocks, whips to the release on the damage point and settles.
+Other models without clips fall back to procedural motion (bob/lean, lunge or
 draw peaking at the damage point, topple + sink; structures sink and tilt).
 `src/render/unit_manifest_builder.gd` regenerates the unit manifest (clip lengths, stride speed from
 `tools/autorig.py`'s QA `stance_speed_mps` when its logs are given, else measured from the toe bones;
@@ -422,7 +440,8 @@ is `arc × flight distance`, carries the base damage rolled at launch, and on ar
 applies it (a projectile whose target died lands harmlessly). Its transform is written once per
 tick (physics interpolated); on arrival it is committed at the impact point and the node stays
 one more tick (`landed`) so the interpolated arrow visibly reaches the target before `Combat`
-frees it. Visuals are a placeholder arrow mesh.
+frees it. Visuals are procedural meshes per projectile `model` id (arrow, javelin, bullet, iron
+bombard ball, lidded clay pot, coal lump, arcane bolt, ice pellet).
 
 ## 6. Movement & pathing
 
@@ -554,18 +573,41 @@ frees it. Visuals are a placeholder arrow mesh.
 
 ## 8. Fog of war
 
-Contract (stub until agent E lands it; `src/world/fog.gd`, stage `fog`): `Fog.state_at(pid,
-pos) -> UNEXPLORED | FOGGED | VISIBLE`, `is_visible(pid, pos)`, `is_explored(pid, pos)`,
-`can_see(pid, unit)` (visibility + invisibility/detection), `reveal(pid, pos, radius,
-duration, detect) -> handle` (timed reveals expire in the sim), `reveals()`, `grid(pid)`,
-`texture(pid)`, `enabled`. The stub reports everything visible and explored; callers already
-use these queries so turning fog on changes no call sites.
-Target design: `Fog` keeps per-player `PackedByteArray` grids (0 = unexplored, 1 = explored/fogged, 2 = visible)
-at 1 m resolution. Recomputed ~10 Hz from unit sight radii (cliff level blocks sight to higher
-levels, trees don't for the slice). Uploads the local player's grid into an `ImageTexture` (L8)
-used by the terrain, water and foliage (trees, `src/render/foliage.gdshader`) shaders through
-`World.set_fog_texture` and by the minimap. Enemy units outside visible cells are hidden;
-enemy buildings once seen leave a "ghost" until re-scouted.
+`Fog` (`src/world/fog.gd`, stage `fog`; rules §14). Off until `enabled` is set: Main turns it on
+for the slice and battlefield scenarios when `rules.vision.fog_of_war` is true (engine tests keep
+"everything visible"). Queries: `Fog.state_at(pid, pos) -> UNEXPLORED | FOGGED | VISIBLE`,
+`is_visible(pid, pos)`, `is_explored(pid, pos)`, `can_see(pid, unit)` (the cell under its centre,
+any footprint / body cell for structures and units over 0.7 m; own and allied units always),
+`shows(pid, unit)` (what the view draws: visible units plus structures the team has seen, their
+ghosts), `seen_structure`, `reveal(pid, pos, radius, duration, detect) -> handle` (timed, ignores
+occluders, expires in the sim), `reveals()`, `grid(pid)` (L8 bytes), `texture(pid)` (an
+`ImageTexture`, L8: 0 unexplored, 128 fogged, 255 visible), `night_factor(t)`, `update_now(world)`.
+Neutral players have no fog.
+Model: one grid per team (allies share vision) at `rules.vision.fog_cell` **2 m** (96 × 96 on the
+slice; the classic game's resolution; 1 m cost 4× per re-stamp in GDScript). Per cell: a count of
+the sight sources seeing it, an explored flag and the texture byte, kept current as counts change.
+Every living, not-hidden unit of a non-neutral player is a source; it is stamped into its team's
+counts and remembers the cells it marked, and is re-stamped only when its cell, sight radius (day /
+night, 3.2 s transition) or eye level changes; dying or leaving the sim unstamps it at once. Line
+of sight uses precomputed ray stamps (each offset knows its parent one step nearer the viewer): a
+cell is seen when its parent passes sight and its terrain level (height / CLIFF_H, ramps fractional)
+is not above the eye; it passes sight when its occluder top (terrain, or a tree's base level +
+`tree_occluder_levels`) is not above the eye. Flyers and reveals ignore occluders. A felled tree
+lowers its cell and re-stamps the sources that reach it. Attack reveal: an attacker the victim's
+owner cannot see is revealed for 1 s in 1.5 m. Each tick walks `unit_list` from a cursor and
+re-stamps changed sources within a third of `STAMP_BUDGET` (24k cells per 0.1 s), so a full sweep
+takes `fog_update` (3 ticks) and the cost never lands on one tick (250 units marching: ≈3 ms per
+tick, `test_fog`); at the end of a sweep the structure memory updates, the texture uploads and
+`Events.fog_updated(local pid)` fires. Deterministic (unit_list order, no clocks).
+Consumers: `Unit.find_target` never acquires what its player cannot see; UnitView hides itself
+when `shows` is false; picking, box select, hover and health bars skip hidden views; Selection
+drops fogged foreign units; `Vfx.allow` culls effects in the fog; `Construction.can_place` needs
+explored ground; the terrain, water, trees and decor shaders read the texture
+(`World.set_fog_texture`; black mask unexplored, 0.45 brightness fogged); the minimap draws a baked
+map image under a fog layer, static neutral markers (Gold Seams, neutral buildings, camp pips) even
+on the black mask, and only the dots the player may see.
+Not yet: invisibility / detection, the cripple reveal (§14.4), ghosts of structures destroyed out
+of sight (they vanish), fog-gated sounds.
 
 ## 9. Players & economy
 
@@ -631,7 +673,19 @@ requirements, ability unlocks. Each file's header documents the full contract.
   `creep_camps.json`, ring layout, guard positions, bounty) follow the same pattern; their
   headers document the API.
 - `AiPlayer` (`src/systems/ai/ai_player.gd`): one per AI seat, throttled `think()`, tuning from
-  `rules.ai.<difficulty>`, its own RNG; it issues only player commands.
+  `rules.ai.<difficulty>`, its own RNG; it issues only player commands (an APM cap drops
+  non-essential ones) and sees only through its own fog. Playtest 2 build-order opponent:
+  workers on gold (`gold_workers`) and the nearest tree line, trained up to
+  `worker_target()`; supply kept ahead (`supply_buffer_food`); the faction's
+  `ai_opening.steps` in order (build / hero / research / upgrade / army; due at `at` +
+  `build_slack`, the next step's cost reserved, a step blocked 45 s for other reasons skipped,
+  failed builds re-issued); building spots on rings around the hall (or the tree line) outside
+  the hall–seam lane with a 1 m walkable margin; the `army` mix, one item per building, inside the
+  upkeep cap; muster, defend (own units hit within 35 m of the hall), push at
+  `attack_threshold()` (the opening's `attack_food`, capped by the upkeep room beside the
+  workers) with attack-moves on the nearest enemy structure it has seen, retreat below
+  `army_retreat_hp`. `state`: build_up, army, defend, push. Creeping, abilities, items and
+  expansions come later.
 
 ## 11. Input, camera, UI
 
@@ -640,7 +694,8 @@ requirements, ability unlocks. Each file's header documents the full contract.
   (arrow keys), `cam_zoom_in/out` (wheel, PgUp / PgDn), `cam_drag` (middle mouse), `select`
   (LMB), `command` (RMB), `queue_modifier` (shift), `cancel` (Esc), `menu` (F10), `jump_alert`
   (space), `subgroup_next` (tab; with shift it cycles back), `select_hero_1..3` (F1–F3),
-  `cycle_halls` (Backspace), `group_0..9` (digit keys; ctrl/shift read from event modifiers),
+  `cycle_halls` (Backspace), `idle_worker` (F8, backtick; ctrl = every idle worker),
+  `group_0..9` (digit keys; ctrl/shift read from event modifiers),
   `card_0..11` (command card grid Q W E R / A S D F / Z X C V, row-major).
 - `RtsCamera` (`extends Camera3D`): looks at a ground `focus` point from `distance` along a fixed
   pitch (-56°; `main.gd` applies `RenderProfile`: FOV 55° vertical `KEEP_HEIGHT`, distance
@@ -678,20 +733,46 @@ requirements, ability unlocks. Each file's header documents the full contract.
   Main Menu, Quit to Desktop; placeholder for juice HUD-11) and cancels a pending targeting mode.
   No pause over the end banner. `CommandInput` is pausable: no orders are given while paused
   (`activate_card`/`command_ground` refuse).
+- `CardModel` (`src/ui/card_model.gd`, static): the 4×3 card as data for the active subgroup
+  (`CommandInput.active_units()`) and page (rules §18.4): `CardModel.Entry` {slot, kind (order,
+  page, build, train, research, upgrade, rally, cancel, back), id, label, key (Classic letter),
+  action (rebindable unit-order action), targeted, state (READY, UNAFFORDABLE, LOCKED, CAPPED,
+  BUSY), reason (error key), cost, short (shortfall), level, missing (names)}. Unit card: slots
+  0–4 Move, Stop, Hold, Attack, Patrol; workers add 5 Build (B) and 6 Build Advanced (V) pages, 7
+  Gather (G), 8 Return Cargo (C, while carrying), 9 Repair. Build pages: the faction's
+  `build_basic` / `build_advanced` in data order, 11 Back (Esc). Building card: `trains`,
+  `research` (a completed line leaves its slot empty), `upgrades_to` in data order in slots 0–6,
+  8–10, 7 Rally (`rally: true`), 11 Cancel while something is queued; a site shows Cancel only.
+  States come from `Production.can_train` / `can_queue_research` and `Tech.can_build`.
+  `describe(...)` gives the tooltip lines.
 - `CommandInput` (`Node`, placed after `Selection` so it sees input first): right-click smart
-  command (ground → move, unit → smart target), shift-queue. Card (rules §18.4): slot 0 Move,
-  1 Stop, 2 Hold, 3 Attack (attack-move on the ground, attack on an enemy), 4 Patrol, shown only
-  when an own mobile unit is selected (`has_orderable()`). **Hotkey presets**
+  command (ground → move, unit → smart target, a production building → rally), shift-queue.
+  The card is `current_card()` (CardModel) on `page`. **Hotkey presets**
   (`Settings.active_hotkey_preset()`: `Settings.hotkey_preset`, else
-  `rules.controls.hotkey_preset`): **Classic** (default) uses the mnemonic actions `cmd_move` M,
-  `cmd_stop` S, `cmd_hold` H, `cmd_attack` A, `cmd_patrol` P ("A-click" attack-move); **Grid**
-  uses `card_0..11` by position (Q W E R / A S D F / Z X C V). `CommandInput.hotkey_action(slot)`
-  names the action of a slot under the active preset (the card's hotkey label reads it).
-  Targeted commands enter targeting mode (cross cursor, left-click confirms, right-click/Esc
-  cancels; attack-move confirmed on an enemy becomes an attack); shows a short order marker
-  ring. `activate_card(slot, shift)` is shared by hotkeys and HUD buttons; `command_ground(pos,
-  shift)` serves the minimap. Later: ability targeting and the build placement ghost
-  (green/red footprint).
+  `rules.controls.hotkey_preset`): **Classic** (default) uses each entry's letter (unit orders
+  through the mnemonic actions `cmd_move` M, `cmd_stop` S, `cmd_hold` H, `cmd_attack` A,
+  `cmd_patrol` P; "A-click" attack-move); **Grid** uses `card_0..11` by position (Q W E R /
+  A S D F / Z X C V). `slot_for_key(event)`; `hotkey_action(slot)` names a unit-order slot's
+  action. Targeted commands (move, attack, patrol, gather, repair, rally) enter targeting mode
+  (cross cursor, left-click confirms, right-click/Esc cancels; attack-move confirmed on an enemy
+  becomes an attack; gather needs a Gold Seam or a tree, repair a damaged own building or
+  machine, or helps build an own site); a build entry enters placement (`targeting == "place"`,
+  `placing`, the `BuildPlacement` ghost; a click sends the nearest worker of the subgroup, Shift
+  queues on the same worker and keeps placing). Esc leaves targeting, then a build page, then
+  presses the card's Cancel. Train goes to the selected building with the shortest queue.
+  `activate_card(slot, shift)` is shared by hotkeys and HUD buttons; `command_ground(pos,
+  shift)` serves the minimap (no placement there); `cancel_queue_slot(building, i)` serves the
+  queue panel. Refusals never reach the sim: deny sound, `denied(reason, short, slot)` and an
+  `error_*` notification.
+- `BuildPlacement` (`src/input/build_placement.gd`, under World, visual only; juice BLD-01/02):
+  the building's model (`UnitView.add_structure_parts` / `structure_fit`, a block when there is
+  none) in the 3-pass sketch material (`sketch_depth/fill/ink.gdshader`: depth prepass, paper
+  fill with sun-side hatching, inverted-hull ink; red ink and a crossing hatch when refused, grey
+  ink when unaffordable; 8-steps-a-second line boil) on an exact spring (ω 40, ζ 0.72) to the
+  snapped footprint, over a per-cell grid (`placement_grid.gdshader`, no depth test) built from
+  `Construction.cell_states` (footprint + a 2-cell border: OK, blocked, not level, unexplored, a
+  hall's Gold Seam gap). `Construction.can_place` is the same cell check, so the grid and the
+  rule never disagree (`test_hud`). `screen_override` lets tests and screenshots aim it.
 - **Juice runtime** (`src/fx/`, juice bible §4; visual only, never writes sim state, never reads
   `World.rng`; tests: `test_juice*.gd`). Rules: gameplay only in the 30 Hz tick, every juice
   curve a closed-form function of time (exact springs, `Juice.damp`, latched peaks, stateless
@@ -758,13 +839,25 @@ requirements, ability unlocks. Each file's header documents the full contract.
   cancels it, rules §18.1, `test_minimap_orders`), portrait panel (placeholder: type colour + initials;
   later a 3D SubViewport), selected-unit name + HP/mana/damage/range/cooldown/armor/speed text,
   multi-selection grid (coloured squares with initials + HP strip; click selects that unit,
-  shift-click removes it) and `CommandCard` (`command_card.gd`, 4×3 buttons with label +
-  hotkey, active targeting mode shown pressed). The bar and console have mouse filter STOP so
-  HUD clicks never reach world selection/commands; buttons never take keyboard focus.
-  `Hud.covers(screen_pos)` reports HUD areas. A notification line above the console shows the
-  local player's `Events.notification` text for 4.5 s (under attack, the war-band marching;
-  placeholder for juice NTF-*). The selected hero's title carries its level. Still to come: hero
-  portraits (left edge), idle worker button, chat area, tooltips, real art (original, no WC3 UI
+  shift-click removes it), a site's construction progress, a building's `QueuePanel`
+  (`queue_panel.gd`, HUD-09: 7 slots, the head's progress bar and time left, a slot waiting for
+  food greys with the loaf glyph, click = cancel that slot) and `CommandCard`
+  (`command_card.gd`, 4×3 `CardButton`s (`card_button.gd`, HUD-05: label, hotkey chip, locked =
+  desaturated + lock, unaffordable = hatch + short-resource glyph that wipes away when
+  affordable, capped chip, deny shake + red flash), refreshed 10 times a second; the armed
+  targeting mode or the building being placed shows pressed). Around the console: the
+  `IdleWorkerButton` (NTF-05: count badge, F8 / backtick next idle worker longest idle first,
+  round robin, Ctrl = all), the `ErrorLine` (HUD-06: `error_*` notifications, repeat = shake),
+  the `HudTooltip` (HUD-02: 250 ms dwell, 500 ms warm window, docked above the card's top-right
+  corner, cost row with shortfalls, description, requirements in red; rebuilt only when its
+  content changes) and the top bar's states (food amber at the cap, the upkeep tier's colour, a
+  refused cost shakes its counter and drops its shortfall under it). Glyphs (coin, log, loaf,
+  clock) are drawn by `UiGlyphs` until icon art exists. The bar and console have mouse filter
+  STOP so HUD clicks never reach world selection/commands; buttons never take keyboard focus.
+  `Hud.covers(screen_pos)` reports HUD areas. A notification line above the error line shows
+  the local player's other `Events.notification` text for 4.5 s (under attack, the war-band
+  marching, building done; placeholder for juice NTF-*). The selected hero's title carries its
+  level. Still to come: hero portraits (left edge), chat area, real art (original, no WC3 UI
   art).
 - Scenario UI (Main, battlefield only): an objective line under the top bar (goal + war-band
   countdown) and the `EndBanner` (`src/ui/end_banner.gd`: Victory / Defeat / Stalemate, battle
@@ -805,14 +898,31 @@ event computed the pitch or the family is `pitch_locked`; voice lines vary ±1 d
 **Aliases** (`sfx_events.json` `aliases`): an unrecorded family plays a recorded stand-in
 (`sw_chop` → `sw_slash`) until its own takes exist. **UI:** `ui_click()` (every `UiStyle.button`,
 the HUD menu button, command-card presses) and `deny(kind)` (error: an untargetable A-click;
-disabled: a command-card press that cannot act) in `ui_faction`'s material. **Music** (MUS-01
-subset): cues from `assets/audio/music/manifest.json`; `match_started(faction, player_id)` (Main,
-after the boot) sets `ui_faction` / `local_player`, lifts the end ducks and plays
-`opening_<faction>`; `play_music(cue)`, `stop_music(fade_s)`. **End (SEQ-02 audio):**
-`Events.match_ended` is only recorded in the tick; `_process` then fades the music over 1.2 s,
-ducks SFX −10 dB and Ambience −6 dB over 1.2 s and plays `victory_` / `defeat_<faction>` at
-600 ms when recorded. `manifest_paths()` lists every take (`tests/unit/test_audio.gd` loads them
-all). In-game music rotation and ambience beds: later.
+disabled: a command-card press that cannot act) in `ui_faction`'s material.
+**Bus levels** (juice ui-camera-audio §5.1, `BUS_DEFAULT_DB`): Music −12, Ambience −16, UI −8,
+Combat −5, World −9, Sub −6, Alerts +1 (→ Voice) dB; ducks are added on top and written every
+frame only on a change, so a ramp's final value lands at any frame rate. **Filter arbiter**
+(AUD-01): Music and Ambience carry an always-on low-pass resting at 20.5 kHz; `filter(key, bus,
+hz, ramp_ms)` / `unfilter(key)`, the lowest request wins, ramped in log-frequency on `now()`.
+**Pause** (`set_paused`, from `Main._toggle_pause`): Music −6 dB, Ambience −10 dB and a 1.2 kHz
+low-pass over 300 ms; the 3D one-shot players are PAUSABLE so world sounds pause with the tree.
+**Music** (MUS-01 P0, `MusicDirector`, `src/audio/music_director.gd`, a child of Audio driven by
+`Audio._process` → `update()`): pieces from `assets/audio/music/manifest.json` (`kind`,
+`faction`, `loop`, `xfade_to_score_s`), two decks with equal-power fades on `now()`, its own RNG.
+`menu_entered()` (MainMenu) loops `menu` (0.75 s fade-in from silence, else a 1 s crossfade);
+`match_loading()` (`Main.start_match`) fades everything out over 1.5 s; `match_started(faction,
+player_id)` (Main, after the boot) sets `ui_faction` / `local_player`, lifts the end and pause
+ducks, plays `opening_<faction>` on the Alerts bus at −4 dB and starts the rotation: the
+faction's `ingame` tracks from a shuffle bag (all play before any repeats, never the same twice
+in a row), the first 6 s after the match starts with a 2 s fade-in, then 20–40 s of silence
+after each track ends (tracks never loop or switch for battle). `play_music(cue)` /
+`stop_music(fade_s)` / `music_id` / `is_music_playing()` stay for scripts and tests. **End
+(SEQ-02 audio):** `Events.match_ended` is only recorded in the tick; `_process` then fades the
+music over 1.2 s, ducks SFX −10 dB and Ambience −6 dB over 1.2 s, plays `victory_` /
+`defeat_<faction>` at 600 ms, and at the stinger's `xfade_to_score_s` the `score` bed enters
+with a 2 s crossfade and loops until the player leaves (the menu crossfades it out).
+`manifest_paths()` lists every take (`tests/unit/test_audio.gd` loads them all). Night pool,
+night filter, hero motifs, rally stems and ambience beds: later.
 
 ## 13. Testing
 

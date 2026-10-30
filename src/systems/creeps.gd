@@ -93,7 +93,7 @@ func camp_state(camp_id: String) -> Dictionary:
 		return {}
 	var alive := camp_members(camp_id)
 	return {"template": c["template"], "pos": c["pos"], "alive": alive.size(), "asleep": false,
-		"cleared": alive.is_empty(), "colour": str(Defs.camp(str(c["template"])).get("colour", ""))}
+		"cleared": alive.is_empty(), "colour": str((Defs.camps.get(str(c["template"]), {}) as Dictionary).get("colour", ""))}
 
 
 func is_asleep(_u: Unit) -> bool:

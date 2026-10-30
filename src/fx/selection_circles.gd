@@ -98,11 +98,12 @@ func _on_selection_changed(sel: Array) -> void:
 		next[u] = now + delay
 	_sel_t0 = next
 	units = sel.duplicate()
+	# records of units that left the selection (or were freed: corpses decay) are dropped
 	for k: Variant in _pulses.keys():
-		if not sel.has(k):
+		if not is_instance_valid(k) or not sel.has(k):
 			_pulses.erase(k)
 	for k2: Variant in _shimmer.keys():
-		if not sel.has(k2):
+		if not is_instance_valid(k2) or not sel.has(k2):
 			_shimmer.erase(k2)
 
 
@@ -281,7 +282,7 @@ func pick(cam: Camera3D, screen_pos: Vector2) -> Unit:
 	var best: Unit = null
 	var best_d := INF
 	for u in world.unit_list:
-		if not u.alive or u.hidden:
+		if not u.alive or u.hidden or (u.view != null and not u.view.visible):
 			continue
 		var h := u.top_height()
 		var p := u.display_pos() + Vector3(0, h * 0.5, 0)

@@ -205,7 +205,7 @@ regenerate. After a render, run `python3 tools/music/manifest.py` and commit `ma
 ## In the game
 
 `assets/audio/music/manifest.json` lists every piece with its `faction` (kingdom, clans, shared), `kind` and `loop`; the
-music director (juice MUS-01) builds its lists from it:
+music director (juice MUS-01, `src/audio/music_director.gd`, wired since Playtest 2) builds its lists from it:
 
 | kind | pieces | how it plays |
 |---|---|---|

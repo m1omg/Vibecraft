@@ -1,10 +1,12 @@
 class_name Main
 extends Node3D
 ## Boots a skirmish.
-## scenario "slice" (default): Wether Downs (data/maps/<rules.match.map>.json), Brennmark (player 0,
-##   local) vs the Tormai (player 1, AI): each starts with its T1 hall, 5 idle workers between the
-##   hall and the main Gold Seam, 500 gold / 150 lumber (rules §3.2); Gold Seams, neutral buildings
-##   and creep camps from the map. Falls back to the sandbox when the map file is missing.
+## scenario "slice" (default; the main menu's Skirmish): Wether Downs (data/maps/<rules.match.map>
+##   .json), Brennmark (player 0, local) vs the Tormai (player 1, AiPlayer): each starts with its T1
+##   hall, 5 idle workers between the hall and the main Gold Seam, 500 gold / 150 lumber (rules
+##   §3.2); Gold Seams, neutral buildings and creep camps from the map; MatchRules ends it (no
+##   structures = defeated) with the end banner. Falls back to the sandbox when the map file is
+##   missing.
 ## scenario "battlefield": Playtest 1, the Battlefield sandbox (data/scenarios.json "battlefield",
 ##   src/scenarios/battlefield.gd): the slice map with both factions' static bases, two armies,
 ##   three creep camps, a scripted Tormai opponent and an annihilation victory with an end banner.
@@ -20,6 +22,8 @@ const MENU_SCENE := "res://src/ui/main_menu.tscn"
 @export_enum("slice", "sandbox", "battlefield") var scenario: String = "slice"
 @export var map_seed: int = 1337
 @export var player_factions: Array[String] = ["kingdom", "clans"]
+## The computer's difficulty in a skirmish (rules.ai.<difficulty>).
+@export var ai_difficulty: String = "normal"
 ## false: only the map (with its Gold Seams and neutral buildings), lighting and camera are set up;
 ## no start bases or creep camps (screenshot / showcase scripts place units).
 @export var spawn_skirmish: bool = true
@@ -37,6 +41,8 @@ const SLOT_COLORS: Array[Color] = [Color("#2EAE3A"), Color("#285DE6")]
 
 ## The Playtest 1 scenario (scenario "battlefield"), else null.
 var battle: BattlefieldScenario = null
+## Skirmish end conditions (scenario "slice": no structures = defeated, cripple reveal), else null.
+var match_rules: MatchRules = null
 var pause_menu: PauseMenu
 var end_banner: EndBanner
 ## Deaths per player id since the match started (end-banner tallies; visual only).
@@ -46,16 +52,22 @@ var losses: Dictionary = {}
 ## Replaces the current scene with a fresh match of `scenario_name` (unpauses the tree). The
 ## old scene is freed by the SceneTree at the end of the frame.
 static func start_match(tree: SceneTree, scenario_name: String) -> Node:
+	Audio.match_loading()   # the menu theme or the score bed fades out (MUS-01)
 	var m: Node = (load(MAIN_SCENE) as PackedScene).instantiate()
 	m.set("scenario", scenario_name)
+	if scenario_name == "slice":
+		var own := Settings.skirmish_faction if Settings.skirmish_faction in ["kingdom", "clans"] else "kingdom"
+		var other := "clans" if own == "kingdom" else "kingdom"
+		m.set("player_factions", [own, other] as Array[String])
+		m.set("ai_difficulty", Settings.ai_difficulty)
 	tree.paused = false
 	tree.change_scene_to_node(m)
 	return m
 
 
-## Back to the main menu (unpauses the tree).
+## Back to the main menu (unpauses the tree; the menu crossfades its theme in).
 static func quit_to_menu(tree: SceneTree) -> void:
-	Audio.stop_music(0.5)
+	Audio.set_paused(false)
 	tree.paused = false
 	tree.change_scene_to_file(MENU_SCENE)
 
@@ -75,6 +87,15 @@ func _ready() -> void:
 		_boot_slice(map)
 	else:
 		_boot_sandbox()
+	if scenario != "sandbox" and bool(Defs.rule("vision.fog_of_war", true)):
+		_enable_fog()
+	if battle == null and scenario == "slice":
+		match_rules = MatchRules.new()
+		match_rules.name = "MatchRules"
+		world.systems_root.add_child(match_rules)
+		match_rules.setup(world)
+		world.register_system(&"ai", match_rules)
+		Events.match_ended.connect(_on_skirmish_ended)
 	selection.setup(world, camera, 0)
 	commands.setup(world, camera, selection, 0)
 	hud.setup(world, selection, commands, camera, 0)
@@ -102,7 +123,7 @@ func _boot_slice(map: MapData) -> void:
 	var taken: Array = []
 	for pid in 2:
 		var fid := player_factions[pid]
-		var p := world.add_player(pid, pid, fid, pid == 1)
+		var p := world.add_player(pid, pid, fid, pid == 1, ai_difficulty)
 		p.color = PlayerState.colour_for(fid, taken)
 		taken.append(p.color)
 		var fac := Defs.faction(fid)
@@ -201,6 +222,14 @@ func _boot_sandbox() -> void:
 	camera.setup(world, map.start_locations[0] + Vector3(0, 0, -4))
 
 
+## Fog of war (rules §14): the local player starts seeing only what its units see; the terrain,
+## water, trees and the minimap darken the rest (black mask unexplored, half dark fogged).
+func _enable_fog() -> void:
+	world.fog.enabled = true
+	world.fog.update_now(world)
+	world.set_fog_texture(world.fog.texture(world.local_player_id))
+
+
 ## Environment setup: camera constants (RenderProfile, research README §1) and the view hooks
 ## (selection rim highlight, building pads). Lighting and grade live in DayNight.
 func _setup_view() -> void:
@@ -239,6 +268,7 @@ func _toggle_pause() -> void:
 		return
 	get_tree().paused = not get_tree().paused
 	pause_menu.visible = get_tree().paused
+	Audio.set_paused(get_tree().paused)   # muffled pause (AUD-01)
 	if get_tree().paused:
 		commands.cancel_targeting()
 
@@ -247,6 +277,15 @@ func _on_unit_died(u: Node, _killer: Node) -> void:
 	var unit := u as Unit
 	if unit != null and unit.world == world:
 		losses[unit.player_id] = int(losses.get(unit.player_id, 0)) + 1
+
+
+func _exit_tree() -> void:
+	if Events.match_ended.is_connected(_on_skirmish_ended):
+		Events.match_ended.disconnect(_on_skirmish_ended)
+
+
+func _on_skirmish_ended(winner: int, _reason: String) -> void:
+	_on_match_ended(winner)
 
 
 ## The scenario decided the match: the end banner (the world keeps running behind it).
@@ -265,10 +304,26 @@ func _on_match_ended(winner: int) -> void:
 func _process(_delta: float) -> void:
 	if battle != null:
 		_set_objective()
+	elif match_rules != null:
+		_set_cripple_line()
 	var hour := DayNight.hour_at(world.time)
 	info.text = "FPS %d | tick %d | units %d | %02d:%02d | selected %d" % [
 		Engine.get_frames_per_second(), world.tick_count, world.unit_list.size(),
 		int(hour), int(fmod(hour, 1.0) * 60.0), selection.selected.size()]
+
+
+## Skirmish: while the local player has no finished hall, the objective line counts down to the
+## reveal (rules §14.4), then says the buildings are revealed.
+func _set_cripple_line() -> void:
+	var left := match_rules.cripple_left(world, world.local_player_id)
+	objective.visible = left >= 0.0 and match_rules.result.is_empty()
+	if not objective.visible:
+		return
+	var secs := ceili(left)
+	@warning_ignore("integer_division")
+	var t := Defs.text("objective_cripple") % [secs / 60, secs % 60] if secs > 0 else Defs.text("objective_cripple_revealed")
+	if objective.text != t:
+		objective.text = t
 
 
 func _set_objective() -> void:

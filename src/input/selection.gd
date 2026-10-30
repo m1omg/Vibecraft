@@ -38,6 +38,8 @@ func _ready() -> void:
 	for i in 10:
 		groups[i] = []
 	Events.unit_died.connect(_on_unit_died)
+	Events.unit_removed.connect(_on_unit_removed)
+	Events.fog_updated.connect(_on_fog_updated)
 
 
 func setup(w: World, cam: RtsCamera, pid: int) -> void:
@@ -110,12 +112,17 @@ func active_subgroup_def() -> String:
 	return defs[subgroup % defs.size()] if not defs.is_empty() else ""
 
 
+## Fog-honest picking: a unit the local player's fog hides cannot be clicked or boxed.
+func _shown(u: Unit) -> bool:
+	return world.fog == null or world.fog.shows(player_id, u)
+
+
 ## Unit under a screen position (closest projected centre within its projected radius).
 func pick_unit(screen_pos: Vector2) -> Unit:
 	var best: Unit = null
 	var best_d := INF
 	for u in world.unit_list:
-		if not u.alive:
+		if not u.alive or not _shown(u):
 			continue
 		var c := _screen_centre(u)
 		if c.x == INF:
@@ -302,7 +309,7 @@ func _box_select(rect: Rect2, shift: bool) -> void:
 	var own_buildings: Array[Unit] = []
 	var others: Array[Unit] = []
 	for u in world.unit_list:
-		if not u.alive or u.is_resource:
+		if not u.alive or u.is_resource or not _shown(u):
 			continue
 		var c := _screen_centre(u)
 		if c.x == INF or not rect.has_point(c):
@@ -364,12 +371,28 @@ func _all_own(units: Array) -> bool:
 
 
 func _on_unit_died(u: Node, _killer: Node) -> void:
+	_on_unit_removed(u)
+
+
+## A unit that dies or leaves the sim (a cancelled site, a defeated player's units) drops out of
+## the selection and the control groups before it is freed.
+func _on_unit_removed(u: Node) -> void:
 	for n in 10:
 		(groups[n] as Array).erase(u)
 	if selected.has(u):
 		var next := selected.duplicate()
 		next.erase(u)
 		_set_selection(next)
+
+
+## A selected foreign unit that the fog now hides drops out of the selection (rules §14.1).
+func _on_fog_updated(_pid: int) -> void:
+	if world == null or world.fog == null or not world.fog.enabled or selected.is_empty():
+		return
+	var keep: Array = selected.filter(func(o: Variant) -> bool:
+		return is_instance_valid(o) and ((o as Unit).player_id == player_id or world.fog.shows(player_id, o as Unit)))
+	if keep.size() != selected.size():
+		_set_selection(keep)
 
 
 # --- projection helpers --------------------------------------------------------------------

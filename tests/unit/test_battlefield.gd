@@ -364,10 +364,13 @@ func test_three_minutes_of_battle_then_victory() -> void:
 	var sel: Selection = main.selection
 	var card: CommandCard = main.hud.card
 	sel.select_units([w.get_unit(b.structures[0])])
-	assert_true(card.buttons[0].disabled and card.buttons[3].disabled, "no unit orders for the hall")
+	for slot in [0, 3]:
+		var e := card.entry(slot)
+		assert_true(e == null or e.kind != "order", "no unit orders for the hall (slot %d)" % slot)
 	sel.select_units(b.members(b.group("army", 0)))
 	assert_false(card.buttons[3].disabled, "unit orders for the army")
-	assert_eq(card.buttons[3].text, "Attack\n[A]", "Attack shows its key")
+	assert_eq(card.buttons[3].text, "Attack", "Attack")
+	assert_eq(card.buttons[3].key_text, "A", "shows its key")
 	var camera: RtsCamera = main.camera
 	var spaced := false
 	for i in BUSY_TICKS:

@@ -22,7 +22,28 @@ var _frac: Dictionary = {}           ## pid -> {"gold": float, "lumber": float} 
 
 
 func hooks() -> Array[StringName]:
-	return [&"spawned"]
+	return [&"spawned", &"died", &"removed"]
+
+
+## A worker that dies inside a mine or at its door frees its place.
+func on_unit_died(u: Unit, _killer: Unit) -> void:
+	_forget_worker(u)
+
+
+func on_unit_removed(u: Unit) -> void:
+	_forget_worker(u)
+
+
+func _forget_worker(u: Unit) -> void:
+	if not u.is_worker:
+		return
+	for mid: int in _inside.keys():
+		if int(_inside[mid]) == u.id:
+			_inside.erase(mid)
+			_inside_until.erase(mid)
+	for mid: int in _door:
+		(_door[mid] as Array).erase(u.id)
+	_last_gather.erase(u.id)
 
 
 func on_unit_spawned(u: Unit) -> void:
@@ -37,6 +58,12 @@ func on_unit_spawned(u: Unit) -> void:
 
 
 func sim_tick(w: World, _dt: float) -> void:
+	if not _inside.is_empty():
+		var mids: Array = _inside.keys()
+		mids.sort()
+		for mid: int in mids:
+			if w.tick_count >= int(_inside_until.get(mid, 0)):
+				_exit_mine(mid)
 	for p: PlayerState in w.players:
 		if p.is_neutral():
 			continue
@@ -129,22 +156,374 @@ func upkeep_factor(pid: int) -> float:
 
 
 # --- gathering (contract with orders/gather.gd and orders/return_resources.gd) ------------
+# A gather order walks to its mine or tree (the handler) and then belongs to the economy, which
+# drives it through o.data["phase"]:
+#   gold:   "queue" (at the mine door, arrival order) -> "inside" (hidden, mine_dwell) ->
+#           "to_dropoff" -> deposit -> "back" -> "queue" ...
+#   lumber: "chop" (1 lumber per chop_interval until lumber_per_trip) -> "to_dropoff" -> deposit
+#           -> "back" (to the tree, or the nearest living one within tree_retarget_radius) ...
+# The worker's last gather target is remembered, so Return Cargo resumes it afterwards.
 
-## A gather order reached its mine / tree. Return true to take the order over (set
-## o.data["phase"]; gather_tick then runs every tick). Stub: false (the order completes).
-func on_gather_reached(_worker: Unit, _o: Order) -> bool:
-	return false
+## A worker chops when its edge is this close to the tree's centre (the trunk fills a 1 m cell).
+const TREE_REACH := 0.8
+
+## Gold Seam occupancy: mine id -> worker id inside (absent = free); the economy's tick brings
+## the worker out (hidden units do not tick themselves).
+var _inside: Dictionary = {}
+var _inside_until: Dictionary = {}     ## mine id -> tick the worker inside comes out
+## mine id -> Array[int] of worker ids waiting at the door, in arrival order.
+var _door: Dictionary = {}
+## worker id -> {"mine": id} or {"tree": index} (Return Cargo resumes it).
+var _last_gather: Dictionary = {}
+## mine ids that already raised their low-gold warning.
+var _warned_low: Dictionary = {}
+
+
+func _mine_dwell_ticks() -> int:
+	return maxi(1, roundi(float(Defs.rule("economy.mine_dwell", 1.0)) * World.TICK_RATE))
+
+
+func _faction_of(u: Unit) -> Dictionary:
+	var p := world.player(u.player_id)
+	return Defs.faction(p.faction) if p != null and p.faction != "" else {}
+
+
+func lumber_per_trip(worker: Unit) -> int:
+	return int(_faction_of(worker).get("lumber_per_trip", 10))
+
+
+func chop_ticks(worker: Unit) -> int:
+	return maxi(1, roundi(float(_faction_of(worker).get("chop_interval", 0.8)) * World.TICK_RATE))
+
+
+## A gather order reached its mine / tree: the economy drives it from now on (o.data["phase"]).
+## Returns false when there is nothing to gather (the order completes).
+func on_gather_reached(worker: Unit, o: Order) -> bool:
+	var discard := bool(Defs.rule("economy.switch_resource_discards_load", true))
+	if o.data.has("tree"):
+		var i := int(o.data["tree"])
+		if not world.doodads.tree_alive(i):
+			return false
+		if worker.carry_gold > 0 and discard:
+			worker.carry_gold = 0       # switching resources drops the load (rules §4.3)
+		_last_gather[worker.id] = {"tree": i}
+		if worker.carry_lumber >= lumber_per_trip(worker):
+			o.data["phase"] = "to_dropoff"
+			return true
+		_begin_chop(worker, o)
+		return true
+	var mine := world.get_unit(o.target_id)
+	if mine == null or not mine.alive or not mine.has_flag("gold_mine") or gold_left(mine) <= 0:
+		return false
+	if worker.carry_lumber > 0 and discard:
+		worker.carry_lumber = 0
+	_last_gather[worker.id] = {"mine": mine.id}
+	if worker.carry_gold >= int(Defs.rule("economy.gold_per_trip", 10)):
+		o.data["phase"] = "to_dropoff"
+		return true
+	_join_door(worker, mine, o)
+	return true
 
 
 ## Drives a gather order once on_gather_reached took it over. Returns the desired velocity.
-func gather_tick(worker: Unit, _o: Order, _dt: float) -> Vector3:
+func gather_tick(worker: Unit, o: Order, dt: float) -> Vector3:
+	worker.harvesting = true
+	match str(o.data.get("phase", "")):
+		"queue":
+			return _queue_tick(worker, o)
+		"inside":
+			return _inside_tick(worker, o)
+		"chop":
+			return _chop_tick(worker, o, dt)
+		"to_dropoff":
+			return _dropoff_tick(worker, o, dt)
+		"back":
+			return _back_tick(worker, o, dt)
 	worker.finish_order()
 	return Vector3.ZERO
 
 
-## The gather order ended (finished, replaced, STOP, death): release mine occupancy.
-func on_gather_order_ended(_worker: Unit, _o: Order) -> void:
-	pass
+## The gather order ended (finished, replaced, STOP, death): a worker inside its mine comes out
+## (empty-handed), its place at the door is given up, and its work animation stops.
+func on_gather_order_ended(worker: Unit, o: Order) -> void:
+	worker.end_work()
+	worker.harvesting = false
+	var mid := int(o.data.get("mine", o.target_id))
+	_leave_door(worker, mid)
+	if int(_inside.get(mid, 0)) == worker.id:
+		_inside.erase(mid)
+		_inside_until.erase(mid)
+		var mine := world.get_unit(mid)
+		if worker.hidden:
+			world.set_hidden(worker, false)
+			if mine != null:
+				worker.teleport(_door_point(mine, worker, worker.pos))
+	o.data.erase("phase")
+
+
+# --- gold -------------------------------------------------------------------------------------
+
+func _join_door(worker: Unit, mine: Unit, o: Order) -> void:
+	o.data["mine"] = mine.id
+	o.data["phase"] = "queue"
+	var q: Array = _door.get_or_add(mine.id, [])
+	if not q.has(worker.id):
+		q.append(worker.id)
+	worker.stop_moving()
+
+
+func _leave_door(worker: Unit, mine_id: int) -> void:
+	var q: Array = _door.get(mine_id, [])
+	q.erase(worker.id)
+
+
+## Waiting at the door: the first in line enters as soon as the mine is free.
+func _queue_tick(worker: Unit, o: Order) -> Vector3:
+	var mine := world.get_unit(int(o.data.get("mine", 0)))
+	if mine == null or not mine.alive or gold_left(mine) <= 0:
+		worker.finish_order()
+		return Vector3.ZERO
+	var q: Array = _door.get(mine.id, [])
+	if _inside.has(mine.id) or q.is_empty() or int(q[0]) != worker.id:
+		return Vector3.ZERO
+	q.pop_front()
+	_inside[mine.id] = worker.id
+	_inside_until[mine.id] = world.tick_count + _mine_dwell_ticks()
+	o.data["phase"] = "inside"
+	world.set_hidden(worker, true)
+	return Vector3.ZERO
+
+
+## Hidden units do not tick: the economy's tick brings miners out (_exit_mine).
+func _inside_tick(_worker: Unit, _o: Order) -> Vector3:
+	return Vector3.ZERO
+
+
+## After mine_dwell the worker inside comes out of the door towards its drop-off with up to 10 gold.
+func _exit_mine(mid: int) -> void:
+	var worker := world.get_unit(int(_inside[mid]))
+	_inside.erase(mid)
+	_inside_until.erase(mid)
+	if worker == null or not worker.alive:
+		return
+	var o := worker.current
+	var mine := world.get_unit(mid)
+	var taken := 0
+	if mine != null and mine.alive:
+		taken = mini(int(Defs.rule("economy.gold_per_trip", 10)), gold_left(mine))
+		mine_gold[mine.id] = gold_left(mine) - taken
+	worker.carry_gold = taken
+	world.set_hidden(worker, false)
+	var drop := find_dropoff(worker) if taken > 0 else null
+	if mine != null:
+		worker.teleport(_door_point(mine, worker, drop.pos if drop != null else worker.pos))
+	if mine != null:
+		_after_mining(mine)
+	if o == null or o.type != Order.Type.GATHER:
+		return
+	if taken <= 0:
+		worker.finish_order()
+		return
+	o.data["phase"] = "to_dropoff"
+
+
+## Low warning (once per mine) and depletion: the seam collapses, its footprint opens, waiting
+## workers go idle.
+func _after_mining(mine: Unit) -> void:
+	var left := gold_left(mine)
+	var low := int(Defs.rule("economy.mine_low_warning", 1500))
+	if left <= low and left > 0 and not _warned_low.has(mine.id):
+		_warned_low[mine.id] = true
+		Events.mine_low.emit(mine)
+		for pid in _miners_of(mine):
+			Events.notification.emit(pid, "mine_low", Defs.text("notice_mine_low"))
+	if left <= 0:
+		_deplete(mine)
+
+
+func _deplete(mine: Unit) -> void:
+	if not mine.is_resource:
+		return
+	mine.is_resource = false
+	if mine.footprint.size != Vector2i.ZERO:
+		world.pathing.set_footprint_rect(mine.footprint, false)
+	Events.mine_depleted.emit(mine)
+	for pid in _miners_of(mine):
+		Events.notification.emit(pid, "mine_depleted", Defs.text("notice_mine_depleted"))
+	_door.erase(mine.id)
+
+
+func _miners_of(mine: Unit) -> Array[int]:
+	var out: Array[int] = []
+	for wid: int in _last_gather:
+		if int((_last_gather[wid] as Dictionary).get("mine", 0)) == mine.id:
+			var w := world.get_unit(wid)
+			if w != null and not out.has(w.player_id):
+				out.append(w.player_id)
+	return out
+
+
+# --- lumber -----------------------------------------------------------------------------------
+
+func _begin_chop(worker: Unit, o: Order) -> void:
+	o.data["phase"] = "chop"
+	worker.stop_moving()
+	worker.begin_work(chop_ticks(worker))
+
+
+func _chop_tick(worker: Unit, o: Order, dt: float) -> Vector3:
+	var i := int(o.data.get("tree", -1))
+	if not world.doodads.tree_alive(i):
+		var next := retarget_tree(worker, o)
+		worker.end_work()
+		if next < 0:
+			worker.finish_order()
+			return Vector3.ZERO
+		o.data["tree"] = next
+		_last_gather[worker.id] = {"tree": next}
+		o.data["phase"] = "back"
+		return Vector3.ZERO
+	worker.face(world.doodads.tree_pos(i), dt)
+	if worker.anim_hint != "work":
+		worker.begin_work(chop_ticks(worker))
+	if world.tick_count - worker.work_t0 < worker.work_ticks:
+		return Vector3.ZERO
+	worker.carry_lumber += world.doodads.harvest(i, 1)
+	if worker.carry_lumber >= lumber_per_trip(worker):
+		worker.end_work()
+		o.data["phase"] = "to_dropoff"
+	else:
+		worker.begin_work(chop_ticks(worker))
+	return Vector3.ZERO
+
+
+# --- trips ------------------------------------------------------------------------------------
+
+func _dropoff_tick(worker: Unit, o: Order, dt: float) -> Vector3:
+	var b := world.get_unit(int(o.data.get("dropoff", 0)))
+	if b == null or not accepts_cargo(b, worker):
+		b = find_dropoff(worker)
+		if b == null:
+			worker.finish_order()      # nowhere to deliver: the worker waits with its cargo
+			return Vector3.ZERO
+		o.data["dropoff"] = b.id
+	if worker.edge_distance(b) <= float(Defs.rule("economy.dropoff_reach", 0.6)):
+		worker.stop_moving()
+		deposit(worker, b)
+		o.data.erase("dropoff")
+		o.data["phase"] = "back"
+		return Vector3.ZERO
+	return worker.chase_point(approach_point(b, worker), dt)
+
+
+## Back to the mine (or the tree) after a delivery.
+func _back_tick(worker: Unit, o: Order, dt: float) -> Vector3:
+	var reach := float(Defs.rule("economy.gather_reach", Unit.GATHER_REACH))
+	if o.data.has("tree"):
+		var i := int(o.data["tree"])
+		if not world.doodads.tree_alive(i):
+			i = retarget_tree(worker, o)
+			if i < 0:
+				worker.finish_order()
+				return Vector3.ZERO
+			o.data["tree"] = i
+			_last_gather[worker.id] = {"tree": i}
+		var tp := world.doodads.tree_pos(i)
+		if worker.edge_distance_to_point(tp) <= TREE_REACH:
+			_begin_chop(worker, o)
+			return Vector3.ZERO
+		return worker.chase_point(tp, dt)
+	var mine := world.get_unit(int(o.data.get("mine", o.target_id)))
+	if mine == null or not mine.alive or not mine.is_resource or gold_left(mine) <= 0:
+		worker.finish_order()
+		return Vector3.ZERO
+	if worker.edge_distance(mine) <= reach:
+		_join_door(worker, mine, o)
+		return Vector3.ZERO
+	return worker.chase_point(approach_point(mine, worker), dt)
+
+
+## The point just outside building `b`'s footprint nearest `worker` (so a walk to a building
+## ends on the side it came from, not wherever the footprint's centre snaps to).
+func approach_point(b: Unit, worker: Unit) -> Vector3:
+	return approach_from(b, worker.pos, worker.radius)
+
+
+## approach_point for a position and a body radius: the footprint point nearest `from`, pushed
+## out towards `from` by the body radius + 0.05 m (corners included), so the worker stops touching
+## the footprint (rules §4.1: delivery on touching; the walk sets the mine cycle).
+func approach_from(b: Unit, from: Vector3, body_radius: float) -> Vector3:
+	if b.footprint.size == Vector2i.ZERO:
+		return b.pos
+	return approach_rect(b.footprint, from, body_radius)
+
+
+## approach_from for a footprint rectangle (cells).
+func approach_rect(r: Rect2i, from: Vector3, body_radius: float) -> Vector3:
+	var pad := body_radius + 0.05
+	var x0 := r.position.x * Grid.CELL
+	var z0 := r.position.y * Grid.CELL
+	var x1 := r.end.x * Grid.CELL
+	var z1 := r.end.y * Grid.CELL
+	var near := Vector3(clampf(from.x, x0, x1), 0.0, clampf(from.z, z0, z1))
+	var out := Vector3(from.x - near.x, 0.0, from.z - near.z)
+	var p: Vector3
+	if out.length_squared() > 1e-6:
+		p = near + out.normalized() * pad
+	else:
+		# inside the footprint: out through the nearest side
+		var d := [from.x - x0, x1 - from.x, from.z - z0, z1 - from.z]
+		match d.find(d.min()):
+			0: p = Vector3(x0 - pad, 0.0, from.z)
+			1: p = Vector3(x1 + pad, 0.0, from.z)
+			2: p = Vector3(from.x, 0.0, z0 - pad)
+			_: p = Vector3(from.x, 0.0, z1 + pad)
+	p.y = world.map.height_at(p.x, p.z)
+	return p
+
+
+## Where a worker leaving mine `mine` appears: the door side facing `toward`, on a walkable cell.
+func _door_point(mine: Unit, worker: Unit, toward: Vector3) -> Vector3:
+	var p := approach_from(mine, toward, worker.radius)
+	var c := world.pathing.nearest_walkable(Grid.world_to_cell(p))
+	var out := Grid.cell_to_world(c)
+	out.y = world.map.height_at(out.x, out.z)
+	return out
+
+
+## Return Cargo delivered: the worker goes back to what it gathered before (when nothing else is
+## queued). Called by orders/return_resources.gd after a deposit.
+func resume_gather(worker: Unit) -> void:
+	if not worker.orders.is_empty() or not _last_gather.has(worker.id):
+		return
+	var last: Dictionary = _last_gather[worker.id]
+	var cmd := {"type": "gather", "player": worker.player_id, "units": [worker.id]}
+	if last.has("tree"):
+		var i := int(last["tree"])
+		if not world.doodads.tree_alive(i):
+			return
+		cmd["pos"] = world.doodads.tree_pos(i)
+		cmd["data"] = {"tree": i}
+	else:
+		var mine := world.get_unit(int(last["mine"]))
+		if mine == null or not mine.alive or not mine.is_resource:
+			return
+		cmd["target"] = mine.id
+	world.issue(cmd)
+
+
+## The last gather target of a worker ({"mine": id} / {"tree": index}, {} when none).
+func last_gather(worker: Unit) -> Dictionary:
+	return _last_gather.get(worker.id, {})
+
+
+## Gold Seam occupancy (tests, juice): the worker id inside, 0 when free.
+func miner_inside(mine: Unit) -> int:
+	return int(_inside.get(mine.id, 0))
+
+
+func door_queue(mine: Unit) -> Array:
+	return _door.get(mine.id, [])
 
 
 ## Nearest living tree within rules.economy.tree_retarget_radius of the order's last tree

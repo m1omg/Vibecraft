@@ -44,6 +44,7 @@ var alive_count: int = 0
 var _index: Dictionary = {}            ## tree-grid Vector2i -> tree index
 var material: ShaderMaterial           ## leaves material of the first species (fog hook, tests)
 var materials: Array[ShaderMaterial] = []
+var _fog_tex: Texture2D                ## the fog texture, also given to materials made later (decor)
 
 # visuals
 var _species: PackedByteArray          ## visual species per tree
@@ -138,6 +139,7 @@ func remove_tree(i: int) -> void:
 
 
 func set_fog_texture(tex: Texture2D) -> void:
+	_fog_tex = tex
 	for m in materials:
 		m.set_shader_parameter("fog_tex", tex)
 		m.set_shader_parameter("fog_enabled", tex != null)
@@ -363,6 +365,9 @@ func _foliage_mat(src: BaseMaterial3D) -> ShaderMaterial:
 			m.set_shader_parameter("alpha_cutoff", clampf(src.alpha_scissor_threshold, 0.3, 0.6))
 	if not leaves:
 		m.set_shader_parameter("sway_amp", 0.02)
+	if _fog_tex != null:
+		m.set_shader_parameter("fog_tex", _fog_tex)
+		m.set_shader_parameter("fog_enabled", true)
 	RenderAtmos.register(m)
 	if leaves:
 		materials.insert(0, m)

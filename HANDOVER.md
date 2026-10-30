@@ -1,7 +1,7 @@
 # Vibecraft handover
 
-Read this first if you are a new Claude session picking up the project. Last updated 2026-10-30. Playtest 1 has shipped; no feedback
-has come in yet.
+Read this first if you are a new Claude session picking up the project. Last updated 2026-10-30. Playtest 2 has shipped (2026-10-21);
+no feedback on it has come in yet.
 
 ## 1. What this is
 
@@ -11,8 +11,9 @@ original (`docs/research/ip-safety.md`).
 
 - Slice factions: the **Brennmark kingdom** (guild townsfolk, wagons, early gunpowder) against the **Tormai clans** (courteous nomad
   households, felt yurts, bronze gongs). Forest-elf and undead-like factions come later.
-- Repo `m1omg/Vibecraft`. Dev branch **`claude/clever-heisenberg-i8649y`**: work, commit and push here. No PR unless the user asks.
-- The code is all **GDScript** (≈ 180 files) plus Godot shaders, with **no C#**, so the standard (non-.NET) Godot build runs it. The
+- Repo `m1omg/Vibecraft`. Dev branch **`claude/clever-heisenberg-i8649y`**: work, commit and push here. Playtest 2 was built on
+  `claude/bold-johnson-kpuvf2` and merged back into it on 2026-10-30. No PR unless the user asks.
+- The code is all **GDScript** (≈ 200 files) plus Godot shaders, with **no C#**, so the standard (non-.NET) Godot build runs it. The
   Python in `tools/` (Blender kits, autorig, audio, music) is offline asset tooling and never ships with the game.
 
 ## 2. The user: how they want to work
@@ -23,7 +24,7 @@ original (`docs/research/ip-safety.md`).
   the user to PLAY-TEST it. Send screenshots, simple run steps, controls, what to try, known issues and questions. Don't just send
   screenshots.
 - The user is busy with other projects. **Message them only with playtest requests** (and answers when they ask). Keep messages short.
-- **Run steps for the user:** the ZIP download link
+- **Run steps for the user:** the ZIP download link of the branch they should play, now
   `https://github.com/m1omg/Vibecraft/archive/refs/heads/claude/clever-heisenberg-i8649y.zip`, then Godot 4.7.2 → Import →
   `project.godot` → F5. They are not a git user.
 - **Software must not depend on the display refresh rate** (hard requirement).
@@ -36,11 +37,33 @@ original (`docs/research/ip-safety.md`).
 - Don't repeatedly tell the user they have no credits. Don't lecture about repo visibility. The "-craft" name is fine.
 - Answer truthfully. Web-search facts about modern apps and prices. Double-check the user's corrections.
 
-## 3. Current state (2026-10-20)
+## 3. Current state (2026-10-21)
 
-- **Playtest 1 "Battlefield Sandbox" shipped and is waiting for the user's feedback.** See `PLAYTEST.md`. Main menu → sandbox on
-  the Wether Downs slice map: a static kingdom base and army against a scripted Tormai guard and war-band, three creep camps, and a
-  victory/defeat banner. Full classic controls. 213 headless tests pass.
+- **Playtest 2 "Base building" shipped and is waiting for the user's feedback** (`PLAYTEST.md`). Main menu → **Skirmish** (faction and
+  computer difficulty toggles) on Wether Downs from one hall and five workers, against the build-order computer; the Playtest 1
+  Battlefield Sandbox is still in the menu. ≈ 270 headless tests pass (the full run takes about 3 minutes).
+- **Playtest 1 feedback, done:** fog of war (per-team 2 m vision grids, cliffs and trees block sight, hidden enemies, building ghosts,
+  terrain/water/foliage/minimap fog) and a real Bombard Wagon (and Sling-Cart) model: procedural Blender kit `tools/kits/siege.py`,
+  rolling wheels, crew, recoil and throwing-arm motion (`src/fx/vehicle_rig.gd`).
+- **Since Playtest 1 (built on `claude/bold-johnson-kpuvf2`, now merged into the dev branch):**
+  - **Music wired** (`src/audio/music_director.gd`): menu loop, the faction rotation with 20–40 s gaps, stinger then score bed;
+    juice §5.1 bus levels (the "mix change" the playtest asks about).
+  - **Economy** (`src/systems/economy.gd`): the gold seam door queue (one worker inside, 1 s dwell, 10 gold), five workers saturate,
+    lumber trips per faction with felling and retargeting, Return Cargo resuming the last job, upkeep tax, seam depletion.
+  - **Construction** (`construction.gd`): cost checked on order and paid on arrival, sites rising from 10 % HP, the kingdom's Hod
+    Chain, cancel 75 %, repair; `cell_states` is the per-cell placement rule that `can_place` and the build ghost share;
+    `Tech.can_build` gates menus, tier and requirements.
+  - **Production and tech** (`production.gd`, `tech.gd`): queues of 7 for units, research and building upgrades, first hero free,
+    hero slots by tier, supply stalls with a notice, hall and Lookout upgrades transforming in place, research effects on living and
+    new units.
+  - **HUD** (`src/ui/`): `CardModel` (the card as data: worker card, build pages, building cards), `CardButton` availability
+    states, `BuildPlacement` sketch ghost and cell grid, `QueuePanel`, `HudTooltip`, `ErrorLine`, `IdleWorkerButton`, rolling
+    resource counters, the upkeep flip. Architecture §11 documents them.
+  - **Skirmish:** `AiPlayer` is a Playtest 2 build-order opponent driven by `factions.<id>.ai_opening` (workers, supply, the
+    opening's steps, army mix, defend, push, retreat); `MatchRules` ends the match (no structures = defeated, cripple reveal).
+  - **Economy and building juice** (`src/fx/build_fx.gd`): stamp, hammer / mallet and chop strokes on the work clip's contact,
+    completion and tier-up flourishes, food popups, tree falls, deliveries, cave-ins; new CC0 + procedural sounds built by
+    `tools/audio/build_layered_sfx.py` (recipes in `gen_layered_recipes.py`), no paid jobs.
 - **Engine:**
   - Fixed 30 Hz sim with physics interpolation, data-driven through the `Defs` autoload.
   - AStarGrid2D pathing on 0.5 m cells with group pathing; a spatial hash.
@@ -49,25 +72,21 @@ original (`docs/research/ip-safety.md`).
   - Juice core: fx clock, VFX pools, order markers, selection rings, health ghost bars, hit-pause, camera impulses.
   - A manifest-driven Audio director.
 - **The M2 contract is in place:** full slice data tables in `data/*.json` (`data/SCHEMA.md`), order handlers, and system stubs with
-  documented APIs. Ownership map: `docs/m2-ownership.md`.
+  documented APIs. Ownership map: `docs/m2-ownership.md`. Still stubs: heroes (XP, levels, revive), most ability effects (the faction
+  signatures among them), items, shops, creep sleep/bounty.
 - **Art:**
-  - **Units:** 12 rigged units (`assets/models/units`). The rig is our free autorigger `tools/autorig.py` plus licensed library clips.
+  - **Units:** 12 rigged units (`assets/models/units`) plus the two siege vehicles (`assets/models/vehicles`). The rig is our free
+    autorigger `tools/autorig.py` plus licensed library clips.
   - **Buildings:** two AI-modelled halls, plus 19 procedural buildings and 47 doodads/neutral structures from Blender kits
     (`tools/kits/`).
   - **Terrain:** Greenvale textures.
 - **Audio:**
-  - SFX for combat, ranged and UI: Seed Audio plus Kenney CC0 (`assets/audio/CREDITS.md`).
+  - SFX for combat, ranged and UI: Seed Audio plus Kenney CC0 (`assets/audio/CREDITS.md`); economy and building sounds are CC0 layers
+    plus procedural bronze bowls (`assets/audio/sfx/world/`).
   - Voice: tier-a acks (ready, what, yes, attack) for the hodman, pavisier, hookgunner, yurtwright and grappler. The script for the
     whole cast is in `docs/design/voice-lines.md`.
-  - **Music: composed in-house** with `tools/music` (fluidsynth + FluidR3_GM, MIT, + numpy synths): 13 pieces (kingdom 1–3, clans
-    1–3, menu, score bed, victory/defeat ×2, clans opening cue), merged in eacaad7. Manifest: `assets/audio/music/manifest.json`.
-    The Audio director already plays the opening cues and the victory/defeat stingers.
-  - **Not wired yet:**
-    - the in-game playlist: per faction, shuffled, 20–40 s gaps, first track 6 s after the opening cue;
-    - the menu loop;
-    - the score bed after the stinger.
-    `tools/music/README.md` "In the game" and the juice MUS-* rows give the spec. The two-person listening check from the bible is
-    still pending: ask the user.
+  - **Music: composed in-house** with `tools/music` (13 pieces), all wired now. The two-person listening check from the bible is still
+    pending: the playtest asks the user.
 
 ## 4. Next steps
 
@@ -93,24 +112,24 @@ original (`docs/research/ip-safety.md`).
    - **Test:** a unit test that the toggle flips and persists `window_mode`, with the `DisplayServer` calls guarded.
    - **Docs:** add "Fullscreen / window: Alt+Enter or F11" to the controls table in `PLAYTEST.md`, and the action to
      `docs/architecture.md` §11. Mention it in the next playtest message.
-   - **Later:** a proper settings screen (window mode, resolution, vsync, UI scale, audio volumes) with the PT2 HUD work.
-2. Fold in the user's **Playtest 1 feedback** when it arrives. Also ask how the three music tracks sounded (menu, Kingdom 1,
-   Clans 1 were sent).
-3. Wire the music playback (§3 "Not wired yet").
-4. **Playtest 2 "Base building":** economy (gold mining, lumber), construction, production, upkeep, tech tiers, full HUD and command
-   card. Adapt subsystem prompts A–H from `docs/workflows/m2-gameplay-build.js` and `docs/m2-ownership.md`.
-5. **Playtest 3 "Heroes & creeps":** heroes, abilities, buffs, creeps, items, shops, fog of war, real minimap.
-6. **Playtest 4 "Versus AI":** the AI opponent, a full juice pass, review and fixes.
-7. **Asset requests** (QA and contract agents):
+   - **Later:** a proper settings screen (window mode, resolution, vsync, UI scale, audio volumes).
+2. Fold in the user's **Playtest 2 feedback** (the questions are in `PLAYTEST.md`; the mix and music answers matter).
+3. **Playtest 3 "Heroes & creeps":** hero XP, levels, skill points and the Learn card; abilities and buffs on the card (cooldown
+   sweeps, autocast); revive at the altar; creeps sleeping at night, bounty, item drops; items and shops; the faction signatures
+   (Levy Horn, Sound the Gong, the worker transforms); hero portraits; the AI creeping its route.
+4. **Playtest 4 "Versus AI":** the full rules §19 AI (creeping, expansions, focus fire, abilities, retreat), a full juice pass,
+   review and fixes. The remaining economy/building juice (ECO-01 mine gulp, ECO-03 cargo hoist, BLD-05/06 foundation and reveal,
+   BLD-24 anticipation, BLD-25 unattended site, BLD-13 route lines) is listed in `docs/design/juice/economy-and-buildings.md`.
+5. **Asset requests** (QA and contract agents):
    - repaint the team-colour masks (most kingdom units are at 1–5 %, the Wheel Marshal at 38 %; run
      `tools/assets/check_team_coverage.gd`);
    - a Pavisier model;
    - creep models (Sootcoats, Harvest Folk, Cairnwakes);
-   - siege carts (Bombard Wagon, Sling-Cart, Grand Bombard);
+   - the Grand Bombard (the Bombard Wagon and Sling-Cart now have procedural models);
    - Hail-Swifts and critters;
    - the Coaching Inn;
    - projectile meshes;
-   - icons, hero portraits and UI art (art bible §11);
+   - icons, hero portraits and UI art (art bible §11): the command card and queue still show names and initials;
    - voice for the rest of the cast.
 
 ## 5. Paid generation: budgets and rules

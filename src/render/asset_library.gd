@@ -3,7 +3,7 @@ extends RefCounted
 ## Resolves, caches and prepares art assets for the views (visual only, never read by the sim).
 ## - Model path for a unit/structure def: `def.model` ("units/kingdom_infantry", a res:// path or
 ##   a bare id), else the unit manifest's alias for the def id, else
-##   assets/models/{units,buildings,neutral}/<def_id>.glb, else "" (placeholder).
+##   assets/models/{units,vehicles,buildings,neutral,doodads}/<def_id>.glb, else "" (placeholder).
 ## - Instancing converts every imported StandardMaterial3D once into the shared painterly
 ##   ShaderMaterials (unit.gdshader / structure.gdshader / foliage.gdshader), cached per source
 ##   material, so all instances of a model share materials and per-instance data goes through
@@ -23,7 +23,8 @@ const TEAM_COVERAGE := "res://assets/models/units/team_coverage.json"
 const TEAM_COVERAGE_MIN := 0.10
 ## Rim of a model with no team colour at all (scaled down to the normal rim at TEAM_COVERAGE_MIN).
 const LOW_COVERAGE_RIM_POWER := 1.4
-const MODEL_DIRS: Array[String] = ["units", "buildings", "neutral", "doodads"]
+## vehicles/: multi-node siege models without a skeleton (tools/kits/siege.py, src/fx/vehicle_rig.gd)
+const MODEL_DIRS: Array[String] = ["units", "vehicles", "buildings", "neutral", "doodads"]
 const EMISSIVE_TAGS: Array[String] = ["GLOW", "LAMP", "EMBER", "GLYPH"]
 
 static var _scenes: Dictionary = {}          ## path -> PackedScene (or null when missing)

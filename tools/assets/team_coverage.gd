@@ -4,7 +4,8 @@ extends RefCounted
 ## A small software rasteriser draws the model's rest pose from the game camera (pitch −56°,
 ## orthographic, eight yaws around the unit) with a depth buffer, and for every visible pixel
 ## evaluates the same team weight the unit shader uses (team_mode 2: the per-texel mask
-## `<model>_team.png` through smoothstep(0.45, 0.8) plus the magenta key on the albedo). It
+## `<model>_team.png` through smoothstep(0.45, 0.8) plus the magenta key on the albedo; team_mode 1:
+## every pixel of a surface whose material name contains TEAM, the kit models' grey team cloth). It
 ## reports:
 ##   coverage     team weight / silhouette pixels (the bible's "share of the visible silhouette")
 ##   upper        team weight in the upper third of the model height / silhouette pixels
@@ -57,6 +58,7 @@ static func measure_model(glb_path: String) -> Dictionary:
 	var pos := PackedVector3Array()
 	var uv := PackedVector2Array()
 	var idx := PackedInt32Array()
+	var forced := PackedFloat32Array()   ## per vertex: 1 on TEAM surfaces (team_mode 1), -1 = sample
 	var albedo: Image = null
 	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
 		if mi.mesh == null:
@@ -75,8 +77,13 @@ static func measure_model(glb_path: String) -> Dictionary:
 			if t.size() != v.size():
 				continue
 			var base := pos.size()
+			var mat := mi.mesh.surface_get_material(s)
+			# as AssetLibrary.convert_material: a texel mask wins (team_mode 2); without one, TEAM
+			# surfaces are team cloth in full (team_mode 1)
+			var team_surface := mask == null and mat != null and mat.resource_name.contains("TEAM")
 			for p in v:
 				pos.append(xf * p)
+				forced.append(1.0 if team_surface else -1.0)
 			uv.append_array(t)
 			if ix.is_empty():
 				for k in v.size():
@@ -84,10 +91,10 @@ static func measure_model(glb_path: String) -> Dictionary:
 			else:
 				for k in ix:
 					idx.append(base + k)
-			if albedo == null:
-				albedo = _albedo_image(mi.mesh.surface_get_material(s))
+			if albedo == null and not team_surface:
+				albedo = _albedo_image(mat)
 	root.free()
-	var out := measure_mesh(pos, uv, idx, mask, albedo)
+	var out := measure_mesh(pos, uv, idx, mask, albedo, forced)
 	out["texel"] = texel_share(mask)
 	return out
 
@@ -137,9 +144,10 @@ static func _lin(c: float) -> float:
 
 
 ## Rasterises triangles (`idx` into `pos` / `uv`, model space, +Y up) from the game camera at
-## YAWS yaws. Returns {coverage, upper, silhouette_px}.
+## YAWS yaws. `forced` (optional, per vertex): a weight >= 0 replaces the sampled one (TEAM
+## surfaces). Returns {coverage, upper, silhouette_px}.
 static func measure_mesh(pos: PackedVector3Array, uv: PackedVector2Array, idx: PackedInt32Array,
-		mask: Image, albedo: Image) -> Dictionary:
+		mask: Image, albedo: Image, forced: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
 	if pos.is_empty() or idx.size() < 3:
 		return {"coverage": 0.0, "upper": 0.0, "silhouette_px": 0}
 	var mk := _plane(mask, Image.FORMAT_L8)
@@ -163,7 +171,7 @@ static func measure_mesh(pos: PackedVector3Array, uv: PackedVector2Array, idx: P
 		var r := rot * Vector3.RIGHT
 		var f := rot * f0
 		var u := rot * u0
-		var res := _raster(pos, uv, idx, centre, r, u, f, scale, upper_y, mk, al)
+		var res := _raster(pos, uv, idx, centre, r, u, f, scale, upper_y, mk, al, forced)
 		sil += int(res.x)
 		team += res.y
 		upper += res.z
@@ -208,7 +216,7 @@ static func _sample_weight(t: Vector2, mk: Array, al: Array) -> float:
 ## One view: returns Vector3(silhouette pixels, team weight sum, upper-third team weight sum).
 static func _raster(pos: PackedVector3Array, uv: PackedVector2Array, idx: PackedInt32Array,
 		centre: Vector3, r: Vector3, u: Vector3, f: Vector3, scale: float, upper_y: float,
-		mk: Array, al: Array) -> Vector3:
+		mk: Array, al: Array, forced: PackedFloat32Array = PackedFloat32Array()) -> Vector3:
 	var n := pos.size()
 	var sx := PackedFloat32Array()
 	var sy := PackedFloat32Array()
@@ -247,6 +255,7 @@ static func _raster(pos: PackedVector3Array, uv: PackedVector2Array, idx: Packed
 		var y0 := maxi(int(floor(minf(ay, minf(by, cy)))), 0)
 		var y1 := mini(int(ceil(maxf(ay, maxf(by, cy)))), RES - 1)
 		var inv := 1.0 / area
+		var fw := forced[a] if forced.size() > a else -1.0
 		for y in range(y0, y1 + 1):
 			var py := y + 0.5
 			for x in range(x0, x1 + 1):
@@ -261,8 +270,10 @@ static func _raster(pos: PackedVector3Array, uv: PackedVector2Array, idx: Packed
 				if z >= zbuf[o]:
 					continue
 				zbuf[o] = z
-				var t := uv[a] * w0 + uv[b] * w1 + uv[c] * w2
-				wbuf[o] = _sample_weight(t, mk, al)
+				if fw >= 0.0:
+					wbuf[o] = fw
+				else:
+					wbuf[o] = _sample_weight(uv[a] * w0 + uv[b] * w1 + uv[c] * w2, mk, al)
 				var hy := pos[a].y * w0 + pos[b].y * w1 + pos[c].y * w2
 				hbuf[o] = 1 if hy >= upper_y else 0
 	var sil := 0

@@ -56,6 +56,15 @@
       "texel": 0.1178,
       "upper_third": 0.1074
     },
+    "kingdom_bombard_wagon": {
+      "coverage": 0.1193,
+      "kind": "unit",
+      "max": 0.150000005960464,
+      "min": 0.100000001490116,
+      "ok": true,
+      "texel": 0.0,
+      "upper_third": 0.0975
+    },
     "kingdom_firewright": {
       "coverage": 0.0137,
       "kind": "hero",
