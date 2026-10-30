@@ -13,8 +13,9 @@ extends SimSystem
 ##     transforms the building in place
 ##   - spawning trained units at the footprint edge toward the rally point; rally on ground,
 ##     unit (follow) or resource (workers gather)
-## Queue entry: {kind: "unit"|"research"|"upgrade", id, ticks, total, cost, food, started: bool,
-##   token: bool (free first hero), level (research)}. Commands handled (World.SYSTEM_COMMANDS):
+## Queue entry: {kind: "unit"|"research"|"upgrade"|"revive", id, ticks, total, cost, food,
+##   started: bool, token: bool (free first hero), level (research), hero (revive: the dead
+##   hero's unit id; HeroSystem prices it and brings the hero back)}. Commands handled (World.SYSTEM_COMMANDS):
 ##   "train" {units: [building], def, queue}, "cancel" {units: [building], slot: index (-1 =
 ##   last)}, "research" {units: [building], def: upgrade id (building upgrades too)}.
 ## Signals (Events): training_started(building, id), training_completed(building, unit),
@@ -158,7 +159,9 @@ func can_acquire_hero(pid: int, hero_id: String) -> bool:
 		for hid: int in p.heroes:
 			var h := world.get_unit(hid)
 			if h == null or not h.alive:
-				count += 1    # dead heroes keep their slot until revived
+				count += 1    # dead heroes keep their slot (and their type) until revived
+				if str(world.heroes.dead_record(hid).get("def_id", "")) == hero_id:
+					return false
 	for bid: int in _queues:
 		var b := world.get_unit(bid)
 		if b == null or b.player_id != pid:
@@ -190,6 +193,29 @@ func train(building: Unit, def_id: String, count: int = 1) -> int:
 	if n > 0:
 		Events.queue_changed.emit(building)
 	return n
+
+
+## Queues the revive of dead hero `hid` at `building` for `cost` (HeroSystem.revive_cost; paid
+## now, food reserved when it starts, like training). True when queued.
+func queue_revive(building: Unit, hid: int, cost: Dictionary) -> bool:
+	if cost.is_empty():
+		return false
+	world.economy.spend(building.player_id, cost)
+	_queues.get_or_add(building.id, []).append({"kind": "revive",
+		"id": str(world.heroes.dead_record(hid).get("def_id", "")), "hero": hid, "ticks": 0,
+		"total": maxi(1, roundi(float(cost.get("time", 1)) * World.TICK_RATE)), "cost": cost,
+		"food": int(cost.get("food", 0)), "started": false})
+	Events.queue_changed.emit(building)
+	return true
+
+
+## True while dead hero `hid` is queued for revival anywhere.
+func is_reviving(hid: int) -> bool:
+	for bid: int in _queues:
+		for e: Dictionary in _queues[bid]:
+			if e["kind"] == "revive" and int(e.get("hero", 0)) == hid:
+				return true
+	return false
 
 
 ## "" when `building` can queue the next level of `upgrade_id` (research or building upgrade),
@@ -259,7 +285,7 @@ func cancel(building: Unit, index: int = -1) -> bool:
 	var i := q.size() - 1 if index < 0 or index >= q.size() else index
 	var e: Dictionary = q[i]
 	q.remove_at(i)
-	var factor_key := "economy.train_cancel_refund" if e["kind"] == "unit" else "economy.research_cancel_refund"
+	var factor_key := "economy.train_cancel_refund" if e["kind"] in ["unit", "revive"] else "economy.research_cancel_refund"
 	world.economy.refund(building.player_id, e.get("cost", {}), float(Defs.rule(factor_key, 1.0)))
 	if e.get("started", false) and int(e.get("food", 0)) > 0:
 		world.adjust_food(building.player_id, -int(e["food"]), 0)
@@ -300,7 +326,7 @@ func sim_tick(w: World, _dt: float) -> void:
 			continue
 		var e: Dictionary = q[0]
 		if not e["started"]:
-			if e["kind"] == "unit" and int(e["food"]) > 0:
+			if e["kind"] in ["unit", "revive"] and int(e["food"]) > 0:
 				var p := w.player(b.player_id)
 				var cap := mini(p.food_cap, int(Defs.rule("economy.food_cap", 100)))
 				if p.food_used + int(e["food"]) > cap:
@@ -328,6 +354,10 @@ func sim_tick(w: World, _dt: float) -> void:
 					Defs.text("notice_research_done") % str(Defs.upgrade(str(e["id"])).get("name", e["id"])))
 			"upgrade":
 				w.tech.complete_building_upgrade(b, str(e["id"]))
+			"revive":
+				var h := w.heroes.complete_revive(b, int(e["hero"]))
+				if h != null:
+					_send_to_rally(b, h)
 
 
 ## The queue head waits for food: production_stalled and, at most every supply_stall_advisory

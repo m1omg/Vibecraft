@@ -113,5 +113,16 @@
   "menu_difficulty_hard": "Hard",
   "notice_upkeep_up": "%s: mined gold is now taxed more. Fewer mouths, more gold.",
   "objective_cripple": "No hall stands. Raise one within %d:%02d or the enemy will see every building we have.",
-  "objective_cripple_revealed": "No hall stands: the enemy sees every building we have until we raise one."
+  "objective_cripple_revealed": "No hall stands: the enemy sees every building we have until we raise one.",
+  "revive_hero": "Revive %s",
+  "hero_dead": "Fallen",
+  "hero_fallen": "Fallen at level %d.",
+  "hero_level_xp": "Level %d  ·  XP %d / %d",
+  "hero_level_max": "Level %d (the highest)",
+  "hero_points": "Skill points to spend: %d. Press Learn on the hero's card.",
+  "hero_reviving": "Returning in %d:%02d.",
+  "hero_revive_hint": "Revive it at your altar.",
+  "notice_hero_died": "Your hero %s has fallen.",
+  "notice_hero_revived": "%s has returned.",
+  "notice_hero_level": "%s reached level %d."
 }

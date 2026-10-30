@@ -91,6 +91,8 @@ func tooltip_for(i: int) -> Dictionary:
 		return {}
 	var e: Dictionary = items[i]
 	var title := CardModel.display_name(str(e["id"]))
+	if e["kind"] == "revive":
+		title = Defs.text("revive_hero") % title
 	var line := ""
 	if i == 0 and not bool(e.get("started", false)):
 		line = Defs.text("queue_waiting") % title
