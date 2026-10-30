@@ -3,7 +3,7 @@
 A Godot 4.7.2 3D hero RTS that plays as close to the classic 2002 hero-RTS as legally possible, with 100 % original names, art,
 audio and text.
 
-**Start with `docs/HANDOVER.md`.** It covers the project state, the user's working style, budgets and rules, and next steps.
+**Start with `HANDOVER.md`** (repo root). It covers the project state, the user's working style, budgets and rules, and next steps.
 
 The essentials:
 
