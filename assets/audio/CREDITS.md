@@ -62,6 +62,8 @@ own Seed Audio jobs are run.
 | `hero_bell_clans_l2` … `_l10` | heroes | procedural | procedural layers |
 | `hero_down` | heroes | procedural | Kenney CC0: `impact-sounds/impactSoft_heavy_000.ogg`, `impact-sounds/impactSoft_heavy_002.ogg`; procedural layers |
 | `hero_revive` | heroes | procedural | procedural layers |
+| `ab_cast`, `ab_heal`, `ab_glint`, `ab_window`, `ab_dark`, `ab_veil`, `ab_lash` | heroes | procedural | procedural layers (`ab_lash` adds Kenney CC0 `impact-sounds/impactPunch_medium_001.ogg`, `_003.ogg`) |
+| `ab_brace`, `ab_ring`, `ab_fire`, `ab_summon` | heroes | cc0 | Kenney CC0 `impact-sounds/` plate, plank, wood, glass and soft impacts; procedural layers |
 | `bullet_hit` | ranged | derived | Kenney CC0: `impact-sounds/impactSoft_medium_002.ogg`; own generated takes: `combat/hit_flesh_l_02.wav`, `combat/hit_metal_l_01.wav`, `combat/hit_wood_l_03.wav`; procedural layers |
 | `javelin_hit` | ranged | derived | Kenney CC0: `impact-sounds/impactPunch_medium_002.ogg`, `impact-sounds/impactSoft_heavy_001.ogg`, `impact-sounds/impactWood_medium_001.ogg`; own generated takes: `combat/hit_flesh_l_03.wav`, `combat/hit_metal_l_02.wav`, `combat/hit_wood_l_01.wav`, `combat/hit_wood_l_02.wav`; procedural layers |
 | `hit_wood_h` | combat | derived | Kenney CC0: `impact-sounds/impactPlank_medium_000.ogg`, `impact-sounds/impactPlank_medium_002.ogg`, `impact-sounds/impactPlank_medium_003.ogg`, `impact-sounds/impactPlank_medium_004.ogg`, `impact-sounds/impactWood_heavy_000.ogg`, `impact-sounds/impactWood_heavy_001.ogg`, `impact-sounds/impactWood_heavy_002.ogg`, `impact-sounds/impactWood_heavy_004.ogg`; own generated takes: `combat/hit_wood_l_01.wav`, `combat/hit_wood_l_02.wav`, `combat/hit_wood_l_03.wav` |

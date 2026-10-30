@@ -1,4 +1,48 @@
 {
+ "ab_brace": [
+  "res://assets/audio/sfx/heroes/ab_brace_01.wav",
+  "res://assets/audio/sfx/heroes/ab_brace_02.wav"
+ ],
+ "ab_cast": [
+  "res://assets/audio/sfx/heroes/ab_cast_01.wav",
+  "res://assets/audio/sfx/heroes/ab_cast_02.wav"
+ ],
+ "ab_dark": [
+  "res://assets/audio/sfx/heroes/ab_dark_01.wav",
+  "res://assets/audio/sfx/heroes/ab_dark_02.wav"
+ ],
+ "ab_fire": [
+  "res://assets/audio/sfx/heroes/ab_fire_01.wav",
+  "res://assets/audio/sfx/heroes/ab_fire_02.wav"
+ ],
+ "ab_glint": [
+  "res://assets/audio/sfx/heroes/ab_glint_01.wav",
+  "res://assets/audio/sfx/heroes/ab_glint_02.wav"
+ ],
+ "ab_heal": [
+  "res://assets/audio/sfx/heroes/ab_heal_01.wav",
+  "res://assets/audio/sfx/heroes/ab_heal_02.wav"
+ ],
+ "ab_lash": [
+  "res://assets/audio/sfx/heroes/ab_lash_01.wav",
+  "res://assets/audio/sfx/heroes/ab_lash_02.wav"
+ ],
+ "ab_ring": [
+  "res://assets/audio/sfx/heroes/ab_ring_01.wav",
+  "res://assets/audio/sfx/heroes/ab_ring_02.wav"
+ ],
+ "ab_summon": [
+  "res://assets/audio/sfx/heroes/ab_summon_01.wav",
+  "res://assets/audio/sfx/heroes/ab_summon_02.wav"
+ ],
+ "ab_veil": [
+  "res://assets/audio/sfx/heroes/ab_veil_01.wav",
+  "res://assets/audio/sfx/heroes/ab_veil_02.wav"
+ ],
+ "ab_window": [
+  "res://assets/audio/sfx/heroes/ab_window_01.wav",
+  "res://assets/audio/sfx/heroes/ab_window_02.wav"
+ ],
  "atk_herb_mote": [
   "res://assets/audio/sfx/ranged/atk_herb_mote_01.wav",
   "res://assets/audio/sfx/ranged/atk_herb_mote_02.wav",

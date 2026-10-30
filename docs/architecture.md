@@ -126,7 +126,9 @@ src/
                 vehicle_rig.gd (procedural motion of multi-node siege models), build_fx.gd
                 (economy and building beats), hero_fx.gd (HER-01/03/04/06/07: level-up emblem,
                 hero down, revive) with hero_sigils.gd + hero_sigil.gdshader (the level ring
-                under every hero) and xp_motes.gd + xp_mote.gdshader (XP flying to the heroes)
+                under every hero) and xp_motes.gd + xp_mote.gdshader (XP flying to the heroes),
+                ability_fx.gd (cast rings, each ability's look and sound, heal numbers, lasting
+                ground effects, reveals and fuse marks drawn from the sim's records)
 data/           see data/SCHEMA.md: factions, units, buildings, heroes, abilities, buffs, items,
                 upgrades, shops, creep_camps, doodads, scenarios (.json), strings/en.json,
                 maps/*.json, test_defs.json (tests only)
@@ -687,6 +689,19 @@ requirements, ability unlocks. Each file's header documents the full contract.
   `on_expire` heals or calls the source effect's `buff_expired`, `dispel` all / selective;
   natural regeneration (`Unit.hp_regen` / `mana_regen` × DT, rules §9) runs here for every
   living unit. Per-rank numbers: `Defs.ability_rank(id, rank)`.
+- The slice's 16 hero abilities run on shared effect scripts with their data params:
+  `heal_target` (splash heals), `taunt_area` (BuffSystem forces taunted units to attack the
+  taunter), `area_buff`, `area_damage` (circle or cone, structure factor, night factors, a
+  follow-up buff and ground effect), `apply_buff` (its `buff_expired` is Fuse Mark's blast, also
+  on the marked unit's death; a dispel defuses), `damage_target` (pull and root), `summon`
+  (timed summons), `reveal_area` (`Fog.reveal`, `detect` shows invisible units),
+  `ground_effect`, `aura` and `passive`. Ground effects tick in `AbilitySystem`: impact damage,
+  periodic damage from the ability's `dps_param`, and `buff` / `enemy_buff` / `ally_buff`
+  re-applied every 0.5 s like an aura. On-attack riders (burns, line cleave), break bonuses
+  (Dust Veil's opener) and crit hastes live in `BuffSystem`. Invisibility (rules §11):
+  `Fog.can_see` hides an `invisible` unit from enemies (creeps too, fog on or off) unless a
+  detecting reveal covers it, so it is neither drawn nor acquired; the owner sees it
+  half-transparent. `sight_override` caps sight (Swallowed Sun).
 - Heroes (`HeroSystem`, `data/heroes.json`): XP table and level cap 10, 3 normal abilities with
   3 ranks (hero levels 1/3/5, `HeroSystem.required_level`) + 1 ultimate at level 6, attributes
   (STR → hp/regen, AGI → armor/attack speed, INT → mana/regen; primary attr → damage) through

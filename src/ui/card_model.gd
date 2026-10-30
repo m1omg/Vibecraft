@@ -416,7 +416,10 @@ static func ability_lines(aid: String, rank: int) -> Array[String]:
 	var v := Defs.ability_rank(aid, rank)
 	var key := "ability_" + aid
 	if Defs.strings.has(key):
-		out.append(Defs.text(key).format(v))
+		var shown := {}
+		for k: String in v:
+			shown[k] = _num(float(v[k])) if v[k] is float or v[k] is int else v[k]
+		out.append(Defs.text(key).format(shown))
 	var parts: Array[String] = []
 	if float(v.get("cooldown", 0.0)) > 0.0:
 		parts.append(Defs.text("tip_cooldown") % _num(float(v["cooldown"])))

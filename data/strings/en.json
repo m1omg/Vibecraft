@@ -142,5 +142,21 @@
   "error_silenced": "Cannot cast right now.",
   "error_bad_target": "That is not a valid target for this ability.",
   "error_cannot_cast": "That ability cannot be cast.",
-  "error_invalid_target": "Unable to target that."
+  "error_invalid_target": "Unable to target that.",
+  "ability_kingdom_linden_balm": "Heals a friendly unit for {amount} HP (half that on herself); allies within 2.5 m of it heal a quarter as much.",
+  "ability_kingdom_brace_the_wheel": "Plants her wheel-shield: enemies within {area} m (not heroes) must attack her for {duration} s, and she gains {armor} armour for 6 s.",
+  "ability_kingdom_measured_cadence": "Aura: friendly units within 9 m attack {attack_speed_pct} % faster.",
+  "ability_kingdom_the_wagon_ring": "Friendly units within 11 m cannot drop below 1 HP for 7 s; when it ends they heal 15 % of their maximum HP.",
+  "ability_kingdom_naphtha_flask": "A flask bursts for {damage} spell damage in a 3 m circle (half to buildings) and leaves the ground burning for {ground_dps} damage a second for 6 s.",
+  "ability_kingdom_fuse_mark": "Marks an enemy; after 4 s the mark goes off for {damage} spell damage, half of it to enemies within 2.5 m (150 % against buildings). A dispel defuses it.",
+  "ability_kingdom_incendiary_wadding": "Aura: ranged friendly units within 9 m set what they hit burning for {burn_dps} damage a second for 3 s.",
+  "ability_kingdom_grand_bombard": "Hauls a Grand Bombard into place for 25 s: a heavy gun that shells what it can see.",
+  "ability_clans_dust_veil": "Vanishes in a cloud of dust for {duration} s, moving {move_speed_pct} % faster. Her first attack ends it with {bonus_damage} bonus damage and slows the target.",
+  "ability_clans_braid_lash": "Lashes an enemy for {damage} spell damage, drags it 3 m closer (1.5 m for heroes) and roots it for {root} s.",
+  "ability_clans_clean_cut": "Each attack has a 20 % chance to strike for {crit_multiplier} × damage; a clean cut lends her a burst of speed.",
+  "ability_clans_through_the_tall_grass": "For 10 s she attacks 40 % faster, ignores slows, and every blow cuts through an 8 m line behind her target.",
+  "ability_clans_sunglint": "Flashes sunlight in a 50° cone: {damage} spell damage, and enemies miss 35 % of their attacks for {duration} s. Half the damage at night, but the glare lasts longer.",
+  "ability_clans_bronze_window": "Opens a bronze window anywhere on the map, showing a {area} m circle for 10 s. At rank 3 it also shows invisible units.",
+  "ability_clans_hail_swifts": "Calls {count} hail-swifts that fight at his side for 45 s.",
+  "ability_clans_swallowed_sun": "Swallows the sun over a 9 m circle for 12 s: enemies inside see only 3 m and miss 40 % of their attacks; friendly units there move 15 % faster."
 }

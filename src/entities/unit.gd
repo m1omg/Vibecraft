@@ -526,6 +526,9 @@ func recompute_stats() -> void:
 	mana_regen = float(_base["mana_regen"]) + float(t.get("mana_regen", 0.0))
 	sight = float(_base["sight"]) + float(t.get("sight", 0.0))
 	sight_night = float(_base["sight_night"]) + float(t.get("sight", 0.0))
+	if t.has("sight_override"):          # Swallowed Sun: sight cut to a few metres
+		sight = minf(sight, float(t["sight_override"]))
+		sight_night = minf(sight_night, float(t["sight_override"]))
 	var base_speed := float(_base["speed"])
 	if base_speed > 0.0 and not is_building:
 		var slow := float(t.get("move_speed_pct", 0.0))
@@ -783,7 +786,8 @@ func set_home(p: Vector3) -> void:
 
 func is_valid_target(o: Unit) -> bool:
 	return o != self and o.alive and not o.is_resource and not o.is_invulnerable and not o.is_item \
-		and not o.hidden and world.is_enemy(player_id, o.player_id)
+		and not o.hidden and world.is_enemy(player_id, o.player_id) \
+		and (not o.status.has("invisible") or world.fog == null or world.fog.can_see(player_id, o))
 
 
 ## Closest valid enemy whose edge is within `r` (units preferred over structures, ties by id;
@@ -802,6 +806,8 @@ func find_target(r: float) -> Unit:
 			continue
 		if fog != null and not fog.can_see(player_id, o):
 			continue    # no acquisition of what the player cannot see (rules §14)
+		if fog == null and o.status.has("invisible") and world.fog != null and not world.fog.can_see(player_id, o):
+			continue    # nor of invisible enemies (rules §11), fog or not
 		var d := edge_distance(o)
 		if d > r:
 			continue

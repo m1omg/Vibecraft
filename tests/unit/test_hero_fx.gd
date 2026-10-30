@@ -115,3 +115,33 @@ func test_fallen_sigil_fades_and_the_revive_beat() -> void:
 	assert_eq(int(fx.counts.get("revived", 0)), 1, "the revive beat")
 	_frame(fx)
 	assert_eq(fx.sigils.items.size(), 1, "the revived hero has its sigil")
+
+
+func test_ability_looks_heals_bursts_and_burning_ground() -> void:
+	var w := _visual_world()
+	var vfx := w.get_node("Fx/Vfx") as Vfx
+	var fx := vfx.abilities
+	var f := w.spawn_unit("kingdom_firewright", 0, Vector3(20, 0, 20))
+	w.heroes.add_xp(f, 2000.0)
+	for a: String in ["kingdom_naphtha_flask", "kingdom_fuse_mark"]:
+		w.heroes.learn(f, a)
+	f.mana = f.max_mana
+	var e := w.spawn_unit("clans_grappler", 1, Vector3(26, 0, 20))
+	w.abilities.cast_now(f, "kingdom_naphtha_flask", null, Vector3(26, 0, 20))
+	w.abilities.cast_now(f, "kingdom_fuse_mark", e)
+	var frames := vfx.marks.frame_count
+	FxClock.advance(World.DT, true)
+	fx._process(World.DT)
+	assert_eq(int(fx.counts.get("kingdom_naphtha_flask", 0)), 1, "the flask's look")
+	assert_true(vfx.marks.frame_count > frames, "the burning ground and the fuse ring are drawn")
+	for i in 4 * 30 + 2:
+		w.step()
+	FxClock.advance(World.DT, true)
+	fx._process(World.DT)
+	assert_eq(int(fx.counts.get("burst", 0)), 1, "the fuse mark's blast")
+	var m := w.spawn_unit("kingdom_wheel_marshal", 0, Vector3(20, 0, 30))
+	m.take_damage(200.0, null)
+	Events.unit_healed.emit(m, 150.0, m)
+	fx._process(World.DT)
+	assert_eq(int(fx.counts.get("heal", 0)), 1, "a heal number")
+	assert_true(Audio.has_family("ab_fire") and Audio.has_family("ab_heal") and Audio.has_family("ab_dark"), "ability sounds exist")

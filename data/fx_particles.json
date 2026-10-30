@@ -1,24 +1,638 @@
 {
   "_doc": "Particle burst kinds (chunk sizes are read at the default 26 m camera: a 0.2 m splinter is ~7 px at 720p) for the VFX pool (src/fx/particle_pool.gd). Each kind is a pool of one-shot emitters: GPUParticles3D on Forward+, CPUParticles3D on Compatibility (or FeelConstants / --cpu-particles). Fields: tex (FxTextures name), blend add|mix|cutout, amount (max particles per burst), life [min, max] s, speed [min, max] m/s, spread (cone half-angle deg), gravity m/s², damping (m/s per s), size [min, max] m, size_end (scale at end of life), color / color_end (sRGB hex, alpha allowed), color_var (second start colour), hdr (emission multiplier; only VFX bloom), spin (rad/s), align (velocity-aligned streaks on GPU), pool (emitters). Values from combat-and-units.md §4.8 (material matrix), CMB-01 (step dust), CMB-36 (clash).",
-  "spark": {"tex": "spark", "blend": "add", "amount": 9, "life": [0.18, 0.26], "speed": [4.0, 7.0], "spread": 40, "gravity": 9.8, "damping": 6.0, "size": [0.22, 0.32], "size_end": 0.5, "color": "#FFF3C4", "color_end": "#FF9B30", "hdr": 2.5, "align": true, "pool": 24},
-  "star": {"tex": "star", "blend": "add", "amount": 1, "life": [0.06, 0.06], "speed": [0.0, 0.0], "spread": 0, "gravity": 0.0, "size": [0.6, 0.6], "size_end": 0.6, "color": "#FFF6EC", "color_end": "#FFF6EC", "hdr": 2.0, "pool": 16},
-  "star_soft": {"tex": "star", "blend": "add", "amount": 1, "life": [0.07, 0.07], "speed": [0.0, 0.0], "spread": 0, "gravity": 0.0, "size": [0.4, 0.4], "size_end": 0.6, "color": "#FFF6EC", "color_end": "#FFE0C8", "hdr": 1.6, "pool": 16},
-  "flare_stone": {"tex": "star", "blend": "add", "amount": 1, "life": [0.05, 0.05], "speed": [0.0, 0.0], "spread": 0, "gravity": 0.0, "size": [0.45, 0.45], "size_end": 0.6, "color": "#FFF0D0", "color_end": "#FFF0D0", "hdr": 1.4, "pool": 8},
-  "splinter": {"tex": "splinter", "blend": "cutout", "amount": 6, "life": [0.32, 0.4], "speed": [2.0, 4.0], "spread": 55, "gravity": 9.8, "damping": 1.0, "size": [0.16, 0.26], "size_end": 0.7, "color": "#8B5A2B", "color_var": "#B07A45", "spin": 10.0, "pool": 16},
-  "sawdust": {"tex": "puff", "blend": "mix", "amount": 2, "life": [0.3, 0.35], "speed": [0.4, 0.9], "spread": 60, "gravity": -0.3, "damping": 1.5, "size": [0.3, 0.4], "size_end": 1.8, "color": "#D9B77EB0", "color_end": "#D9B77E00", "pool": 12},
-  "droplet": {"tex": "drop", "blend": "cutout", "amount": 5, "life": [0.24, 0.3], "speed": [2.0, 3.5], "spread": 45, "gravity": 12.0, "damping": 0.5, "size": [0.12, 0.18], "size_end": 0.6, "color": "#C8323C", "color_var": "#E2575E", "pool": 16},
-  "dust_gore_off": {"tex": "puff", "blend": "mix", "amount": 3, "life": [0.25, 0.3], "speed": [0.8, 1.6], "spread": 50, "gravity": 0.5, "damping": 2.0, "size": [0.12, 0.2], "size_end": 1.6, "color": "#D9CBB0C0", "color_end": "#D9CBB000", "pool": 12},
-  "chip_stone": {"tex": "chip", "blend": "cutout", "amount": 6, "life": [0.38, 0.45], "speed": [2.0, 4.0], "spread": 50, "gravity": 12.0, "damping": 0.5, "size": [0.11, 0.16], "size_end": 0.7, "color": "#8E8579", "color_var": "#6E675E", "spin": 8.0, "pool": 12},
-  "dust_stone": {"tex": "puff", "blend": "mix", "amount": 2, "life": [0.45, 0.5], "speed": [0.3, 0.8], "spread": 70, "gravity": -0.2, "damping": 1.0, "size": [0.4, 0.5], "size_end": 2.0, "color": "#B9AE9CB0", "color_end": "#B9AE9C00", "pool": 12},
-  "chip_ice": {"tex": "chip", "blend": "cutout", "amount": 5, "life": [0.35, 0.4], "speed": [2.0, 4.0], "spread": 50, "gravity": 12.0, "damping": 0.5, "size": [0.09, 0.13], "size_end": 0.7, "color": "#EEF5FA", "color_var": "#A9C8DA", "spin": 8.0, "pool": 8},
-  "straw": {"tex": "straw", "blend": "cutout", "amount": 7, "life": [0.5, 0.6], "speed": [1.5, 3.0], "spread": 60, "gravity": 4.0, "damping": 2.0, "size": [0.18, 0.24], "size_end": 0.8, "color": "#D8B860", "color_var": "#A8873E", "spin": 10.0, "pool": 12},
-  "chaff": {"tex": "puff", "blend": "mix", "amount": 2, "life": [0.4, 0.45], "speed": [0.3, 0.8], "spread": 70, "gravity": -0.2, "damping": 1.0, "size": [0.3, 0.4], "size_end": 2.0, "color": "#CDB98A4C", "color_end": "#CDB98A00", "pool": 8},
-  "soot_puff": {"tex": "puff", "blend": "mix", "amount": 2, "life": [0.45, 0.5], "speed": [0.2, 0.5], "spread": 50, "gravity": -0.6, "damping": 0.5, "size": [0.3, 0.4], "size_end": 2.2, "color": "#2A262259", "color_end": "#2A262200", "pool": 8},
-  "dust_step": {"tex": "puff", "blend": "mix", "amount": 3, "life": [0.35, 0.5], "speed": [0.3, 0.8], "spread": 80, "gravity": -0.25, "damping": 2.5, "size": [0.12, 0.2], "size_end": 2.4, "color": "#B3A48C70", "color_end": "#B3A48C00", "pool": 32},
-  "dust_land": {"tex": "puff", "blend": "mix", "amount": 6, "life": [0.5, 0.7], "speed": [0.6, 1.4], "spread": 85, "gravity": -0.2, "damping": 2.0, "size": [0.25, 0.4], "size_end": 2.2, "color": "#B3A48C90", "color_end": "#B3A48C00", "pool": 12},
-  "dust_clash": {"tex": "puff", "blend": "mix", "amount": 8, "life": [0.35, 0.5], "speed": [1.5, 2.6], "spread": 88, "gravity": -0.1, "damping": 3.5, "size": [0.25, 0.4], "size_end": 2.4, "color": "#B3A48C80", "color_end": "#B3A48C00", "pool": 6},
-  "clod": {"tex": "chip", "blend": "cutout", "amount": 3, "life": [0.35, 0.45], "speed": [1.5, 3.0], "spread": 35, "gravity": 12.0, "damping": 0.3, "size": [0.08, 0.11], "size_end": 0.8, "color": "#6B5A44", "color_var": "#4F4231", "spin": 6.0, "pool": 12},
-  "muzzle": {"tex": "star", "blend": "add", "amount": 1, "life": [0.06, 0.06], "speed": [0.0, 0.0], "spread": 0, "gravity": 0.0, "size": [0.6, 0.6], "size_end": 0.5, "color": "#FFE7A8", "color_end": "#FF9B30", "hdr": 3.0, "pool": 8},
-  "smoke_puff": {"tex": "puff", "blend": "mix", "amount": 3, "life": [0.6, 0.9], "speed": [0.5, 1.2], "spread": 25, "gravity": -0.5, "damping": 1.5, "size": [0.25, 0.35], "size_end": 2.6, "color": "#D8D2C8A0", "color_end": "#D8D2C800", "pool": 8},
-  "bolt_burst": {"tex": "soft", "blend": "add", "amount": 8, "life": [0.2, 0.3], "speed": [1.5, 3.0], "spread": 90, "gravity": 0.0, "damping": 5.0, "size": [0.12, 0.2], "size_end": 0.3, "color": "#CFE6FF", "color_end": "#6FA8FF", "hdr": 1.8, "pool": 12}
+  "spark": {
+    "tex": "spark",
+    "blend": "add",
+    "amount": 9,
+    "life": [
+      0.18,
+      0.26
+    ],
+    "speed": [
+      4.0,
+      7.0
+    ],
+    "spread": 40,
+    "gravity": 9.8,
+    "damping": 6.0,
+    "size": [
+      0.22,
+      0.32
+    ],
+    "size_end": 0.5,
+    "color": "#FFF3C4",
+    "color_end": "#FF9B30",
+    "hdr": 2.5,
+    "align": true,
+    "pool": 24
+  },
+  "star": {
+    "tex": "star",
+    "blend": "add",
+    "amount": 1,
+    "life": [
+      0.06,
+      0.06
+    ],
+    "speed": [
+      0.0,
+      0.0
+    ],
+    "spread": 0,
+    "gravity": 0.0,
+    "size": [
+      0.6,
+      0.6
+    ],
+    "size_end": 0.6,
+    "color": "#FFF6EC",
+    "color_end": "#FFF6EC",
+    "hdr": 2.0,
+    "pool": 16
+  },
+  "star_soft": {
+    "tex": "star",
+    "blend": "add",
+    "amount": 1,
+    "life": [
+      0.07,
+      0.07
+    ],
+    "speed": [
+      0.0,
+      0.0
+    ],
+    "spread": 0,
+    "gravity": 0.0,
+    "size": [
+      0.4,
+      0.4
+    ],
+    "size_end": 0.6,
+    "color": "#FFF6EC",
+    "color_end": "#FFE0C8",
+    "hdr": 1.6,
+    "pool": 16
+  },
+  "flare_stone": {
+    "tex": "star",
+    "blend": "add",
+    "amount": 1,
+    "life": [
+      0.05,
+      0.05
+    ],
+    "speed": [
+      0.0,
+      0.0
+    ],
+    "spread": 0,
+    "gravity": 0.0,
+    "size": [
+      0.45,
+      0.45
+    ],
+    "size_end": 0.6,
+    "color": "#FFF0D0",
+    "color_end": "#FFF0D0",
+    "hdr": 1.4,
+    "pool": 8
+  },
+  "splinter": {
+    "tex": "splinter",
+    "blend": "cutout",
+    "amount": 6,
+    "life": [
+      0.32,
+      0.4
+    ],
+    "speed": [
+      2.0,
+      4.0
+    ],
+    "spread": 55,
+    "gravity": 9.8,
+    "damping": 1.0,
+    "size": [
+      0.16,
+      0.26
+    ],
+    "size_end": 0.7,
+    "color": "#8B5A2B",
+    "color_var": "#B07A45",
+    "spin": 10.0,
+    "pool": 16
+  },
+  "sawdust": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 2,
+    "life": [
+      0.3,
+      0.35
+    ],
+    "speed": [
+      0.4,
+      0.9
+    ],
+    "spread": 60,
+    "gravity": -0.3,
+    "damping": 1.5,
+    "size": [
+      0.3,
+      0.4
+    ],
+    "size_end": 1.8,
+    "color": "#D9B77EB0",
+    "color_end": "#D9B77E00",
+    "pool": 12
+  },
+  "droplet": {
+    "tex": "drop",
+    "blend": "cutout",
+    "amount": 5,
+    "life": [
+      0.24,
+      0.3
+    ],
+    "speed": [
+      2.0,
+      3.5
+    ],
+    "spread": 45,
+    "gravity": 12.0,
+    "damping": 0.5,
+    "size": [
+      0.12,
+      0.18
+    ],
+    "size_end": 0.6,
+    "color": "#C8323C",
+    "color_var": "#E2575E",
+    "pool": 16
+  },
+  "dust_gore_off": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 3,
+    "life": [
+      0.25,
+      0.3
+    ],
+    "speed": [
+      0.8,
+      1.6
+    ],
+    "spread": 50,
+    "gravity": 0.5,
+    "damping": 2.0,
+    "size": [
+      0.12,
+      0.2
+    ],
+    "size_end": 1.6,
+    "color": "#D9CBB0C0",
+    "color_end": "#D9CBB000",
+    "pool": 12
+  },
+  "chip_stone": {
+    "tex": "chip",
+    "blend": "cutout",
+    "amount": 6,
+    "life": [
+      0.38,
+      0.45
+    ],
+    "speed": [
+      2.0,
+      4.0
+    ],
+    "spread": 50,
+    "gravity": 12.0,
+    "damping": 0.5,
+    "size": [
+      0.11,
+      0.16
+    ],
+    "size_end": 0.7,
+    "color": "#8E8579",
+    "color_var": "#6E675E",
+    "spin": 8.0,
+    "pool": 12
+  },
+  "dust_stone": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 2,
+    "life": [
+      0.45,
+      0.5
+    ],
+    "speed": [
+      0.3,
+      0.8
+    ],
+    "spread": 70,
+    "gravity": -0.2,
+    "damping": 1.0,
+    "size": [
+      0.4,
+      0.5
+    ],
+    "size_end": 2.0,
+    "color": "#B9AE9CB0",
+    "color_end": "#B9AE9C00",
+    "pool": 12
+  },
+  "chip_ice": {
+    "tex": "chip",
+    "blend": "cutout",
+    "amount": 5,
+    "life": [
+      0.35,
+      0.4
+    ],
+    "speed": [
+      2.0,
+      4.0
+    ],
+    "spread": 50,
+    "gravity": 12.0,
+    "damping": 0.5,
+    "size": [
+      0.09,
+      0.13
+    ],
+    "size_end": 0.7,
+    "color": "#EEF5FA",
+    "color_var": "#A9C8DA",
+    "spin": 8.0,
+    "pool": 8
+  },
+  "straw": {
+    "tex": "straw",
+    "blend": "cutout",
+    "amount": 7,
+    "life": [
+      0.5,
+      0.6
+    ],
+    "speed": [
+      1.5,
+      3.0
+    ],
+    "spread": 60,
+    "gravity": 4.0,
+    "damping": 2.0,
+    "size": [
+      0.18,
+      0.24
+    ],
+    "size_end": 0.8,
+    "color": "#D8B860",
+    "color_var": "#A8873E",
+    "spin": 10.0,
+    "pool": 12
+  },
+  "chaff": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 2,
+    "life": [
+      0.4,
+      0.45
+    ],
+    "speed": [
+      0.3,
+      0.8
+    ],
+    "spread": 70,
+    "gravity": -0.2,
+    "damping": 1.0,
+    "size": [
+      0.3,
+      0.4
+    ],
+    "size_end": 2.0,
+    "color": "#CDB98A4C",
+    "color_end": "#CDB98A00",
+    "pool": 8
+  },
+  "soot_puff": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 2,
+    "life": [
+      0.45,
+      0.5
+    ],
+    "speed": [
+      0.2,
+      0.5
+    ],
+    "spread": 50,
+    "gravity": -0.6,
+    "damping": 0.5,
+    "size": [
+      0.3,
+      0.4
+    ],
+    "size_end": 2.2,
+    "color": "#2A262259",
+    "color_end": "#2A262200",
+    "pool": 8
+  },
+  "dust_step": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 3,
+    "life": [
+      0.35,
+      0.5
+    ],
+    "speed": [
+      0.3,
+      0.8
+    ],
+    "spread": 80,
+    "gravity": -0.25,
+    "damping": 2.5,
+    "size": [
+      0.12,
+      0.2
+    ],
+    "size_end": 2.4,
+    "color": "#B3A48C70",
+    "color_end": "#B3A48C00",
+    "pool": 32
+  },
+  "dust_land": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 6,
+    "life": [
+      0.5,
+      0.7
+    ],
+    "speed": [
+      0.6,
+      1.4
+    ],
+    "spread": 85,
+    "gravity": -0.2,
+    "damping": 2.0,
+    "size": [
+      0.25,
+      0.4
+    ],
+    "size_end": 2.2,
+    "color": "#B3A48C90",
+    "color_end": "#B3A48C00",
+    "pool": 12
+  },
+  "dust_clash": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 8,
+    "life": [
+      0.35,
+      0.5
+    ],
+    "speed": [
+      1.5,
+      2.6
+    ],
+    "spread": 88,
+    "gravity": -0.1,
+    "damping": 3.5,
+    "size": [
+      0.25,
+      0.4
+    ],
+    "size_end": 2.4,
+    "color": "#B3A48C80",
+    "color_end": "#B3A48C00",
+    "pool": 6
+  },
+  "clod": {
+    "tex": "chip",
+    "blend": "cutout",
+    "amount": 3,
+    "life": [
+      0.35,
+      0.45
+    ],
+    "speed": [
+      1.5,
+      3.0
+    ],
+    "spread": 35,
+    "gravity": 12.0,
+    "damping": 0.3,
+    "size": [
+      0.08,
+      0.11
+    ],
+    "size_end": 0.8,
+    "color": "#6B5A44",
+    "color_var": "#4F4231",
+    "spin": 6.0,
+    "pool": 12
+  },
+  "muzzle": {
+    "tex": "star",
+    "blend": "add",
+    "amount": 1,
+    "life": [
+      0.06,
+      0.06
+    ],
+    "speed": [
+      0.0,
+      0.0
+    ],
+    "spread": 0,
+    "gravity": 0.0,
+    "size": [
+      0.6,
+      0.6
+    ],
+    "size_end": 0.5,
+    "color": "#FFE7A8",
+    "color_end": "#FF9B30",
+    "hdr": 3.0,
+    "pool": 8
+  },
+  "smoke_puff": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 3,
+    "life": [
+      0.6,
+      0.9
+    ],
+    "speed": [
+      0.5,
+      1.2
+    ],
+    "spread": 25,
+    "gravity": -0.5,
+    "damping": 1.5,
+    "size": [
+      0.25,
+      0.35
+    ],
+    "size_end": 2.6,
+    "color": "#D8D2C8A0",
+    "color_end": "#D8D2C800",
+    "pool": 8
+  },
+  "bolt_burst": {
+    "tex": "soft",
+    "blend": "add",
+    "amount": 8,
+    "life": [
+      0.2,
+      0.3
+    ],
+    "speed": [
+      1.5,
+      3.0
+    ],
+    "spread": 90,
+    "gravity": 0.0,
+    "damping": 5.0,
+    "size": [
+      0.12,
+      0.2
+    ],
+    "size_end": 0.3,
+    "color": "#CFE6FF",
+    "color_end": "#6FA8FF",
+    "hdr": 1.8,
+    "pool": 12
+  },
+  "ember": {
+    "tex": "spark",
+    "blend": "add",
+    "amount": 10,
+    "life": [
+      0.4,
+      0.8
+    ],
+    "speed": [
+      1.5,
+      4.0
+    ],
+    "spread": 55,
+    "gravity": -1.5,
+    "damping": 2.0,
+    "size": [
+      0.12,
+      0.22
+    ],
+    "size_end": 0.3,
+    "color": "#FFD27A",
+    "color_end": "#E0481A00",
+    "hdr": 2.0,
+    "pool": 12
+  },
+  "heal_mote": {
+    "tex": "spark",
+    "blend": "add",
+    "amount": 8,
+    "life": [
+      0.6,
+      0.9
+    ],
+    "speed": [
+      0.6,
+      1.4
+    ],
+    "spread": 30,
+    "gravity": -1.2,
+    "damping": 1.0,
+    "size": [
+      0.12,
+      0.2
+    ],
+    "size_end": 0.4,
+    "color": "#C8FFB0",
+    "color_end": "#7CFF8A00",
+    "hdr": 1.6,
+    "pool": 10
+  },
+  "glint": {
+    "tex": "star",
+    "blend": "add",
+    "amount": 6,
+    "life": [
+      0.25,
+      0.4
+    ],
+    "speed": [
+      2.0,
+      5.0
+    ],
+    "spread": 70,
+    "gravity": 0.0,
+    "damping": 4.0,
+    "size": [
+      0.25,
+      0.4
+    ],
+    "size_end": 0.2,
+    "color": "#FFF6D8",
+    "color_end": "#FFD27A00",
+    "hdr": 2.2,
+    "pool": 8
+  },
+  "shadow_puff": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 6,
+    "life": [
+      0.8,
+      1.2
+    ],
+    "speed": [
+      0.6,
+      1.6
+    ],
+    "spread": 85,
+    "gravity": -0.3,
+    "damping": 1.5,
+    "size": [
+      0.5,
+      0.8
+    ],
+    "size_end": 2.4,
+    "color": "#2A2238B0",
+    "color_end": "#2A223800",
+    "pool": 6
+  },
+  "dust_veil": {
+    "tex": "puff",
+    "blend": "mix",
+    "amount": 10,
+    "life": [
+      0.7,
+      1.0
+    ],
+    "speed": [
+      1.0,
+      2.4
+    ],
+    "spread": 88,
+    "gravity": -0.2,
+    "damping": 2.5,
+    "size": [
+      0.35,
+      0.6
+    ],
+    "size_end": 2.6,
+    "color": "#C9B892C0",
+    "color_end": "#C9B89200",
+    "pool": 6
+  }
 }

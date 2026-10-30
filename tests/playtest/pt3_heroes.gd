@@ -7,7 +7,7 @@ extends SceneTree
 ##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
 ##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     -s tests/playtest/pt3_heroes.gd
-## Saves tests/output/pt3_{learn_page,altar_revive,level_up}.png.
+## Saves tests/output/pt3_{learn_page,altar_revive,level_up,abilities}.png.
 
 const OUT_DIR := "res://tests/output/"
 
@@ -85,6 +85,27 @@ func _run() -> void:
 		await process_frame
 	print("enemy hero ", enemy.get("def_id"))
 	await _shot("pt3_level_up.png")
+	# abilities: the Firewright's burning ground, the Skymirror's swallowed sun, the Marshal's ring
+	var ab: Object = world.get("abilities")
+	world.call("issue", {"type": "cancel", "player": 0, "units": [altar.get("id")], "slot": 0})
+	var fire2: Node = world.call("spawn_unit", "kingdom_firewright", 0, marshal.get("pos") + Vector3(-3, 0, 2))
+	for h: Node in [marshal, fire2, enemy]:
+		heroes.call("add_xp", h, 2000.0)
+		h.set("acquire_range", 0.0)
+	heroes.call("learn", fire2, "kingdom_naphtha_flask")
+	heroes.call("learn", enemy, "clans_swallowed_sun")
+	heroes.call("learn", marshal, "kingdom_the_wagon_ring")
+	for h: Node in [marshal, fire2, enemy]:
+		h.set("mana", h.get("max_mana"))
+	ab.call("cast_now", fire2, "kingdom_naphtha_flask", null, enemy.get("pos") + Vector3(1.5, 0, 1))
+	ab.call("cast_now", enemy, "clans_swallowed_sun", null, marshal.get("pos") + Vector3(-6, 0, -5))
+	ab.call("cast_now", marshal, "kingdom_the_wagon_ring")
+	camera.call("jump_to", marshal.get("pos") + Vector3(-1, 0, -1))
+	for i in 9:
+		FxClock.advance(1.0 / 30.0, true)
+		world.call("step")
+		await process_frame
+	await _shot("pt3_abilities.png")
 	FxClock.manual = false
 	quit(0)
 

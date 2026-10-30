@@ -208,9 +208,9 @@ func cast_now(caster: Unit, ability_id: String, target: Unit = null, pos: Vector
 	var mana_cost := float(v.get("mana", 0.0))
 	if caster.mana < mana_cost:
 		return false
+	world.buffs.on_action(caster, "cast")      # casting breaks invisibility first; a veil cast now stays
 	if not execute(caster, ability_id, rank, target, pos):
 		return false
-	world.buffs.on_action(caster, "cast")
 	caster.mana -= mana_cost
 	caster.cooldowns[ability_id] = world.tick_count + roundi(float(v.get("cooldown", 0.0)) * World.TICK_RATE)
 	return true
@@ -268,10 +268,60 @@ func sim_tick(w: World, _dt: float) -> void:
 		_emit_auras(w)
 	var i := _ground.size() - 1
 	while i >= 0:
-		_ground[i]["ticks"] = int(_ground[i]["ticks"]) - 1
-		if int(_ground[i]["ticks"]) <= 0:
+		var g: Dictionary = _ground[i]
+		_tick_ground(w, g)
+		g["ticks"] = int(g["ticks"]) - 1
+		g["age"] = int(g.get("age", 0)) + 1
+		if int(g["ticks"]) <= 0:
 			_ground.remove_at(i)
 		i -= 1
+
+
+## One tick of a ground effect (buffs.json ground_effects): its first tick deals impact_damage;
+## every `tick` seconds (default 1 s) a periodic one deals dps × tick (the ability's `dps_param`
+## value) to the units its relation allows inside; every 0.5 s its buffs (`buff`, `enemy_buff`,
+## `ally_buff`) are re-applied to the units inside, lingering (`linger`, default 2 s) after
+## they leave, like an aura.
+func _tick_ground(w: World, g: Dictionary) -> void:
+	var d := Defs.ground_effect(str(g["id"]))
+	if d.is_empty():
+		return
+	var owner := w.get_unit(int(g["owner_id"]))
+	var pid := int(g["player"])
+	var v: Dictionary = g["values"]
+	var age := int(g.get("age", 0))
+	var r := float(g["radius"])
+	var p: Dictionary = d.get("periodic", {})
+	var every := maxi(1, roundi(float(d.get("tick", 1.0)) * World.TICK_RATE))
+	var dps := float(v.get(str(p.get("dps_param", "dps")), p.get("dps", 0.0)))
+	var hit_now := age == 0 and float(d.get("impact_damage", 0.0)) > 0.0
+	var dot_now := dps > 0.0 and age > 0 and age % every == 0
+	var buff_now := age % AURA_TICKS == 0
+	if not (hit_now or dot_now or buff_now):
+		return
+	var linger := float(d.get("linger", Defs.rule("status.aura_linger", 2.0)))
+	var c: Vector3 = g["pos"]
+	for u: Unit in w.query_radius(c, r + w.max_unit_radius):
+		if not u.alive or u.hidden or Grid.flat_dist(u.pos, c) - u.radius > r:
+			continue
+		var enemy := pid >= 0 and w.is_enemy(pid, u.player_id)
+		var rel: Array = d.get("relation", ["enemy"])
+		var allowed := (enemy and rel.has("enemy")) or (not enemy and rel.has("ally"))
+		for f: Variant in d.get("require", []):
+			allowed = allowed and CastContext._has(u, str(f))
+		var f2 := float(d.get("structure_factor", 1.0)) if u.is_structure() else 1.0
+		if allowed and hit_now:
+			w.combat.hit(owner, u, float(d["impact_damage"]) * f2, str(d.get("damage_type", "spell")))
+		if allowed and dot_now:
+			w.combat.hit(owner, u, dps * every * World.DT * f2, str(p.get("damage_type", "spell")))
+		if not buff_now or not u.alive or u.is_structure():
+			continue
+		if allowed and d.has("buff"):
+			w.buffs.apply(u, str(d["buff"]), owner, {}, linger)
+		if enemy and d.has("enemy_buff"):
+			w.buffs.apply(u, str(d["enemy_buff"]), owner, {}, linger)
+		elif not enemy and d.has("ally_buff"):
+			w.buffs.apply(u, str(d["ally_buff"]), owner, {}, linger)
 
 
 ## Every living unit with a learned aura re-applies its buff to the units its filter allows within

@@ -64,6 +64,12 @@ func setup(w: World) -> void:
 
 
 ## Hour of day from sim time (deterministic; gameplay may query is_day()).
+## Night (rules §13: dusk 18:00 to dawn 06:00) at `sim_time`; sim rules may read it.
+static func is_night_at(sim_time: float) -> bool:
+	var h := hour_at(sim_time)
+	return h < DAWN or h >= DUSK
+
+
 static func hour_at(sim_time: float) -> float:
 	return fposmod(START_HOUR + sim_time / DAY_LENGTH * 24.0, 24.0)
 

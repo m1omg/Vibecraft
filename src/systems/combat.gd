@@ -76,8 +76,10 @@ func fire(attacker: Unit, target: Unit) -> void:
 	if not crit.is_empty() and proc(attacker, "crit", float(crit.get("chance", 0.0))):
 		base *= float(crit.get("multiplier", 1.0))
 		last_crit = true
+		if world.buffs != null:
+			world.buffs.on_crit(attacker)
 	if world.buffs != null:
-		base += world.buffs.on_attack(attacker, target)
+		base += world.buffs.on_attack(attacker, target, base)
 	if proc(attacker, "miss", float(t.get("miss_chance", 0.0))):
 		Events.attack_missed.emit(attacker, target)
 		return

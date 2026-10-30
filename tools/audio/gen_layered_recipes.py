@@ -224,5 +224,51 @@ rec("hero_revive","heroes","procedural",[{"layers":[
     bowl(293.66,1.6,2.0,0,-2,6000), bowl(440.0,1.4,1.8,40,-5,7000), bowl(587.33,1.2,1.6,80,-7,8000),
     {"synth":"noise","dur":1.0,"hp":4000,"decay":0.6,"attack":0.05,"gain_db":-30}]}
     for _ in range(2)],"revive: an open procedural chord on D with a soft shimmer")
+# hero abilities (juice ABL-*, Playtest 3): procedural one-shots plus CC0 layers
+rec("ab_cast","heroes","procedural",[{"layers":[
+    {"synth":"noise","dur":0.35,"lp":2500,"hp":300,"decay":0.12,"attack":0.08,"gain_db":-10},
+    bowl(f0,0.4,0.5,40,-12,6000)]}
+    for f0 in (880.0,987.77)],"cast swell: a soft procedural whoosh and a faint bell")
+rec("ab_heal","heroes","procedural",[{"layers":[
+    bowl(783.99,0.8,1.1,0,-3,9000), bowl(1174.66,0.7,1.0,90,-6,9000), tick(5200,0,-16)]}
+    for _ in range(2)],"linden balm: two bright procedural bells a fifth apart")
+rec("ab_brace","heroes","cc0",[{"layers":[
+    {"src":IS+"impactPlate_medium_00%d.ogg"%a,"pitch":0.85},
+    {"src":IS+"impactPlank_medium_00%d.ogg"%b,"pitch":0.7,"gain_db":-5,"offset_ms":20},
+    {"synth":"thump","f0":70,"f1":40,"decay":0.12,"dur":0.35,"gain_db":-6}]}
+    for a,b in ((0,1),(2,3))],"brace the wheel: a shield planted, plate and timber (Kenney CC0) + sub thump")
+rec("ab_ring","heroes","procedural",[{"layers":[
+    bowl(196.0,2.0,2.2,0,0,4000), bowl(293.66,1.6,2.0,80,-4,5000),
+    {"src":IS+"impactWood_heavy_00%d.ogg"%a,"pitch":0.8,"gain_db":-6},
+    {"src":IS+"impactWood_heavy_00%d.ogg"%b,"pitch":0.75,"gain_db":-8,"offset_ms":140}]}
+    for a,b in ((0,2),(1,3))],"the wagon ring: wagons drawn round (Kenney CC0 wood) under a procedural bronze chord")
+rec("ab_fire","heroes","procedural",[{"layers":[
+    {"synth":"thump","f0":80,"f1":45,"decay":0.15,"dur":0.4,"gain_db":-2},
+    {"synth":"noise","dur":0.9,"lp":3000,"hp":200,"decay":0.35,"attack":0.01,"gain_db":-6},
+    {"src":IS+"impactGlass_heavy_00%d.ogg"%a,"pitch":1.1,"gain_db":-8}]}
+    for a in (0,2)],"naphtha flask: a glass burst (Kenney CC0) and a procedural fire whoosh")
+rec("ab_lash","heroes","procedural",[{"layers":[
+    {"synth":"noise","dur":0.25,"hp":1500,"decay":0.06,"attack":0.04,"gain_db":-6},
+    {"src":IS+"impactPunch_medium_00%d.ogg"%a,"pitch":1.3,"offset_ms":120,"gain_db":-4}]}
+    for a in (1,3)],"braid lash: a whip whoosh (procedural) and its crack (Kenney CC0)")
+rec("ab_veil","heroes","procedural",[{"layers":[
+    {"synth":"noise","dur":0.8,"lp":1800,"hp":150,"decay":0.3,"attack":0.03,"gain_db":-6}]}
+    for _ in range(2)],"dust veil: a soft procedural dust puff")
+rec("ab_glint","heroes","procedural",[{"layers":[
+    bowl(2093.0,0.35,0.6,0,-2,12000), bowl(3135.96,0.25,0.5,20,-8,12000), tick(7000,0,-12)]}
+    for _ in range(2)],"sunglint: a bright procedural ping")
+rec("ab_window","heroes","procedural",[{"layers":[
+    bowl(659.25,1.4,1.8,0,-3,7000), bowl(987.77,1.2,1.6,60,-7,8000),
+    {"synth":"noise","dur":1.2,"hp":5000,"decay":0.5,"attack":0.2,"gain_db":-36}]}
+    for _ in range(2)],"bronze window: a polished bowl with a shimmer")
+rec("ab_dark","heroes","procedural",[{"layers":[
+    {"synth":"rumble","dur":2.0,"lp":120,"decay":0.9,"attack":0.3,"gain_db":-4},
+    bowl(110.0,2.0,2.2,0,-6,1800),
+    {"synth":"noise","dur":1.2,"lp":900,"hp":100,"decay":0.5,"attack":0.4,"gain_db":-12}]}
+    for _ in range(2)],"swallowed sun: a low procedural swell into darkness")
+rec("ab_summon","heroes","cc0",[{"layers":[
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%a,"pitch":0.8},
+    bowl(392.0,1.0,1.2,30,-8,5000)]}
+    for a in (1,4)],"a summon arrives: a soft heavy thud (Kenney CC0) and a bowl")
 json.dump({"_doc":"Recipes for tools/audio/build_layered_sfx.py: CC0 (Kenney, assets_src/audio/cc0/kenney, licence files beside them) and procedural placeholder takes. A take with a 'name' is a kit item: it is written as <id>_<name>_<nn>.wav.","recipes":R},open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)),'layered_recipes.json'),'w'),indent=1)
 print(len(R))

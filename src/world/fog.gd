@@ -191,7 +191,11 @@ func is_explored(pid: int, pos: Vector3) -> bool:
 func can_see(pid: int, u: Unit) -> bool:
 	if u == null or u.hidden:
 		return false
-	if not enabled or pid >= PlayerState.NEUTRAL_HOSTILE or world.is_ally(pid, u.player_id):
+	if world.is_ally(pid, u.player_id):
+		return true
+	if u.status.has("invisible") and not detects(pid, u.pos):
+		return false        # rules §11: invisible to enemies (creeps too) unless detected
+	if not enabled or pid >= PlayerState.NEUTRAL_HOSTILE:
 		return true
 	var g := _grid_for(pid)
 	if g == null:
@@ -203,11 +207,23 @@ func can_see(pid: int, u: Unit) -> bool:
 	return false
 
 
+## True when a detecting reveal of `pid`'s team covers `pos` (Bronze Window rank 3; rules §11).
+func detects(pid: int, pos: Vector3) -> bool:
+	for r: Dictionary in _reveals:
+		if r["detect"] and world.is_ally(pid, int(r["pid"])) \
+				and Vector2(pos.x - r["pos"].x, pos.z - r["pos"].z).length() <= float(r["radius"]):
+			return true
+	return false
+
+
 ## Should player `pid`'s view draw unit `u`? Visible units, plus structures (and Gold Seams) the
-## team has seen: their ghosts stay drawn in the fog (rules §14.1).
+## team has seen: their ghosts stay drawn in the fog (rules §14.1). Invisible enemies are hidden
+## even with fog off.
 func shows(pid: int, u: Unit) -> bool:
-	if not enabled or u == null:
+	if u == null:
 		return true
+	if not enabled:
+		return can_see(pid, u)
 	if can_see(pid, u):
 		return true
 	if u.footprint.size != Vector2i.ZERO:

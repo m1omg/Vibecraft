@@ -237,18 +237,32 @@ func strike_hit_time(state: String) -> float:
 
 # --- per frame -----------------------------------------------------------------------------
 
+var _veiled: bool = false
+
+
+static func _set_transparency(n: Node, t: float) -> void:
+	for c in n.get_children():
+		if c is GeometryInstance3D:
+			(c as GeometryInstance3D).transparency = t
+		_set_transparency(c, t)
+
+
 func _process(delta: float) -> void:
 	if unit == null:
 		return
 	# fog of war (rules §14.1): enemies only while the local player sees them, structures once
 	# seen (ghosts); nothing else runs for a hidden view
 	var fog := unit.world.fog if unit.world != null else null
-	if fog != null and fog.enabled:
+	if fog != null and (fog.enabled or unit.status.has("invisible")):
 		var show := fog.shows(unit.world.local_player_id, unit)
 		if visible != show:
 			visible = show
 		if not show:
 			return
+	var veil := unit.status.has("invisible")     # an own invisible unit shows half-transparent
+	if veil != _veiled:
+		_veiled = veil
+		_set_transparency(self, 0.55 if veil else 0.0)
 	if is_structure:
 		_update_structure()
 		if not unit.alive:

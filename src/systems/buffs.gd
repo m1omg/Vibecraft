@@ -40,10 +40,13 @@ func on_unit_damaged(u: Unit, _amount: float, _src: Unit) -> void:
 		_push_modifiers(u)
 
 
-## The unit attacks (Combat.fire): buffs that break on attack end (invisibility), on-attack
-## riders apply their buff to the target (the rider's values come from the carrying buff).
-## Returns extra damage for this attack (a buff's `bonus_damage` when it breaks on the attack).
-func on_attack(attacker: Unit, target: Unit) -> float:
+## The unit attacks (Combat.fire, `base` = the attack's damage): on-attack riders apply their
+## buff to the target (Incendiary Wadding's burn: dps and duration from the carrying buff's
+## burn_dps / burn_duration) or cleave a line behind it (Through the Tall Grass: `factor` × base
+## to every enemy in a length × width strip, never the target, structures only when allowed);
+## buffs that break on attack end (invisibility) and pay their `bonus_damage` into this attack and
+## their opener slow on the target (Dust Veil). Returns the extra damage.
+func on_attack(attacker: Unit, target: Unit, base: float = 0.0) -> float:
 	if attacker.buffs.is_empty():
 		return 0.0
 	var extra := 0.0
@@ -53,15 +56,50 @@ func on_attack(attacker: Unit, target: Unit) -> float:
 		var v: Dictionary = b.get("values", {})
 		var rider: Dictionary = d.get("on_attack", {})
 		if rider.has("apply_buff") and target != null and target.alive:
-			apply(target, str(rider["apply_buff"]), attacker, v.get("rider", {}))
+			var rv := {"dps": v.get("burn_dps", 0.0), "duration": v.get("burn_duration", 3.0)}
+			apply(target, str(rider["apply_buff"]), attacker, rv)
+		if rider.has("line_cleave") and target != null:
+			_cleave(attacker, target, base, rider["line_cleave"])
 		if (d.get("breaks_on", []) as Array).has("attack"):
-			extra += float(v.get("bonus_damage", 0.0))
+			extra += float(v.get("bonus_damage", (d.get("on_break_attack", {}) as Dictionary).get("bonus_damage", 0.0)))
+			var slow := str(v.get("opener_slow_buff", ""))
+			if slow != "" and target != null and target.alive:
+				apply(target, slow, attacker)
 			attacker.buffs.erase(b)
 			Events.buff_removed.emit(attacker, str(b["id"]))
 			gone = true
 	if gone:
 		_push_modifiers(attacker)
 	return extra
+
+
+func _cleave(attacker: Unit, target: Unit, base: float, c: Dictionary) -> void:
+	var dir := Vector2(target.pos.x - attacker.pos.x, target.pos.z - attacker.pos.z)
+	if dir.length() < 0.01:
+		return
+	dir = dir.normalized()
+	var length := float(c.get("length", 8.0))
+	var half := float(c.get("width", 2.0)) * 0.5
+	var mid := attacker.pos + Vector3(dir.x, 0.0, dir.y) * length * 0.5
+	for u: Unit in world.query_radius(mid, length * 0.5 + half + world.max_unit_radius):
+		if u == target or not u.alive or u.hidden or not attacker.is_valid_target(u):
+			continue
+		if u.is_structure() and not c.get("structures", false):
+			continue
+		var v := Vector2(u.pos.x - attacker.pos.x, u.pos.z - attacker.pos.z)
+		var along := v.dot(dir)
+		if along < 0.0 or along > length or absf(v.cross(dir)) > half + u.radius:
+			continue
+		world.combat.hit(attacker, u, base * float(c.get("factor", 1.0)), attacker.attack_type)
+
+
+## A crit landed: a crit buff with a `haste_buff` (Clean Cut) hastes its carrier.
+func on_crit(attacker: Unit) -> void:
+	for b: Dictionary in attacker.buffs:
+		var haste := str((b.get("values", {}) as Dictionary).get("haste_buff", ""))
+		if haste != "" and Defs.buff(str(b["id"])).has("crit"):
+			apply(attacker, haste, attacker)
+			return
 
 
 ## The unit casts ("cast") or uses an item ("item"): buffs that break on it end.
@@ -78,8 +116,12 @@ func on_action(u: Unit, action: String) -> void:
 		_push_modifiers(u)
 
 
+## Death ends every buff (rules §10.1); a buff that explodes on expiry goes off now (Fuse Mark).
 func on_unit_died(u: Unit, _killer: Unit) -> void:
 	_units.erase(u.id)
+	for b: Dictionary in u.buffs.duplicate():
+		if str((Defs.buff(str(b["id"])).get("on_expire", {}) as Dictionary).get("effect", "")) == "explode":
+			_expired(u, b)
 
 
 func on_unit_removed(u: Unit) -> void:
@@ -122,6 +164,10 @@ func apply(target: Unit, buff_id: String, source: Unit = null, values: Dictionar
 		rec["remaining"] = ticks       # a weaker copy never replaces, but keeps it from running out
 	_units[target.id] = true
 	_push_modifiers(target)
+	if (d.get("status", []) as Array).has("taunt") and source != null and source.alive:
+		# taunt (rules §10.2): the victim drops what it was doing and attacks the taunter
+		target.clear_orders()
+		target.issue_order(Order.make(Order.Type.ATTACK, source.pos, source.id))
 	return rec
 
 
