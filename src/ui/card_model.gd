@@ -85,7 +85,7 @@ static func build(w: World, pid: int, units: Array[Unit], page: String = PAGE_MA
 		return card
 	var lead := units[0]
 	if lead.player_id != pid:
-		if lead.is_structure() and not Defs.shop(lead.def_id).is_empty() and lead.player_id >= PlayerState.NEUTRAL_HOSTILE:
+		if lead.is_structure() and Defs.shops.has(lead.def_id) and lead.player_id >= PlayerState.NEUTRAL_HOSTILE:
 			_shop_card(w, pid, lead, card)     # neutral shops serve whoever brings a hero
 		return card
 	if lead.is_mobile():
@@ -329,7 +329,7 @@ static func _building_card(w: World, pid: int, b: Unit, card: Array) -> void:
 		if n < BUILDING_SLOTS.size():
 			card[BUILDING_SLOTS[n]] = _research_entry(w, pid, b, str(uid), BUILDING_SLOTS[n], "upgrade")
 		n += 1
-	if not Defs.shop(b.def_id).is_empty():
+	if Defs.shops.has(b.def_id):
 		_shop_card(w, pid, b, card)
 		return
 	if b.def.get("rally", false):

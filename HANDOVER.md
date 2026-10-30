@@ -1,7 +1,7 @@
 # Vibecraft handover
 
-Read this first if you are a new Claude session picking up the project. Last updated 2026-10-30. Playtest 2 has shipped (2026-10-21);
-no feedback on it has come in yet.
+Read this first if you are a new Claude session picking up the project. Last updated 2026-10-30. Playtest 3 has shipped
+(2026-10-30); no feedback on Playtest 2 or 3 has come in yet.
 
 ## 1. What this is
 
@@ -37,12 +37,33 @@ original (`docs/research/ip-safety.md`).
 - Don't repeatedly tell the user they have no credits. Don't lecture about repo visibility. The "-craft" name is fine.
 - Answer truthfully. Web-search facts about modern apps and prices. Double-check the user's corrections.
 
-## 3. Current state (2026-10-21)
+## 3. Current state (2026-10-30)
 
-- **Playtest 2 "Base building" shipped and is waiting for the user's feedback** (`PLAYTEST.md`). Main menu → **Skirmish** (faction and
-  computer difficulty toggles) on Wether Downs from one hall and five workers, against the build-order computer; the Playtest 1
-  Battlefield Sandbox is still in the menu. ≈ 270 headless tests pass (the full run takes about 3 minutes).
-- **Fullscreen by default (2026-10-30, asked for by the user; not in a playtest message yet, so mention it in the next one):** the
+- **Playtest 3 "Heroes and creeps" shipped and is waiting for the user's feedback** (`PLAYTEST.md`; it also repeats the open
+  Playtest 2 questions). The same Skirmish on Wether Downs, now with heroes and creeps on both sides. ≈ 330 headless tests pass
+  (the full run takes about 4 minutes). What it added (architecture §10–§11 has the contracts):
+  - **Heroes** (`heroes.gd`): kill XP shared within 18.75 m (creep factor, single-hero bonus), level-ups, proper names, the Learn
+    page, death records, the altar revive (a Production queue entry) and the inn revive; the hero bar (top left) and the info
+    panel's XP and attributes.
+  - **Casting** (`abilities.gd`, `buffs.gd`, `combat.gd`): cast point / backswing / channel / cancel rules, mana and cooldowns
+    spent at the cast point, auras and passives, buffs (refresh, hero control durations, DoTs / HoTs, breaks, dispel), natural
+    regeneration (it was missing before), the damage pipeline (damage %, PRD crits and misses, damage taken), invisibility
+    through `Fog.can_see`, ground effects; the card's ability buttons (cooldown sweeps, mana shortfall, targeting with an area
+    ring).
+  - **The 16 slice hero abilities** with their effects, tooltips (`ability_<id>` strings filled per rank) and a first juice
+    pass (`hero_fx.gd`, `hero_sigils.gd`, `xp_motes.gd`, `ability_fx.gd`; procedural sounds in `assets/audio/sfx/heroes`).
+  - **Creeps** (`creeps.gd`): bounty, drops, night sleep with a seeded stagger, invulnerable full-heal returns, the give-up
+    timer, the creep spell AI (`SpellAi`), creep passives and auras.
+  - **Items and shops** (`items.gd`, `shops.gd`, `inventory_panel.gd`): permanent item stats, charge merging, the recall
+    channel, the first hero's recall item, shop cards (own and neutral), restock, Fair Exchange, the inn revive; numpad
+    item keys.
+  - **Worker defence:** the Levy Horn / Flail Levies (kingdom), Sound the Gong / Home Yurt garrisons (clans).
+  - **The computer** learns from each hero's `skill_build`, casts through `SpellAi`, drinks potions, revives at the altar,
+    creeps along the map's `creep_route`, and calls its worker defence.
+  - Screenshots: `tests/playtest/pt3_heroes.gd` (learn page, altar revive, level-up, abilities, inventory, shop).
+- **Playtest 2 "Base building" (2026-10-21):** Skirmish (faction and computer difficulty toggles) on Wether Downs from one hall and
+  five workers, against the build-order computer; the Playtest 1 Battlefield Sandbox is still in the menu.
+- **Fullscreen by default (2026-10-30, asked for by the user; announced with Playtest 3):** the
   game opens in borderless fullscreen at the monitor's resolution (`window/size/mode=3`). Alt+Enter or F11 (`toggle_fullscreen`,
   handled by the `Settings` autoload, which keeps processing in menus and while paused) switches to a resizable 1600×900 window
   centred on the screen and back. The choice is saved as `Settings.window_mode` in `user://settings.cfg` and re-applied at start
@@ -96,20 +117,23 @@ original (`docs/research/ip-safety.md`).
 
 ## 4. Next steps
 
-1. Fold in the user's **Playtest 2 feedback** (the questions are in `PLAYTEST.md`; the mix and music answers matter).
-2. **Playtest 3 "Heroes & creeps":** hero XP, levels, skill points and the Learn card; abilities and buffs on the card (cooldown
-   sweeps, autocast); revive at the altar; creeps sleeping at night, bounty, item drops; items and shops; the faction signatures
-   (Levy Horn, Sound the Gong, the worker transforms); hero portraits; the AI creeping its route.
-3. **Playtest 4 "Versus AI":** the full rules §19 AI (creeping, expansions, focus fire, abilities, retreat), a full juice pass,
-   review and fixes. The remaining economy/building juice (ECO-01 mine gulp, ECO-03 cargo hoist, BLD-05/06 foundation and reveal,
-   BLD-24 anticipation, BLD-25 unattended site, BLD-13 route lines) is listed in `docs/design/juice/economy-and-buildings.md`.
-4. **Asset requests** (QA and contract agents):
+1. Fold in the user's **Playtest 2 and 3 feedback** (the questions are in `PLAYTEST.md`; the Playtest 2 mix and music answers
+   matter).
+2. **Playtest 4 "Versus AI":** the rest of rules §19 for the computer (shops and potions, the recall item, expansions, focus fire,
+   hero micro and retreat on Hard, contested camps, scouting), a full juice pass (the remaining HER-01..08 and ABL rows, the
+   economy/building juice still listed in `docs/design/juice/economy-and-buildings.md`), review and fixes. Gaps left by Playtest 3:
+   autocast on the card (right click), item drag and drop, selling items in the interface, the laptop item keys (Alt + 1–6 clash
+   with control groups), inn heroes (hiring), conditional creep passives (Stand Still, Settle), Swallowed Sun blocking sight
+   lines, the Levy Horn on the tier-2 Walled Burg (its def has no abilities), a settings screen.
+3. **Asset requests** (QA and contract agents):
    - repaint the team-colour masks (most kingdom units are at 1–5 %, the Wheel Marshal at 38 %; run
      `tools/assets/check_team_coverage.gd`);
    - a Pavisier model;
    - creep models (Sootcoats, Harvest Folk, Cairnwakes);
-   - the Grand Bombard (the Bombard Wagon and Sling-Cart now have procedural models);
+   - the Grand Bombard (the Bombard Wagon and Sling-Cart now have procedural models) and a Flail Levy look (it uses the Hodman
+     model);
    - Hail-Swifts and critters;
+   - item icons and ground props (the oilcloth bundle, power-up props; neutrals §1.8);
    - the Coaching Inn;
    - projectile meshes;
    - icons, hero portraits and UI art (art bible §11): the command card and queue still show names and initials;

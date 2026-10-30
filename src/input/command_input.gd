@@ -281,7 +281,7 @@ func _shop_selected() -> Unit:
 	if selection == null or selection.selected.size() != 1:
 		return null
 	var u: Unit = selection.selected[0]
-	return u if u.alive and not Defs.shop(u.def_id).is_empty() else null
+	return u if u.alive and Defs.shops.has(u.def_id) else null
 
 
 ## Inventory slot pressed (button or numpad): instant items are used at once, targeted ones arm
