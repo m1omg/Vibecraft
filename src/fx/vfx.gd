@@ -9,6 +9,7 @@ extends Node3D
 ##   - routes records to its modules: CombatFx (impacts, flashes, knockback, deaths, clash),
 ##     CombatText -> PopupText (the only world text), OrderMarkers (marks, ripple, rally,
 ##     waypoints), MissileFx (trails, stuck missiles), BuildFx (economy and building beats),
+##     HeroFx (sigils, XP motes, level-up, hero death and revive),
 ##     the ParticlePool and GroundMarks
 ##     primitives, and the body composers' acks;
 ##   - runs the density governor (Calm / Busy / Brawl from the on-screen hit rate, FND-3) and
@@ -37,6 +38,7 @@ var smears: Smears
 var circles: SelectionCircles
 var bars: HealthBars
 var build: BuildFx
+var heroes: HeroFx
 var selected: Array = []                 ## the local selection (Events.selection_changed)
 var tier: int = Tier.CALM
 var intensity: float = 0.0
@@ -82,6 +84,9 @@ func _ready() -> void:
 	build = BuildFx.new()
 	build.name = "BuildFx"
 	add_child(build)
+	heroes = HeroFx.new()
+	heroes.name = "HeroFx"
+	add_child(heroes)
 
 
 func setup(w: World) -> void:
@@ -98,6 +103,7 @@ func setup(w: World) -> void:
 	missiles.setup(w, self)
 	smears.setup(w)
 	build.setup(self, w)
+	heroes.setup(self, w)
 	_connect(Events.unit_damaged, _on_unit_damaged)
 	_connect(Events.unit_died, _on_unit_died)
 	_connect(Events.command_issued, _on_command)

@@ -124,7 +124,6 @@
   "hero_revive_hint": "Revive it at your altar.",
   "notice_hero_died": "Your hero %s has fallen.",
   "notice_hero_revived": "%s has returned.",
-  "notice_hero_level": "%s reached level %d.",
   "tip_learn": "Spend a skill point on one of the hero's abilities.",
   "tip_hero_level": "Hero level %d",
   "tip_rank": "Rank %d of %d",

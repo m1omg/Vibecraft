@@ -3191,6 +3191,925 @@
      ]
     }
    ]
+  },
+  {
+   "id": "hero_xp_kingdom",
+   "group": "heroes",
+   "source": "cc0",
+   "note": "XP spoke-chip clicks into the wheel: an ivory knock (Kenney CC0, pitched up) + procedural tick",
+   "takes": [
+    {
+     "max_ms": 160,
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_000.ogg",
+       "pitch": 1.7,
+       "len_ms": 80,
+       "hp": 900
+      },
+      {
+       "synth": "tick",
+       "f": 4200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -8,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "max_ms": 160,
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_002.ogg",
+       "pitch": 1.8,
+       "len_ms": 80,
+       "hp": 900
+      },
+      {
+       "synth": "tick",
+       "f": 4500,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -8,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "max_ms": 160,
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactWood_light_004.ogg",
+       "pitch": 1.65,
+       "len_ms": 80,
+       "hp": 900
+      },
+      {
+       "synth": "tick",
+       "f": 4000,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -8,
+       "offset_ms": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hero_xp_clans",
+   "group": "heroes",
+   "source": "procedural",
+   "note": "XP fleck tings the gong: a small procedural bronze bowl",
+   "takes": [
+    {
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 2637.0,
+       "decay": 0.22,
+       "dur": 0.45,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 6000,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -14,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 2793.8,
+       "decay": 0.22,
+       "dur": 0.45,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 6000,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -14,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 2489.0,
+       "decay": 0.22,
+       "dur": 0.45,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 6000,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -14,
+       "offset_ms": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hero_level_kingdom",
+   "group": "heroes",
+   "source": "procedural",
+   "note": "kingdom level-up: a ratchet clack (Kenney CC0) and a rising arpeggio of procedural bells on D",
+   "takes": [
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_000.ogg",
+       "pitch": 0.7,
+       "len_ms": 160,
+       "gain_db": -6
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlate_light_001.ogg",
+       "pitch": 0.9,
+       "len_ms": 200,
+       "gain_db": -10,
+       "offset_ms": 40
+      },
+      {
+       "synth": "bowl",
+       "f0": 293.66,
+       "decay": 1.4,
+       "dur": 1.6,
+       "offset_ms": 0,
+       "gain_db": -3,
+       "lp": 6000
+      },
+      {
+       "synth": "bowl",
+       "f0": 369.99,
+       "decay": 1.2,
+       "dur": 1.5,
+       "offset_ms": 90,
+       "gain_db": -5,
+       "lp": 7000
+      },
+      {
+       "synth": "bowl",
+       "f0": 440.0,
+       "decay": 1.1,
+       "dur": 1.4,
+       "offset_ms": 180,
+       "gain_db": -6,
+       "lp": 7000
+      },
+      {
+       "synth": "bowl",
+       "f0": 587.33,
+       "decay": 1.3,
+       "dur": 1.4,
+       "offset_ms": 300,
+       "gain_db": -4,
+       "lp": 8000
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney/impact-sounds/impactMetal_light_002.ogg",
+       "pitch": 0.7,
+       "len_ms": 160,
+       "gain_db": -6
+      },
+      {
+       "src": "kenney/impact-sounds/impactPlate_light_003.ogg",
+       "pitch": 0.9,
+       "len_ms": 200,
+       "gain_db": -10,
+       "offset_ms": 40
+      },
+      {
+       "synth": "bowl",
+       "f0": 293.66,
+       "decay": 1.4,
+       "dur": 1.6,
+       "offset_ms": 0,
+       "gain_db": -3,
+       "lp": 6000
+      },
+      {
+       "synth": "bowl",
+       "f0": 369.99,
+       "decay": 1.2,
+       "dur": 1.5,
+       "offset_ms": 90,
+       "gain_db": -5,
+       "lp": 7000
+      },
+      {
+       "synth": "bowl",
+       "f0": 440.0,
+       "decay": 1.1,
+       "dur": 1.4,
+       "offset_ms": 180,
+       "gain_db": -6,
+       "lp": 7000
+      },
+      {
+       "synth": "bowl",
+       "f0": 587.33,
+       "decay": 1.3,
+       "dur": 1.4,
+       "offset_ms": 300,
+       "gain_db": -4,
+       "lp": 8000
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hero_level_clans",
+   "group": "heroes",
+   "source": "procedural",
+   "note": "Tormai level-up: a struck procedural gong on D under two bronze bowls",
+   "takes": [
+    {
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 146.83,
+       "decay": 2.2,
+       "dur": 1.6,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 3000
+      },
+      {
+       "synth": "rumble",
+       "dur": 1.2,
+       "lp": 110,
+       "decay": 0.5,
+       "attack": 0.04,
+       "gain_db": -14
+      },
+      {
+       "synth": "bowl",
+       "f0": 293.66,
+       "decay": 1.4,
+       "dur": 1.5,
+       "offset_ms": 120,
+       "gain_db": -5,
+       "lp": 6000
+      },
+      {
+       "synth": "bowl",
+       "f0": 440.0,
+       "decay": 1.1,
+       "dur": 1.4,
+       "offset_ms": 240,
+       "gain_db": -7,
+       "lp": 7000
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 146.83,
+       "decay": 2.2,
+       "dur": 1.6,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 3000
+      },
+      {
+       "synth": "rumble",
+       "dur": 1.2,
+       "lp": 110,
+       "decay": 0.5,
+       "attack": 0.04,
+       "gain_db": -14
+      },
+      {
+       "synth": "bowl",
+       "f0": 293.66,
+       "decay": 1.4,
+       "dur": 1.5,
+       "offset_ms": 120,
+       "gain_db": -5,
+       "lp": 6000
+      },
+      {
+       "synth": "bowl",
+       "f0": 440.0,
+       "decay": 1.1,
+       "dur": 1.4,
+       "offset_ms": 240,
+       "gain_db": -7,
+       "lp": 7000
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hero_bell_kingdom",
+   "group": "heroes",
+   "source": "procedural",
+   "note": "the level's ladder bell (kingdom): one step up a D pentatonic ladder per level",
+   "takes": [
+    {
+     "name": "l2",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 587.33,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -16,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "l3",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 659.26,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -16,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "l4",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 739.99,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -16,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "l5",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 880.0,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -16,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "l6",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 987.77,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -16,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "l7",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 1174.66,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -16,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "l8",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 1318.51,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -16,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "l9",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 1479.98,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -16,
+       "offset_ms": 0
+      }
+     ]
+    },
+    {
+     "name": "l10",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 1760.0,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 9000
+      },
+      {
+       "synth": "tick",
+       "f": 5200,
+       "decay": 0.003,
+       "hp": 2500,
+       "gain_db": -16,
+       "offset_ms": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hero_bell_clans",
+   "group": "heroes",
+   "source": "procedural",
+   "note": "the level's ladder bell (Tormai bronze): one step up a D pentatonic ladder per level",
+   "takes": [
+    {
+     "name": "l2",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 587.33,
+       "decay": 1.6,
+       "dur": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 5000
+      },
+      {
+       "synth": "bowl",
+       "f0": 880.9950000000001,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 30,
+       "gain_db": -9,
+       "lp": 6000
+      }
+     ]
+    },
+    {
+     "name": "l3",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 659.26,
+       "decay": 1.6,
+       "dur": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 5000
+      },
+      {
+       "synth": "bowl",
+       "f0": 988.89,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 30,
+       "gain_db": -9,
+       "lp": 6000
+      }
+     ]
+    },
+    {
+     "name": "l4",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 739.99,
+       "decay": 1.6,
+       "dur": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 5000
+      },
+      {
+       "synth": "bowl",
+       "f0": 1109.9850000000001,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 30,
+       "gain_db": -9,
+       "lp": 6000
+      }
+     ]
+    },
+    {
+     "name": "l5",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 880.0,
+       "decay": 1.6,
+       "dur": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 5000
+      },
+      {
+       "synth": "bowl",
+       "f0": 1320.0,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 30,
+       "gain_db": -9,
+       "lp": 6000
+      }
+     ]
+    },
+    {
+     "name": "l6",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 987.77,
+       "decay": 1.6,
+       "dur": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 5000
+      },
+      {
+       "synth": "bowl",
+       "f0": 1481.655,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 30,
+       "gain_db": -9,
+       "lp": 6000
+      }
+     ]
+    },
+    {
+     "name": "l7",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 1174.66,
+       "decay": 1.6,
+       "dur": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 5000
+      },
+      {
+       "synth": "bowl",
+       "f0": 1761.9900000000002,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 30,
+       "gain_db": -9,
+       "lp": 6000
+      }
+     ]
+    },
+    {
+     "name": "l8",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 1318.51,
+       "decay": 1.6,
+       "dur": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 5000
+      },
+      {
+       "synth": "bowl",
+       "f0": 1977.7649999999999,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 30,
+       "gain_db": -9,
+       "lp": 6000
+      }
+     ]
+    },
+    {
+     "name": "l9",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 1479.98,
+       "decay": 1.6,
+       "dur": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 5000
+      },
+      {
+       "synth": "bowl",
+       "f0": 2219.9700000000003,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 30,
+       "gain_db": -9,
+       "lp": 6000
+      }
+     ]
+    },
+    {
+     "name": "l10",
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 1760.0,
+       "decay": 1.6,
+       "dur": 1.8,
+       "offset_ms": 0,
+       "gain_db": 0,
+       "lp": 5000
+      },
+      {
+       "synth": "bowl",
+       "f0": 2640.0,
+       "decay": 1.0,
+       "dur": 1.4,
+       "offset_ms": 30,
+       "gain_db": -9,
+       "lp": 6000
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hero_down",
+   "group": "heroes",
+   "source": "procedural",
+   "note": "hero down sting: a low procedural minor third on D over a rumble, a soft thud (Kenney CC0)",
+   "takes": [
+    {
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 146.83,
+       "decay": 1.8,
+       "dur": 2.0,
+       "offset_ms": 0,
+       "gain_db": -1,
+       "lp": 2500
+      },
+      {
+       "synth": "bowl",
+       "f0": 174.61,
+       "decay": 1.6,
+       "dur": 2.0,
+       "offset_ms": 60,
+       "gain_db": -4,
+       "lp": 2500
+      },
+      {
+       "synth": "rumble",
+       "dur": 1.4,
+       "lp": 120,
+       "decay": 0.6,
+       "gain_db": -9
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_000.ogg",
+       "pitch": 0.6,
+       "gain_db": -6
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 146.83,
+       "decay": 1.8,
+       "dur": 2.0,
+       "offset_ms": 0,
+       "gain_db": -1,
+       "lp": 2500
+      },
+      {
+       "synth": "bowl",
+       "f0": 174.61,
+       "decay": 1.6,
+       "dur": 2.0,
+       "offset_ms": 60,
+       "gain_db": -4,
+       "lp": 2500
+      },
+      {
+       "synth": "rumble",
+       "dur": 1.4,
+       "lp": 120,
+       "decay": 0.6,
+       "gain_db": -9
+      },
+      {
+       "src": "kenney/impact-sounds/impactSoft_heavy_002.ogg",
+       "pitch": 0.6,
+       "gain_db": -6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hero_revive",
+   "group": "heroes",
+   "source": "procedural",
+   "note": "revive: an open procedural chord on D with a soft shimmer",
+   "takes": [
+    {
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 293.66,
+       "decay": 1.6,
+       "dur": 2.0,
+       "offset_ms": 0,
+       "gain_db": -2,
+       "lp": 6000
+      },
+      {
+       "synth": "bowl",
+       "f0": 440.0,
+       "decay": 1.4,
+       "dur": 1.8,
+       "offset_ms": 40,
+       "gain_db": -5,
+       "lp": 7000
+      },
+      {
+       "synth": "bowl",
+       "f0": 587.33,
+       "decay": 1.2,
+       "dur": 1.6,
+       "offset_ms": 80,
+       "gain_db": -7,
+       "lp": 8000
+      },
+      {
+       "synth": "noise",
+       "dur": 1.0,
+       "hp": 4000,
+       "decay": 0.6,
+       "attack": 0.05,
+       "gain_db": -30
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "synth": "bowl",
+       "f0": 293.66,
+       "decay": 1.6,
+       "dur": 2.0,
+       "offset_ms": 0,
+       "gain_db": -2,
+       "lp": 6000
+      },
+      {
+       "synth": "bowl",
+       "f0": 440.0,
+       "decay": 1.4,
+       "dur": 1.8,
+       "offset_ms": 40,
+       "gain_db": -5,
+       "lp": 7000
+      },
+      {
+       "synth": "bowl",
+       "f0": 587.33,
+       "decay": 1.2,
+       "dur": 1.6,
+       "offset_ms": 80,
+       "gain_db": -7,
+       "lp": 8000
+      },
+      {
+       "synth": "noise",
+       "dur": 1.0,
+       "hp": 4000,
+       "decay": 0.6,
+       "attack": 0.05,
+       "gain_db": -30
+      }
+     ]
+    }
+   ]
   }
  ]
 }

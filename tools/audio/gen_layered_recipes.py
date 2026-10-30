@@ -190,5 +190,39 @@ rec("eco_lumber_drop","world","cc0",[{"max_ms":520,"layers":[
 rec("ui_research_done","ui","procedural",[{"layers":[
     bowl(659.25,0.9,1.2,0,-2,7000), bowl(987.77,0.7,1.0,110,-6,8000), tick(4200,0,-14)]}
     for _ in range(1)],"research done: two procedural bowls a fifth apart")
+# heroes (juice HER-03/04/06/07, Playtest 3): procedural bowls and bells on D, CC0 knocks
+LADDER=(587.33,659.26,739.99,880.0,987.77,1174.66,1318.51,1479.98,1760.0)   # D major pentatonic, levels 2..10
+rec("hero_xp_kingdom","heroes","cc0",[{"max_ms":160,"layers":[
+    {"src":IS+"impactWood_light_00%d.ogg"%a,"pitch":p,"len_ms":80,"hp":900},
+    tick(f,0,-8)]}
+    for a,p,f in ((0,1.7,4200),(2,1.8,4500),(4,1.65,4000))],"XP spoke-chip clicks into the wheel: an ivory knock (Kenney CC0, pitched up) + procedural tick")
+rec("hero_xp_clans","heroes","procedural",[{"layers":[
+    bowl(f0,0.22,0.45,0,0,9000), tick(6000,0,-14)]}
+    for f0 in (2637.0,2793.8,2489.0)],"XP fleck tings the gong: a small procedural bronze bowl")
+rec("hero_level_kingdom","heroes","procedural",[{"layers":[
+    {"src":IS+"impactMetal_light_00%d.ogg"%a,"pitch":0.7,"len_ms":160,"gain_db":-6},
+    {"src":IS+"impactPlate_light_00%d.ogg"%b,"pitch":0.9,"len_ms":200,"gain_db":-10,"offset_ms":40},
+    bowl(293.66,1.4,1.6,0,-3,6000), bowl(369.99,1.2,1.5,90,-5,7000), bowl(440.0,1.1,1.4,180,-6,7000),
+    bowl(587.33,1.3,1.4,300,-4,8000)]}
+    for a,b in ((0,1),(2,3))],"kingdom level-up: a ratchet clack (Kenney CC0) and a rising arpeggio of procedural bells on D")
+rec("hero_level_clans","heroes","procedural",[{"layers":[
+    bowl(146.83,2.2,1.6,0,0,3000), {"synth":"rumble","dur":1.2,"lp":110,"decay":0.5,"attack":0.04,"gain_db":-14},
+    bowl(293.66,1.4,1.5,120,-5,6000), bowl(440.0,1.1,1.4,240,-7,7000)]}
+    for _ in range(2)],"Tormai level-up: a struck procedural gong on D under two bronze bowls")
+rec("hero_bell_kingdom","heroes","procedural",[{"name":"l%d"%(i+2),"layers":[
+    bowl(f0,1.0,1.4,0,0,9000), tick(5200,0,-16)]}
+    for i,f0 in enumerate(LADDER)],"the level's ladder bell (kingdom): one step up a D pentatonic ladder per level")
+rec("hero_bell_clans","heroes","procedural",[{"name":"l%d"%(i+2),"layers":[
+    bowl(f0,1.6,1.8,0,0,5000), bowl(f0*1.5,1.0,1.4,30,-9,6000)]}
+    for i,f0 in enumerate(LADDER)],"the level's ladder bell (Tormai bronze): one step up a D pentatonic ladder per level")
+rec("hero_down","heroes","procedural",[{"layers":[
+    bowl(146.83,1.8,2.0,0,-1,2500), bowl(174.61,1.6,2.0,60,-4,2500),
+    {"synth":"rumble","dur":1.4,"lp":120,"decay":0.6,"gain_db":-9},
+    {"src":IS+"impactSoft_heavy_00%d.ogg"%a,"pitch":0.6,"gain_db":-6}]}
+    for a in (0,2)],"hero down sting: a low procedural minor third on D over a rumble, a soft thud (Kenney CC0)")
+rec("hero_revive","heroes","procedural",[{"layers":[
+    bowl(293.66,1.6,2.0,0,-2,6000), bowl(440.0,1.4,1.8,40,-5,7000), bowl(587.33,1.2,1.6,80,-7,8000),
+    {"synth":"noise","dur":1.0,"hp":4000,"decay":0.6,"attack":0.05,"gain_db":-30}]}
+    for _ in range(2)],"revive: an open procedural chord on D with a soft shimmer")
 json.dump({"_doc":"Recipes for tools/audio/build_layered_sfx.py: CC0 (Kenney, assets_src/audio/cc0/kenney, licence files beside them) and procedural placeholder takes. A take with a 'name' is a kit item: it is written as <id>_<name>_<nn>.wav.","recipes":R},open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)),'layered_recipes.json'),'w'),indent=1)
 print(len(R))

@@ -70,6 +70,7 @@ func on_unit_died(u: Unit, killer: Unit) -> void:
 			"inventory": u.inventory.duplicate(true), "cooldowns": u.cooldowns.duplicate(),
 			"autocast": u.autocast.duplicate(), "died_tick": world.tick_count}
 		Events.hero_died.emit(u)
+		Events.notification.emit(u.player_id, "hero_died", Defs.text("notice_hero_died") % display_name(u))
 	award_kill_xp(u, killer)
 
 
@@ -147,7 +148,21 @@ func award_kill_xp(victim: Unit, killer: Unit) -> void:
 	var bonus := 1.0 + single_hero_bonus(pid)
 	var creep := victim.player_id == PlayerState.NEUTRAL_HOSTILE
 	for h in hs:
-		add_xp(h, share * bonus * (creep_factor(h) if creep else 1.0))
+		var amount := share * bonus * (creep_factor(h) if creep else 1.0)
+		var lv := level_of(h)
+		add_xp(h, amount)
+		if amount > 0.0:
+			Events.hero_xp_gained.emit(h, amount, victim.pos, level_of(h) - lv)
+
+
+## XP ratio within the hero's current level (1 at the cap): the hero bar and the sigil's arc.
+static func xp_ratio(hero: Dictionary) -> float:
+	var lv := int(hero.get("level", 1))
+	if lv >= int(Defs.rule("heroes.level_cap", 10)):
+		return 1.0
+	var lo := Defs.xp_for_level(lv)
+	var hi := Defs.xp_for_level(lv + 1)
+	return clampf((float(hero.get("xp", 0.0)) - lo) / maxf(hi - lo, 1.0), 0.0, 1.0)
 
 
 func level_of(u: Unit) -> int:
@@ -307,6 +322,7 @@ func complete_revive(building: Unit, hid: int) -> Unit:
 		else:
 			p.heroes.append(u.id)
 	Events.hero_revived.emit(u)
+	Events.notification.emit(u.player_id, "hero_revived", Defs.text("notice_hero_revived") % display_name(u))
 	return u
 
 

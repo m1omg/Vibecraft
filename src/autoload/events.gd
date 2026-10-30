@@ -52,6 +52,9 @@ signal xp_gained(hero: Node, amount: float)
 signal ability_learned(hero: Node, ability_id: String, rank: int)
 signal hero_died(hero: Node)
 signal hero_revived(hero: Node)
+## Kill XP reached a hero (HeroSystem.award_kill_xp): the amount, where the victim fell and how
+## many levels it crossed (the XP motes fly from there, juice HER-03).
+signal hero_xp_gained(hero: Node, amount: float, from_pos: Vector3, levels: int)
 signal ability_cast(caster: Node, ability_id: String, rank: int, target: Node, pos: Vector3)
 signal cast_started(caster: Node, ability_id: String)
 signal cast_cancelled(caster: Node, ability_id: String)

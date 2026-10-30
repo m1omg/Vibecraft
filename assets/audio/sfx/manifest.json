@@ -114,6 +114,86 @@
   "res://assets/audio/sfx/ranged/gust_bolt_02.wav",
   "res://assets/audio/sfx/ranged/gust_bolt_03.wav"
  ],
+ "hero_bell_clans_l10": [
+  "res://assets/audio/sfx/heroes/hero_bell_clans_l10_01.wav"
+ ],
+ "hero_bell_clans_l2": [
+  "res://assets/audio/sfx/heroes/hero_bell_clans_l2_01.wav"
+ ],
+ "hero_bell_clans_l3": [
+  "res://assets/audio/sfx/heroes/hero_bell_clans_l3_01.wav"
+ ],
+ "hero_bell_clans_l4": [
+  "res://assets/audio/sfx/heroes/hero_bell_clans_l4_01.wav"
+ ],
+ "hero_bell_clans_l5": [
+  "res://assets/audio/sfx/heroes/hero_bell_clans_l5_01.wav"
+ ],
+ "hero_bell_clans_l6": [
+  "res://assets/audio/sfx/heroes/hero_bell_clans_l6_01.wav"
+ ],
+ "hero_bell_clans_l7": [
+  "res://assets/audio/sfx/heroes/hero_bell_clans_l7_01.wav"
+ ],
+ "hero_bell_clans_l8": [
+  "res://assets/audio/sfx/heroes/hero_bell_clans_l8_01.wav"
+ ],
+ "hero_bell_clans_l9": [
+  "res://assets/audio/sfx/heroes/hero_bell_clans_l9_01.wav"
+ ],
+ "hero_bell_kingdom_l10": [
+  "res://assets/audio/sfx/heroes/hero_bell_kingdom_l10_01.wav"
+ ],
+ "hero_bell_kingdom_l2": [
+  "res://assets/audio/sfx/heroes/hero_bell_kingdom_l2_01.wav"
+ ],
+ "hero_bell_kingdom_l3": [
+  "res://assets/audio/sfx/heroes/hero_bell_kingdom_l3_01.wav"
+ ],
+ "hero_bell_kingdom_l4": [
+  "res://assets/audio/sfx/heroes/hero_bell_kingdom_l4_01.wav"
+ ],
+ "hero_bell_kingdom_l5": [
+  "res://assets/audio/sfx/heroes/hero_bell_kingdom_l5_01.wav"
+ ],
+ "hero_bell_kingdom_l6": [
+  "res://assets/audio/sfx/heroes/hero_bell_kingdom_l6_01.wav"
+ ],
+ "hero_bell_kingdom_l7": [
+  "res://assets/audio/sfx/heroes/hero_bell_kingdom_l7_01.wav"
+ ],
+ "hero_bell_kingdom_l8": [
+  "res://assets/audio/sfx/heroes/hero_bell_kingdom_l8_01.wav"
+ ],
+ "hero_bell_kingdom_l9": [
+  "res://assets/audio/sfx/heroes/hero_bell_kingdom_l9_01.wav"
+ ],
+ "hero_down": [
+  "res://assets/audio/sfx/heroes/hero_down_01.wav",
+  "res://assets/audio/sfx/heroes/hero_down_02.wav"
+ ],
+ "hero_level_clans": [
+  "res://assets/audio/sfx/heroes/hero_level_clans_01.wav",
+  "res://assets/audio/sfx/heroes/hero_level_clans_02.wav"
+ ],
+ "hero_level_kingdom": [
+  "res://assets/audio/sfx/heroes/hero_level_kingdom_01.wav",
+  "res://assets/audio/sfx/heroes/hero_level_kingdom_02.wav"
+ ],
+ "hero_revive": [
+  "res://assets/audio/sfx/heroes/hero_revive_01.wav",
+  "res://assets/audio/sfx/heroes/hero_revive_02.wav"
+ ],
+ "hero_xp_clans": [
+  "res://assets/audio/sfx/heroes/hero_xp_clans_01.wav",
+  "res://assets/audio/sfx/heroes/hero_xp_clans_02.wav",
+  "res://assets/audio/sfx/heroes/hero_xp_clans_03.wav"
+ ],
+ "hero_xp_kingdom": [
+  "res://assets/audio/sfx/heroes/hero_xp_kingdom_01.wav",
+  "res://assets/audio/sfx/heroes/hero_xp_kingdom_02.wav",
+  "res://assets/audio/sfx/heroes/hero_xp_kingdom_03.wav"
+ ],
  "hit_flesh_h": [
   "res://assets/audio/sfx/combat/hit_flesh_h_01.wav",
   "res://assets/audio/sfx/combat/hit_flesh_h_02.wav",

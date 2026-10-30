@@ -14,7 +14,7 @@ extends CanvasLayer
 ##   - pool: `FeelConstants.popup_cap` labels built once; when all are busy the oldest is reused.
 ## Motion is closed form on the fx clock (RISE_FADE), so it is the same at any refresh rate.
 
-enum Style { CRIT, HEAL, GOLD, LUMBER, MISS, MANA, NORMAL, FOOD }
+enum Style { CRIT, HEAL, GOLD, LUMBER, MISS, MANA, NORMAL, FOOD, LEVEL }
 
 const STYLES: Dictionary = {
 	Style.CRIT: {"px": 30, "fill": "#FF4433", "outline": "#2A0A04", "life": 1.0, "rise": 18.0, "suffix": "!"},
@@ -25,6 +25,7 @@ const STYLES: Dictionary = {
 	Style.MANA: {"px": 16, "fill": "#4FA8FF", "outline": "#0A1A33", "life": 1.0, "rise": 40.0, "prefix": "+"},
 	Style.FOOD: {"px": 20, "fill": "#FFC98A", "outline": "#3A2108", "life": 1.2, "rise": 40.0, "prefix": "+"},
 	Style.NORMAL: {"px": 16, "fill": "#F2EEE6", "outline": "#120A04", "life": 0.9, "rise": 36.0},
+	Style.LEVEL: {"px": 34, "fill": "#FFE9A8", "outline": "#3A2108", "life": 1.1, "rise": 26.0},
 }
 const LANE_PX := 22.0
 const LANE_WINDOW := 0.3

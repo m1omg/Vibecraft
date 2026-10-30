@@ -473,6 +473,48 @@
    "bus": "UI",
    "cap": 1,
    "spacing_ms": 400
+  },
+  "hero_xp_kingdom": {
+   "onset_ms": 0,
+   "peak_ms": 3,
+   "bus": "World",
+   "cap": 4,
+   "spacing_ms": 40
+  },
+  "hero_xp_clans": {
+   "onset_ms": 0,
+   "peak_ms": 5,
+   "bus": "World",
+   "cap": 4,
+   "spacing_ms": 40
+  },
+  "hero_level_kingdom": {
+   "onset_ms": 1,
+   "peak_ms": 300,
+   "bus": "World",
+   "cap": 2,
+   "spacing_ms": 300
+  },
+  "hero_level_clans": {
+   "onset_ms": 1,
+   "peak_ms": 20,
+   "bus": "World",
+   "cap": 2,
+   "spacing_ms": 300
+  },
+  "hero_down": {
+   "onset_ms": 1,
+   "peak_ms": 60,
+   "bus": "SFX",
+   "cap": 1,
+   "spacing_ms": 500
+  },
+  "hero_revive": {
+   "onset_ms": 1,
+   "peak_ms": 80,
+   "bus": "World",
+   "cap": 2,
+   "spacing_ms": 300
   }
  },
  "events": {

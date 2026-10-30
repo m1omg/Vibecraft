@@ -7,7 +7,7 @@ extends SceneTree
 ##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
 ##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     -s tests/playtest/pt3_heroes.gd
-## Saves tests/output/pt3_{learn_page,altar_revive}.png.
+## Saves tests/output/pt3_{learn_page,altar_revive,level_up}.png.
 
 const OUT_DIR := "res://tests/output/"
 
@@ -71,6 +71,21 @@ func _run() -> void:
 	tip.set("_hover_t0", float(tip.get("_hover_t0")) - 1.0)
 	await _frames(4)
 	await _shot("pt3_altar_revive.png")
+	tip.call("unhover", slot)
+	tip.set("_leave_t0", float(tip.get("_leave_t0")) - 1.0)
+	# the level-up ceremony on a manual fx clock: the emblem stands 0.5 s in
+	var enemy: Node = world.call("spawn_unit", "clans_hero_skymirror", 1, marshal.get("pos") + Vector3(4, 0, -2))
+	sel.call("select_units", [marshal])
+	camera.call("jump_to", marshal.get("pos"))
+	await _frames(3)
+	FxClock.manual = true
+	heroes.call("add_xp", marshal, 600.0)
+	for i in 16:
+		FxClock.advance(1.0 / 30.0, true)
+		await process_frame
+	print("enemy hero ", enemy.get("def_id"))
+	await _shot("pt3_level_up.png")
+	FxClock.manual = false
 	quit(0)
 
 

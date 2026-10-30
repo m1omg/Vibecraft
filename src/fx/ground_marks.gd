@@ -230,6 +230,12 @@ func _process(_delta: float) -> void:
 		multimesh.buffer = _buf
 
 
+## A quad transform at `p` laid on the terrain (tilted to its normal, lifted LIFT), its basis
+## scaled to half-size `r`; `salt` staggers coplanar marks. Also used by the hero sigils.
+func ground_xf(p: Vector3, r: float, salt: int) -> Transform3D:
+	return _ground_xf(p, r, salt)
+
+
 func _ground_xf(p: Vector3, r: float, salt: int) -> Transform3D:
 	var m := world.map
 	var s := maxf(r, 0.3)

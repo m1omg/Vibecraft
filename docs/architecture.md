@@ -123,7 +123,10 @@ src/
                 body_juice.gd (unit body composer), order_markers.gd (CMB-08..11, rally flag),
                 camera_juice.gd (CAM-05 trauma + kick), selection_circles.gd (rings, hover),
                 health_bars.gd + health_bar.gdshader (ghost bar), fx_textures.gd, proc_mesh.gd,
-                vehicle_rig.gd (procedural motion of multi-node siege models)
+                vehicle_rig.gd (procedural motion of multi-node siege models), build_fx.gd
+                (economy and building beats), hero_fx.gd (HER-01/03/04/06/07: level-up emblem,
+                hero down, revive) with hero_sigils.gd + hero_sigil.gdshader (the level ring
+                under every hero) and xp_motes.gd + xp_mote.gdshader (XP flying to the heroes)
 data/           see data/SCHEMA.md: factions, units, buildings, heroes, abilities, buffs, items,
                 upgrades, shops, creep_camps, doodads, scenarios (.json), strings/en.json,
                 maps/*.json, test_defs.json (tests only)
@@ -665,9 +668,20 @@ requirements, ability unlocks. Each file's header documents the full contract.
   and pushes their modifiers as the `buffs` source. Per-rank numbers: `Defs.ability_rank(id,
   rank)`.
 - Heroes (`HeroSystem`, `data/heroes.json`): XP table and level cap 10, 3 normal abilities with
-  3 ranks (hero levels 1/3/5) + 1 ultimate at level 6, attributes (STR → hp/regen, AGI →
-  armor/attack speed, INT → mana/regen; primary attr → damage) through `Defs.hero_stats`, the
-  derived level-1 unit def, 6-slot inventory (`ItemSystem`), revive at altar or inn.
+  3 ranks (hero levels 1/3/5, `HeroSystem.required_level`) + 1 ultimate at level 6, attributes
+  (STR → hp/regen, AGI → armor/attack speed, INT → mana/regen; primary attr → damage) through
+  `Defs.hero_stats`, the derived level-1 unit def, 6-slot inventory (`ItemSystem`). Proper
+  names are picked by the match seed and unit id (`display_name`: "Title: Name"). Kill XP
+  (`award_kill_xp`, from `on_unit_died`): the victim's level in the unit or hero table (×0.5
+  for summons; structures only with an attack; no critters), split evenly among the killer's
+  owner's heroes within 18.75 m below the cap, × the creep factor and the single-hero bonus;
+  nothing for a deny, a structure's blow, a neutral killer or with no hero in range; a float,
+  never rounded; `Events.hero_xp_gained(hero, amount, from_pos, levels)` feeds the XP motes. A
+  dead hero's record (`_dead`: level, XP, skills, items, cooldowns) keeps its slot and type;
+  the altar revive is a `Production` queue entry of kind `revive` (`revive_cost`: gold in whole
+  hundredths up to 550, time up to 110 s, 5 food on start; `complete_revive` restores it with
+  full HP and min(max, 100) mana in its old place in `PlayerState.heroes`). Inn revive comes
+  with the shops.
 - Items (`ItemSystem`), shops (`ShopSystem`, per-player stock, `buy` / `sell` / `service`
   commands) and creeps (`CreepSystem.spawn_camps(map, only = [])`: camp templates from
   `creep_camps.json`, ring layout, guard positions, bounty) follow the same pattern; their
@@ -865,8 +879,14 @@ requirements, ability unlocks. Each file's header documents the full contract.
   STOP so HUD clicks never reach world selection/commands; buttons never take keyboard focus.
   `Hud.covers(screen_pos)` reports HUD areas. A notification line above the error line shows
   the local player's other `Events.notification` text for 4.5 s (under attack, the war-band
-  marching, building done; placeholder for juice NTF-*). The selected hero's title carries its
-  level. Still to come: hero portraits (left edge), chat area, real art (original, no WC3 UI
+  marching, building done; placeholder for juice NTF-*). The `HeroBar` (`hero_bar.gd`, top
+  left: the heroes in acquisition order, the F1–F3 order; initials until portrait art, level
+  badge, HP / mana / pouring XP bars, a "+N" skill pip, a flip on level-up, the fallen state
+  with the revive timer; click selects, tooltips dock beside it). Hero cards: Learn (O) in slot
+  7 while points are unspent opens `CardModel.PAGE_LEARN` (abilities at their bottom-row
+  places, rank gates, Back in slot 7); the main card shows the abilities by rank; an altar
+  shows Revive in place of a dead hero's train button. The info panel shows "Title: Name -
+  Level N", XP and STR / AGI / INT. Still to come: chat area, real art (original, no WC3 UI
   art).
 - Scenario UI (Main, battlefield only): an objective line under the top bar (goal + war-band
   countdown) and the `EndBanner` (`src/ui/end_banner.gd`: Victory / Defeat / Stalemate, battle

@@ -131,16 +131,6 @@ static func now() -> float:
 	return Time.get_ticks_usec() / 1000000.0
 
 
-## XP ratio within the current level (1 at the cap).
-static func xp_ratio(hero: Dictionary) -> float:
-	var lv := int(hero.get("level", 1))
-	if lv >= int(Defs.rule("heroes.level_cap", 10)):
-		return 1.0
-	var lo := Defs.xp_for_level(lv)
-	var hi := Defs.xp_for_level(lv + 1)
-	return clampf((float(hero.get("xp", 0.0)) - lo) / maxf(hi - lo, 1.0), 0.0, 1.0)
-
-
 func _on_level_up(u: Node) -> void:
 	for s in slots:
 		if s.visible and s.hero_id == (u as Unit).id:
@@ -181,7 +171,7 @@ func _refresh(delta: float) -> void:
 		s.points = pts
 		s.hp = u.hp / maxf(u.max_hp, 1.0) if s.alive else 0.0
 		s.mana = u.mana / u.max_mana if s.alive and u.max_mana > 0.0 else (0.0 if not s.alive else -1.0)
-		s.xp_target = xp_ratio(hero)
+		s.xp_target = HeroSystem.xp_ratio(hero)
 		s.xp += (s.xp_target - s.xp) * (1.0 - exp(-XP_K * delta)) if delta > 0.0 else s.xp_target - s.xp
 		s.revive_left = world.production.revive_left(hid) if not s.alive else -1.0
 		s.selected = s.alive and selection != null and selection.selected.has(u)
