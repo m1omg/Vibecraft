@@ -306,79 +306,22 @@ func _schedule_sleep(w: World, cid: String, c: Dictionary, alive: Array[Unit], n
 		wake_camp(cid)
 
 
-## The creep spell AI (neutrals §1.7, simplified): each awake member of a pulled camp casts one
-## ready ability: a summon or camp buff at once; an area blast with 2+ enemies or a hero in it;
-## a ground effect on the biggest enemy cluster (heroes count twice); a heal on the most hurt
-## camp-mate below 60 % (itself last); a root or silence on an enemy hero, else the farthest
-## ranged enemy in range.
+## The creep spell AI (neutrals §1.7, through SpellAi): each awake member of a pulled camp casts
+## one ready ability: summons and camp buffs when pulled, blasts on 2+ enemies or a hero, ground
+## effects on the biggest cluster, heals on the most hurt camp-mate below 60 % (itself last),
+## roots and silences on heroes first.
 func _creep_spells(alive: Array[Unit]) -> void:
 	for m in alive:
 		if m.stunned or m.returning or (m.current != null and m.current.type == Order.Type.CAST):
 			continue
 		for aid: Variant in m.abilities:
 			var id := str(aid)
-			var kind := str(Defs.ability(id).get("type", ""))
-			if kind in ["passive", "aura", "command"] or world.abilities.cast_error(m, id, null, false) != "":
+			if world.abilities.cast_error(m, id, null, false) != "":
 				continue
-			var pick := _spell_pick(m, id, kind, alive)
+			var pick := SpellAi.pick(world, m, id, alive)
 			if pick.is_empty():
 				continue
 			var cmd := {"type": "cast", "player": m.player_id, "units": [m.id], "ability": id}
 			cmd.merge(pick)
 			world.issue(cmd)
 			break
-
-
-func _spell_pick(m: Unit, id: String, kind: String, mates: Array[Unit]) -> Dictionary:
-	var v := Defs.ability_rank(id, 1)
-	var effect := str(Defs.ability(id).get("effect", ""))
-	var reach := float(v.get("range", 0.0))
-	var area := float(v.get("area", 0.0))
-	var foes: Array[Unit] = []
-	for u: Unit in world.query_radius(m.pos, maxf(reach, area) + area + world.max_unit_radius):
-		if m.is_valid_target(u) and not u.is_structure():
-			foes.append(u)
-	match kind:
-		"instant":
-			if effect == "area_damage":
-				var n := 0
-				var hero := false
-				for f in foes:
-					if m.edge_distance(f) <= area:
-						n += 1
-						hero = hero or f.is_hero
-				return {"self": true} if n >= 2 or hero else {}
-			return {"self": true} if not foes.is_empty() else {}
-		"target_point":
-			var best: Unit = null
-			var best_score := 1
-			for f in foes:
-				if m.edge_distance(f) > reach:
-					continue
-				var score := 0
-				for g in foes:
-					if Grid.flat_dist(f.pos, g.pos) <= area:
-						score += 2 if g.is_hero else 1
-				if score > best_score:
-					best_score = score
-					best = f
-			return {"pos": best.pos} if best != null else {}
-		"target_unit":
-			if effect == "heal_target":
-				var hurt: Unit = null
-				for a in mates:
-					if a.hp < a.max_hp * 0.6 and m.edge_distance(a) <= reach \
-							and (hurt == null or a.hp / a.max_hp < hurt.hp / hurt.max_hp or hurt == m):
-						if a != m or hurt == null:
-							hurt = a
-				return {"target": hurt.id} if hurt != null else {}
-			var pick: Unit = null
-			for f in foes:
-				if m.edge_distance(f) > reach:
-					continue
-				if f.is_hero:
-					return {"target": f.id}
-				if not f.projectile.is_empty() and (pick == null or m.edge_distance(f) > m.edge_distance(pick)):
-					pick = f
-			return {"target": pick.id} if pick != null else {}
-	return {}

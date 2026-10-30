@@ -4,8 +4,10 @@ extends AbilityEffect
 
 
 func cast(ctx: CastContext) -> bool:
-	if ctx.target_unit == null:
+	var yurt := ctx.target_unit
+	if yurt == null:
+		yurt = ctx.world.construction.free_garrison_near(ctx.caster)
+	if yurt == null or not ctx.world.construction.can_enter(ctx.caster, yurt):
 		return false
-	ctx.world.issue({"type": "enter", "player": ctx.caster.player_id, "units": [ctx.caster.id],
-		"target": ctx.target_unit.id})
+	ctx.caster.issue_order(Order.make(Order.Type.ENTER, yurt.pos, yurt.id))
 	return true

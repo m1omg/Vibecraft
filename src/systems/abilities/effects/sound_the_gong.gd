@@ -4,5 +4,5 @@ extends AbilityEffect
 ## no-op.
 
 
-func cast(_ctx: CastContext) -> bool:
-	return true
+func cast(ctx: CastContext) -> bool:
+	return ctx.world.construction.sound_the_gong(ctx.caster, float(ctx.value("range", 30.0)))

@@ -58,6 +58,8 @@ signal hero_xp_gained(hero: Node, amount: float, from_pos: Vector3, levels: int)
 signal ability_cast(caster: Node, ability_id: String, rank: int, target: Node, pos: Vector3)
 ## An attack missed (the attacker's miss_chance, e.g. blinded; Combat.fire): no damage, a "miss" tell.
 signal attack_missed(attacker: Node, target: Node)
+## A unit changed its def in place (Take Up / Lay Down the Flail): its view reloads.
+signal unit_transformed(unit: Node, from_def: String)
 ## A recall finished: the hero (and `count` - 1 others) arrived beside `hall`.
 signal recall_completed(hero: Node, hall: Node, count: int)
 ## A spell or item healed `amount` HP (the heal number and bloom).

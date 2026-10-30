@@ -260,6 +260,16 @@ func _apply_def() -> void:
 		"hp_regen": hp_regen, "mana_regen": mana_regen}
 
 
+## Re-reads `attack` (a garrison arming or disarming its slings).
+func apply_attack() -> void:
+	_apply_attack()
+	_base["damage_min"] = damage_min
+	_base["damage_max"] = damage_max
+	_base["attack_range"] = attack_range
+	_base["cooldown"] = float(attack.get("cooldown", 1.0))
+	recompute_stats()
+
+
 func _apply_attack() -> void:
 	if attack.is_empty():
 		return

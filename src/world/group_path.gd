@@ -52,8 +52,8 @@ func find_base(from: Vector3, goal: Vector3, large: bool) -> Base:
 	var best: Base = null
 	var best_d := SHARE_RADIUS
 	for b in _bases:
-		if b.large != large:
-			continue
+		if b.large != large or b.path.size() < 2:
+			continue          # a base its owner has since emptied is no use to anyone
 		var s := b.path[0]
 		var d := Vector2(s.x + goal.x - b.goal.x - from.x, s.z + goal.z - b.goal.z - from.z).length()
 		if d <= best_d:

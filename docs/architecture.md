@@ -741,6 +741,19 @@ requirements, ability unlocks. Each file's header documents the full contract.
   The creep spell AI (neutrals §1.7, simplified) casts for pulled camps twice a second;
   creep passives and auras are permanent buffs (`AbilitySystem._emit_auras`), "every N
   attacks" passives ride `AbilitySystem.on_attack`.
+- Worker defence (the faction signatures): the Moot Hall's Levy Horn makes every Hodman within
+  22 m Take Up the Flail (`AbilitySystem.take_up`: the unit becomes a Flail Levy in place for
+  40 s, keeping its cargo, remembering its order); Lay Down the Flail / Lay Down Flails (all),
+  the timer or 5 s more than 30 m from every hall (`kingdom_levy_leash`) turn it back
+  (`revert_levy`: the order resumes, a 20 s lockout). The Shell Hall's Sound the Gong
+  (`Construction.sound_the_gong`, a toggle: All Clear) sends Yurtwrights within 30 m into free
+  Home Yurt slots (ENTER); a garrisoned yurt shoots one sling per occupant (`_arm_garrison`,
+  `Unit.apply_attack`), Unload All, All Clear or dropping below `garrison_eject_hp` empties it.
+  `Events.unit_transformed` tells the view.
+- `SpellAi` (`src/systems/ai/spell_ai.gd`): when and where a computer-run unit casts (heals
+  below 60 %, taunts and blasts on 2+ enemies or a hero, the biggest cluster for area and
+  ground effects, heroes first for disables, ultimates on bigger fights); the creep spell AI and
+  AiPlayer's heroes share it.
 - `AiPlayer` (`src/systems/ai/ai_player.gd`): one per AI seat, throttled `think()`, tuning from
   `rules.ai.<difficulty>`, its own RNG; it issues only player commands (an APM cap drops
   non-essential ones) and sees only through its own fog. Playtest 2 build-order opponent:
@@ -753,8 +766,13 @@ requirements, ability unlocks. Each file's header documents the full contract.
   upkeep cap; muster, defend (own units hit within 35 m of the hall), push at
   `attack_threshold()` (the opening's `attack_food`, capped by the upkeep room beside the
   workers) with attack-moves on the nearest enemy structure it has seen, retreat below
-  `army_retreat_hp`. `state`: build_up, army, defend, push. Creeping, abilities, items and
-  expansions come later.
+  `army_retreat_hp`. Playtest 3: hero skill points from `heroes.<id>.skill_build`, heal items
+  below 40 % HP, altar revives as soon as gold and food allow, SpellAi casts in fights;
+  creeping along the map's `creep_route.hero_1` (own-side `_p1` / `_p2` copies), camps up to
+  `max_camp` and at most `camp_level_ratio` × the group's levels, home to heal below
+  `hero_retreat_hp`, drops picked up; the worker defence (`use_signature`: Levy Horn / Sound the
+  Gong at 3+ enemy combat units with 6+ food near its workers, released 10 s after). `state`:
+  build_up, army, creep, defend, push. Shops, the recall item and expansions come later.
 
 ## 11. Input, camera, UI
 

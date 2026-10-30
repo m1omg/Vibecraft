@@ -177,3 +177,40 @@ func test_menu_skirmish_setup_starts_the_match() -> void:
 	Settings.skirmish_faction = keep_faction
 	Settings.ai_difficulty = keep_diff
 	Settings.save_settings()
+
+
+## Playtest 3: the computer's hero spends its points from the skill build, the group creeps the
+## first camp of the map's route and picks up its drop, and a fallen hero is revived.
+func test_ai_hero_learns_creeps_and_revives() -> void:
+	await _boot()
+	var ai: AiPlayer = world.ai_players[0]
+	world.player(1).gold = 5000
+	world.player(1).lumber = 5000
+	var hall: Unit = _own(1, "clans_shell_hall")[0]
+	var route := ai._route_camps()
+	assert_true(route.size() >= 3, "the map's creep route resolves (%s)" % str(route))
+	var first: String = route[0]
+	var camp_pos: Vector3 = world.creeps.camp_state(first)["pos"]
+	assert_lt(Grid.flat_dist(camp_pos, hall.pos), 90.0, "the own-side copy, near the AI's base")
+	var hero := world.spawn_unit("clans_hero_uncut", 1, hall.pos + Vector3(6, 0, 6))
+	for i in 4:
+		world.spawn_unit("clans_grappler", 1, hall.pos + Vector3(8 + i, 0, 8))
+	ai._army_on = true
+	var learned := false
+	var crept := false
+	for t in 30 * 120:
+		world.step()
+		learned = learned or world.heroes.rank_of(hero, "clans_dust_veil") > 0
+		crept = crept or ai.state == "creep"
+		if world.creeps.camp_state(first)["cleared"]:
+			break
+	assert_true(learned, "Dust Veil learned from the skill build")
+	assert_true(crept, "the group went creeping")
+	assert_true(world.creeps.camp_state(first)["cleared"], "and cleared the route's first camp")
+	assert_true(float(hero.hero["xp"]) > 0.0, "the hero earned XP")
+	var hid := hero.id
+	world.spawn_unit("clans_naming_stones", 1, hall.pos + Vector3(-16, 0, 10))
+	hero.take_damage(999999.0, null)
+	for t in 30 * 3:
+		world.step()
+	assert_true(world.production.is_reviving(hid), "the fallen hero is being revived at the altar")

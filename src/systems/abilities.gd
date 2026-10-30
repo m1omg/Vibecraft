@@ -24,6 +24,7 @@ const AURA_TICKS := 15                ## auras re-apply every 0.5 s (rules §10.
 var _ground: Array[Dictionary] = []   ## {handle, id, owner_id, player, pos, radius, ticks, values}
 var _next_handle: int = 1
 var _casting: Dictionary = {}         ## unit id -> true while a CAST order is in its wind-up or channel
+var _levies: Dictionary = {}          ## Flail Levy unit id -> {from, order: {type, target, pos}, far_t}
 var _passives: Dictionary = {}        ## unit id -> {ability id: rank} of the passive buffs it carries
 
 
@@ -34,6 +35,7 @@ func hooks() -> Array[StringName]:
 func on_unit_died(u: Unit, _killer: Unit) -> void:
 	_casting.erase(u.id)
 	_passives.erase(u.id)
+	_levies.erase(u.id)
 
 
 func on_unit_removed(u: Unit) -> void:
@@ -69,6 +71,8 @@ func cooldown_left(u: Unit, ability_id: String) -> float:
 func cast_error(u: Unit, ability_id: String, target: Unit = null, need_target: bool = true) -> String:
 	var a := Defs.ability(ability_id)
 	if a.is_empty() or ["passive", "aura", "command"].has(str(a.get("type", ""))):
+		return "cannot_cast"
+	if u.is_building and u.under_construction:
 		return "cannot_cast"
 	if rank_of(u, ability_id) <= 0:
 		return "not_learned"
@@ -257,6 +261,87 @@ func is_autocast(u: Unit, ability_id: String) -> bool:
 	return bool(u.autocast.get(ability_id, (Defs.ability(ability_id).get("autocast", {}) as Dictionary).get("default", false)))
 
 
+# --- the kingdom's levy (worker defence; kingdom §5) ------------------------------------------
+
+func is_levy(u: Unit) -> bool:
+	return _levies.has(u.id)
+
+
+## Take Up the Flail: a Hodman within `hall_range` of an own finished hall becomes a Flail Levy
+## for `duration` (buff_flail_levy), keeping its cargo; what it was doing is remembered for the
+## way back. False away from every hall.
+func take_up(u: Unit, into: String, v: Dictionary) -> bool:
+	if into == "" or is_levy(u) or _hall_distance(u) > float(v.get("hall_range", 22.0)):
+		return false
+	var mem := {"from": u.def_id, "far_t": -1.0, "lockout": float(v.get("lockout", 20.0))}
+	if u.current != null:
+		mem["order"] = {"type": u.current.type, "target": u.current.target_id, "pos": u.current.target_pos,
+			"data": u.current.data.duplicate()}
+	u.clear_orders()
+	u.transform_to(into)
+	_levies[u.id] = mem
+	world.buffs.apply(u, "buff_flail_levy", u, {"duration": float(v.get("duration", 40.0))})
+	Events.unit_transformed.emit(u, str(mem["from"]))
+	return true
+
+
+## Lay Down the Flail (also when the levy's time runs out or it strays too far): back to a Hodman
+## with its cargo, resuming what it was doing; Take Up the Flail is locked out for a while.
+func revert_levy(u: Unit) -> bool:
+	if not is_levy(u):
+		return false
+	var mem: Dictionary = _levies[u.id]
+	_levies.erase(u.id)
+	world.buffs.remove(u, "buff_flail_levy")
+	world.buffs.remove(u, "buff_levy_leash")
+	var into := u.def_id
+	u.clear_orders()
+	u.transform_to(str(mem["from"]))
+	u.cooldowns["kingdom_take_up_the_flail"] = world.tick_count + roundi(float(mem.get("lockout", 20.0)) * World.TICK_RATE)
+	Events.unit_transformed.emit(u, into)
+	var o: Dictionary = mem.get("order", {})
+	if not o.is_empty():
+		var t := world.get_unit(int(o["target"]))
+		if int(o["target"]) == 0 or (t != null and t.alive):
+			var ord := Order.make(o["type"], o["pos"], int(o["target"]))
+			ord.data = o.get("data", {})
+			u.issue_order(ord)
+	return true
+
+
+## Edge distance from `u` to the nearest own finished hall (INF without one).
+func _hall_distance(u: Unit) -> float:
+	var best := INF
+	for b in world.unit_list:
+		if b.alive and b.player_id == u.player_id and b.has_flag("town_hall") and not b.under_construction:
+			best = minf(best, u.edge_distance(b))
+	return best
+
+
+## Levies return to their jobs when their time runs out, or after `grace` s more than the leash
+## range from every hall (kingdom_levy_leash; the countdown shows as buff_levy_leash).
+func _tick_levies() -> void:
+	for uid: int in _levies.keys():
+		var u := world.get_unit(uid)
+		if u == null or not u.alive:
+			_levies.erase(uid)
+			continue
+		if not world.buffs.has_buff(u, "buff_flail_levy"):
+			revert_levy(u)
+			continue
+		var leash := Defs.ability_rank("kingdom_levy_leash", 1)
+		var mem: Dictionary = _levies[uid]
+		if _hall_distance(u) > float(leash.get("hall_range", 30.0)):
+			if float(mem["far_t"]) < 0.0:
+				mem["far_t"] = world.time
+				world.buffs.apply(u, "buff_levy_leash", u, {}, float(leash.get("grace", 5.0)))
+			elif world.time - float(mem["far_t"]) >= float(leash.get("grace", 5.0)):
+				revert_levy(u)
+		elif float(mem["far_t"]) >= 0.0:
+			mem["far_t"] = -1.0
+			world.buffs.remove(u, "buff_levy_leash")
+
+
 ## Adds a ground effect; returns its handle. Ticking (DoTs, aura buffs, vision) is this system's.
 func add_ground_effect(effect_id: String, owner: Unit, pos: Vector3, radius: float, duration: float,
 		values: Dictionary = {}) -> int:
@@ -283,6 +368,8 @@ func sim_tick(w: World, _dt: float) -> void:
 			u.finish_order()
 	if w.tick_count % AURA_TICKS == 0:
 		_emit_auras(w)
+	if not _levies.is_empty():
+		_tick_levies()
 	var i := _ground.size() - 1
 	while i >= 0:
 		var g: Dictionary = _ground[i]

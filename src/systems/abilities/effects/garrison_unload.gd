@@ -4,5 +4,7 @@ extends AbilityEffect
 
 
 func cast(ctx: CastContext) -> bool:
+	if ctx.caster.garrison.is_empty():
+		return false
 	ctx.world.construction.garrison_unload(ctx.caster)
 	return true

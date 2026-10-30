@@ -254,6 +254,17 @@ func activate_card(slot: int, shift: bool = false) -> bool:
 func _activate_ability(e: CardModel.Entry, shift: bool) -> bool:
 	if e.passive:
 		return false
+	if str(Defs.ability(e.id).get("type", "")) == "command":
+		# Roll the Felt: every selected Yurtwright heads into the nearest Home Yurt with room
+		var any := false
+		for u in active_units():
+			var yurt := world.construction.free_garrison_near(u)
+			if yurt != null:
+				_issue_for([u.id], {"type": "enter", "target": yurt.id, "queue": shift})
+				any = true
+		if not any:
+			_deny("cannot_cast")
+		return any
 	if not e.targeted:
 		var caster := _caster_for(e.id, null, Vector3.INF, false)
 		if caster == null:

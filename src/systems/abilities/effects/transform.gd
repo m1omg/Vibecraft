@@ -4,5 +4,7 @@ extends AbilityEffect
 ## defence). Stub: no-op until a World.transform_unit exists.
 
 
-func cast(_ctx: CastContext) -> bool:
-	return true
+func cast(ctx: CastContext) -> bool:
+	if bool(ctx.value("revert", false)):
+		return ctx.world.abilities.revert_levy(ctx.caster)
+	return ctx.world.abilities.take_up(ctx.caster, str(ctx.value("into", "")), ctx.values)

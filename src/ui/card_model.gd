@@ -128,6 +128,7 @@ static func _unit_card(w: World, lead: Unit, card: Array) -> void:
 		_hero_card(w, lead, card)
 		return
 	if not lead.is_worker:
+		_unit_abilities(w, lead, card)
 		return
 	if lead.abilities.has("cmd_build_basic"):
 		card[5] = _command(5, "page", PAGE_BASIC, "cmd_build_basic")
@@ -140,6 +141,64 @@ static func _unit_card(w: World, lead: Unit, card: Array) -> void:
 	var rep := lead.repair_ability()
 	if rep != "":
 		card[9] = _command(9, "order", "repair", rep)
+	_unit_abilities(w, lead, card)
+
+
+## A unit's own abilities (the faction signatures: Take Up / Lay Down the Flail, Roll the Felt)
+## in the free slots of the bottom row, right to left.
+static func _unit_abilities(w: World, u: Unit, card: Array) -> void:
+	for aid: Variant in u.abilities:
+		var id := str(aid)
+		if id.begins_with("cmd_") or id == u.repair_ability():
+			continue
+		var t := str(Defs.ability(id).get("type", ""))
+		if t == "passive" or t == "aura" or _has_entry(card, id):
+			continue
+		for slot: int in [11, 10, 9, 8]:
+			if card[slot] == null:
+				card[slot] = _own_ability_entry(w, u, id, slot)
+				break
+
+
+## A building's own abilities (Levy Horn, Lay Down Flails, Sound the Gong / All Clear, Unload
+## All) in the free building slots.
+static func _building_abilities(w: World, b: Unit, card: Array) -> void:
+	for aid: Variant in b.abilities:
+		var id := str(aid)
+		if id.begins_with("cmd_") or _has_entry(card, id):
+			continue
+		for slot: int in BUILDING_SLOTS:
+			if card[slot] == null:
+				card[slot] = _own_ability_entry(w, b, id, slot)
+				break
+
+
+static func _has_entry(card: Array, id: String) -> bool:
+	for e: Variant in card:
+		if e != null and (e as Entry).id == id:
+			return true
+	return false
+
+
+static func _own_ability_entry(w: World, u: Unit, id: String, slot: int) -> Entry:
+	var ab := Defs.ability(id)
+	var e := _entry(slot, "ability", id)
+	e.label = str(ab.get("name", id))
+	e.key = str(ab.get("hotkey", ""))
+	var t := str(ab.get("type", ""))
+	e.targeted = t == "target_unit" or t == "target_point"
+	if t == "toggle" and id == "clans_sound_the_gong" and w.construction.gong_sounding(u.player_id):
+		e.label = str(ab.get("params", {}).get("toggle_name", e.label))
+	if t == "command":
+		return e
+	var err := w.abilities.cast_error(u, id, null, false)
+	if err == "cannot_cast" and t == "toggle":
+		err = ""
+	e.reason = err
+	e.state = int(STATE_OF.get(err, State.LOCKED)) if err != "" else State.READY
+	e.cooldown_left = w.abilities.cooldown_left(u, id)
+	e.cooldown_total = w.abilities.cooldown_total(u, id)
+	return e
 
 
 ## The hero's Learn button (while skill points are unspent) and its abilities on the bottom row.
@@ -275,6 +334,7 @@ static func _building_card(w: World, pid: int, b: Unit, card: Array) -> void:
 		return
 	if b.def.get("rally", false):
 		card[RALLY_SLOT] = _command(RALLY_SLOT, "rally", "rally", "cmd_rally")
+	_building_abilities(w, b, card)
 	if not w.production.queue_of(b).is_empty():
 		card[CANCEL_SLOT] = _cancel_entry(false)
 

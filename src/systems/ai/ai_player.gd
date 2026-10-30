@@ -19,9 +19,17 @@ extends SimSystem
 ##     cap before the push leaves beside the workers) with attack-moves on the
 ##     nearest enemy structure it has seen (else the enemy start) and retreats below
 ##     army_retreat_hp of the push's starting HP.
+## Playtest 3 adds the heroes (rules §19): skill points spent at once from the hero's
+## `skill_build`; abilities cast in fights through SpellAi (area on 2+ targets, heals below 60 %);
+## a heal item drunk below 40 % HP; dead heroes revived at the altar as soon as gold and food
+## allow; creeping along the map's `creep_route` (own-side camp copies, camps up to `max_camp`
+## and at most `camp_level_ratio` × the group's levels), the group going home to heal when a
+## hero drops below `hero_retreat_hp`, drops picked up after each camp; and the worker defence
+## (`use_signature`): Levy Horn / Sound the Gong when 3+ enemy combat units (6+ food) close on
+## its workers, released 10 s after none remain.
 ## It issues ONLY player command dictionaries (World.issue), sees only through its own fog and
 ## obeys every rule; its random choices use its own stream `rng` (seeded from the match seed ^
-## 0xA1, rules §2.3). Creeping, items, abilities and expansions come with Playtests 3 and 4.
+## 0xA1, rules §2.3). Shops, the recall item and expansions come with Playtest 4.
 ## Signals: none (it acts through commands; debug overlays read `state`).
 
 const STEP_SKIP_S := 45.0
@@ -54,6 +62,10 @@ var _push_hp0 := 0.0
 var _last_push_cmd := -100.0
 var _rallied: Dictionary = {}       ## building id -> true
 var _actions: Array[int] = []       ## ticks of recent commands (APM cap)
+var _route: Array = []              ## camp ids in creep order (resolved once)
+var _creep_camp: String = ""        ## the camp being cleared
+var _signature_on := false
+var _danger_t := -100.0             ## last time enemies closed on the workers
 
 
 func setup_player(w: World, pid: int, diff: String = "normal") -> void:
@@ -99,7 +111,12 @@ func think() -> void:
 	_build_order()
 	_train_workers()
 	_train_army(p)
+	_hero_care()
 	_command_army()
+	if state in ["creep", "push", "defend"]:
+		_cast_in_fights(_army())
+	if bool(tuning().get("use_signature", false)):
+		_signature()
 
 
 # --- base ----------------------------------------------------------------------------------
@@ -505,6 +522,37 @@ func _command_army() -> void:
 		return
 	var threat := world.time - _threat_t < THREAT_HOLD_S
 	match state:
+		"creep":
+			if threat:
+				state = "defend"
+				_creep_camp = ""
+				_last_push_cmd = world.time
+				_issue({"type": "attack_move", "units": _ids(army), "pos": _threat_pos})
+				return
+			if _army_on and _food(army) >= attack_threshold():
+				state = "army"           # the push takes over on the next think
+				_creep_camp = ""
+				return
+			var low := false
+			for h in _heroes():
+				low = low or h.hp < h.max_hp * float(tuning().get("hero_retreat_hp", 0.35))
+			var st := world.creeps.camp_state(_creep_camp)
+			if low:
+				state = "army"
+				_creep_camp = ""
+				_issue({"type": "move", "units": _ids(army), "pos": _muster})
+				return
+			if st.is_empty() or bool(st["cleared"]):
+				if not st.is_empty():
+					_loot(st["pos"])
+				state = "army"
+				_creep_camp = ""
+				return
+			if world.time - _last_push_cmd >= PUSH_REISSUE_S:
+				_last_push_cmd = world.time
+				var idle := army.filter(func(u: Unit) -> bool: return u.current == null)
+				if not idle.is_empty():
+					_issue({"type": "attack_move", "units": _ids(idle), "pos": st["pos"]}, false)
 		"push":
 			var hp := 0.0
 			for u in army:
@@ -539,12 +587,191 @@ func _command_army() -> void:
 				_last_push_cmd = world.time
 				_issue({"type": "attack_move", "units": _ids(army), "pos": _push_target(army)})
 				return
+			var camp := _next_camp(army)
+			if camp != "":
+				state = "creep"
+				_creep_camp = camp
+				_last_push_cmd = world.time
+				_issue({"type": "attack_move", "units": _ids(army), "pos": world.creeps.camp_state(camp)["pos"]})
+				return
 			var strays: Array = []
 			for u in army:
 				if u.current == null and Grid.flat_dist(u.pos, _muster) > 8.0:
 					strays.append(u.id)
 			if not strays.is_empty():
 				_issue({"type": "move", "units": strays, "pos": _muster}, false)
+
+
+# --- heroes, creeping, worker defence (Playtest 3) ------------------------------------------
+
+func _heroes() -> Array[Unit]:
+	var out: Array[Unit] = []
+	for u in world.unit_list:
+		if u.alive and u.is_hero and u.player_id == player_id:
+			out.append(u)
+	return out
+
+
+## Skill points from the hero's skill_build, heal items when hurt, revives.
+func _hero_care() -> void:
+	for h in _heroes():
+		if int(h.hero.get("skill_points", 0)) > 0:
+			_learn(h)
+		if h.hp < h.max_hp * 0.4:
+			_drink(h)
+	_revive()
+
+
+func _learn(h: Unit) -> void:
+	var planned := {}
+	for aid: Variant in Defs.hero(str(h.hero.get("hero_id", h.def_id))).get("skill_build", []):
+		var id := str(aid)
+		planned[id] = int(planned.get(id, 0)) + 1
+		if int(planned[id]) > world.heroes.rank_of(h, id) and world.heroes.can_learn(h, id):
+			_issue({"type": "learn", "units": [h.id], "ability": id})
+			return
+	for aid: Variant in h.def.get("hero_abilities", []):
+		if world.heroes.can_learn(h, str(aid)):
+			_issue({"type": "learn", "units": [h.id], "ability": str(aid)})
+			return
+
+
+func _drink(h: Unit) -> void:
+	for slot in h.inventory.size():
+		var it: Variant = h.inventory[slot]
+		if it != null and str(Defs.item(str(it["id"])).get("effect", "")).begins_with("heal") \
+				and world.items.can_use(h, slot):
+			_issue({"type": "use_item", "units": [h.id], "slot": slot})
+			return
+
+
+func _revive() -> void:
+	for hid in world.heroes.dead_heroes(player_id):
+		if world.production.is_reviving(hid):
+			continue
+		var cost := world.heroes.revive_cost(hid)
+		if not _affordable(cost):
+			return
+		for b in _own_buildings():
+			if world.heroes.can_revive(b, hid) == "":
+				_issue({"type": "revive", "units": [b.id], "hero": hid})
+				_spend(cost)
+				return
+
+
+## Heroes cast what SpellAi picks for the fight around them, one cast each per think.
+func _cast_in_fights(army: Array[Unit]) -> void:
+	for h in _heroes():
+		if h.current != null and h.current.type == Order.Type.CAST:
+			continue
+		for aid: Variant in h.def.get("hero_abilities", []):
+			var id := str(aid)
+			if world.abilities.cast_error(h, id, null, false) != "":
+				continue
+			var pick := SpellAi.pick(world, h, id, army)
+			if pick.is_empty():
+				continue
+			var cmd := {"type": "cast", "units": [h.id], "ability": id}
+			cmd.merge(pick)
+			_issue(cmd)
+			break
+
+
+## The map's creep route for the first hero (map meta creep_route.hero_1), each template id
+## resolved to this player's copy (the nearer `<id>_p1` / `<id>_p2`) or the shared camp.
+func _route_camps() -> Array:
+	if not _route.is_empty() or world.creeps == null:
+		return _route
+	var meta: Dictionary = world.map.meta if world.map.meta is Dictionary else {}
+	var r: Dictionary = meta.get("creep_route", {})
+	var camps := world.creeps.camps()
+	for tid: Variant in r.get("hero_1", []):
+		var id := str(tid)
+		if camps.has(id):
+			_route.append(id)
+			continue
+		var best := ""
+		for suffix: String in ["_p1", "_p2"]:
+			if camps.has(id + suffix) and (best == "" or Grid.flat_dist((camps[id + suffix] as Dictionary)["pos"], _hall.pos)
+					< Grid.flat_dist((camps[best] as Dictionary)["pos"], _hall.pos)):
+				best = id + suffix
+		if best != "":
+			_route.append(best)
+	if _route.is_empty():
+		var ids: Array = camps.keys()
+		ids.sort_custom(func(a: String, b: String) -> bool:
+			return Grid.flat_dist((camps[a] as Dictionary)["pos"], _hall.pos) < Grid.flat_dist((camps[b] as Dictionary)["pos"], _hall.pos))
+		_route = ids
+	return _route
+
+
+## The next camp to creep: the first on the route still standing, of a colour up to max_camp
+## and no stronger than camp_level_ratio × the group's levels; "" when none (or no healthy hero).
+func _next_camp(army: Array[Unit]) -> String:
+	var heroes := _heroes()
+	if heroes.is_empty() or not heroes.all(func(h: Unit) -> bool: return h.hp >= h.max_hp * 0.8):
+		return ""
+	var group := 0
+	for u in army:
+		group += maxi(1, u.level)
+	var colours := ["green", "amber", "red"]
+	var max_c := colours.find(str(tuning().get("max_camp", "green")))
+	var ratio := float(tuning().get("camp_level_ratio", 1.0))
+	for cid: Variant in _route_camps():
+		var st := world.creeps.camp_state(str(cid))
+		if st.is_empty() or bool(st["cleared"]):
+			continue
+		if colours.find(str(st["colour"])) > max_c:
+			continue
+		var lv := 0
+		for m in world.creeps.camp_members(str(cid)):
+			lv += maxi(1, m.level)
+		if float(lv) <= ratio * float(group):
+			return str(cid)
+	return ""
+
+
+## After a camp: the first hero with room picks up what dropped there.
+func _loot(at: Vector3) -> void:
+	for u in world.unit_list:
+		if u.alive and u.is_item and Grid.flat_dist(u.pos, at) <= 12.0:
+			for h in _heroes():
+				if world.items.can_pickup(h, u):
+					_issue({"type": "smart", "units": [h.id], "target": u.id}, false)
+					return
+
+
+## The worker defence (rules §19): Levy Horn or Sound the Gong when 3+ enemy combat units (6+
+## food) are within 18 m of its workers; Lay Down Flails or All Clear 10 s after none remain.
+func _signature() -> void:
+	if _hall == null or not _hall.alive:
+		return
+	var near := 0
+	var food := 0
+	var workers := _workers()
+	for u in world.unit_list:
+		if not u.alive or u.is_worker or not u.is_mobile() or not world.is_enemy(player_id, u.player_id) \
+				or u.player_id >= PlayerState.NEUTRAL_HOSTILE:
+			continue
+		if world.fog != null and not world.fog.can_see(player_id, u):
+			continue
+		for wk in workers:
+			if Grid.flat_dist(wk.pos, u.pos) <= 18.0:
+				near += 1
+				food += int((u.def.get("cost", {}) as Dictionary).get("food", 0))
+				break
+	if near >= 3 and food >= 6:
+		_danger_t = world.time
+		if not _signature_on:
+			var call := "kingdom_levy_horn" if _hall.abilities.has("kingdom_levy_horn") else "clans_sound_the_gong"
+			if _hall.abilities.has(call) and world.abilities.is_ready(_hall, call):
+				_signature_on = true
+				_issue({"type": "cast", "units": [_hall.id], "ability": call})
+	elif _signature_on and world.time - _danger_t >= 10.0:
+		_signature_on = false
+		var release := "kingdom_lay_down_flails_all" if _hall.abilities.has("kingdom_lay_down_flails_all") else "clans_sound_the_gong"
+		if _hall.abilities.has(release):
+			_issue({"type": "cast", "units": [_hall.id], "ability": release})
 
 
 ## Enemy structures the AI can see now are remembered (its own fog only).

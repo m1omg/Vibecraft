@@ -31,7 +31,13 @@ var _repairing: Dictionary = {}
 
 
 func hooks() -> Array[StringName]:
-	return [&"died", &"removed"]
+	return [&"died", &"removed", &"damaged"]
+
+
+## A garrison building below `garrison_eject_hp` of its HP throws its occupants out.
+func on_unit_damaged(u: Unit, _amount: float, _src: Unit) -> void:
+	if not u.garrison.is_empty() and u.hp < u.max_hp * float(u.def.get("garrison_eject_hp", 0.0)):
+		garrison_unload(u)
 
 
 func on_unit_died(u: Unit, _killer: Unit) -> void:
@@ -424,6 +430,9 @@ func on_repair_ended(worker: Unit, _o: Order) -> void:
 
 # --- garrison ------------------------------------------------------------------------------
 
+var _gong_on: Dictionary = {}     ## player id -> true while Sound the Gong is on
+
+
 ## Slots of a garrison building (buildings.json `garrison`; `garrison_accepts`,
 ## `garrison_attack` per occupant, `garrison_eject_hp`).
 func garrison_slots(b: Unit) -> int:
@@ -435,11 +444,95 @@ func can_enter(u: Unit, b: Unit) -> bool:
 		and (b.def.get("garrison_accepts", []) as Array).has(u.def_id)
 
 
-## Puts `u` inside `b` (hidden, untargetable). Stub: false.
-func garrison_enter(_u: Unit, _b: Unit) -> bool:
-	return false
+## Puts `u` inside `b` (hidden, untargetable); the building's sling attack grows with its
+## occupants. False when full or not accepted.
+func garrison_enter(u: Unit, b: Unit) -> bool:
+	if not can_enter(u, b) or not u.alive:
+		return false
+	u.clear_orders()
+	world.set_hidden(u, true)
+	b.garrison.append(u.id)
+	_arm_garrison(b)
+	Events.garrison_changed.emit(b)
+	return true
 
 
-## Empties a garrison building. Stub.
-func garrison_unload(_b: Unit) -> void:
-	pass
+## Empties a garrison building: the occupants step out at its door (toward its rally point).
+func garrison_unload(b: Unit) -> void:
+	if b.garrison.is_empty():
+		return
+	var door := world.production.spawn_point(b, b.rally_pos)
+	var i := 0
+	for uid: int in b.garrison:
+		var u := world.get_unit(uid)
+		if u == null or not u.alive:
+			continue
+		u.teleport(door + Vector3(cos(i * 2.1), 0.0, sin(i * 2.1)) * 0.8 * float(mini(i, 1)))
+		world.set_hidden(u, false)
+		i += 1
+	b.garrison.clear()
+	_arm_garrison(b)
+	Events.garrison_changed.emit(b)
+
+
+## The garrison's attack: `garrison_attack` with its damage times the occupants (one sling each),
+## none when empty.
+func _arm_garrison(b: Unit) -> void:
+	var n := b.garrison.size()
+	var atk: Dictionary = b.def.get("garrison_attack", {})
+	if n <= 0 or atk.is_empty():
+		b.attack = {}
+		b.damage_min = 0
+		b.damage_max = 0
+		b.engage_id = 0
+		return
+	var a := atk.duplicate(true)
+	var dmg: Array = a.get("damage", [0, 0])
+	a["damage"] = [int(dmg[0]) * n, int(dmg[1]) * n]
+	a["acquire"] = maxf(float(a.get("acquire", 0.0)), float(a.get("range", 9.4)) + 1.0)
+	b.attack = a
+	b.apply_attack()
+
+
+## A free garrison building near `u` (the nearest own finished one with room), null when none.
+func free_garrison_near(u: Unit, within: float = 40.0) -> Unit:
+	var best: Unit = null
+	for b in world.unit_list:
+		if b.alive and b.player_id == u.player_id and can_enter(u, b) and Grid.flat_dist(b.pos, u.pos) <= within \
+				and (best == null or Grid.flat_dist(b.pos, u.pos) < Grid.flat_dist(best.pos, u.pos)):
+			best = b
+	return best
+
+
+## Sound the Gong / All Clear (clans hall toggle): the first press sends every Yurtwright within
+## `range` of the hall to the free Home Yurt slots (nearest first; the rest keep working); the
+## second empties every Home Yurt of the player. True when something happened.
+func sound_the_gong(hall: Unit, range_m: float) -> bool:
+	var pid := hall.player_id
+	if _gong_on.get(pid, false):
+		_gong_on.erase(pid)
+		var n := 0
+		for b in world.unit_list:
+			if b.alive and b.player_id == pid and not b.garrison.is_empty():
+				garrison_unload(b)
+				n += 1
+		return n > 0 or true
+	_gong_on[pid] = true
+	var room: Dictionary = {}
+	for u: Unit in world.query_radius(hall.pos, range_m + world.max_unit_radius):
+		if not u.alive or u.hidden or u.player_id != pid or not u.abilities.has("clans_roll_the_felt"):
+			continue
+		var yurt := free_garrison_near(u)
+		while yurt != null and int(room.get(yurt.id, yurt.garrison.size())) >= garrison_slots(yurt):
+			yurt = null
+		if yurt == null:
+			continue
+		room[yurt.id] = int(room.get(yurt.id, yurt.garrison.size())) + 1
+		u.clear_orders()
+		u.issue_order(Order.make(Order.Type.ENTER, yurt.pos, yurt.id))
+	return true
+
+
+## True while the player's gong is sounding (the hall button shows All Clear).
+func gong_sounding(pid: int) -> bool:
+	return bool(_gong_on.get(pid, false))
