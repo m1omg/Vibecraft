@@ -37,6 +37,11 @@ func on_unit_spawned(u: Unit) -> void:
 	if p != null and not p.heroes.has(u.id):
 		p.heroes.append(u.id)
 	apply_attributes(u)
+	if p != null and p.recall_grants > 0 and p.faction != "":
+		# the first hero comes with the faction's recall item (rules §6.1)
+		var recall := str(Defs.faction(p.faction).get("recall_item", ""))
+		if recall != "" and world.items.give(u, recall) >= 0:
+			p.recall_grants -= 1
 
 
 ## A proper name from the hero's list (rules §6.1), picked by the match seed and the unit id so
@@ -173,9 +178,14 @@ func rank_of(u: Unit, ability_id: String) -> int:
 	return int((u.hero.get("ranks", {}) as Dictionary).get(ability_id, 0))
 
 
-## Recomputes the hero's base stats from level + attribute bonuses (Defs.hero_stats).
+## Recomputes the hero's base stats from level + attribute bonuses (Defs.hero_stats): permanent
+## gains (`attr_bonus`) plus the carried items' attributes (`item_attr`, ItemSystem).
 func apply_attributes(u: Unit) -> void:
-	var st := Defs.hero_stats(str(u.hero.get("hero_id", u.def_id)), level_of(u), u.hero.get("attr_bonus", {}))
+	var bonus: Dictionary = (u.hero.get("attr_bonus", {}) as Dictionary).duplicate()
+	var items: Dictionary = u.hero.get("item_attr", {})
+	for k: String in items:
+		bonus[k] = int(bonus.get(k, 0)) + int(items[k])
+	var st := Defs.hero_stats(str(u.hero.get("hero_id", u.def_id)), level_of(u), bonus)
 	if st.is_empty():
 		return
 	u.level = level_of(u)
@@ -275,6 +285,20 @@ func revive_cost(hid: int) -> Dictionary:
 	return {"gold": gold, "lumber": 0, "food": int(cost.get("food", 5)), "time": t}
 
 
+## Inn revive (rules §6.7): f = min(0.8 + 0.2 × (L − 1), 2.6), gold and lumber floor(cost × f) of
+## the hero def's cost, in whole hundredths.
+func inn_revive_cost(hid: int) -> Dictionary:
+	var rec := dead_record(hid)
+	if rec.is_empty():
+		return {}
+	var r: Dictionary = Defs.rule("heroes.inn_revive", {})
+	var cost: Dictionary = Defs.unit(str(rec["def_id"])).get("cost", {})
+	var lv := int((rec["hero"] as Dictionary).get("level", 1))
+	var pct := mini(roundi(float(r.get("base", 0.8)) * 100.0) + roundi(float(r.get("per_level", 0.2)) * 100.0) * (lv - 1),
+		roundi(float(r.get("factor_max", 2.6)) * 100.0))
+	return {"gold": int(cost.get("gold", 425)) * pct / 100, "lumber": int(cost.get("lumber", 100)) * pct / 100}
+
+
 ## "" when `building` can start reviving dead hero `hid`, else an error key (cannot_train,
 ## busy, queue_full, need_gold).
 func can_revive(building: Unit, hid: int) -> String:
@@ -295,13 +319,15 @@ func can_revive(building: Unit, hid: int) -> String:
 
 ## The revive finished at `building`: the hero returns beside it with its level, XP, skills,
 ## items and running cooldowns, full HP and min(max mana, 100) mana (rules §6.7), takes its old
-## place in the acquisition order and walks to the rally point.
-func complete_revive(building: Unit, hid: int) -> Unit:
+## place in the acquisition order and walks to the rally point. `inn`: an inn revive (50 % HP,
+## no mana; its food is counted now).
+func complete_revive(building: Unit, hid: int, inn: bool = false) -> Unit:
 	var rec := dead_record(hid)
 	if rec.is_empty():
 		return null
-	var u := world.spawn_unit(str(rec["def_id"]), building.player_id,
-		world.production.spawn_point(building, building.rally_pos), 0.0, {"food_reserved": true})
+	var pid := int(rec["player"])
+	var u := world.spawn_unit(str(rec["def_id"]), pid,
+		world.production.spawn_point(building, building.rally_pos if not inn else Vector3.INF), 0.0, {"food_reserved": not inn})
 	if u == null:
 		return null
 	_dead.erase(hid)
@@ -310,9 +336,14 @@ func complete_revive(building: Unit, hid: int) -> Unit:
 	u.cooldowns = (rec["cooldowns"] as Dictionary).duplicate()
 	u.autocast = (rec["autocast"] as Dictionary).duplicate()
 	apply_attributes(u)
+	world.items.refresh_carrier(u)
 	var r: Dictionary = Defs.rule("heroes.revive", {})
 	u.hp = u.max_hp * float(r.get("hp", 1.0))
 	u.mana = minf(u.max_mana, float(r.get("mana_flat", 100)))
+	if inn:
+		var ir: Dictionary = Defs.rule("heroes.inn_revive", {})
+		u.hp = u.max_hp * float(ir.get("hp", 0.5))
+		u.mana = u.max_mana * float(ir.get("mana", 0.0))
 	var p := world.player(u.player_id)
 	if p != null:
 		p.heroes.erase(u.id)

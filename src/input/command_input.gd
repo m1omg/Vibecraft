@@ -36,6 +36,9 @@ var player_id: int = 0
 var targeting: String = ""
 var page: String = CardModel.PAGE_MAIN
 const ABILITY_PREFIX := "ability:"   ## targeting mode of a unit or point ability: "ability:<id>"
+const ITEM_PREFIX := "item:"         ## a targeted item: "item:<slot>"
+const MOVE_ITEM_PREFIX := "moveitem:"   ## moving an item: "moveitem:<slot>" (ground drops, a hero gets it)
+var item_hero: Unit = null           ## the hero whose item targeting is armed
 ## The building def being placed while targeting == "place".
 var placing: String = ""
 ## The placement ghost (visual only), made on first use.
@@ -80,6 +83,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			if escape():
 				get_viewport().set_input_as_handled()
 			return
+		for i in 6:
+			if k.is_action_pressed("item_%d" % (i + 1)):
+				var h := selection.hero_in_selection() if selection != null else null
+				if h != null:
+					use_item(h, i)
+					get_viewport().set_input_as_handled()
+				return
 		var slot := slot_for_key(k)
 		if slot >= 0:
 			activate_card(slot, k.shift_pressed)
@@ -124,9 +134,15 @@ func active_units() -> Array[Unit]:
 	return out
 
 
-## The card now (CardModel entries, null for empty slots).
+## The card now (CardModel entries, null for empty slots); a selected neutral shop shows its
+## stock to whoever brings a hero.
 func current_card() -> Array:
-	return CardModel.build(world, player_id, active_units(), page)
+	var us := active_units()
+	if us.is_empty():
+		var shop := _shop_selected()
+		if shop != null:
+			us = [shop]
+	return CardModel.build(world, player_id, us, page)
 
 
 func set_page(p: String) -> void:
@@ -205,6 +221,25 @@ func activate_card(slot: int, shift: bool = false) -> bool:
 			_issue_for([active_units()[0].id], {"type": "revive", "hero": e.uid})
 		"ability":
 			return _activate_ability(e, shift)
+		"buy":
+			var shop := _shop_selected()
+			var buyer := CardModel.buyer_for(world, player_id, shop) if shop != null else null
+			if buyer == null:
+				return false
+			_issue_raw({"type": "buy", "player": player_id, "units": [buyer.id], "target": shop.id, "def": e.id})
+		"service":
+			var shop2 := _shop_selected()
+			if shop2 == null:
+				return false
+			var by := CardModel.buyer_for(world, player_id, shop2)
+			_issue_raw({"type": "service", "player": player_id, "units": [by.id] if by != null else [],
+				"target": shop2.id, "def": e.id})
+		"inn_revive":
+			var inn := _shop_selected()
+			if inn == null:
+				return false
+			_issue_raw({"type": "service", "player": player_id, "units": [], "target": inn.id,
+				"def": "neutral_inn_revive", "hero": e.uid})
 		"cancel":
 			var us := active_units()
 			if e.id == "site":
@@ -228,6 +263,75 @@ func _activate_ability(e: CardModel.Entry, shift: bool) -> bool:
 		return true
 	_set_targeting(ABILITY_PREFIX + e.id)
 	return true
+
+
+## The selected shop (own faction shop or a neutral one), null when the selection is not one.
+func _shop_selected() -> Unit:
+	if selection == null or selection.selected.size() != 1:
+		return null
+	var u: Unit = selection.selected[0]
+	return u if u.alive and not Defs.shop(u.def_id).is_empty() else null
+
+
+## Inventory slot pressed (button or numpad): instant items are used at once, targeted ones arm
+## targeting ("item:<slot>"; a recall's point picks the hall). False when nothing happened.
+func use_item(hero: Unit, slot: int) -> bool:
+	if not can_process() or hero == null or hero.player_id != player_id or not hero.alive:
+		return false
+	if slot < 0 or slot >= hero.inventory.size() or hero.inventory[slot] == null:
+		return false
+	if not world.items.can_use(hero, slot):
+		_deny("cooldown" if world.items.cooldown_left(hero, slot) > 0.0 else "cannot_cast")
+		return false
+	var d := Defs.item(str(hero.inventory[slot]["id"]))
+	if str(d.get("targeting", "instant")) == "instant":
+		_issue_raw({"type": "use_item", "player": player_id, "units": [hero.id], "slot": slot})
+		return true
+	item_hero = hero
+	_set_targeting(ITEM_PREFIX + str(slot))
+	return true
+
+
+## Right click on an inventory slot: the next click drops the item on the ground or gives it to
+## another own hero.
+func begin_move_item(hero: Unit, slot: int) -> void:
+	if hero == null or hero.player_id != player_id or slot >= hero.inventory.size() or hero.inventory[slot] == null:
+		return
+	item_hero = hero
+	_set_targeting(MOVE_ITEM_PREFIX + str(slot))
+
+
+## A targeted item's or a moved item's click.
+func _item_click(cmd: String, target: Unit, ground: Vector3, shift: bool) -> bool:
+	if item_hero == null or not item_hero.alive:
+		return true
+	if cmd.begins_with(MOVE_ITEM_PREFIX):
+		var slot := int(cmd.trim_prefix(MOVE_ITEM_PREFIX))
+		if target != null and target != item_hero and target.is_hero and target.player_id == player_id:
+			_issue_raw({"type": "drop_item", "player": player_id, "units": [item_hero.id], "slot": slot, "target": target.id})
+			return true
+		if ground == Vector3.INF:
+			_deny("invalid_target")
+			return false
+		_issue_raw({"type": "drop_item", "player": player_id, "units": [item_hero.id], "slot": slot, "pos": ground, "queue": shift})
+		_marker(ground, Color(1, 0.9, 0.3))
+		return true
+	var s := int(cmd.trim_prefix(ITEM_PREFIX))
+	var cmdd := {"type": "use_item", "player": player_id, "units": [item_hero.id], "slot": s, "queue": shift}
+	if target != null and str(Defs.item(str(item_hero.inventory[s]["id"])).get("targeting", "")) == "target_unit":
+		cmdd["target"] = target.id
+	elif ground != Vector3.INF:
+		cmdd["pos"] = ground
+	else:
+		_deny("invalid_target")
+		return false
+	_issue_raw(cmdd)
+	_marker(ground if ground != Vector3.INF else target.pos, Color(0.5, 0.75, 1.0))
+	return true
+
+
+func _issue_raw(cmd: Dictionary) -> void:
+	world.issue(cmd)
 
 
 ## Smart casting: the unit of the active subgroup that can cast `ability_id` now (on `target`),
@@ -390,6 +494,8 @@ func _issue_targeted(cmd: String, screen_pos: Vector2, shift: bool) -> bool:
 	var target := selection.pick_unit(screen_pos)
 	if cmd.begins_with(ABILITY_PREFIX):
 		return _cast_at(cmd.trim_prefix(ABILITY_PREFIX), target, camera.screen_to_ground(screen_pos), shift)
+	if cmd.begins_with(ITEM_PREFIX) or cmd.begins_with(MOVE_ITEM_PREFIX):
+		return _item_click(cmd, target, camera.screen_to_ground(screen_pos), shift)
 	match cmd:
 		"attack_move":
 			if target != null and (target.is_invulnerable or target.is_resource or target.is_item):
@@ -433,6 +539,8 @@ func _issue_targeted(cmd: String, screen_pos: Vector2, shift: bool) -> bool:
 func _issue_ground(cmd: String, ground: Vector3, shift: bool) -> bool:
 	if cmd.begins_with(ABILITY_PREFIX):
 		return _cast_at(cmd.trim_prefix(ABILITY_PREFIX), null, ground, shift)
+	if cmd.begins_with(ITEM_PREFIX) or cmd.begins_with(MOVE_ITEM_PREFIX):
+		return _item_click(cmd, null, ground, shift)
 	match cmd:
 		"gather":
 			if world.doodads.nearest_tree(ground, World.TREE_CLICK_RADIUS) < 0:

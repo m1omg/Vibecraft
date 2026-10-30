@@ -17,6 +17,7 @@ extends SimSystem
 ## Called by: HUD (stock_of, can_buy for the shop card), AI.
 
 var _stock: Dictionary = {}    ## "pid:shop_id" -> {item: {count, restock_ticks}}
+var _service_ready: Dictionary = {}   ## "pid:cooldown group" -> tick the service is ready again
 
 
 func handle_command(cmd: Dictionary, units: Array[Unit]) -> bool:
@@ -30,6 +31,8 @@ func handle_command(cmd: Dictionary, units: Array[Unit]) -> bool:
 		"sell":
 			return not units.is_empty() and sell(pid, shop, units[0], int(cmd.get("slot", -1)))
 		"service":
+			if str(cmd.get("def", "")) == "neutral_inn_revive":
+				return revive_at_inn(pid, shop, int(cmd.get("hero", 0)))
 			return use_service(pid, shop, str(cmd.get("def", "")), units[0] if not units.is_empty() else null)
 	return false
 
@@ -93,19 +96,110 @@ func buy(pid: int, shop: Unit, item_id: String, hero: Unit = null) -> bool:
 		world.items.spawn_item(item_id, hero.pos)
 	Events.item_bought.emit(pid, shop, item_id, hero)
 	Events.stock_changed.emit(pid, shop)
+	if world.creeps != null and shop.player_id >= PlayerState.NEUTRAL_HOSTILE:
+		world.creeps.wake_near(shop)
 	return true
 
 
-## Sells slot `slot` of `hero` to a merchant (shops.json buys_items > 0). Stub: false.
-func sell(_pid: int, _shop: Unit, _hero: Unit, _slot: int) -> bool:
+## Sells slot `slot` of `hero` to a merchant that buys items (shops.json buys_items: the share of
+## the item's value paid). True when sold.
+func sell(pid: int, shop: Unit, hero: Unit, slot: int) -> bool:
+	var factor := float(Defs.shop(shop.def_id).get("buys_items", 0.0))
+	if factor <= 0.0 or hero == null or not hero.is_hero or not in_use_range(hero, shop):
+		return false
+	if slot < 0 or slot >= hero.inventory.size() or hero.inventory[slot] == null:
+		return false
+	var iid := str(hero.inventory[slot]["id"])
+	hero.inventory[slot] = null
+	world.items.refresh_carrier(hero)
+	Events.inventory_changed.emit(hero)
+	world.economy.add_income(pid, "gold", floori(float(Defs.item(iid).get("value", 0)) * factor), "item_sale")
+	return true
+
+
+## "" when `pid` can use service `service_id` at `shop` now, else an error key.
+func can_use_service(pid: int, shop: Unit, service_id: String, unit: Unit = null) -> String:
+	if not (Defs.shop(shop.def_id).get("services", []) as Array).has(service_id):
+		return "not_sold"
+	var sv: Dictionary = Defs.services.get(service_id, {})
+	if world.time < float(sv.get("from", 0.0)):
+		return "not_yet"
+	if bool(sv.get("needs_hero", false)) and (unit == null or not unit.is_hero or not in_use_range(unit, shop)):
+		return "need_hero"
+	if world.tick_count < int(_service_ready.get("%d:%s" % [pid, sv.get("cooldown_group", service_id)], 0)):
+		return "busy"
+	if str(sv.get("kind", "")) == "trade" and not world.economy.can_afford(pid, sv.get("give", {})):
+		return "need_gold" if (sv.get("give", {}) as Dictionary).has("gold") else "need_lumber"
+	return ""
+
+
+## Uses a service: a Fair Exchange trade (pays `give`, receives `get`, taxed like income when
+## the service says so, then its shared cooldown) or an inn revive (`unit` carries the dead
+## hero's id in its place: see revive_at_inn). True when it happened.
+func use_service(pid: int, shop: Unit, service_id: String, unit: Unit) -> bool:
+	if can_use_service(pid, shop, service_id, unit) != "":
+		return false
+	var sv: Dictionary = Defs.services.get(service_id, {})
+	if str(sv.get("kind", "")) == "trade":
+		world.economy.spend(pid, sv.get("give", {}))
+		var got: Dictionary = sv.get("get", {})
+		for k: String in got:
+			var src := "trade" if bool(sv.get("taxed_by_upkeep", false)) else "untaxed"
+			world.economy.add_income(pid, k, int(got[k]), src)
+		_service_ready["%d:%s" % [pid, sv.get("cooldown_group", service_id)]] = \
+			world.tick_count + roundi(float(sv.get("cooldown", 0.0)) * World.TICK_RATE)
+		if world.creeps != null:
+			world.creeps.wake_near(shop)
+		return true
 	return false
 
 
-## Uses a service (Fair Exchange, inn revive). Stub: false.
-func use_service(_pid: int, _shop: Unit, _service_id: String, _unit: Unit) -> bool:
-	return false
+## Inn revive (rules §6.7): instant, at the inn, for gold and lumber by the hero's level, with
+## 50 % HP and no mana. True when the hero is back.
+func revive_at_inn(pid: int, inn: Unit, hid: int) -> bool:
+	if not (Defs.shop(inn.def_id).get("services", []) as Array).has("neutral_inn_revive"):
+		return false
+	var cost := world.heroes.inn_revive_cost(hid)
+	var rec := world.heroes.dead_record(hid)
+	if cost.is_empty() or int(rec.get("player", -1)) != pid or not world.economy.can_afford(pid, cost):
+		return false
+	var p := world.player(pid)
+	var cap := mini(p.food_cap, int(Defs.rule("economy.food_cap", 100)))
+	if p.food_used + int(Defs.unit(str(rec["def_id"])).get("cost", {}).get("food", 5)) > cap:
+		return false
+	world.economy.spend(pid, cost)
+	var h := world.heroes.complete_revive(inn, hid, true)
+	if world.creeps != null:
+		world.creeps.wake_near(inn)
+	return h != null
 
 
-## Restock timers (per player). Stub: no restock yet.
+## Restock (shops.json `restock` s per item, per player): one item back each period while short.
 func sim_tick(_w: World, _dt: float) -> void:
-	pass
+	for key: String in _stock:
+		var shop := world.get_unit(int(key.get_slice(":", 1)))
+		if shop == null:
+			continue
+		var rows := {}
+		for r: Dictionary in Defs.shop(shop.def_id).get("stock", []):
+			rows[str(r["item"])] = r
+		var st: Dictionary = _stock[key]
+		for iid: String in st:
+			var row: Dictionary = rows.get(iid, {})
+			if row.is_empty() or int(st[iid]["count"]) >= int(row["max"]):
+				st[iid]["restock_ticks"] = 0
+				continue
+			st[iid]["restock_ticks"] = int(st[iid]["restock_ticks"]) + 1
+			if int(st[iid]["restock_ticks"]) >= roundi(float(row.get("restock", 60.0)) * World.TICK_RATE):
+				st[iid]["restock_ticks"] = 0
+				st[iid]["count"] = int(st[iid]["count"]) + 1
+				Events.stock_changed.emit(int(key.get_slice(":", 0)), shop)
+
+
+## Seconds until the next restock of `item_id` at `shop` for `pid` (0 when full).
+func restock_left(pid: int, shop: Unit, item_id: String) -> float:
+	var st := _player_stock(pid, shop)
+	for r: Dictionary in Defs.shop(shop.def_id).get("stock", []):
+		if str(r["item"]) == item_id and int(st[item_id]["count"]) < int(r["max"]):
+			return maxf(0.0, float(r.get("restock", 60.0)) - int(st[item_id]["restock_ticks"]) * World.DT)
+	return 0.0

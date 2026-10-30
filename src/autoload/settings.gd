@@ -65,6 +65,14 @@ static func default_actions() -> Dictionary:
 		"select_hero_1": [{"key": KEY_F1}],
 		"select_hero_2": [{"key": KEY_F2}],
 		"select_hero_3": [{"key": KEY_F3}],
+		# inventory slots on the classic numpad grid (rules §6.8, §18.7; the laptop preset
+		# Alt+1..6 waits for the settings screen: digits are control groups)
+		"item_1": [{"key": KEY_KP_7}],
+		"item_2": [{"key": KEY_KP_8}],
+		"item_3": [{"key": KEY_KP_4}],
+		"item_4": [{"key": KEY_KP_5}],
+		"item_5": [{"key": KEY_KP_1}],
+		"item_6": [{"key": KEY_KP_2}],
 	}
 	for i in 10:
 		a["group_%d" % i] = [{"key": KEY_0 + i}]

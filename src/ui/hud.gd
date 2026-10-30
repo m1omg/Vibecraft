@@ -46,6 +46,7 @@ var tooltip: HudTooltip
 var queue_panel: QueuePanel
 var idle_button: IdleWorkerButton
 var hero_bar: HeroBar
+var inventory: InventoryPanel
 ## A site's construction progress: label and bar (selection panel).
 var progress_row: HBoxContainer
 var progress_label: Label
@@ -144,6 +145,12 @@ func _ready() -> void:
 	hero_bar = HeroBar.new()
 	hero_bar.position = Vector2(10, 64)
 	$Root.add_child(hero_bar)
+	inventory = InventoryPanel.new()
+	inventory.visible = false
+	inventory.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var layout: HBoxContainer = $Root/Console/Layout
+	layout.add_child(inventory)
+	layout.move_child(inventory, card.get_index())
 	for kind: String in ["gold", "lumber", "food"]:
 		_wrap_counter(kind)
 	tooltip = HudTooltip.new()
@@ -161,6 +168,10 @@ func setup(w: World, sel: Selection, cmd: CommandInput, cam: RtsCamera, pid: int
 	queue_panel.commands = cmd
 	idle_button.setup(w, sel, cam, pid)
 	hero_bar.setup(w, sel, pid)
+	inventory.setup(w, cmd)
+	inventory.slot_hovered.connect(func(b: CardButton) -> void:
+		tooltip.hover(b, inventory.tooltip_for(b.slot), card.get_global_rect()))
+	inventory.slot_unhovered.connect(func(b: CardButton) -> void: tooltip.unhover(b))
 	menu_button.pressed.connect(_on_menu_pressed)
 	Events.selection_changed.connect(_on_selection_changed)
 	Events.notification.connect(_on_notification)
@@ -382,6 +393,8 @@ func _show_selection(units: Array) -> void:
 	grid.visible = _units.size() > 1
 	stats_label.visible = _units.size() <= 1
 	if _units.is_empty():
+		if inventory != null:
+			inventory.show_hero(null)
 		name_label.text = ""
 		stats_label.text = ""
 		portrait_label.text = ""
@@ -397,6 +410,8 @@ func _show_selection(units: Array) -> void:
 				break
 	portrait_label.text = initials(lead.def)
 	_set_portrait_color(icon_color(lead.def_id).darkened(0.35))
+	if inventory != null:
+		inventory.show_hero(lead if _units.size() == 1 and lead.is_hero else null)
 	name_label.text = _title(lead) if _units.size() == 1 else "%d units selected" % _units.size()
 	_layout_icons()
 	_refresh_info()
@@ -501,7 +516,8 @@ func card_tooltip(e: CardModel.Entry) -> Dictionary:
 		"lines": CardModel.describe(world, player_id, e), "requires": reqs}
 
 
-## Live tooltip: re-reads the hovered card entry (costs, availability) or queue slot.
+## Live tooltip: re-reads the hovered card entry (costs, availability), inventory slot or queue
+## slot.
 func _refresh_tooltip() -> void:
 	var t := tooltip.target
 	if t == null:
@@ -509,6 +525,8 @@ func _refresh_tooltip() -> void:
 	if t is CardButton and (t as CardButton).get_parent().get_parent() == card:
 		var b := t as CardButton
 		tooltip.set_content(card_tooltip(card.entry(b.slot)))
+	elif t is CardButton and inventory.buttons.has(t):
+		tooltip.set_content(inventory.tooltip_for((t as CardButton).slot))
 	elif t is CardButton:
 		tooltip.set_content(queue_panel.tooltip_for((t as CardButton).slot))
 	elif t == idle_button:

@@ -81,9 +81,13 @@ class Entry:
 static func build(w: World, pid: int, units: Array[Unit], page: String = PAGE_MAIN) -> Array:
 	var card: Array = []
 	card.resize(SLOTS)
-	if w == null or units.is_empty() or units[0].player_id != pid:
+	if w == null or units.is_empty():
 		return card
 	var lead := units[0]
+	if lead.player_id != pid:
+		if lead.is_structure() and not Defs.shop(lead.def_id).is_empty() and lead.player_id >= PlayerState.NEUTRAL_HOSTILE:
+			_shop_card(w, pid, lead, card)     # neutral shops serve whoever brings a hero
+		return card
 	if lead.is_mobile():
 		if lead.is_hero and page == PAGE_LEARN:
 			_learn_page(w, lead, card)
@@ -266,10 +270,86 @@ static func _building_card(w: World, pid: int, b: Unit, card: Array) -> void:
 		if n < BUILDING_SLOTS.size():
 			card[BUILDING_SLOTS[n]] = _research_entry(w, pid, b, str(uid), BUILDING_SLOTS[n], "upgrade")
 		n += 1
+	if not Defs.shop(b.def_id).is_empty():
+		_shop_card(w, pid, b, card)
+		return
 	if b.def.get("rally", false):
 		card[RALLY_SLOT] = _command(RALLY_SLOT, "rally", "rally", "cmd_rally")
 	if not w.production.queue_of(b).is_empty():
 		card[CANCEL_SLOT] = _cancel_entry(false)
+
+
+## A shop's card (rules §16, neutrals §5): its stock in data order (price, how many are left,
+## locked until available, capped when sold out, "need a hero" while no own hero stands within
+## use range), then its services (Fair Exchange trades) and, at an inn, one Revive per dead
+## hero. The buyer is the nearest own hero in range (`buyer_for`).
+static func _shop_card(w: World, pid: int, shop: Unit, card: Array) -> void:
+	var hero := buyer_for(w, pid, shop)
+	var n := 0
+	for row: Dictionary in w.shops.stock_of(pid, shop):
+		if n >= BUILDING_SLOTS.size():
+			break
+		var iid := str(row["item"])
+		var e := _entry(BUILDING_SLOTS[n], "buy", iid)
+		e.label = str(Defs.item(iid).get("name", iid))
+		e.key = str(row.get("hotkey", ""))
+		e.cost = (Defs.item(iid).get("price", {}) as Dictionary).duplicate()
+		e.level = int(row["count"])
+		e.levels = int(row["max"])
+		_shortfall(w, pid, e)
+		var err := w.shops.can_buy(pid, shop, iid, hero)
+		e.reason = err
+		e.state = int(STATE_OF.get(err, State.LOCKED)) if err != "" else State.READY
+		if err == "sold_out":
+			e.state = State.CAPPED
+		elif err == "need_hero" and e.short.is_empty():
+			e.state = State.LOCKED
+		card[e.slot] = e
+		n += 1
+	for sid: Variant in Defs.shop(shop.def_id).get("services", []):
+		var sv: Dictionary = Defs.services.get(str(sid), {})
+		if str(sv.get("kind", "")) == "inn_revive":
+			for hid in w.heroes.dead_heroes(pid):
+				if n >= BUILDING_SLOTS.size():
+					break
+				var rec := w.heroes.dead_record(hid)
+				var e2 := _entry(BUILDING_SLOTS[n], "inn_revive", str(rec["def_id"]))
+				e2.uid = hid
+				e2.hero = true
+				e2.label = Defs.text("revive_hero") % display_name(str(rec["def_id"]))
+				var keys: Array = sv.get("hotkeys", [])
+				e2.key = str(keys[mini(n, keys.size() - 1)]) if not keys.is_empty() else ""
+				e2.cost = w.heroes.inn_revive_cost(hid).duplicate()
+				e2.level = int((rec["hero"] as Dictionary).get("level", 1))
+				_shortfall(w, pid, e2)
+				e2.state = State.UNAFFORDABLE if not e2.short.is_empty() else State.READY
+				card[e2.slot] = e2
+				n += 1
+			continue
+		if n >= BUILDING_SLOTS.size():
+			break
+		var e3 := _entry(BUILDING_SLOTS[n], "service", str(sid))
+		e3.label = str(sv.get("name", sid))
+		e3.key = str(sv.get("hotkey", ""))
+		e3.cost = (sv.get("give", {}) as Dictionary).duplicate()
+		_shortfall(w, pid, e3)
+		var err3 := w.shops.can_use_service(pid, shop, str(sid), hero)
+		e3.reason = err3
+		e3.state = int(STATE_OF.get(err3, State.LOCKED)) if err3 != "" else State.READY
+		card[e3.slot] = e3
+		n += 1
+
+
+## The own hero that buys at `shop`: the nearest one within the shop's use range (null: none).
+static func buyer_for(w: World, pid: int, shop: Unit) -> Unit:
+	var best: Unit = null
+	var p := w.player(pid)
+	for hid: Variant in p.heroes if p != null else []:
+		var h := w.get_unit(int(hid))
+		if h != null and h.alive and w.shops.in_use_range(h, shop) \
+				and (best == null or h.edge_distance(shop) < best.edge_distance(shop)):
+			best = h
+	return best
 
 
 static func _cancel_entry(site: bool) -> Entry:
@@ -406,6 +486,35 @@ static func describe(w: World, pid: int, e: Entry) -> Array[String]:
 				_add_text(out, "tip_not_learned")
 		"revive":
 			out.append(Defs.text("tip_revive") % e.level)
+		"inn_revive":
+			out.append(Defs.text("tip_inn_revive") % e.level)
+		"buy":
+			out.append_array(item_lines(e.id))
+			out.append(Defs.text("tip_stock") % [e.level, e.levels])
+			if e.reason == "need_hero":
+				out.append(Defs.text("error_need_hero"))
+		"service":
+			var sv: Dictionary = Defs.services.get(e.id, {})
+			var get_: Dictionary = sv.get("get", {})
+			for k: String in get_:
+				out.append(Defs.text("tip_service_get") % [int(get_[k]), k])
+	return out
+
+
+## What an item does, from its data: the stat bonuses of a permanent item, what a consumable
+## restores or grants, its cooldown group.
+static func item_lines(iid: String) -> Array[String]:
+	var out: Array[String] = []
+	var d := Defs.item(iid)
+	var key := "item_" + iid.trim_prefix("item_")
+	if Defs.strings.has("desc_" + key):
+		out.append(Defs.text("desc_" + key))
+	var p: Dictionary = d.get("params", {})
+	for k: String in p:
+		if Defs.strings.has("stat_" + k) and (p[k] is float or p[k] is int):
+			out.append(Defs.text("stat_" + k) % _num(float(p[k])))
+	if str(d.get("effect", "")) == "recall_to_hall":
+		_add_text(out, "tip_recall")
 	return out
 
 

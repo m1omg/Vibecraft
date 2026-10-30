@@ -729,6 +729,15 @@ requirements, ability unlocks. Each file's header documents the full contract.
   auto-acquire sleepers. Bounty (4 × level + 2 + 0–4, taxed, none for summons) goes to the
   killer's owner (`Events.bounty_paid`); drops are rolled at match start and ride the camp's
   highest (Drop B) and lowest (Drop A) level creep; on-death ground effects (Loose Straw).
+  Items (rules §6.8): permanent items count while carried (`refresh_carrier`: stat params as
+  the "items" modifier source, str / agi / int as the hero's `item_attr`); identical charged
+  purchasables merge up to 2 × their charges; a recall item channels 5 s (an order cancels and
+  keeps the charge), then the hero and up to 23 own units within 9.4 m appear beside the own
+  finished hall nearest the chosen point; the first hero brings the faction's `recall_item`.
+  Shops: per-player stock that restocks one item every `restock` s, a hero within 7 m buys,
+  merchants that `buys_items` take slots back, Fair Exchange trades (taxed, shared cooldown,
+  from 3 min), the inn revive (instant, 50 % HP, no mana, `HeroSystem.inn_revive_cost`);
+  trades wake nearby camps.
   The creep spell AI (neutrals §1.7, simplified) casts for pulled camps twice a second;
   creep passives and auras are permanent buffs (`AbilitySystem._emit_auras`), "every N
   attacks" passives ride `AbilitySystem.on_attack`.
@@ -936,7 +945,13 @@ requirements, ability unlocks. Each file's header documents the full contract.
   shown, never pressed). Instant abilities cast from the best caster of the subgroup at once;
   unit and point abilities arm `CommandInput.ABILITY_PREFIX + id` targeting (an area ability's
   ring rides the cursor), the click casts from the nearest caster that can; an altar
-  shows Revive in place of a dead hero's train button. The info panel shows "Title: Name -
+  shows Revive in place of a dead hero's train button. The `InventoryPanel` (2 × 3 slots between
+  the selection panel and the card, for a single selected hero): item name, numpad key (7 8 /
+  4 5 / 1 2, actions `item_1..6`), charges, the group cooldown's sweep; click or key uses
+  (targeted items arm `CommandInput.ITEM_PREFIX` targeting), right click arms
+  `MOVE_ITEM_PREFIX` (ground drops, an own hero receives). A selected shop (own or neutral)
+  shows its stock, services and inn revives on the card; the nearest own hero within use range
+  buys (`CardModel.buyer_for`). The info panel shows "Title: Name -
   Level N", XP and STR / AGI / INT. Still to come: chat area, real art (original, no WC3 UI
   art).
 - Scenario UI (Main, battlefield only): an objective line under the top bar (goal + war-band

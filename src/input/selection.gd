@@ -229,6 +229,20 @@ func own_heroes() -> Array[Unit]:
 	return out
 
 
+## The own hero whose inventory the numpad keys use: the active subgroup's lead when it is a
+## hero, else the first own hero in the selection (null: none).
+func hero_in_selection() -> Unit:
+	var sub := active_subgroup_def()
+	var first: Unit = null
+	for u in selected:
+		if u.alive and u.is_hero and u.player_id == player_id:
+			if u.def_id == sub:
+				return u
+			if first == null:
+				first = u
+	return first
+
+
 ## Heroes the player has acquired, dead ones included (the hero bar's buttons).
 func hero_count() -> int:
 	var p := world.player(player_id)

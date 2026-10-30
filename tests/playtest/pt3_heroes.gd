@@ -7,7 +7,7 @@ extends SceneTree
 ##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
 ##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     -s tests/playtest/pt3_heroes.gd
-## Saves tests/output/pt3_{learn_page,altar_revive,level_up,abilities}.png.
+## Saves tests/output/pt3_{learn_page,altar_revive,level_up,abilities,inventory,shop}.png.
 
 const OUT_DIR := "res://tests/output/"
 
@@ -107,6 +107,32 @@ func _run() -> void:
 		await process_frame
 	await _shot("pt3_abilities.png")
 	FxClock.manual = false
+	# the inventory panel, then the Weighstall's card with the hero beside it
+	var items: Object = world.get("items")
+	for iid: String in ["item_tin_gorget", "item_kingdom_linden_salve", "item_kingdom_linden_salve", "item_plow_horse_brass"]:
+		items.call("give", marshal, iid)
+	sel.call("select_units", [marshal])
+	await _frames(4)
+	var inv: Control = hud.get("inventory")
+	var ib: Control = (inv.get("buttons") as Array)[1]
+	tip.call("hover", ib, inv.call("tooltip_for", 1), (hud.get("card") as Control).get_global_rect())
+	tip.set("_hover_t0", float(tip.get("_hover_t0")) - 1.0)
+	await _frames(4)
+	await _shot("pt3_inventory.png")
+	tip.call("unhover", ib)
+	tip.set("_leave_t0", float(tip.get("_leave_t0")) - 1.0)
+	var shop: Node = null
+	for u: Node in world.get("unit_list"):
+		if str(u.get("def_id")) == "neutral_weighstall":
+			shop = u
+	if shop != null:
+		marshal.call("teleport", shop.get("pos") + Vector3(5, 0, 2))
+		camera.call("jump_to", shop.get("pos"))
+		for i in 3:
+			world.call("step")
+		sel.call("select_units", [shop])
+		await _frames(6)
+		await _shot("pt3_shop.png")
 	quit(0)
 
 

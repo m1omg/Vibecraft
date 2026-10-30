@@ -42,17 +42,53 @@ func spawn_item(item_id: String, pos: Vector3, charges: int = -1) -> Unit:
 	return e
 
 
-## Puts an item into the first free slot of a hero. Returns the slot, or -1 (full / not a hero).
+## Puts an item into a hero's inventory: identical charged purchasables merge into one slot up to
+## charge_merge_factor × their base charges (neutrals §4.1), anything else takes the first free
+## slot. Returns the slot, or -1 (full / not a hero).
 func give(hero: Unit, item_id: String, charges: int = -1) -> int:
 	if not hero.is_hero:
 		return -1
+	var d := Defs.item(item_id)
+	var n := charges if charges >= 0 else int(d.get("charges", 0))
+	if n > 0 and str(d.get("class", "")) == "purchasable":
+		var cap := int(d.get("charges", 1)) * int(Defs.rule("items.charge_merge_factor", 2))
+		for i in hero.inventory.size():
+			var it: Variant = hero.inventory[i]
+			if it != null and str(it["id"]) == item_id and int(it["charges"]) + n <= cap:
+				it["charges"] = int(it["charges"]) + n
+				Events.inventory_changed.emit(hero)
+				return i
 	var slot := free_slot(hero)
 	if slot < 0:
 		return -1
-	hero.inventory[slot] = {"id": item_id,
-		"charges": charges if charges >= 0 else int(Defs.item(item_id).get("charges", 0))}
+	hero.inventory[slot] = {"id": item_id, "charges": n}
+	refresh_carrier(hero)
 	Events.inventory_changed.emit(hero)
 	return slot
+
+
+## Permanent items count while carried (rules §6.8: different items add up): their stat params
+## become the hero's "items" modifier source, their str / agi / int go to HeroSystem as item
+## attributes. Called whenever the inventory changes.
+func refresh_carrier(u: Unit) -> void:
+	var mods := {}
+	var attrs := {"str": 0, "agi": 0, "int": 0}
+	for it: Variant in u.inventory:
+		if it == null:
+			continue
+		var d := Defs.item(str(it["id"]))
+		if str(d.get("class", "")) != "permanent" and str(d.get("class", "")) != "artifact":
+			continue
+		var p: Dictionary = d.get("params", {})
+		for k: String in p:
+			if attrs.has(k):
+				attrs[k] = int(attrs[k]) + int(p[k])
+			elif p[k] is float or p[k] is int:
+				mods[k] = float(mods.get(k, 0.0)) + float(p[k])
+	u.set_modifiers(&"items", mods)
+	if u.is_hero and not u.hero.is_empty():
+		u.hero["item_attr"] = attrs
+		world.heroes.apply_attributes(u)
 
 
 func is_powerup(item_id: String) -> bool:
@@ -91,6 +127,7 @@ func drop(u: Unit, slot: int, pos: Vector3) -> Unit:
 		return null
 	var it: Dictionary = u.inventory[slot]
 	u.inventory[slot] = null
+	refresh_carrier(u)
 	Events.inventory_changed.emit(u)
 	var e := spawn_item(str(it["id"]), pos, int(it.get("charges", -1)))
 	Events.item_dropped.emit(u, str(it["id"]), pos)
@@ -105,6 +142,7 @@ func transfer(from: Unit, slot: int, to: Unit) -> bool:
 	if give(to, str(it["id"]), int(it.get("charges", -1))) < 0:
 		return false
 	from.inventory[slot] = null
+	refresh_carrier(from)
 	Events.inventory_changed.emit(from)
 	return true
 
@@ -116,10 +154,11 @@ func can_use(u: Unit, slot: int) -> bool:
 	return str(d.get("class", "")) != "permanent" and cooldown_left(u, slot) <= 0.0
 
 
-## Use range of the item in `slot` (m); < 0 = no target needed.
+## Use range of the item in `slot` (m); < 0 = no target needed (instant items; a recall's point
+## only chooses the hall, minimap clicks included).
 func use_range(u: Unit, slot: int) -> float:
 	var d := Defs.item(str(u.inventory[slot]["id"])) if slot >= 0 and slot < u.inventory.size() and u.inventory[slot] != null else {}
-	if str(d.get("targeting", "instant")) == "instant":
+	if str(d.get("targeting", "instant")) == "instant" or str(d.get("effect", "")) == "recall_to_hall":
 		return -1.0
 	return float(d.get("range", 0.0))
 
@@ -132,15 +171,31 @@ func cooldown_left(u: Unit, slot: int) -> float:
 	return maxf(0.0, (int(u.cooldowns.get("item:" + group, 0)) - world.tick_count) * World.DT)
 
 
-## Uses the item: runs its effect, spends a charge, starts the (group) cooldown. Return true to
-## keep the USE_ITEM order (channels: set o.data["phase"], then use_tick). Stub: instant use.
-func use(u: Unit, slot: int, target: Unit, pos: Vector3, _o: Order = null) -> bool:
+## Uses the item: runs its effect, spends a charge, starts the (group) cooldown. A recall keeps
+## the USE_ITEM order through its channel (o.data["phase"], then use_tick) and spends its charge
+## only on completion. Returns true to keep the order.
+func use(u: Unit, slot: int, target: Unit, pos: Vector3, o: Order = null) -> bool:
 	if not can_use(u, slot):
 		return false
 	var it: Dictionary = u.inventory[slot]
 	var iid := str(it["id"])
+	var d := Defs.item(iid)
+	world.buffs.on_action(u, "item")
+	if str(d.get("effect", "")) == "recall_to_hall" and o != null:
+		o.data["phase"] = "channel"
+		o.data["t"] = 0
+		o.data["item"] = iid
+		Events.item_used.emit(u, iid)
+		return true
 	if not _run_effect(u, iid, target, pos):
 		return false
+	_spend(u, slot, iid)
+	return false
+
+
+## Spends one charge of `slot` (the item leaves at 0) and starts its group cooldown.
+func _spend(u: Unit, slot: int, iid: String) -> void:
+	var it: Dictionary = u.inventory[slot]
 	var d := Defs.item(iid)
 	var group := str(d.get("cooldown_group", iid))
 	var cd := float((Defs.rule("items.group_cooldown", {}) as Dictionary).get(group, d.get("cooldown", 0.0)))
@@ -149,18 +204,55 @@ func use(u: Unit, slot: int, target: Unit, pos: Vector3, _o: Order = null) -> bo
 		it["charges"] = int(it["charges"]) - 1
 		if int(it["charges"]) == 0:
 			u.inventory[slot] = null
-	Events.item_used.emit(u, iid)
+	if d.get("effect", "") != "recall_to_hall":
+		Events.item_used.emit(u, iid)
 	Events.inventory_changed.emit(u)
-	return false
 
 
-func use_tick(u: Unit, _o: Order, _dt: float) -> Vector3:
+## The recall channel (rules §6.8): after rules.items.recall_channel the hero and up to 23 own
+## non-structure units within 9.4 m (nearest first, counted now) appear beside the own finished
+## hall nearest the chosen point; with no hall left it fails and keeps the charge. Only the
+## owner's order or death ends it (an order cancels and keeps the charge).
+func use_tick(u: Unit, o: Order, _dt: float) -> Vector3:
+	o.data["t"] = int(o.data.get("t", 0)) + 1
+	if int(o.data["t"]) < roundi(float(Defs.rule("items.recall_channel", 5.0)) * World.TICK_RATE):
+		return Vector3.ZERO
+	var at := o.target_pos if o.target_pos != Vector3.ZERO else u.pos
+	var hall: Unit = null
+	for b in world.unit_list:
+		if b.alive and b.player_id == u.player_id and b.has_flag("town_hall") and not b.under_construction \
+				and (hall == null or Grid.flat_dist(b.pos, at) < Grid.flat_dist(hall.pos, at)):
+			hall = b
+	if hall != null and o.slot >= 0 and o.slot < u.inventory.size() and u.inventory[o.slot] != null:
+		var r := float(Defs.rule("items.recall_radius", 9.4))
+		var cap := int(Defs.rule("items.recall_max_units", 23))
+		var band: Array[Unit] = []
+		for m: Unit in world.query_radius(u.pos, r + world.max_unit_radius):
+			if m != u and m.alive and m.player_id == u.player_id and m.is_mobile() and not m.hidden \
+					and Grid.flat_dist(m.pos, u.pos) <= r:
+				band.append(m)
+		band.sort_custom(func(a: Unit, b: Unit) -> bool:
+			var da := Grid.flat_dist(a.pos, u.pos)
+			var db := Grid.flat_dist(b.pos, u.pos)
+			return da < db if da != db else a.id < b.id)
+		band.resize(mini(band.size(), cap))
+		var spot := world.production.spawn_point(hall, hall.rally_pos)
+		var moved: Array[Unit] = [u]
+		moved.append_array(band)
+		for i in moved.size():
+			var a := TAU * float(i) / maxf(float(moved.size()), 1.0)
+			var ring := 0.0 if i == 0 else 1.2 + 0.4 * float(i / 8)
+			if moved[i] != u:
+				moved[i].clear_orders()
+			moved[i].teleport(spot + Vector3(cos(a), 0.0, sin(a)) * ring)
+		_spend(u, o.slot, str(o.data.get("item", "")))
+		Events.recall_completed.emit(u, hall, moved.size())
 	u.finish_order()
 	return Vector3.ZERO
 
 
-func cancel_use(_u: Unit, _o: Order) -> void:
-	pass
+func cancel_use(_u: Unit, o: Order) -> void:
+	o.data.erase("phase")
 
 
 func _run_effect(u: Unit, item_id: String, target: Unit, pos: Vector3) -> bool:

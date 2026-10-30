@@ -176,3 +176,40 @@ func test_altar_revive_button() -> void:
 	assert_true(hud.hero_bar.slots[0].revive_left > 0.0, "the hero bar shows the timer")
 	hud.queue_panel.refresh(altar)
 	assert_true(str(hud.queue_panel.tooltip_for(0).get("title", "")).begins_with("Revive "), "the queue says Revive")
+
+
+func test_inventory_panel_and_numpad_use() -> void:
+	var hero := _hero()
+	hero.set_base_stats({"hp_regen": 0.0})
+	for i in hero.inventory.size():
+		hero.inventory[i] = null       # the first hero came with the recall horn
+	world.items.give(hero, "item_kingdom_linden_salve")
+	hero.take_damage(300.0, null)
+	sel.select_units([hero])
+	assert_true(hud.inventory.visible, "a hero shows its inventory")
+	assert_eq(hud.inventory.entry(0).id, "item_kingdom_linden_salve", "slot 7 holds the salve")
+	var hp := hero.hp
+	_key(KEY_KP_7)
+	world.step()
+	world.step()
+	assert_near(hero.hp, hp + 240.0, 0.5, "numpad 7 drank it: +240 HP")
+	assert_eq(hud.inventory.entry(0), null, "and it is gone")
+	sel.select_units([_hall()])
+	assert_false(hud.inventory.visible, "no inventory for a building")
+
+
+func test_shop_card_sells_to_the_nearest_hero() -> void:
+	var shop := world.spawn_unit("neutral_weighstall", PlayerState.NEUTRAL_PASSIVE, _hall().pos + Vector3(20, 0, -10))
+	var hero := world.spawn_unit("kingdom_wheel_marshal", 0, shop.pos + Vector3(5, 0, 0))
+	for i in hero.inventory.size():
+		hero.inventory[i] = null
+	sel.select_units([shop])
+	var e := _entry(0)
+	assert_true(e != null and e.kind == "buy" and e.id == "item_rosehip_draught", "the stock on the card")
+	assert_eq(e.state, CardModel.State.READY, "a hero stands in range")
+	assert_true(commands.activate_card(0), "buy")
+	world.step()
+	assert_eq(str(hero.inventory[0]["id"]) if hero.inventory[0] != null else "", "item_rosehip_draught", "the hero has it")
+	hero.teleport(shop.pos + Vector3(30, 0, 0))
+	sel.select_units([shop])
+	assert_eq(_entry(0).reason, "need_hero", "out of range: bring a hero")

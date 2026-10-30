@@ -25,7 +25,7 @@
       "tree_hp": 50,
       "food_cap": 100,
       "upkeep_rounding": "floor",
-      "upkeep_taxed_income": ["mine", "bounty", "item_sale", "ability"],
+      "upkeep_taxed_income": ["mine", "bounty", "item_sale", "ability", "trade"],
       "build_pay": "on_start",
       "build_check_on_order": true,
       "build_start_hp": 0.1,
