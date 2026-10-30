@@ -3,8 +3,8 @@ extends SceneTree
 ## the Playtest 1 battlefield, the camera close on the kingdom's wagon; it rolls forward (wheels
 ## turn, the crew walk), then fires at a Tormai Grappler placed in range (the barrel recoils).
 ## Run (software Vulkan):
-##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1600x900x24" \
-##     godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution 1280x720 \
+##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
+##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     -s tests/playtest/siege_wagon.gd
 ## Then the Tormai Sling-Cart fires at a Pavisier (the throwing arm whips forward on the release).
 ## Saves tests/output/siege_wagon_{rest,rolling,recoil}.png and siege_sling_{rest,release}.png. Exit

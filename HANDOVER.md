@@ -42,6 +42,12 @@ original (`docs/research/ip-safety.md`).
 - **Playtest 2 "Base building" shipped and is waiting for the user's feedback** (`PLAYTEST.md`). Main menu → **Skirmish** (faction and
   computer difficulty toggles) on Wether Downs from one hall and five workers, against the build-order computer; the Playtest 1
   Battlefield Sandbox is still in the menu. ≈ 270 headless tests pass (the full run takes about 3 minutes).
+- **Fullscreen by default (2026-10-30, asked for by the user; not in a playtest message yet, so mention it in the next one):** the
+  game opens in borderless fullscreen at the monitor's resolution (`window/size/mode=3`). Alt+Enter or F11 (`toggle_fullscreen`,
+  handled by the `Settings` autoload, which keeps processing in menus and while paused) switches to a resizable 1600×900 window
+  centred on the screen and back. The choice is saved as `Settings.window_mode` in `user://settings.cfg` and re-applied at start
+  (`tests/unit/test_window.gd`). The 1600×900 viewport stays the UI design size (`canvas_items` + `expand`). Later: a settings
+  screen (window mode, resolution, vsync, UI scale, audio volumes).
 - **Playtest 1 feedback, done:** fog of war (per-team 2 m vision grids, cliffs and trees block sight, hidden enemies, building ghosts,
   terrain/water/foliage/minimap fog) and a real Bombard Wagon (and Sling-Cart) model: procedural Blender kit `tools/kits/siege.py`,
   rolling wheels, crew, recoil and throwing-arm motion (`src/fx/vehicle_rig.gd`).
@@ -90,37 +96,14 @@ original (`docs/research/ip-safety.md`).
 
 ## 4. Next steps
 
-1. **Fullscreen by default (asked for by the user; do this first).** The game currently opens in a 1600×900 window, and there is no
-   fullscreen option. `project.godot` has `window/size/viewport_width=1600`, `viewport_height=900`, `resizable=true`, and stretch
-   `canvas_items` / `expand`.
-   - **Default mode:** start in **borderless fullscreen at the monitor's native resolution**. Set `window/size/mode=3`
-     (`DisplayServer.WINDOW_MODE_FULLSCREEN`, borderless; not 4, exclusive).
-   - **Keep the 1600×900 viewport** as the UI design size. With `canvas_items` + `expand`, the HUD scales and the 3D view renders
-     at the real window resolution. Wider and taller screens show more map.
-   - **Toggle with Alt+Enter and F11.** Add a `toggle_fullscreen` action to `Settings.default_actions()` in
-     `src/autoload/settings.gd`. Handle it in a node that keeps processing while the game is paused: the Settings autoload with
-     `process_mode = PROCESS_MODE_ALWAYS`, using `_unhandled_input`, so the toggle also works in the main menu and the F10 pause
-     menu.
-   - **Windowed size:** going windowed restores a 1600×900 window centred on the current screen, still resizable.
-   - **Remember the choice:** persist it as `window_mode` (`"fullscreen"` / `"windowed"`) in `user://settings.cfg` via `_PERSISTED`,
-     and apply it in `Settings._ready()` after `load_settings()`.
-   - **Headless:** skip all `DisplayServer` window calls when `DisplayServer.get_name() == "headless"` so the headless tests are
-     unaffected.
-   - **Screenshot scripts:** under Xvfb a fullscreen window would take the Xvfb screen size (1600×900) instead of
-     `--resolution 1280x720`. Add Godot's `--windowed` flag to every screenshot command, in §6 below, in the `## Run` comments of
-     `tests/playtest/*.gd`, and in `tools/README.md`.
-   - **Test:** a unit test that the toggle flips and persists `window_mode`, with the `DisplayServer` calls guarded.
-   - **Docs:** add "Fullscreen / window: Alt+Enter or F11" to the controls table in `PLAYTEST.md`, and the action to
-     `docs/architecture.md` §11. Mention it in the next playtest message.
-   - **Later:** a proper settings screen (window mode, resolution, vsync, UI scale, audio volumes).
-2. Fold in the user's **Playtest 2 feedback** (the questions are in `PLAYTEST.md`; the mix and music answers matter).
-3. **Playtest 3 "Heroes & creeps":** hero XP, levels, skill points and the Learn card; abilities and buffs on the card (cooldown
+1. Fold in the user's **Playtest 2 feedback** (the questions are in `PLAYTEST.md`; the mix and music answers matter).
+2. **Playtest 3 "Heroes & creeps":** hero XP, levels, skill points and the Learn card; abilities and buffs on the card (cooldown
    sweeps, autocast); revive at the altar; creeps sleeping at night, bounty, item drops; items and shops; the faction signatures
    (Levy Horn, Sound the Gong, the worker transforms); hero portraits; the AI creeping its route.
-4. **Playtest 4 "Versus AI":** the full rules §19 AI (creeping, expansions, focus fire, abilities, retreat), a full juice pass,
+3. **Playtest 4 "Versus AI":** the full rules §19 AI (creeping, expansions, focus fire, abilities, retreat), a full juice pass,
    review and fixes. The remaining economy/building juice (ECO-01 mine gulp, ECO-03 cargo hoist, BLD-05/06 foundation and reveal,
    BLD-24 anticipation, BLD-25 unattended site, BLD-13 route lines) is listed in `docs/design/juice/economy-and-buildings.md`.
-5. **Asset requests** (QA and contract agents):
+4. **Asset requests** (QA and contract agents):
    - repaint the team-colour masks (most kingdom units are at 1–5 %, the Wheel Marshal at 38 %; run
      `tools/assets/check_team_coverage.gd`);
    - a Pavisier model;
@@ -163,9 +146,10 @@ The full log is in `docs/asset-ledger.md`. **Log every paid job there**, includi
   `slice-plan.md` > art-and-audio bible > juice docs > `architecture.md`.
 - **Tests:** `godot --headless --path . --import`, then `godot --headless --path . -s tests/run_tests.gd`. All must pass. Never
   skip or disable a test.
-- **Screenshots:** `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1600x900x24" godot --path .
-  --rendering-driver vulkan --audio-driver Dummy --resolution 1280x720 -s tests/playtest/pt1_sandbox.gd`. Add `--windowed` once the
-  fullscreen default (§4 step 1) is in. Software rendering runs at about 1–2 fps. LOOK at the PNGs.
+- **Screenshots:** `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" godot --path .
+  --rendering-driver vulkan --audio-driver Dummy -s tests/playtest/pt1_sandbox.gd`. The game starts fullscreen, so a capture is
+  the size of the Xvfb screen: Godot ignores `--windowed` and `--resolution` then. Software rendering runs at about 1–2 fps. LOOK
+  at the PNGs.
 - **IP checks** before every commit: `python3 tools/ip/check_banned_terms.py` and `tools/ip/check_value_echo.py`. Never use the
   reference game's names, lines, melodies or designs anywhere outside `docs/`.
 - **Session setup:** `.claude/hooks/session-start.sh` installs Godot 4.7.2, lavapipe/xvfb, Blender bpy (`/opt/bpyenv`),

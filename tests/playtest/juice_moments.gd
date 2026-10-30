@@ -2,8 +2,8 @@ extends SceneTree
 ## Signature-moment beat captures (juice bible §2, §5.4) on the slice map in the real main scene
 ## (HUD, camera, selection, command input, fx). Runs with a fixed frame time so every capture
 ## lands on its beat however slow the software renderer is:
-##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1600x900x24" \
-##     godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution 1280x720 \
+##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
+##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     --fixed-fps 60 -s tests/playtest/juice_moments.gd [-- --only=sm01,sm05]
 ## SM-01 (the first command): twelve Pavisiers are box-selected with real mouse events, then a
 ## right-click on open grass: captures at the box release (+33 ms: rings painting in from the

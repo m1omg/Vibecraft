@@ -5,8 +5,8 @@ extends SceneTree
 ## north-east — at default and close zoom, by day and by night, a ramp facing the camera, plus a
 ## clash in the middle. Saves tests/output/visual_*.png.
 ## Run (software Vulkan):
-##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1600x900x24" \
-##     godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution 1280x720 \
+##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
+##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     -s tests/playtest/screenshot_visual.gd [-- --only=day_default,night_close]
 ## Units the gameplay data does not define yet are registered from slice-content.json for the shot
 ## only (tests/playtest/slice_defs.gd). Everything is loaded at runtime (autoloads are not visible

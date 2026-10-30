@@ -4,8 +4,8 @@ extends SceneTree
 ## the build page short of gold (hatched buttons, shortfall tooltip, error line).
 ## Untyped on purpose: a -s script compiles before the autoloads exist.
 ## Run (software Vulkan):
-##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1600x900x24" \
-##     godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution 1280x720 \
+##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
+##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     -s tests/playtest/base_hud.gd
 ## Saves tests/output/hud_{place_valid,place_blocked,hall_queue,short_of_gold}.png.
 

@@ -5,8 +5,8 @@ extends SceneTree
 ## steps per frame keep the software renderer bearable). Asserts one side wins within 90 sim
 ## seconds and saves tests/output/battle_1..3.png during the fight. Exit code 1 on failure.
 ## Run (software Vulkan):
-##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1600x900x24" \
-##     godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution 1280x720 \
+##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
+##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     -s tests/playtest/battle.gd
 ## Everything is loaded at runtime (autoload names are not visible to -s scripts at compile time).
 

@@ -5,8 +5,8 @@ extends SceneTree
 ## the computer's push and the end, and a count of engine errors.
 ## Untyped on purpose: a -s script compiles before the autoloads exist.
 ## Run (software Vulkan):
-##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1600x900x24" \
-##     godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution 1280x720 \
+##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
+##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     -s tests/playtest/pt2_skirmish.gd
 ## Saves tests/output/pt2_{mining,building,hall_card,push,end}.png. Exit 1 when the match does not
 ## end within 16 minutes.

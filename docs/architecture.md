@@ -692,8 +692,9 @@ requirements, ability unlocks. Each file's header documents the full contract.
 - Input actions (project.godot `[input]`, generated from `Settings.default_actions()` by
   `tools/gen_input_map.gd`; `Settings` re-adds any missing at runtime): `cam_left/right/up/down`
   (arrow keys), `cam_zoom_in/out` (wheel, PgUp / PgDn), `cam_drag` (middle mouse), `select`
-  (LMB), `command` (RMB), `queue_modifier` (shift), `cancel` (Esc), `menu` (F10), `jump_alert`
-  (space), `subgroup_next` (tab; with shift it cycles back), `select_hero_1..3` (F1–F3),
+  (LMB), `command` (RMB), `queue_modifier` (shift), `cancel` (Esc), `menu` (F10),
+  `toggle_fullscreen` (Alt+Enter, F11; descriptors may carry `"alt": true`), `jump_alert` (space),
+  `subgroup_next` (tab; with shift it cycles back), `select_hero_1..3` (F1–F3),
   `cycle_halls` (Backspace), `idle_worker` (F8, backtick; ctrl = every idle worker),
   `group_0..9` (digit keys; ctrl/shift read from event modifiers),
   `card_0..11` (command card grid Q W E R / A S D F / Z X C V, row-major).
@@ -727,6 +728,14 @@ requirements, ability unlocks. Each file's header documents the full contract.
   Emits `Events.selection_changed`.
   The press must land in the world (HUD panels stop it); once pressing, drag motion and the
   release are read in `_input`, before the GUI, so a box that ends over the HUD still completes.
+- Window: `project.godot` starts in borderless fullscreen (`window/size/mode=3`) at the
+  monitor's resolution; the 1600×900 viewport is the UI design size (`canvas_items` +
+  `expand`). `Settings` (process ALWAYS, so it works in the menu and while paused) handles
+  `toggle_fullscreen` in `_unhandled_input`: `toggle_fullscreen()` flips `window_mode`
+  (`"fullscreen"` / `"windowed"`, persisted), saves and calls `apply_window_mode()`, which goes
+  fullscreen or restores a resizable `WINDOWED_SIZE` (1600×900) window centred on the current
+  screen; `_ready` re-applies a saved `"windowed"`. Every `DisplayServer` window call is skipped
+  when headless. The main menu's Enter (start skirmish) ignores Alt+Enter.
 - Pause: F10 (`menu`) is handled by the HUD, which keeps processing while the tree is paused
   (Main and World do not), so the same key unpauses; `Main._toggle_pause` pauses the tree, shows
   the `PauseMenu` (`src/ui/pause_menu.gd`, process ALWAYS: Resume (F10 / Esc), Restart, Quit to
@@ -939,8 +948,10 @@ night filter, hero motifs, rally stems and ambience beds: later.
 - `tests/playtest/*.gd`: scripted scenarios (spawn units, issue commands, advance N ticks, assert
   outcomes, optionally save screenshots to `tests/output/`, git-ignored). Screenshots need a
   display: `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0
-  1600x900x24" godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution
-  1280x720 -s tests/playtest/screenshot_overview.gd` (lavapipe) or `--rendering-driver opengl3`.
+  1280x720x24" godot --path . --rendering-driver vulkan --audio-driver Dummy
+  -s tests/playtest/screenshot_overview.gd` (lavapipe) or `--rendering-driver opengl3`. The game
+  starts fullscreen, so the Xvfb screen sets the capture size (`--windowed` / `--resolution`
+  have no effect then).
 - `tests/unit/test_perf.gd`: worst-case tick cost with 250 units (dense blob idle and
   attack-moving, a cross-map group order on the generated map, 2 × 125 armies clashing); every
   tick is timed and both the average and the worst tick are asserted (`assert_tick_cost`).

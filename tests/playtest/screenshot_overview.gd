@@ -5,8 +5,8 @@ extends SceneTree
 ##   overview_enemy_base.png - default camera over player 1's base
 ##   overview_cliffs.png  - default camera at a plateau ramp (cliff walls, ramp)
 ## Run (software Vulkan):
-##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1600x900x24" \
-##     godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution 1280x720 \
+##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
+##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     -s tests/playtest/screenshot_overview.gd
 ## Everything is loaded at runtime (autoload names are not visible to -s scripts at compile time).
 

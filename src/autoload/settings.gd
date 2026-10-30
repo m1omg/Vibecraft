@@ -25,6 +25,9 @@ var always_show_health_bars: bool = true
 ## "grid" (the 4 x 3 card on Q W E R / A S D F / Z X C V); "" = rules.controls.hotkey_preset.
 var hotkey_preset: String = ""
 
+# Window (Alt+Enter / F11 toggles; rules: borderless fullscreen at the monitor's resolution by default)
+var window_mode: String = "fullscreen"     ## "fullscreen" (borderless) or "windowed"
+
 # Skirmish setup (main menu)
 var skirmish_faction: String = "kingdom"   ## the local player's faction; the computer plays the other
 var ai_difficulty: String = "normal"       ## rules.ai.<difficulty>: easy, normal, hard
@@ -32,8 +35,10 @@ var ai_difficulty: String = "normal"       ## rules.ai.<difficulty>: easy, norma
 const _PERSISTED: Array[String] = [
 	"edge_pan_enabled", "edge_pan_margin_px", "edge_pan_speed", "key_pan_speed",
 	"drag_pan_speed", "zoom_step", "double_click_ms", "always_show_health_bars", "hotkey_preset",
-	"skirmish_faction", "ai_difficulty",
+	"skirmish_faction", "ai_difficulty", "window_mode",
 ]
+## The windowed size (the UI design size, project.godot viewport).
+const WINDOWED_SIZE := Vector2i(1600, 900)
 
 ## action name -> Array of input descriptors. Descriptor: {"key": Key} or {"mouse": MouseButton}.
 ## Control groups use plain digit keys; ctrl/shift are read from the event modifiers.
@@ -52,6 +57,7 @@ static func default_actions() -> Dictionary:
 		"queue_modifier": [{"key": KEY_SHIFT}],
 		"cancel": [{"key": KEY_ESCAPE}],
 		"menu": [{"key": KEY_F10}],
+		"toggle_fullscreen": [{"key": KEY_ENTER, "alt": true}, {"key": KEY_F11}],
 		"jump_alert": [{"key": KEY_SPACE}],
 		"subgroup_next": [{"key": KEY_TAB}],     # Shift+Tab cycles backwards (Selection)
 		"cycle_halls": [{"key": KEY_BACKSPACE}],
@@ -85,6 +91,7 @@ static func make_event(desc: Dictionary) -> InputEvent:
 		var k := InputEventKey.new()
 		k.device = -1
 		k.physical_keycode = desc["key"]
+		k.alt_pressed = bool(desc.get("alt", false))
 		return k
 	var m := InputEventMouseButton.new()
 	m.device = -1
@@ -93,8 +100,47 @@ static func make_event(desc: Dictionary) -> InputEvent:
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # Alt+Enter / F11 also work in the menu and while paused
 	ensure_input_actions()
 	load_settings()
+	# project.godot already starts in borderless fullscreen, so only a saved "windowed" needs applying
+	if window_mode == "windowed":
+		apply_window_mode()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.is_action_pressed("toggle_fullscreen") and not event.is_echo():
+		toggle_fullscreen()
+		get_viewport().set_input_as_handled()
+
+
+static func is_headless() -> bool:
+	return DisplayServer.get_name() == "headless"
+
+
+## Alt+Enter / F11: fullscreen <-> windowed, remembered in user://settings.cfg. Returns the new mode.
+func toggle_fullscreen() -> String:
+	window_mode = "windowed" if window_mode == "fullscreen" else "fullscreen"
+	save_settings()
+	apply_window_mode()
+	return window_mode
+
+
+## Puts the window in `window_mode`: borderless fullscreen at the monitor's resolution, or a
+## resizable WINDOWED_SIZE window centred on the screen it is on. No-op when headless.
+func apply_window_mode() -> void:
+	if is_headless():
+		return
+	if window_mode == "fullscreen":
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		return
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_RESIZE_DISABLED, false)
+	var screen := DisplayServer.window_get_current_screen()
+	var area := DisplayServer.screen_get_usable_rect(screen)
+	var size := Vector2i(mini(WINDOWED_SIZE.x, area.size.x), mini(WINDOWED_SIZE.y, area.size.y))
+	DisplayServer.window_set_size(size)
+	DisplayServer.window_set_position(area.position + (area.size - size) / 2)
 
 
 ## Adds any default action missing from the InputMap (e.g. when project.godot was edited by hand).

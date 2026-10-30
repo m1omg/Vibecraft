@@ -130,7 +130,7 @@ func _start(scenario: String) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo \
+	if event is InputEventKey and event.pressed and not event.echo and not (event as InputEventKey).alt_pressed \
 			and (event as InputEventKey).keycode in [KEY_ENTER, KEY_KP_ENTER]:
 		start_skirmish()
 		get_viewport().set_input_as_handled()

@@ -88,6 +88,7 @@ then F5 again.
 | Camera | Arrow keys, screen edges, middle-drag; mouse wheel zooms |
 | Jump to the last alert | **Space** |
 | Menu / pause | **F10** |
+| Fullscreen / window | **Alt + Enter** or **F11** (the game starts fullscreen and remembers your choice) |
 
 **Tooltips:** rest the mouse on a command button for a moment to see its cost (missing gold or
 lumber in red, for example "95 (-35)"), what it does, and what it still needs. Locked buttons are

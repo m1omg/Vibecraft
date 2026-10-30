@@ -4,8 +4,8 @@ extends SceneTree
 ## the real menu -> Main.start_match path. The sim is stepped by hand between captures (the
 ## software renderer runs at ~2 fps), so every capture shows a real sim moment.
 ## Run (software Vulkan):
-##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1600x900x24" \
-##     godot --path . --rendering-driver vulkan --audio-driver Dummy --resolution 1280x720 \
+##   VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json xvfb-run -a -s "-screen 0 1280x720x24" \
+##     godot --path . --rendering-driver vulkan --audio-driver Dummy \
 ##     -s tests/playtest/pt1_sandbox.gd
 ## Saves tests/output/pt1_{menu,opening,fight,pause,end}.png. Exit code 1 when the fight never
 ## happens or the banner does not show. Everything is loaded at runtime (autoload names are not
