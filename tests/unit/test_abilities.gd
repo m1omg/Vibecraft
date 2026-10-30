@@ -153,9 +153,11 @@ func test_periodic_damage_regeneration_and_blindness() -> void:
 	var blind := w.spawn_unit("clans_hero_uncut", 1, Vector3(26, 0, 20))
 	w.buffs.apply(blind, "buff_sunglint_blind", null, {"miss_chance": 1.0}, 5.0)
 	var misses: Array = []
-	Events.attack_missed.connect(func(a: Node, _t: Node) -> void: misses.append(a))
+	var on_miss := func(a: Node, _t: Node) -> void: misses.append(a)
+	Events.attack_missed.connect(on_miss)
 	var before := soldier.hp
 	for i in 3:
 		w.combat.fire(blind, soldier)
+	Events.attack_missed.disconnect(on_miss)
 	assert_eq(misses.size(), 3, "a blinded attacker misses")
 	assert_lt(before - soldier.hp, 0.5, "and deals nothing")

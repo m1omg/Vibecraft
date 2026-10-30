@@ -719,8 +719,19 @@ requirements, ability unlocks. Each file's header documents the full contract.
   with the shops.
 - Items (`ItemSystem`), shops (`ShopSystem`, per-player stock, `buy` / `sell` / `service`
   commands) and creeps (`CreepSystem.spawn_camps(map, only = [])`: camp templates from
-  `creep_camps.json`, ring layout, guard positions, bounty) follow the same pattern; their
-  headers document the API.
+  `creep_camps.json`, ring layout, guard positions) follow the same pattern; their headers
+  document the API. Creeps (rules §15): a camp acts as one (`alert_camp`); a leash of 18.75 m;
+  every return is invulnerable (`buff_returning`) and ends with a full heal at home; a camp
+  that neither dealt nor took damage for 10 s walks home; camps sleep on their schedule
+  (`sleeps`, night by default) once home and calm, 0–6 s after the boundary (a stagger seeded
+  by the match seed and camp id), and wake at the next boundary, when a member is hit, a
+  building starts within 12 m or a trade happens within 10 m (`wake_near`); player units never
+  auto-acquire sleepers. Bounty (4 × level + 2 + 0–4, taxed, none for summons) goes to the
+  killer's owner (`Events.bounty_paid`); drops are rolled at match start and ride the camp's
+  highest (Drop B) and lowest (Drop A) level creep; on-death ground effects (Loose Straw).
+  The creep spell AI (neutrals §1.7, simplified) casts for pulled camps twice a second;
+  creep passives and auras are permanent buffs (`AbilitySystem._emit_auras`), "every N
+  attacks" passives ride `AbilitySystem.on_attack`.
 - `AiPlayer` (`src/systems/ai/ai_player.gd`): one per AI seat, throttled `think()`, tuning from
   `rules.ai.<difficulty>`, its own RNG; it issues only player commands (an APM cap drops
   non-essential ones) and sees only through its own fog. Playtest 2 build-order opponent:

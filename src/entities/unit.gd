@@ -808,6 +808,8 @@ func find_target(r: float) -> Unit:
 			continue    # no acquisition of what the player cannot see (rules §14)
 		if fog == null and o.status.has("invisible") and world.fog != null and not world.fog.can_see(player_id, o):
 			continue    # nor of invisible enemies (rules §11), fog or not
+		if o.status.has("sleep"):
+			continue    # sleeping creeps are never auto-acquired (rules §15.3: night is safe scouting)
 		var d := edge_distance(o)
 		if d > r:
 			continue

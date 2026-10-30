@@ -229,6 +229,23 @@ func execute(caster: Unit, ability_id: String, rank: int, target: Unit = null, p
 	return ok
 
 
+## A landed attack: "every N attacks" passives (Ember Rake's burn, Rockfall Blow's stun) put
+## their buff on the target on every N-th attack of this unit.
+func on_attack(attacker: Unit, target: Unit) -> void:
+	if attacker.is_hero or attacker.abilities.is_empty() or target == null or not target.alive:
+		return
+	for aid: Variant in attacker.abilities:
+		var v := Defs.ability_rank(str(aid), 1)
+		var every := int(v.get("every", 0))
+		if every <= 0 or str(Defs.ability(str(aid)).get("type", "")) != "passive":
+			continue
+		var key := "%s#hits" % aid
+		var n := int(attacker.cooldowns.get(key, 0)) + 1
+		attacker.cooldowns[key] = n
+		if n % every == 0 and v.has("buff"):
+			world.buffs.apply(target, str(v["buff"]), attacker, v)
+
+
 func set_autocast(u: Unit, ability_id: String, on: bool) -> void:
 	if not Defs.ability(ability_id).has("autocast"):
 		return
@@ -324,16 +341,18 @@ func _tick_ground(w: World, g: Dictionary) -> void:
 			w.buffs.apply(u, str(d["ally_buff"]), owner, {}, linger)
 
 
-## Every living unit with a learned aura re-applies its buff to the units its filter allows within
-## the aura's area, lasting the linger time (rules §10.3: 0.5 s refresh, 2 s linger, the same
-## aura from two emitters keeps the highest rank, auras ignore fog). Passives (Clean Cut) are
-## permanent buffs carrying their rank's values, re-applied when the rank changes.
+## Every living unit with a learned aura (heroes) or an aura of its own (creeps, units)
+## re-applies its buff to the units its filter allows within the aura's area, lasting the linger
+## time (rules §10.3: 0.5 s refresh, 2 s linger, the same aura from two emitters keeps the highest
+## rank, auras ignore fog). Passives with a buff (Clean Cut, Stuffed, Hardy) are permanent buffs
+## carrying their rank's values, re-applied when the rank changes; conditional passive buffs
+## (Stand Still) are not in yet.
 func _emit_auras(w: World) -> void:
 	var linger := float(Defs.rule("status.aura_linger", 2.0))
 	for u in w.unit_list:
-		if not u.alive or not u.is_hero or u.hidden:
+		if not u.alive or u.hidden or (not u.is_hero and u.abilities.is_empty()):
 			continue
-		for aid: Variant in u.def.get("hero_abilities", []):
+		for aid: Variant in (u.def.get("hero_abilities", []) if u.is_hero else u.abilities):
 			var a := Defs.ability(str(aid))
 			var kind := str(a.get("type", ""))
 			if kind != "aura" and kind != "passive":
@@ -343,7 +362,7 @@ func _emit_auras(w: World) -> void:
 				continue
 			var v := Defs.ability_rank(str(aid), rank)
 			var buff := str(v.get("buff", ""))
-			if buff == "":
+			if buff == "" or Defs.buff(buff).has("condition"):
 				continue
 			var vals := v.duplicate()
 			vals["rank"] = rank

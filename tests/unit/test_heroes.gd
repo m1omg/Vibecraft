@@ -88,8 +88,10 @@ func test_level_up_keeps_missing_hp_and_caps_at_ten() -> void:
 	assert_near(hero.max_hp, 675.0, 0.01, "level-1 HP (kingdom §6.2)")
 	hero.take_damage(100.0, null)
 	var levels: Array[int] = []
-	Events.hero_level_up.connect(func(u: Node) -> void: levels.append(int(u.hero["level"])))
+	var on_level := func(u: Node) -> void: levels.append(int(u.hero["level"]))
+	Events.hero_level_up.connect(on_level)
 	w.heroes.add_xp(hero, 500.0)
+	Events.hero_level_up.disconnect(on_level)
 	assert_eq(levels, [2, 3] as Array[int], "two level-ups in order")
 	assert_eq(int(hero.hero["skill_points"]), 3, "+1 point per level")
 	assert_near(hero.max_hp - hero.hp, 100.0, 0.01, "the missing HP is kept")

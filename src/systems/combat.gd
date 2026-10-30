@@ -83,6 +83,8 @@ func fire(attacker: Unit, target: Unit) -> void:
 	if proc(attacker, "miss", float(t.get("miss_chance", 0.0))):
 		Events.attack_missed.emit(attacker, target)
 		return
+	if world.abilities != null:
+		world.abilities.on_attack(attacker, target)
 	if attacker.projectile.is_empty():
 		hit(attacker, target, base, attacker.attack_type)
 	else:

@@ -11,7 +11,8 @@ extends Node
 ##   - lasting ground effects are drawn every frame from the sim's records: burning ground, the
 ##     swallowed sun, smoke and straw as tinted discs with a pulsing edge; the local team's Bronze
 ##     Window reveals as a dashed ring; a Fuse Mark ticks as a red ring under its target;
-##   - the local player's invisible units are drawn half-transparent (UnitView).
+##   - the local player's invisible units are drawn half-transparent (UnitView); sleeping creeps
+##     breathe out a small puff every 2.2 s.
 ## Handlers only enqueue; the queue drains in `_process`. Every curve is closed-form on the fx
 ## clock.
 
@@ -43,7 +44,7 @@ var world: World
 var counts: Dictionary = {}
 var _queue: Array = []
 var _links: Array = []
-var _ember_beat: Dictionary = {}     ## ground effect handle -> the last ember beat played
+var _ember_beat: Dictionary = {}     ## ground effect handle (or -unit id: snores) -> the last beat played
 
 
 func setup(v: Vfx, w: World) -> void:
@@ -177,6 +178,12 @@ func _draw_lasting() -> void:
 		var xf2 := vfx.marks.ground_xf(rv["pos"], float(rv["radius"]), int(rv["handle"]))
 		vfx.marks.add_frame(xf2, GroundMarks.Shape.RING_DASHED, Color(0.95, 0.75, 0.4, 0.6), 0.04, 0.0)
 	for u in world.unit_list:
+		if u.alive and u.status.has("sleep") and vfx.allow(u.pos):
+			# a sleeping creep breathes out a small puff every 2.2 s (rules §15.3 tells; never a "Z")
+			var beat := floori(now / 2.2 + Juice.hash01(u.id, 0, 3))
+			if beat != int(_ember_beat.get(-u.id, beat)):
+				vfx.particles.burst("smoke_puff", u.display_pos() + Vector3(0, u.top_height() + 0.1, 0), Vector3.UP, 0.4, 1)
+			_ember_beat[-u.id] = beat
 		if u.alive and not u.buffs.is_empty() and world.buffs.has_buff(u, "buff_fuse_mark") and vfx.allow(u.pos):
 			var k := 0.5 + 0.5 * sin(TAU * now * 3.0)
 			vfx.marks.add_frame(vfx.marks.ground_xf(u.display_pos(), 0.9, u.id), GroundMarks.Shape.RING,

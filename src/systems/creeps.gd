@@ -20,8 +20,55 @@ extends SimSystem
 ##   started near guard camps), AI (camp_state), HUD / minimap (camps(), camp_state).
 
 const RING := 2.5
+const SPELL_TICKS := 15        ## the creep spell AI thinks twice a second
 
-var _camps: Dictionary = {}    ## camp instance id -> {template, pos, members: Array[int], cleared, aggro}
+var _camps: Dictionary = {}    ## camp instance id -> {template, pos, members: Array[int], cleared, aggro, sleeps}
+var _drops: Dictionary = {}    ## carrier creep id -> item id (rolled at match start, neutrals §1.8)
+var _last_fight: Dictionary = {}   ## camp id -> sim time of the last damage a member dealt or took
+var _asleep: Dictionary = {}   ## camp id -> true while its members sleep
+
+
+func hooks() -> Array[StringName]:
+	return [&"spawned", &"died", &"damaged"]
+
+
+## A member hit or hitting keeps its camp fighting (the give-up timer) and wakes it.
+func on_unit_damaged(u: Unit, _amount: float, src: Unit) -> void:
+	if u.camp_id != "":
+		_last_fight[u.camp_id] = world.time
+		if _asleep.get(u.camp_id, false):
+			wake_camp(u.camp_id)
+	if src != null and src.camp_id != "":
+		_last_fight[src.camp_id] = world.time
+
+
+## A building started within guard_build_radius of a sleeping camp wakes it (rules §15.3).
+func on_unit_spawned(u: Unit) -> void:
+	if not u.is_structure() or u.player_id >= PlayerState.NEUTRAL_HOSTILE or _asleep.is_empty():
+		return
+	var r := float(Defs.rule("creeps.guard_build_radius", 12.0))
+	for cid: String in _asleep.keys():
+		if Grid.flat_dist(u.pos, (_camps[cid] as Dictionary)["pos"]) <= r:
+			wake_camp(cid)
+
+
+## A creep falls: bounty to the killer's owner (rules §15.5: taxed like mined gold, none for
+## summons or neutral killers), its drop on the ground, an on-death ground effect (Loose Straw).
+func on_unit_died(u: Unit, killer: Unit) -> void:
+	if u.camp_id == "" and not u.is_creep():
+		return
+	if killer != null and not u.is_summoned and killer.player_id < PlayerState.NEUTRAL_HOSTILE:
+		var got := world.economy.add_income(killer.player_id, "gold", bounty_for(u), "bounty")
+		if got > 0:
+			Events.bounty_paid.emit(killer.player_id, got, u.pos)
+	if _drops.has(u.id):
+		world.items.spawn_item(str(_drops[u.id]), u.pos)
+		_drops.erase(u.id)
+	for aid: Variant in u.abilities:
+		var g := str(Defs.ability_rank(str(aid), 1).get("on_death_ground_effect", ""))
+		if g != "":
+			var gd := Defs.ground_effect(g)
+			world.abilities.add_ground_effect(g, u, u.pos, float(gd.get("radius", 2.0)), float(gd.get("duration", 4.0)))
 
 
 ## Spawns every camp of `map` (owner NEUTRAL_HOSTILE). Map camps without a template (test maps)
@@ -56,11 +103,55 @@ func spawn_camps(map: MapData, only: Array = []) -> int:
 			if u != null:
 				u.camp_id = cid
 				u.set_home(u.pos)
+				u.leash_range = float(Defs.rule("creeps.leash", 18.75))
 				members.append(u.id)
 				n += 1
 		_camps[cid] = {"template": str(c.get("template", "")), "pos": centre, "members": members,
-			"cleared": false, "aggro": false}
+			"cleared": false, "aggro": false,
+			"sleeps": str(c.get("sleeps_override", tmpl.get("sleeps_override", tmpl.get("sleeps", "night"))))}
+		_roll_drops(cid, tmpl.get("drops", {}), members)
 	return n
+
+
+## Drops (neutrals §1.8), rolled now with the seeded sim RNG: Drop B goes to the camp's
+## highest-level creep, Drop A to its lowest (ties: the first in order; summons never carry);
+## each item is picked from its pool (items of the listed classes at the drop's level), or the
+## drop's fixed `item`.
+func _roll_drops(cid: String, drops: Dictionary, members: Array[int]) -> void:
+	if drops.is_empty() or members.is_empty():
+		return
+	var hi := members[0]
+	var lo := members[0]
+	for uid in members:
+		var u := world.get_unit(uid)
+		if u.level > world.get_unit(hi).level:
+			hi = uid
+		if u.level < world.get_unit(lo).level:
+			lo = uid
+	for slot: String in ["B", "A"]:
+		if not drops.has(slot):
+			continue
+		var spec: Dictionary = drops[slot]
+		var item := str(spec.get("item", ""))
+		if item == "":
+			var pool: Array = []
+			for iid: String in Defs.items:
+				var d: Dictionary = Defs.items[iid]
+				if (spec.get("class", []) as Array).has(str(d.get("class", ""))) and int(d.get("level", 0)) == int(spec.get("level", 1)):
+					pool.append(iid)
+			pool.sort()
+			if pool.is_empty():
+				continue
+			item = str(pool[world.rng.randi_range(0, pool.size() - 1)])
+		var carrier := hi if slot == "B" or not drops.has("B") else lo
+		if _drops.has(carrier):
+			carrier = lo if carrier == hi else hi
+		_drops[carrier] = item
+
+
+## The item a creep will drop ("" when none).
+func drop_of(u: Unit) -> String:
+	return str(_drops.get(u.id, ""))
 
 
 ## Creep order for a layout: highest level first (ties in template order; neutrals §1.9).
@@ -92,12 +183,30 @@ func camp_state(camp_id: String) -> Dictionary:
 	if c.is_empty():
 		return {}
 	var alive := camp_members(camp_id)
-	return {"template": c["template"], "pos": c["pos"], "alive": alive.size(), "asleep": false,
-		"cleared": alive.is_empty(), "colour": str((Defs.camps.get(str(c["template"]), {}) as Dictionary).get("colour", ""))}
+	return {"template": c["template"], "pos": c["pos"], "alive": alive.size(),
+		"asleep": bool(_asleep.get(camp_id, false)), "cleared": alive.is_empty(),
+		"colour": str((Defs.camps.get(str(c["template"]), {}) as Dictionary).get("colour", ""))}
 
 
-func is_asleep(_u: Unit) -> bool:
-	return false
+func is_asleep(u: Unit) -> bool:
+	return u.status.has("sleep")
+
+
+## Puts a calm camp to sleep (buff_sleeping on every member: as stunned, wakes on damage).
+func sleep_camp(camp_id: String) -> void:
+	_asleep[camp_id] = true
+	for m in camp_members(camp_id):
+		world.buffs.apply(m, "buff_sleeping", null, {}, -1.0)
+	Events.camp_slept.emit(camp_id)
+
+
+func wake_camp(camp_id: String) -> void:
+	if not _asleep.has(camp_id):
+		return
+	_asleep.erase(camp_id)
+	for m in camp_members(camp_id):
+		world.buffs.remove(m, "buff_sleeping")
+	Events.camp_woke.emit(camp_id)
 
 
 ## Rules §15.1 "the camp acts as one": a member of `camp_id` acquired `target` or was hit by
@@ -125,17 +234,25 @@ func bounty_for(u: Unit) -> int:
 	return int(b["per_level"]) * u.level + int(b["base"]) + world.rng.randi_range(0, int(b["rand"]))
 
 
-## A purchase / service at `building` wakes sleeping camps within rules.creeps.wake_trade_radius.
-## Stub: no sleep yet.
-func wake_near(_building: Unit) -> void:
-	pass
+## A purchase / service at `building` wakes sleeping camps with a member within
+## rules.creeps.wake_trade_radius of its footprint edge (rules §15.3).
+func wake_near(building: Unit) -> void:
+	var r := float(Defs.rule("creeps.wake_trade_radius", 10.0))
+	for cid: String in _asleep.keys():
+		for m in camp_members(cid):
+			if building.edge_distance(m) <= r:
+				wake_camp(cid)
+				break
 
 
-## Camp bookkeeping: a pulled camp calms down once no member is fighting (the next pull emits
-## camp_aggro again) and a camp whose members are all dead is cleared once (camp_cleared).
-## Not in yet: sleep schedules and the give-up timer (Unit's idle behaviour leashes creeps and
-## walks them home).
-func sim_tick(_w: World, _dt: float) -> void:
+## Camp bookkeeping (rules §15.1–§15.3): a pulled camp calms down once no member is fighting
+## (the next pull emits camp_aggro again); a camp that neither dealt nor took damage for
+## give_up_time walks home; every return is invulnerable and ends with a full heal; camps sleep
+## on their schedule (night by default) once home and calm, each camp 0–6 s after dusk (a
+## seeded stagger), and wake at dawn the same way; the creep spell AI casts for pulled camps; a
+## camp whose members are all dead is cleared once (camp_cleared).
+func sim_tick(w: World, _dt: float) -> void:
+	var night := DayNight.is_night_at(w.time)
 	for cid: String in _camps:
 		var c: Dictionary = _camps[cid]
 		if bool(c["cleared"]):
@@ -144,7 +261,124 @@ func sim_tick(_w: World, _dt: float) -> void:
 		if alive.is_empty():
 			c["cleared"] = true
 			c["aggro"] = false
+			_asleep.erase(cid)
 			Events.camp_cleared.emit(cid)
 			continue
-		if bool(c.get("aggro", false)) and alive.all(func(m: Unit) -> bool: return m.engage_id == 0):
-			c["aggro"] = false
+		var fighting := alive.any(func(m: Unit) -> bool: return m.engage_id != 0 or m.current != null)
+		if bool(c.get("aggro", false)):
+			if not fighting:
+				c["aggro"] = false
+			elif w.time - float(_last_fight.get(cid, w.time)) > float(Defs.rule("creeps.give_up_time", 10.0)):
+				for m in alive:
+					m.engage_id = 0
+					m.clear_orders()
+					m.return_to(m.home_pos())
+				c["aggro"] = false
+			elif w.tick_count % SPELL_TICKS == 0:
+				_creep_spells(alive)
+		for m in alive:
+			var shielded := w.buffs.has_buff(m, "buff_returning")
+			if m.returning and not shielded:
+				w.buffs.apply(m, "buff_returning", null, {}, -1.0)
+			elif shielded and not m.returning:
+				w.buffs.remove(m, "buff_returning")
+				m.hp = m.max_hp
+				m.mana = m.max_mana
+		_schedule_sleep(w, cid, c, alive, night, fighting)
+
+
+## Sleep schedules: "night" camps sleep from dusk, "day" camps by day, "never" never; each camp
+## falls asleep / wakes stagger seconds after the boundary, a stagger seeded by the match seed
+## and the camp id (no draw from the shared stream).
+func _schedule_sleep(w: World, cid: String, c: Dictionary, alive: Array[Unit], night: bool, fighting: bool) -> void:
+	var sched := str(c.get("sleeps", "night"))
+	if sched == "never":
+		return
+	var want := night if sched == "night" else not night
+	var hour := DayNight.hour_at(w.time)
+	var since := fposmod(hour - (DayNight.DUSK if night else DayNight.DAWN), 24.0) * DayNight.DAY_LENGTH / 24.0
+	var stagger := float(Defs.rule("creeps.sleep_stagger", 6.0)) * float(absi(hash([w.rng.seed, cid])) % 1000) / 1000.0
+	var asleep := bool(_asleep.get(cid, false))
+	if want and not asleep and since >= stagger and not fighting and not bool(c.get("aggro", false)):
+		if alive.all(func(m: Unit) -> bool: return not m.returning and Grid.flat_dist(m.pos, m.home_pos()) <= Unit.HOME_EPS):
+			sleep_camp(cid)
+	elif not want and asleep and since >= stagger:
+		wake_camp(cid)
+
+
+## The creep spell AI (neutrals §1.7, simplified): each awake member of a pulled camp casts one
+## ready ability: a summon or camp buff at once; an area blast with 2+ enemies or a hero in it;
+## a ground effect on the biggest enemy cluster (heroes count twice); a heal on the most hurt
+## camp-mate below 60 % (itself last); a root or silence on an enemy hero, else the farthest
+## ranged enemy in range.
+func _creep_spells(alive: Array[Unit]) -> void:
+	for m in alive:
+		if m.stunned or m.returning or (m.current != null and m.current.type == Order.Type.CAST):
+			continue
+		for aid: Variant in m.abilities:
+			var id := str(aid)
+			var kind := str(Defs.ability(id).get("type", ""))
+			if kind in ["passive", "aura", "command"] or world.abilities.cast_error(m, id, null, false) != "":
+				continue
+			var pick := _spell_pick(m, id, kind, alive)
+			if pick.is_empty():
+				continue
+			var cmd := {"type": "cast", "player": m.player_id, "units": [m.id], "ability": id}
+			cmd.merge(pick)
+			world.issue(cmd)
+			break
+
+
+func _spell_pick(m: Unit, id: String, kind: String, mates: Array[Unit]) -> Dictionary:
+	var v := Defs.ability_rank(id, 1)
+	var effect := str(Defs.ability(id).get("effect", ""))
+	var reach := float(v.get("range", 0.0))
+	var area := float(v.get("area", 0.0))
+	var foes: Array[Unit] = []
+	for u: Unit in world.query_radius(m.pos, maxf(reach, area) + area + world.max_unit_radius):
+		if m.is_valid_target(u) and not u.is_structure():
+			foes.append(u)
+	match kind:
+		"instant":
+			if effect == "area_damage":
+				var n := 0
+				var hero := false
+				for f in foes:
+					if m.edge_distance(f) <= area:
+						n += 1
+						hero = hero or f.is_hero
+				return {"self": true} if n >= 2 or hero else {}
+			return {"self": true} if not foes.is_empty() else {}
+		"target_point":
+			var best: Unit = null
+			var best_score := 1
+			for f in foes:
+				if m.edge_distance(f) > reach:
+					continue
+				var score := 0
+				for g in foes:
+					if Grid.flat_dist(f.pos, g.pos) <= area:
+						score += 2 if g.is_hero else 1
+				if score > best_score:
+					best_score = score
+					best = f
+			return {"pos": best.pos} if best != null else {}
+		"target_unit":
+			if effect == "heal_target":
+				var hurt: Unit = null
+				for a in mates:
+					if a.hp < a.max_hp * 0.6 and m.edge_distance(a) <= reach \
+							and (hurt == null or a.hp / a.max_hp < hurt.hp / hurt.max_hp or hurt == m):
+						if a != m or hurt == null:
+							hurt = a
+				return {"target": hurt.id} if hurt != null else {}
+			var pick: Unit = null
+			for f in foes:
+				if m.edge_distance(f) > reach:
+					continue
+				if f.is_hero:
+					return {"target": f.id}
+				if not f.projectile.is_empty() and (pick == null or m.edge_distance(f) > m.edge_distance(pick)):
+					pick = f
+			return {"target": pick.id} if pick != null else {}
+	return {}
