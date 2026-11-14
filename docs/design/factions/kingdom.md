@@ -728,14 +728,14 @@ Autocast toggles with a right-click (global rule). "Research" names the upgrade 
 | Flail Hetman | `kingdom_flail_hetman` | STR | 24 (+2.5) | 17 (+1.8) | 13 (+1.3) | 1–9 | 0 | 2.0 | 1.1 (melee) | G | 4.6 | P1 (slice-plan B24) |
 | Firewright | `kingdom_firewright` | INT | 16 (+1.8) | 12 (+1.0) | 21 (+3.0) | 3–9 | −1 | 2.2 | 7.0 (missile) | G+A | 4.4 | **[SLICE]** |
 
-Derived values (HP / mana / armour / damage / cooldown):
+Derived values (HP / mana / armour / damage / cooldown) (with the Playtest 3 hero tuning of rules §6.6: base HP 200, +1 armour, +3 damage):
 
 | Hero | Level 1 | Level 5 | Level 10 |
 |---|---|---|---|
-| Wheel Marshal | 675 / 240 / 4.6 / 24–30 / 1.77 s | 925 / 330 / 6.1 / 34–40 / 1.64 s | 1250 / 465 / 8.2 / 47–53 / 1.49 s |
-| Orrery Sage | 475 / 300 / 3.2 / 22–28 / 1.64 s | 625 / 480 / 4.4 / 34–40 / 1.54 s | 825 / 705 / 5.9 / 49–55 / 1.44 s |
-| Flail Hetman | 700 / 195 / 5.1 / 25–33 / 1.49 s | 950 / 270 / 7.2 / 35–43 / 1.35 s | 1250 / 360 / 9.9 / 47–55 / 1.20 s |
-| Firewright | 500 / 315 / 2.6 / 24–30 / 1.77 s | 675 / 495 / 3.8 / 36–42 / 1.67 s | 900 / 720 / 5.3 / 51–57 / 1.55 s |
+| Wheel Marshal | 775 / 240 / 5.6 / 27–33 / 1.77 s | 1025 / 330 / 7.1 / 37–43 / 1.64 s | 1350 / 465 / 9.2 / 50–56 / 1.49 s |
+| Orrery Sage | 575 / 300 / 4.2 / 25–31 / 1.64 s | 725 / 480 / 5.4 / 37–43 / 1.54 s | 925 / 705 / 6.9 / 52–58 / 1.44 s |
+| Flail Hetman | 800 / 195 / 6.1 / 28–36 / 1.49 s | 1050 / 270 / 8.2 / 38–46 / 1.35 s | 1350 / 360 / 10.9 / 50–58 / 1.20 s |
+| Firewright | 600 / 315 / 3.6 / 27–33 / 1.77 s | 775 / 495 / 4.8 / 39–45 / 1.67 s | 1000 / 720 / 6.3 / 54–60 / 1.55 s |
 
 ### 6.3 Kits
 
@@ -748,7 +748,7 @@ Derived values (HP / mana / armour / damage / cooldown):
 | Ability | Rank | Mana | Cooldown | Range / area | Effect |
 |---|---|---|---|---|---|
 | **Linden Balm** (Q; allied unit target; **on herself at 50 % effect**) | 1 / 2 / 3 | 80 | 7 s | 8 m | Heals the allied target for **150 / 290 / 430** (75 / 145 / 215 when she targets herself). Other allies within 2.5 m of the target heal 25 % of that (the Marshal included if she stands there). Does not work on mechanical units. VFX: drifting linden blossoms. Icon: a linden sprig over a wheel hub (never a glowing hand or a light pillar) |
-| **Brace the Wheel** (W; no target) | 1 / 2 / 3 | 60 | 15 s | 4 / 5 / 6 m | Taunts enemy **non-hero** units in the radius to attack her for 2 / 3 / 4 s. She gains +4 / +6 / +8 armour for 6 s. VFX: she plants the wheel-shield's rim and a **wheel-rim ring** (`fx_wheel_rim_ring`: an ivory ring with spoke ticks) rolls out from the rim to the radius; no dust burst, no camera shake, no red shout, no roar, so it never reads as a ground slam |
+| **Brace the Wheel** (W; no target) | 1 / 2 / 3 | 60 | 15 s | 4 / 5 / 6 m | Taunts enemy **non-hero** units in the radius to attack her for 2 / 3 / 4 s. She gains +5 / +7 / +9 armour for 6 s. VFX: she plants the wheel-shield's rim and a **wheel-rim ring** (`fx_wheel_rim_ring`: an ivory ring with spoke ticks) rolls out from the rim to the radius; no dust burst, no camera shake, no red shout, no roar, so it never reads as a ground slam |
 | **Measured Cadence** (E; aura) | 1 / 2 / 3 | — | — | 9 m | Allied units gain **+6 / +10 / +14 % attack speed**. VFX: a faint drum-beat pulse ring under her every 1.5 s. Regeneration is left to the Linden Sister |
 | **The Wagon Ring** (R; ultimate, no target) | — | 150 | 160 s | 11 m | Painted wagon boards and wheels slam down into a barricade ring around her (art bible `K_WAGON`; never a ghostly or glowing ring, dome, halo or light pillar). For **7 s**, allied non-structure units in the ring when cast **cannot drop below 1 HP**. When it ends, each affected unit restores 15 % of its max HP. Not dispellable (ultimate) |
 
@@ -787,7 +787,7 @@ Derived values (HP / mana / armour / damage / cooldown):
 | Ability | Rank | Mana | Cooldown | Range / area | Effect |
 |---|---|---|---|---|---|
 | **Naphtha Flask** (Q; point) | 1 / 2 / 3 | 95 | 9 s | 10 m, radius 3 m | Impact **55 / 90 / 125** Spell damage, then the ground burns for 6 s at **12 / 20 / 28** damage per second (a ground effect: Spell damage, ignores armour value; not a buff, so it cannot be dispelled; leaving the area ends it). Buildings take 50 % |
-| **Fuse Mark** (W; **enemy** unit or building) | 1 / 2 / 3 | 80 | 11 s | 8 m | Lights a fuse on the target. After **4 s** it explodes for **80 / 140 / 200** Spell damage to the target and 50 % to enemies within 2.5 m. If the target dies first, the fuse explodes at once where it fell. Buildings take ×1.5. The fuse is a magic debuff, **dispellable: yes** (a dispel defuses it with no explosion) |
+| **Fuse Mark** (W; **enemy** unit or building) | 1 / 2 / 3 | 80 | 11 s | 8 m | Lights a fuse on the target. After **4 s** it explodes for **95 / 165 / 235** Spell damage to the target and 50 % to enemies within 2.5 m. If the target dies first, the fuse explodes at once where it fell. Buildings take ×1.5. The fuse is a magic debuff, **dispellable: yes** (a dispel defuses it with no explosion) |
 | **Incendiary Wadding** (E; aura) | 1 / 2 / 3 | — | — | 9 m | Attacks by allied **ranged non-structure units, heroes included** (the Firewright too) set targets alight for **3 / 5 / 7** damage per second for 3 s. The burn is Spell damage (ignores armour value), refreshes, does not stack, **dispellable: yes**; buildings take 50 %. Towers do not apply it |
 | **Grand Bombard** (R; ultimate, point within 6 m) | — | 175 | 150 s | Fires up to 17 m (minimum 3 m) | Places a crewed bronze bombard for **25 s**: summoned, mechanical, ground, immobile (**not** a structure), 900 HP, 5 armour Fortified. Fires every 2.4 s at enemy ground units and buildings: Siege **75–85**, splash 1.25 m full / 2.5 m half. Counts as a level-5 summon for XP. Reuses the Bombard Wagon mesh at 1.3× scale |
 

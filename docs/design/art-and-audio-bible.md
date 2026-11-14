@@ -1878,7 +1878,7 @@ budgeted in the faction docs; this table covers the 2D and audio work owned by t
 | Hall concepts | Done (ledger #22) | — | — | 0 |
 | Terrain, cliffs, water, swatches, foliage | Done: 13 (ledger #15) + 14 swatches (ledger #21). To do: ≈ 14 (the slice-extra swatches of §5.6, second tile variants, ≈ 4 swatches for the two T2 hall add-on kits, §5.5 T4) | Higgsfield | 0.25 cr | ≈ 3.5 cr |
 | Image-to-3D redo: the Pavisier and any regenerated concept that passes the squint test | ≤ 4 | Higgsfield Tripo H3.1 | 9 cr | ≤ 36 cr |
-| Icons: 45 items (33 neutral, 5 Curio Cabinet, 7 Tea Tent), ≈ 55 kingdom and ≈ 47 clans (units, heroes, abilities, buildings, research, summons for the selection grid, toggle states), 17 creep abilities | ≈ 164 icons = 41 sheets + 30 % retries ≈ 53 sheets | Krea 2 Medium | 9 CU per sheet | ≈ 477 CU (×4 if grids fail) |
+| Icons: 45 items (33 neutral, 5 Curio Cabinet, 7 Tea Tent), ≈ 55 kingdom and ≈ 47 clans (units, heroes, abilities, buildings, research, summons for the selection grid, toggle states), 17 creep abilities | ≈ 164 icons = 41 sheets + 30 % retries ≈ 53 sheets | Krea 2 Medium | 9 CU per sheet | ≈ 477 CU (×4 if grids fail). **Done 2026-11-14:** the 45 items, the Coaching Inn and the 2 Fair Exchange buttons as 12 `gpt_image_2_6` 2×2 sheets on Higgsfield (0.25 cr each, the grids split cleanly; ledger #26), and the 24 modelled buildings rendered from the game's views at 0 cost (ledger #27). The rest can follow the same two routes |
 | Command pictograms (18: 15 commands + 3 minimap toggles) | Hand-drawn SVG like the cursors (§5.5 T9 list); no generation | — | — | 0 |
 | Hero portraits | 4 × 2 | Krea 2 Medium | 9 CU | 72 CU |
 | UI frame parts | ≈ 18 | Krea 2 Medium | 9 CU | 162 CU |

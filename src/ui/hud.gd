@@ -75,6 +75,7 @@ var _upkeep_label_text := ""
 @onready var minimap: Minimap = %Minimap
 @onready var portrait: PanelContainer = %Portrait
 @onready var portrait_label: Label = %PortraitLabel
+var portrait_icon: TextureRect             ## the lead's game icon (buildings, IconLibrary) over the face colour
 @onready var name_label: Label = %UnitName
 @onready var stats_label: Label = %UnitStats
 @onready var grid: GridContainer = %SelectionGrid
@@ -84,6 +85,14 @@ var _upkeep_label_text := ""
 
 
 func _ready() -> void:
+	portrait_icon = TextureRect.new()
+	portrait_icon.name = "PortraitIcon"
+	portrait_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait_icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	portrait_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait.add_child(portrait_icon)
+	portrait.move_child(portrait_icon, 0)
 	for i in MAX_ICONS:
 		_make_icon(i)
 	_show_selection([])
@@ -398,6 +407,7 @@ func _show_selection(units: Array) -> void:
 		name_label.text = ""
 		stats_label.text = ""
 		portrait_label.text = ""
+		portrait_icon.texture = null
 		_set_portrait_color(Color(0.05, 0.05, 0.05, 0.9))
 		_layout_icons()
 		return
@@ -408,7 +418,8 @@ func _show_selection(units: Array) -> void:
 			if u.def_id == sub:
 				lead = u
 				break
-	portrait_label.text = initials(lead.def)
+	portrait_icon.texture = IconLibrary.texture(lead.def_id)
+	portrait_label.text = initials(lead.def) if portrait_icon.texture == null else ""
 	_set_portrait_color(icon_color(lead.def_id).darkened(0.35))
 	if inventory != null:
 		inventory.show_hero(lead if _units.size() == 1 and lead.is_hero else null)
@@ -617,6 +628,9 @@ func _make_icon(i: int) -> void:
 	b.focus_mode = Control.FOCUS_NONE
 	b.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS   # like the card: acts on the press
 	b.add_theme_font_size_override("font_size", 15)
+	b.expand_icon = true
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	var sb := StyleBoxFlat.new()
 	sb.border_color = Color(0, 0, 0, 0.8)
 	sb.set_border_width_all(1)
@@ -644,7 +658,8 @@ func _layout_icons() -> void:
 		if not b.visible:
 			continue
 		var u: Unit = _units[i]
-		b.text = initials(u.def)
+		b.icon = IconLibrary.texture(u.def_id)
+		b.text = initials(u.def) if b.icon == null else ""
 		_icon_styles[i].bg_color = icon_color(u.def_id)
 		_set_bar(i, u.hp / u.max_hp)
 

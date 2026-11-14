@@ -37,8 +37,19 @@ original (`docs/research/ip-safety.md`).
 - Don't repeatedly tell the user they have no credits. Don't lecture about repo visibility. The "-craft" name is fine.
 - Answer truthfully. Web-search facts about modern apps and prices. Double-check the user's corrections.
 
-## 3. Current state (2026-10-30)
+## 3. Current state (2026-11-14)
 
+- **Update 3b (2026-11-14), waiting for the user's check:** the user's Playtest 3 answer was "the heroes were a little bit
+  weak, but otherwise good", plus a request for item and building icons. Done:
+  - **Hero tuning** (rules §6.6 and §23 #34): +100 base HP, +0.25 HP/s, +1 armour, +3 damage on every hero (`heroes.json`
+    rules `base_hp`, `base_hp_regen`, `armor_bonus`, `damage_bonus`); Brace the Wheel, Fuse Mark, Braid Lash and Sunglint
+    raised. Linden Balm and Naphtha Flask are functional equivalents and stay (the 20 % rule). The faction tables include it.
+  - **Icons** (`IconLibrary`, architecture §11): 45 items, 25 buildings and 2 shop services at 128 px with mipmaps in
+    `assets/ui/icons/`. Items are 2×2 `gpt_image_2_6` sheets (ledger #26, 3.25 cr; prompts in
+    `tools/prompts/icons/item_icon_sheets.json`); buildings are rendered from the game's own views (ledger #27, free:
+    `tools/assets/render_building_icons.gd`, then `tools/assets/icon_sheets.py all`). Shown on the command card, the
+    inventory, the queue, the portrait and the selection grid; greyscale when locked, capped or busy. Units, heroes,
+    abilities and research still show names and initials.
 - **Playtest 3 "Heroes and creeps" shipped and is waiting for the user's feedback** (`PLAYTEST.md`; it also repeats the open
   Playtest 2 questions). The same Skirmish on Wether Downs, now with heroes and creeps on both sides. ≈ 330 headless tests pass
   (the full run takes about 4 minutes). What it added (architecture §10–§11 has the contracts):
@@ -133,21 +144,23 @@ original (`docs/research/ip-safety.md`).
    - the Grand Bombard (the Bombard Wagon and Sling-Cart now have procedural models) and a Flail Levy look (it uses the Hodman
      model);
    - Hail-Swifts and critters;
-   - item icons and ground props (the oilcloth bundle, power-up props; neutrals §1.8);
-   - the Coaching Inn;
+   - ground props for items (the oilcloth bundle, power-up props; neutrals §1.8);
+   - a Coaching Inn model (it is a placeholder box; its icon is painted);
    - projectile meshes;
-   - icons, hero portraits and UI art (art bible §11): the command card and queue still show names and initials;
+   - icons for units, heroes, abilities and research, hero portraits and UI art (art bible §11): items, buildings and shop
+     services have icons now (`tools/assets/icon_sheets.py`; unit icons could be rendered the same way as the buildings);
    - voice for the rest of the cast.
 
 ## 5. Paid generation: budgets and rules
 
 The full log is in `docs/asset-ledger.md`. **Log every paid job there**, including failures.
 
-- **Balances (2026-10-20):** Krea **719.98 CU**, Higgsfield **77.35 cr**.
+- **Balances:** Krea **719.98 CU** (2026-10-20), Higgsfield **94.60 cr** (2026-11-14).
 - **Higgsfield** is for what only it does well:
   - `tripo_h3_1_image_to_3d`: 9 cr, characters and buildings (raw output faces +X);
   - `3d_rigging` + clip: 8 cr (we mostly use the free autorigger now);
-  - `gpt_image_2_5` images: 0.25 cr, for concepts and textures.
+  - `gpt_image_2_5` images: 0.25 cr, for concepts and textures; `gpt_image_2_6` (0.25 cr) for the 2×2 icon sheets (it
+    paints cleaner separate panels; four icons per image).
   - Submit 2–3 images at a time (429 rate limits are not charged).
 - **Krea** is for 2D and audio:
   - Krea 2 Medium images: 9 CU;

@@ -941,7 +941,15 @@ requirements, ability unlocks. Each file's header documents the full contract.
   (`command_card.gd`, 4×3 `CardButton`s (`card_button.gd`, HUD-05: label, hotkey chip, locked =
   desaturated + lock, unaffordable = hatch + short-resource glyph that wipes away when
   affordable, capped chip, deny shake + red flash), refreshed 10 times a second; the armed
-  targeting mode or the building being placed shows pressed). Around the console: the
+  targeting mode or the building being placed shows pressed). **Icons:** `IconLibrary`
+  (`icon_library.gd`, static, cached) maps a def id to its 128 px icon in `assets/ui/icons/{items,
+  buildings,services}/` (mipmapped; `ALIASES` lends one icon to another id) and makes the greyscale
+  × 0.55 copy on first use. `CardButton.set_icon` (from `show_entry`, and from `QueuePanel` for queue
+  slots) draws it over the face instead of the label, grey when locked, capped or busy for any reason
+  but a cooldown; the portrait (`Hud.portrait_icon`) and the selection grid's buttons use it too. Ids
+  without an icon keep the coloured face and initials. Built by `tools/assets/icon_sheets.py`
+  (items from 2×2 sheets, buildings from `tools/assets/render_building_icons.gd`, which renders each
+  building through its own `UnitView`). Around the console: the
   `IdleWorkerButton` (NTF-05: count badge, F8 / backtick next idle worker longest idle first,
   round robin, Ctrl = all), the `ErrorLine` (HUD-06: `error_*` notifications, repeat = shake),
   the `HudTooltip` (HUD-02: 250 ms dwell, 500 ms warm window, docked above the card's top-right

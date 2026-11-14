@@ -198,7 +198,7 @@ func test_learn_and_cast_routes() -> void:
 	for u: Unit in [hero, ally]:
 		u.set_base_stats({"hp_regen": 0.0, "mana_regen": 0.0})   # exact numbers: no regeneration
 	assert_eq(int(hero.hero.get("skill_points", 0)), 1, "a new hero has one skill point")
-	assert_near(hero.max_hp, 675.0, 0.01, "level-1 stats from attributes")
+	assert_near(hero.max_hp, 775.0, 0.01, "level-1 stats from attributes")
 	_cmd(w, "move", [hero], {"pos": Vector3(21, 0, 26)})
 	_cmd(w, "learn", [hero], {"ability": "kingdom_linden_balm"})
 	w.step()

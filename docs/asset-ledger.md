@@ -19,7 +19,8 @@ Budget policy (agreed with the user):
 | Krea | Seed Audio 1.0 SFX (~2.5 s) | 4.63 CU |
 | Krea | Tripo H3.1 text-to-3D (textured) | 148.15 CU |
 | Krea | Hunyuan3D 3.1 Rapid text-to-3D | 166.67 CU (failed attempt: not charged) |
-| Higgsfield | gpt_image_2_5 image | 0.25 cr |
+| Higgsfield | gpt_image_2_5 image | 0.25 cr (quality low, the default; medium 0.5 cr, high 1.5 cr — quoted 2026-11-14) |
+| Higgsfield | gpt_image_2_6 image | 0.25 cr (default settings, verified 2026-11-14) |
 | Higgsfield | tripo_h3_1_image_to_3d | 9 cr (verified) |
 | Higgsfield | hunyuan3d_v3_image_to_3d LowPoly | 14 cr (quoted) |
 | Higgsfield | image_to_3d (Meshy) textured | 30 cr (quoted) |
@@ -65,12 +66,15 @@ Budget policy (agreed with the user):
 
 | 24 | 2026-10-17 | Higgsfield | Hall image-to-3D redo, 2 × tripo_h3_1_image_to_3d face_limit 20000: moot hall 30c30deb-665f-44b3-99d0-0d7a97a0f8fb, shell hall 18634ede-cb91-4aa3-a6ef-6b58c290c8cb | 18 cr | Approved: textured all round; moot hall needs --yaw 90 (door to camera) → assets/models/buildings/ |
 | 25 | 2026-10-20 | none (in-house) | Composed music, branch music/p0: Kingdom 1-3, Clans 1-3, menu theme, end-screen bed, victory and defeat stingers for both factions, clans opening cue (13 pieces, ≈ 24.5 min) composed in Python with `tools/music` and rendered offline (FluidSynth 2.3 + the MIT FluidR3_GM soundfont + numpy synths) | **0 CU** | All 13 at −16 LUFS, true peak ≤ −1.98 dBTP, 48 kHz stereo Ogg; sources, seeds and hashes in `assets/audio/music/manifest.json`. Replaces the banned ElevenLabs Music plan (≈ 444 CU per 10 s). Only the kingdom opening cue stays from that probe |
+| 26 | 2026-11-14 | Higgsfield | Item icon sheets (art bible T9, 2×2, prompts in `tools/prompts/icons/item_icon_sheets.json`): A/B probe of sheet 1 on gpt_image_2_5 low 2aee80dd (kept as `items_01_gpt25.png`, not used) and gpt_image_2_6 a8fd3f4d (won: cleaner panels); then gpt_image_2_6 sheets 2–12: 069f0324, cf12451b, 95fff40b, a5b6794f, 6b4b8241, 68148c07, 825d14cb, 00080ade, aad7ff02, 2fe9c6e2, 7238a7ca (45 items, the Coaching Inn, the two Fair Exchange services) | 3.25 cr (13 × 0.25; balance 97.85 → 94.60, verified) | All 48 approved → `assets_src/icons/items/sheets/` → `tools/assets/icon_sheets.py items` → `assets/ui/icons/{items,buildings,services}/`. 7 first submissions were refused by the rate limit (429), never created, not charged. Sheet 3 was sent with "a wisp of steam"; the prompt file says "a curl of steam" because the banned-term check flags the word |
+| 27 | 2026-11-14 | none (in-house) | Building icons: the 24 modelled buildings rendered through the game's own UnitView (`tools/assets/render_building_icons.gd`), composited on the T9 faction vignettes with a bronze frame (`tools/assets/icon_sheets.py buildings`) | **0 cr** | All approved → `assets/ui/icons/buildings/`; the renders are not kept (rebuild any time) |
 
 **Bake-off conclusion (2026-10-16):** characters and anything that turns → Higgsfield Tripo H3.1 (9 cr) + Higgsfield
 rigging (8 cr). Static buildings/props → Krea TRELLIS v1 (~15 CU) is acceptable when the back is never seen; otherwise
 Higgsfield Tripo H3.1. All other Krea 3D models cost 148–222 CU each — banned.
 
-**Balances after log:** Krea 1529.63 CU · Higgsfield 225.25 cr (verified 2026-10-16 16:49)
+**Balances after log:** Krea 1529.63 CU · Higgsfield 225.25 cr (verified 2026-10-16 16:49). Higgsfield 94.60 cr after #26
+(verified 2026-11-14).
 
 ## 2026-10-20 audio pass (branch audio/p0)
 

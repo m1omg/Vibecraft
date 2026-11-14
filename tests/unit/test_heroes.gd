@@ -85,7 +85,7 @@ func test_creep_factor_and_single_hero_bonus() -> void:
 func test_level_up_keeps_missing_hp_and_caps_at_ten() -> void:
 	var w := _world()
 	var hero := w.spawn_unit("kingdom_wheel_marshal", 0, Vector3(20, 0, 20))
-	assert_near(hero.max_hp, 675.0, 0.01, "level-1 HP (kingdom §6.2)")
+	assert_near(hero.max_hp, 775.0, 0.01, "level-1 HP (kingdom §6.2)")
 	hero.take_damage(100.0, null)
 	var levels: Array[int] = []
 	var on_level := func(u: Node) -> void: levels.append(int(u.hero["level"]))
@@ -95,13 +95,13 @@ func test_level_up_keeps_missing_hp_and_caps_at_ten() -> void:
 	assert_eq(levels, [2, 3] as Array[int], "two level-ups in order")
 	assert_eq(int(hero.hero["skill_points"]), 3, "+1 point per level")
 	assert_near(hero.max_hp - hero.hp, 100.0, 0.01, "the missing HP is kept")
-	assert_near(hero.max_hp, 100.0 + 25.0 * floorf(23.0 + 2.6 * 2.0), 0.01, "max HP from STR")
+	assert_near(hero.max_hp, 200.0 + 25.0 * floorf(23.0 + 2.6 * 2.0), 0.01, "max HP from STR")
 	w.heroes.add_xp(hero, 99999.0)
 	assert_eq(w.heroes.level_of(hero), 10, "the cap is level 10")
 	var xp := float(hero.hero["xp"])
 	w.heroes.add_xp(hero, 50.0)
 	assert_near(float(hero.hero["xp"]), xp, 0.0001, "no XP at level 10")
-	assert_near(hero.max_hp, 1250.0, 0.01, "rules §6.6 check: 1250 HP at level 10")
+	assert_near(hero.max_hp, 1350.0, 0.01, "rules §6.6 check: 1350 HP at level 10")
 
 
 func test_rank_gates_through_the_learn_command() -> void:
@@ -148,7 +148,9 @@ func test_death_keeps_the_slot_and_the_altar_revives() -> void:
 	w.heroes.learn(hero, first)
 	hero.cooldowns["probe"] = w.tick_count + 9000
 	var old_id := hero.id
-	_kill(w, hero, w.spawn_unit("clans_hero_uncut", 1, Vector3(21, 0, 20)))
+	var killer := w.spawn_unit("clans_hero_uncut", 1, Vector3(21, 0, 20))
+	_kill(w, hero, killer)
+	w.remove_unit(killer)          # it would besiege the altar during the revive
 	assert_eq(w.heroes.dead_heroes(0), [old_id] as Array[int], "the dead hero waits for revival")
 	assert_false(w.production.can_acquire_hero(0, "kingdom_wheel_marshal"), "its type stays taken")
 	assert_eq(w.production.can_train(altar, "kingdom_firewright"), "hero_limit", "and its slot at tier 1")

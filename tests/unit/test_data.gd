@@ -102,13 +102,14 @@ func test_slice_stats_match_slice_content() -> void:
 	assert_eq(Defs.unit("gold_mine")["footprint"], [12.0, 12.0], "Gold Seam 12 x 12")
 
 
-## kingdom.md §6.2 and clans.md §6.1 derived tables (HP / mana / armour / damage / cooldown).
+## kingdom.md §6.2 and clans.md §6.1 derived tables (HP / mana / armour / damage / cooldown), with the
+## Playtest 3 hero tuning (rules §6.6).
 func test_hero_stats_match_faction_doc_tables() -> void:
 	var rows := {
-		"kingdom_wheel_marshal": [[1, 675, 240, 4.6, 24, 30, 1.77], [5, 925, 330, 6.1, 34, 40, 1.64], [10, 1250, 465, 8.2, 47, 53, 1.49]],
-		"kingdom_firewright": [[1, 500, 315, 2.6, 24, 30, 1.77], [5, 675, 495, 3.8, 36, 42, 1.67], [10, 900, 720, 5.3, 51, 57, 1.55]],
-		"clans_hero_uncut": [[1, 575, 210, 4.6, 24, 33, 1.39], [5, 775, 300, 6.7, 31, 40, 1.27], [10, 1025, 405, 9.7, 41, 50, 1.12]],
-		"clans_hero_skymirror": [[1, 500, 330, 2.2, 23, 31, 1.80], [5, 650, 495, 3.4, 34, 42, 1.69], [10, 875, 720, 4.9, 49, 57, 1.58]],
+		"kingdom_wheel_marshal": [[1, 775, 240, 5.6, 27, 33, 1.77], [5, 1025, 330, 7.1, 37, 43, 1.64], [10, 1350, 465, 9.2, 50, 56, 1.49]],
+		"kingdom_firewright": [[1, 600, 315, 3.6, 27, 33, 1.77], [5, 775, 495, 4.8, 39, 45, 1.67], [10, 1000, 720, 6.3, 54, 60, 1.55]],
+		"clans_hero_uncut": [[1, 675, 210, 5.6, 27, 36, 1.39], [5, 875, 300, 7.7, 34, 43, 1.27], [10, 1125, 405, 10.7, 44, 53, 1.12]],
+		"clans_hero_skymirror": [[1, 600, 330, 3.2, 26, 34, 1.80], [5, 750, 495, 4.4, 37, 45, 1.69], [10, 975, 720, 5.9, 52, 60, 1.58]],
 	}
 	for hid: String in rows:
 		for r: Array in rows[hid]:
@@ -135,7 +136,7 @@ func test_ability_ranks_resolve() -> void:
 	assert_near(float(r1["mana"]), 70.0, 1e-6, "shared mana")
 	assert_near(float(r1["cooldown"]), 14.0, 1e-6, "rank 1 cooldown")
 	assert_near(float(r3["cooldown"]), 10.0, 1e-6, "rank 3 cooldown")
-	assert_near(float(r3["damage"]), 110.0, 1e-6, "rank 3 damage")
+	assert_near(float(r3["damage"]), 135.0, 1e-6, "rank 3 damage")
 	assert_near(float(r1["pull"]), 3.0, 1e-6, "params merged")
 	assert_near(float(r1["cast_point"]), 0.3, 1e-6, "default cast point")
 	assert_near(float(Defs.ability_rank("clans_sunglint", 1)["cast_point"]), 0.4, 1e-6, "ability cast point")

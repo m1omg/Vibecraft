@@ -20,6 +20,8 @@ paid generation API.
 | `preview/` | Godot | tiny separate Godot project used by `render_preview.py` (`inspect.gd`, `turntable.gd`) |
 | `tests/` | bpy / bash | synthetic rigged characters and props, retarget checker, `run_all.sh` end-to-end test, `test_autorig.sh` |
 | `assets/check_team_coverage.gd` | Godot (headless) | **team-colour check**: measures every unit model's team share of its visible silhouette from the game camera (software raster of the rest pose, 8 yaws, the shader's mask + magenta key) and fails models outside the art bible §3.1 range (units 10–15 %, workers ≥ 8 %, heroes ≤ 18 %, a team area in the upper third). `-- --write` refreshes `assets/models/units/team_coverage.json` (the game strengthens the team rim of under-covered models from it); see "Team-colour check" |
+| `assets/render_building_icons.gd` | Godot (Vulkan, xvfb) | renders every building and resource def through its own `UnitView` (model, add-ons, team cloth in the faction's colour, placeholders) to `assets_src/icons/buildings/renders/<id>.png` (512 px, transparent; not kept in git) |
+| `assets/icon_sheets.py` | python3 + Pillow | **game icons** (128 px + mipmapped `.import`): `items` splits the 2×2 sheets listed in `tools/prompts/icons/item_icon_sheets.json` into framed item / service icons; `buildings` crops the renders onto the faction vignettes with the bronze frame; `all` does both → `assets/ui/icons/` |
 | `music/` | python3 + fluidsynth + ffmpeg | **composed music**: `score.py` composition API, `synths.py` numpy instruments, `palette.py`, `render.py` stems → mix → master → Ogg (see "Music toolkit") |
 
 `bpy` = Blender as a Python module: `/opt/bpyenv/v313/bin/python` (bpy 5.2 LTS, Pillow, numpy).

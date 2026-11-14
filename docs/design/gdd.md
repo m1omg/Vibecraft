@@ -207,18 +207,18 @@ Packed Clay Pots, Gustcaller Second Ribbon.
 | Hero | Ability (hotkey) | Kind | Key numbers (rank 1 / 2 / 3) | Equivalent? |
 |---|---|---|---|---|
 | **Wheel Marshal** (STR) | Linden Balm (L) | Ally heal, self at 50 % | 150 / 290 / 430; 80 mana, 7 s | Yes |
-| | Brace the Wheel (B) | Taunt plus armour | 4 / 5 / 6 m, taunt 2 / 3 / 4 s, +4 / 6 / 8 armour | No |
+| | Brace the Wheel (B) | Taunt plus armour | 4 / 5 / 6 m, taunt 2 / 3 / 4 s, +5 / 7 / 9 armour | No |
 | | Measured Cadence (C) | Aura | +6 / 10 / 14 % attack speed | No |
 | | The Wagon Ring (R) | Ultimate | 7 s: allies cannot drop below 1 HP, then +15 % HP; 150 mana, 160 s | Yes |
 | **Firewright** (INT) | Naphtha Flask (N) | Area burn | 55 / 90 / 125 + 12 / 20 / 28 per s for 6 s; 95 mana, 9 s | Yes |
-| | Fuse Mark (F) | Delayed bomb | 80 / 140 / 200 after 4 s; 80 mana, 11 s | No |
+| | Fuse Mark (F) | Delayed bomb | 95 / 165 / 235 after 4 s; 80 mana, 11 s | No |
 | | Incendiary Wadding (W) | Aura | Allied ranged attacks burn 3 / 5 / 7 per s | No |
 | | Grand Bombard (B) | Ultimate | 25 s crewed bombard, 900 HP, Siege 75–85; 175 mana, 150 s | Yes |
 | **The Uncut** (AGI) | Dust Veil (D) | Stealth opener | 15 / 20 / 25 s, +20 / 30 / 45 % speed, +60 / 100 / 140 first hit; 55 mana, 8 s | Yes |
-| | Braid Lash (L) | Pull and root | 40 / 75 / 110, pull 3 m, root 1 / 1.25 / 1.5 s; 70 mana | No |
+| | Braid Lash (L) | Pull and root | 55 / 95 / 135, pull 3 m, root 1 / 1.25 / 1.5 s; 70 mana | No |
 | | Clean Cut (C) | Passive crit | 20 %: 1.6× / 2.3× / 3.0× | Yes |
 | | Through the Tall Grass (T) | Ultimate | 10 s: +40 % attack speed, line cleave 8 m × 2 m; 125 mana, 120 s | No |
-| **Skymirror** (INT) | Sunglint (G) | Cone blind | 35 % miss 3 / 4 / 5 s, 50 / 85 / 120 damage; Moonglint at night | No |
+| **Skymirror** (INT) | Sunglint (G) | Cone blind | 35 % miss 3 / 4 / 5 s, 55 / 100 / 140 damage; Moonglint at night | No |
 | | Bronze Window (B) | Remote reveal | 10 / 14 / 18 m for 10 s; rank 3 detects | Yes |
 | | Hail-Swifts (W) | Summon | 2 / 2 / 3 ground swifts for 45 s, tank creeps; 100 mana, 38 s | Yes |
 | | Swallowed Sun (U) | Ultimate | 9 m darkness for 12 s: sight 3 m, 40 % miss; 175 mana, 150 s | No |

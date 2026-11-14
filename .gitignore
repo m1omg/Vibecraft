@@ -16,3 +16,6 @@ __pycache__/
 
 # Test artefacts (screenshots, benchmarks)
 tests/output/
+
+# Building icon renders: free to rebuild (tools/assets/render_building_icons.gd)
+assets_src/icons/buildings/renders/

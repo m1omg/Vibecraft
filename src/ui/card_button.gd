@@ -11,6 +11,9 @@ extends Button
 ##   - queue slots: a progress bar along the bottom edge.
 ## Acts on the press, not the release (juice §1.2 rule 1). Real-time curves in closed form (the
 ## same at any refresh rate). Drawing only: CommandCard / QueuePanel decide what it shows.
+## Entries with a game icon (IconLibrary: items, buildings, services) show it instead of the label:
+## greyscale when locked, capped or busy (not on a cooldown, which sweeps over the colour), +10 %
+## brightness on hover, 1 px down and 10 % darker while pressed (art bible §7.4).
 
 signal hovered(button: CardButton)
 signal unhovered(button: CardButton)
@@ -41,6 +44,8 @@ var _cd_t0: float = 0.0            ## fx time the entry arrived (the sweep runs 
 var badge: String = ""             ## a glyph over the face (a queue slot waiting for food: "food")
 var face: Color = Color(0.2, 0.18, 0.15)
 var entry: CardModel.Entry         ## what the button shows (null = empty)
+var icon_tex: Texture2D            ## the entry's game icon (null: the coloured face and label)
+var icon_id: String = ""
 
 var _box: StyleBoxFlat
 var _shake_t0 := -10.0
@@ -53,6 +58,7 @@ var _last_short: String = ""
 func _init() -> void:
 	focus_mode = Control.FOCUS_NONE
 	action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	clip_text = true
 	add_theme_font_size_override("font_size", 12)
@@ -88,7 +94,8 @@ static func now() -> float:
 func show_entry(e: CardModel.Entry, key_label: String) -> void:
 	entry = e
 	disabled = e == null
-	text = e.label if e != null else ""
+	set_icon(e.id if e != null else "")
+	text = e.label if e != null and icon_tex == null else ""
 	key_text = key_label if e != null else ""
 	set_state(e.state if e != null else CardModel.State.READY, _short_of(e), _chip_for(e))
 	cd_left = e.cooldown_left if e != null else 0.0
@@ -181,6 +188,8 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	var t := now()
 	var r := Rect2(Vector2.ZERO, size)
+	if icon_tex != null:
+		_draw_icon(r)
 	# unaffordable: hatch (fading in, or wiping away left to right once affordable)
 	var hatch_from := 0.0
 	var hatch_alpha := 0.0
@@ -216,6 +225,35 @@ func _draw() -> void:
 	var fa := FLASH.a * (1.0 - (t - _flash_t0) / FLASH_S)
 	if fa > 0.0:
 		draw_rect(r, Color(FLASH, fa))
+
+
+## Shows the game icon of def `id` (none when it has no icon).
+func set_icon(id: String) -> void:
+	icon_id = id
+	icon_tex = IconLibrary.texture(id)
+
+
+## The icon face, inside the 1 px rim: grey when unavailable, lit on hover, sunk while pressed.
+func _draw_icon(r: Rect2) -> void:
+	var tex := icon_tex
+	if icon_greyed():
+		tex = IconLibrary.grey(icon_id)
+	var m := Color.WHITE
+	var dy := 0.0
+	match get_draw_mode():
+		DRAW_HOVER:
+			m = Color(1.1, 1.1, 1.1)
+		DRAW_PRESSED, DRAW_HOVER_PRESSED:
+			m = Color(0.9, 0.9, 0.9)
+			dy = 1.0
+	draw_texture_rect(tex, Rect2(r.position + Vector2(1, 1 + dy), r.size - Vector2(2, 2)), false, m)
+
+
+## Locked, capped or busy for any reason but a cooldown: the icon shows in greyscale.
+func icon_greyed() -> bool:
+	if state == CardModel.State.LOCKED or state == CardModel.State.CAPPED:
+		return true
+	return state == CardModel.State.BUSY and (entry == null or entry.reason != "cooldown")
 
 
 ## The cooldown: a dark wedge over the share still to run, clockwise from 12 o'clock, shrinking

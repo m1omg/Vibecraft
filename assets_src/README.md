@@ -11,6 +11,7 @@ Layout:
 - `characters/<unit_id>/rig_source_facing_pz.glb` — the re-oriented (+Z facing) mesh uploaded for rigging
 - `characters/<unit_id>/bakeoff_*.glb` — generator bake-off results (decimated copies)
 - `textures/`, `props/` — raw textures and props
+- `icons/items/sheets/items_NN.png` — the 2×2 item icon sheets (ledger #26; `tools/assets/icon_sheets.py items` cuts them)
 
 Rebuild a unit (example: kingdom_infantry):
 ```

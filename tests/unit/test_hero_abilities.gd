@@ -60,7 +60,7 @@ func test_brace_the_wheel_taunts_nearby_enemies() -> void:
 	assert_true(near.current != null and near.current.type == Order.Type.ATTACK and near.current.target_id == m.id, "and attacks her")
 	assert_false(w.buffs.has_buff(far, "buff_taunted"), "not one beyond 4 m")
 	assert_false(w.buffs.has_buff(hero, "buff_taunted"), "never a hero")
-	assert_near(m.armor, armor + 4.0, 0.01, "she braces: +4 armour")
+	assert_near(m.armor, armor + 5.0, 0.01, "she braces: +5 armour")
 
 
 func test_the_wagon_ring_holds_the_line_then_heals() -> void:

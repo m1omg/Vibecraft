@@ -843,14 +843,14 @@ All four heroes use the global hero rules (rules §6):
 | **Kettle-Uncle** (`clans_hero_kettle_uncle`), a Thoom | STR tank chieftain | STR | 26 (+2.9) | 11 (+1.1) | 13 (+1.5) | 6–15 | −1 | 2.4 | 1.2 m melee | 4.4 | 28.1 / 12.5 | 3.1 m | later |
 | **Omen-Mother** (`clans_hero_omen_mother`) | INT support (hex, heal) | INT | 17 (+1.8) | 13 (+1.1) | 21 (+2.6) | 1–8 | −2 | 2.3 | 7.0 m (tea-brick chip, 15 m/s) | 4.7 | 28.1 / 12.5 | 2.1 m (hunched) | P1 (slice-plan B25) |
 
-**Derived values** (HP / mana / armour / damage / effective attack cooldown; `test_hero_attributes` asserts these):
+**Derived values** (HP / mana / armour / damage / effective attack cooldown (with the Playtest 3 hero tuning of rules §6.6: base HP 200, +1 armour, +3 damage); `test_hero_stats_match_faction_doc_tables` asserts these):
 
 | Hero | Level 1 | Level 5 | Level 10 |
 |---|---|---|---|
-| The Uncut | 575 / 210 / 4.6 / 24–33 / 1.39 s | 775 / 300 / 6.7 / 31–40 / 1.27 s | 1025 / 405 / 9.7 / 41–50 / 1.12 s |
-| Skymirror | 500 / 330 / 2.2 / 23–31 / 1.80 s | 650 / 495 / 3.4 / 34–42 / 1.69 s | 875 / 720 / 4.9 / 49–57 / 1.58 s |
-| Kettle-Uncle | 750 / 195 / 2.3 / 32–41 / 1.97 s | 1025 / 285 / 3.5 / 43–52 / 1.85 s | 1400 / 390 / 5.0 / 58–67 / 1.71 s |
-| Omen-Mother | 525 / 315 / 1.9 / 22–29 / 1.83 s | 700 / 465 / 3.1 / 32–39 / 1.72 s | 925 / 660 / 4.6 / 45–52 / 1.60 s |
+| The Uncut | 675 / 210 / 5.6 / 27–36 / 1.39 s | 875 / 300 / 7.7 / 34–43 / 1.27 s | 1125 / 405 / 10.7 / 44–53 / 1.12 s |
+| Skymirror | 600 / 330 / 3.2 / 26–34 / 1.80 s | 750 / 495 / 4.4 / 37–45 / 1.69 s | 975 / 720 / 5.9 / 52–60 / 1.58 s |
+| Kettle-Uncle | 850 / 195 / 3.3 / 35–44 / 1.97 s | 1125 / 285 / 4.5 / 46–55 / 1.85 s | 1500 / 390 / 6.0 / 61–70 / 1.71 s |
+| Omen-Mother | 625 / 315 / 2.9 / 25–32 / 1.83 s | 800 / 465 / 4.1 / 35–42 / 1.72 s | 1025 / 660 / 5.6 / 48–55 / 1.60 s |
 
 **Proper names** (one is picked at random for each hero, shown as "Title: Name", rules §6.1):
 - The Uncut ("Uncut Duelist"): *Ilaya, Teshe, Orsel, Nauri, Bessu*.
@@ -874,7 +874,7 @@ All four heroes use the global hero rules (rules §6):
 | Key | Ability | Rank 1 / 2 / 3 | Mana | Cooldown | Kind |
 |---|---|---|---|---|---|
 | Q | **Dust Veil**: she drops low into the grass, and a **flat, ground-hugging puff of ochre dust** rolls outward around her (about 3 m across, never above knee height) and settles; when it settles she is gone. Invisible (`fade`, rules §11) for up to **15 / 20 / 25 s** with **+20 / 30 / 45%** move speed (fade time **0.35 s**). Her first attack out of it deals **+60 / 100 / 140** bonus Heroic damage and slows the target 30% for 2 s (heroes **1 s**, `hero_duration`). VFX: no column, no spin, no swirl and no translucent fade-out; the settling dust sells the vanish (her owner then sees her through the global invisibility shader) | see text | 55 | 8 s | ≈WC3 #1 (stealth opener) |
-| W | **Braid Lash**: she draws the weighted braid back low behind her and snaps it forward **in a straight line** at a ground unit within 5.5 m (never whirled overhead). It deals **40 / 75 / 110** Spell damage, pulls the target **3 m** toward her (heroes 1.5 m) and roots it for **1.0 / 1.25 / 1.5 s** (heroes **0.75 / 1.0 / 1.25 s**, `hero_duration`) | see text | 70 | 14 / 12 / 10 s | Original |
+| W | **Braid Lash**: she draws the weighted braid back low behind her and snaps it forward **in a straight line** at a ground unit within 5.5 m (never whirled overhead). It deals **55 / 95 / 135** Spell damage, pulls the target **3 m** toward her (heroes 1.5 m) and roots it for **1.0 / 1.25 / 1.5 s** (heroes **0.75 / 1.0 / 1.25 s**, `hero_duration`) | see text | 70 | 14 / 12 / 10 s | Original |
 | E | **Clean Cut** (passive; formerly Keen Edge, renamed 2026-10-19 because that is a tabletop RPG's spell name with the same function): **20%** chance to deal **1.6× / 2.3× / 3.0×** damage. Each crit gives her +25% move speed for 1.5 s (hit-and-run) | see text | – | – | ≈WC3 #2 (critical strike) |
 | R | **Through the Tall Grass** (ult, level 6): for **10 s** she gains **+40%** attack speed and **ignores slows** (move and attack-speed slows on her are suppressed; roots and stuns still apply), and every attack also cuts an **8 m × 2 m line** behind the target for **100%** of the hit. The cut deals **Heroic** damage, takes the hit's **post-crit, pre-armour** value (each victim's own type and armour then apply), and **does not hit structures**. A straight dust-slash streak shows each cut. Target: against 4 clumped Pavisiers it deals about 800 damage to units other than the one she attacks (§13, Q2) | – | 125 | 120 s | Original (a line cleave, not a spin AoE) |
 
@@ -889,7 +889,7 @@ All four heroes use the global hero rules (rules §6):
 
 | Key | Ability | Rank 1 / 2 / 3 | Mana | Cooldown | Kind |
 |---|---|---|---|---|---|
-| Q | **Sunglint**: he tilts the staff-mirror and flashes a **50° cone, 7 m long**. The **blind** is the main effect: 35% miss chance for **3 / 4 / 5 s** (heroes **2 / 2.5 / 3 s**, `hero_duration`). It also deals **50 / 85 / 120** Spell damage. **At night it becomes Moonglint:** 50% damage, but the blind lasts 2 s longer (heroes 1 s longer). Cast point 0.4 s | see text | 80 | 9 s | Original (a cone blind, not a line nuke) |
+| Q | **Sunglint**: he tilts the staff-mirror and flashes a **50° cone, 7 m long**. The **blind** is the main effect: 35% miss chance for **3 / 4 / 5 s** (heroes **2 / 2.5 / 3 s**, `hero_duration`). It also deals **55 / 100 / 140** Spell damage. **At night it becomes Moonglint:** 50% damage, but the blind lasts 2 s longer (heroes 1 s longer). Cast point 0.4 s | see text | 80 | 9 s | Original (a cone blind, not a line nuke) |
 | W | **Bronze Window**: he flips the brow-mirror down over his eyes and looks through it. Reveals a **10 / 14 / 18 m** radius anywhere on the map for **10 s**. At rank 3 it also reveals invisible units | see text | 60 / 50 / 40 | 20 / 15 / 10 s | ≈WC3 #1 (remote reveal) |
 | E | **Hail-Swifts**: summons **2 / 2 / 3** hail-cloud birds (level 2 / 2 / 3) for **45 s**: opaque, icy-white swifts of packed hail, with no ghost glow. They are **ground summons that skim 0.6 m above the grass** (`hover_height` is visual only): flags **ground, summoned**; ground pathing; normal line of sight; **5.2 m/s**; sight 17 / 12.5. Each: **160 / 200 / 240 HP**, Light 0, Pierce **7–9 / 9–11 / 10–12** (ice pellets), CD 1.5, range 4.5 m. Melee units and creeps can hit them and idle creeps acquire them, so they **tank** while the Skymirror creeps. **No true sight at any rank.** On death or expiry each bursts into a **2 m hail patch**: 15 Spell damage and a 20% slow for 2 s to enemy ground units. Summons give 50% XP (rules §10.6) | see text | 100 | 38 s | ≈WC3 #2 (summon), changed to skimming hail birds |
 | R | **Swallowed Sun** (ult, level 6): within 12 m, a **9 m radius** goes dark for **12 s**. Enemies inside have sight 3 m and a **40% miss chance**, and enemy vision cannot see into the area. Your units inside gain +15% move speed. It is an **area state, not a timed control**: it applies in full to heroes while they are inside and lingers the rules aura time (2 s) after they leave | – | 175 | 150 s | Original (it uses the day/night sight system) |
@@ -951,7 +951,7 @@ never be entered as data. `tools/ip/value_echo_reference.json` carries the same 
 | Clean Cut | Critical strike | 15% chance, 2× at rank 1 (3× / 4× at ranks 2–3*) | 20%, 1.6× / 2.3× / 3.0× (≥ 20 % away at every rank) |
 | Bronze Window | Remote reveal | 8 s duration | 10 s |
 | Hail-Swifts | Summoned beasts | 30 s cooldown at rank 1 | 38 s; 2 / 2 / 3 skimming hail birds (ground summons), 160 / 200 / 240 HP |
-| Sunglint | Line nuke of another Orc hero | 75 damage at rank 1 | 50 / 85 / 120, cone, blind first |
+| Sunglint | Line nuke of another Orc hero | 75 damage at rank 1 | 55 / 100 / 140, cone, blind first |
 | Cauldron Ring | AoE stun | 90 mana | 100 mana |
 | Kettle Blessing | Bouncing heal | 3 / 4 / 5 jumps, 90 mana, 9 s cooldown | 2 / 3 / 4 jumps at −15%, 85 mana, 10 s |
 | Marmot Curse | Polymorph | 70 mana | 80 mana, 9 s cooldown |

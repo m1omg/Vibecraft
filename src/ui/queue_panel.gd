@@ -61,7 +61,8 @@ func refresh(b: Unit) -> void:
 			continue
 		var e: Dictionary = items[i]
 		var id := str(e["id"])
-		btn.text = Hud.initials({"name": CardModel.display_name(id)})
+		btn.set_icon(id)
+		btn.text = Hud.initials({"name": CardModel.display_name(id)}) if btn.icon_tex == null else ""
 		btn.face = Hud.icon_color(id).darkened(0.45) if Defs.units.has(id) else Color(0.25, 0.2, 0.14)
 		var stalled := i == 0 and not bool(e.get("started", false))
 		btn.set_state(CardModel.State.BUSY if stalled else CardModel.State.READY, "", "")

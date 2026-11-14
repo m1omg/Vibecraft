@@ -1,0 +1,66 @@
+{
+  "_doc": "Item icon sheets (art bible §5.5 T9, 2x2, item kind: the item itself on a cloth, umber-black #241C14, warm lantern accent). Built into prompts by tools/assets/icon_sheets.py; split by tools/assets/icon_sheets.py split. Order = quadrants 1 top-left, 2 top-right, 3 bottom-left, 4 bottom-right.",
+  "template": "2x2 grid of four separate square fantasy game icons with wide dark gaps: 1. {s1}, 2. {s2}, 3. {s3}, 4. {s4}. Each icon: one bold central subject filling 70 percent of its square, lit from the upper left, strong value contrast, a warm lantern-light glow accent, simple dark umber-black (#241C14) vignette background, no border, no frame, no text, stylized hand-painted fantasy strategy game art, painterly brush texture, big simple readable shapes, bold clear silhouette, saturated harmonious colours, soft painted gradients, gentle top light painted into the colours, painted ambient occlusion, clean colour blocking with one or two main colours, game-ready asset",
+  "sheets": [
+    {"id": "items_01", "icons": [
+      ["item_way_home_horn", "a curved cow-horn bugle with a brass mouthpiece and brass bell rim, a burgundy cord wound around it, resting on a scrap of homespun cloth"],
+      ["item_way_home_felt", "a tightly rolled bundle of teal felt tied with a saffron-yellow cord, resting on a scrap of homespun cloth"],
+      ["item_homing_pigeon", "a plump grey homing pigeon standing on a folded cloth, a tiny rolled message tied to its leg"],
+      ["item_snoop_peg", "a short wooden tent peg with a carved watchful eye near its top, driven into a tuft of grass"]]},
+    {"id": "items_02", "icons": [
+      ["item_kingdom_linden_salve", "a shallow round tin of green salve with its lid off, linden leaves and pale yellow linden blossoms beside it, on a cloth"],
+      ["item_kingdom_sages_tincture", "a small square glass vial of deep blue tincture with a cork, a sprig of grey-green sage beside it, on a cloth"],
+      ["item_kingdom_tin_watchman", "a small tin soldier figurine holding a tiny lantern, mounted on a pointed wooden stake"],
+      ["item_tailors_chalk", "a taut chalk-dusted string snapped straight between two iron pins, a flat triangular piece of white tailor's chalk beside it, on a cloth"]]},
+    {"id": "items_03", "icons": [
+      ["item_clans_salt_tea", "a wide wooden bowl of milky salt tea with a curl of steam, on a scrap of teal felt"],
+      ["item_clans_kettle_bottom_tea", "a small dented bronze tea kettle tipped forward, a last trickle of dark tea from its spout, on a scrap of felt"],
+      ["item_clans_brick_tea", "a pressed rectangular brick of dark tea with a little pile of curled tea shavings beside it, on a scrap of felt"],
+      ["item_clans_overnight_steep", "a lidded clay steeping jug wrapped in a strip of saffron felt, a crescent moon stamped on its side"]]},
+    {"id": "items_04", "icons": [
+      ["item_clans_hail_eye_pebble", "a smooth white river pebble with a pale blue ring pattern like an eye, on a scrap of teal felt"],
+      ["item_clans_folded_yurt", "a tiny round felt tent folded into a travel bundle: a teal felt roll strapped onto a bundle of wooden lattice poles"],
+      ["item_tattle_burrs", "a sprig of spiky green burrs strung with tiny brass bells on a red thread, on a cloth"],
+      ["item_picnic_hamper", "a wicker picnic hamper with a red-checked cloth, a loaf of bread and red apples peeking out"]]},
+    {"id": "items_05", "icons": [
+      ["item_rosehip_draught", "a round glass bottle of bright red rosehip draught with a cork stopper and two rosehips tied to its neck, on a cloth"],
+      ["item_bluebell_cordial", "a slim tall glass bottle of violet-blue cordial with bluebell flowers tied around its neck, on a cloth"],
+      ["item_wanderers_hobnails", "a pair of worn brown leather walking boots, the soles studded with iron hobnails, on a cloth"],
+      ["item_stoutheart_weight", "a cast-iron weight shaped like a stout heart with a ring handle on top, on a cloth"]]},
+    {"id": "items_06", "icons": [
+      ["item_wiped_slate", "a small school slate in a wooden frame, half wiped clean by a damp grey cloth"],
+      ["item_horseshoe_nail", "a single large square-headed iron horseshoe nail, its tip glowing faint forge-orange, on a cloth"],
+      ["item_jugglers_ball", "a patched leather juggling ball in red and yellow diamonds, on a cloth"],
+      ["item_riddle_knot", "an intricate endless knot tied from braided blue cord, on a cloth"]]},
+    {"id": "items_07", "icons": [
+      ["item_wild_strawberries", "a small cluster of ripe wild strawberries with green leaves and a white blossom, on a cloth"],
+      ["item_dropped_purse", "a small brown leather drawstring purse with a few gold coins spilling out, on a cloth"],
+      ["item_fair_day_rosette", "a prize ribbon rosette with three rings of red, blue and gold and two trailing ribbon tails, on a cloth"],
+      ["item_old_soldiers_tally_stick", "a notched hazel tally stick with rows of cut marks, tied with a faded red ribbon, on a cloth"]]},
+    {"id": "items_08", "icons": [
+      ["item_plow_horse_brass", "a round polished horse brass medallion with a sun pattern on a short leather strap, on a cloth"],
+      ["item_hares_foot_charm", "a lucky hare's-foot charm bound with red thread on a leather cord, on a cloth"],
+      ["item_inkhorn_pendant", "a small polished horn inkwell with a wooden stopper hung on a leather cord, a drop of black ink at its lip, on a cloth"],
+      ["item_whetstone_fob", "a grey whetstone on a short brass watch chain, on a cloth"]]},
+    {"id": "items_09", "icons": [
+      ["item_tin_gorget", "a crescent-shaped tin gorget neck plate with rivets and a leather strap, on a cloth"],
+      ["item_dewdrop_locket", "an open silver locket holding a single glowing blue dewdrop, on a cloth"],
+      ["item_moss_amulet", "a round flat stone amulet overgrown with soft green moss and a tiny fern, on a cord, on a cloth"],
+      ["item_four_leaf_brooch", "a brooch shaped like a four-leaf clover in green enamel with a gold rim, on a cloth"]]},
+    {"id": "items_10", "icons": [
+      ["item_woodpecker_quill", "a black-and-white barred woodpecker feather with a red tip, on a cloth"],
+      ["item_millstone_yoke", "a heavy wooden ox yoke with a small round millstone hanging from its middle"],
+      ["item_fox_fur_mantle", "a russet fox-fur shoulder mantle with a bronze clasp, on a cloth"],
+      ["item_lensgrinders_monocle", "a brass monocle with a thick ground-glass lens catching the light, on a fine chain, on a cloth"]]},
+    {"id": "items_11", "icons": [
+      ["item_blackthorn_knuckles", "a knuckle-duster carved from dark blackthorn wood, studded with short thorns, on a cloth"],
+      ["item_honeycomb_wedge", "a wedge of golden honeycomb dripping honey, on a cloth"],
+      ["item_mint_sprig", "a fresh sprig of bright green mint leaves with a dew drop, on a cloth"],
+      ["item_smoke_pellets", "three round grey clay pellets with a single low, flat ribbon of pale smoke lying over them, on a cloth"]]},
+    {"id": "items_12", "icons": [
+      ["item_firefly_jar", "a small corked glass jar holding six fireflies that glow cool green-white, on a cloth"],
+      ["neutral_coaching_inn", "the half-timbered gable of a country coaching inn with a hanging lantern sign over its door"],
+      ["neutral_fair_exchange_gold", "a brass balance scale, its left pan raised with gold coins, its right pan lowered under a split log"],
+      ["neutral_fair_exchange_lumber", "a brass balance scale, its left pan raised with a split log, its right pan lowered under a heap of gold coins"]]}
+  ]
+}

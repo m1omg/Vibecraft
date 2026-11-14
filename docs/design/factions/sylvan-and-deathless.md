@@ -426,14 +426,14 @@ radius 0.55 m (rules §6.6, §7.10).
 | **Lampbreaker** (`sylvan_hero_lampbreaker`) | Mana-draining melee (AGI) | AGI | 20 (+2.1) | 22 (+2.4) | 15 (+1.6) | 2–8 | −2 | 2.1 | Melee 1.2 m (pole) | G | 4.8 |
 | **Reedstalker** (`sylvan_hero_reedstalker`) | Assassin (AGI melee, mobility) | AGI | 18 (+2.0) | 22 (+2.5) | 14 (+1.5) | 3–9 | −1 | 2.0 | Melee 0.9 m | G | 4.9 |
 
-Derived values (HP / mana / armour / damage / attack cooldown):
+Derived values (HP / mana / armour / damage / attack cooldown) (with the Playtest 3 hero tuning of rules §6.6: base HP 200, +1 armour, +3 damage):
 
 | Hero | Level 1 | Level 5 | Level 10 |
 |---|---|---|---|
-| Lark Captain | 525 / 240 / 5.3 / 23–31 / 1.48 s | 700 / 345 / 8.0 / 32–40 / 1.31 s | 925 / 495 / 11.3 / 43–51 / 1.15 s |
-| Thicket Weaver | 500 / 315 / 2.9 / 24–30 / 1.75 s | 675 / 495 / 4.1 / 36–42 / 1.64 s | 900 / 720 / 5.9 / 51–57 / 1.51 s |
-| Lampbreaker | 600 / 225 / 4.6 / 24–30 / 1.46 s | 800 / 315 / 7.3 / 33–39 / 1.30 s | 1050 / 435 / 10.9 / 45–51 / 1.13 s |
-| Reedstalker | 550 / 210 / 5.6 / 25–31 / 1.39 s | 750 / 300 / 8.6 / 35–41 / 1.22 s | 1000 / 405 / 12.2 / 47–53 / 1.06 s |
+| Lark Captain | 625 / 240 / 6.3 / 26–34 / 1.48 s | 800 / 345 / 9.0 / 35–43 / 1.31 s | 1025 / 495 / 12.3 / 46–54 / 1.15 s |
+| Thicket Weaver | 600 / 315 / 3.9 / 27–33 / 1.75 s | 775 / 495 / 5.1 / 39–45 / 1.64 s | 1000 / 720 / 6.9 / 54–60 / 1.51 s |
+| Lampbreaker | 700 / 225 / 5.6 / 27–33 / 1.46 s | 900 / 315 / 8.3 / 36–42 / 1.30 s | 1150 / 435 / 11.9 / 48–54 / 1.13 s |
+| Reedstalker | 650 / 210 / 6.6 / 28–34 / 1.39 s | 850 / 300 / 9.6 / 38–44 / 1.22 s | 1100 / 405 / 13.2 / 50–56 / 1.06 s |
 
 | Hero | Look (one oversized prop) | Proper names (one at random, "Title: Name") |
 |---|---|---|
@@ -972,14 +972,14 @@ Global hero rules apply. Heroes rise at the **Cenotaph**. All heroes: sight 28.1
 | **The Patriarch** (`deathless_hero_patriarch`) | Noble lord (INT melee, sleep, life-steal aura) | INT | 19 (+2.2) | 12 (+1.2) | 20 (+2.7) | 3–11 | 0 | 2.1 | Melee 1.0 m | G | 4.5 |
 | **Gravewright** (`deathless_hero_gravewright`) | Mason tank (STR, line stun, armour break) | STR | 26 (+2.8) | 11 (+1.1) | 14 (+1.4) | 1–7 | +1 | 2.3 | Melee 1.0 m | G | 4.4 |
 
-Derived values (HP / mana / armour / damage / attack cooldown):
+Derived values (HP / mana / armour / damage / attack cooldown) (with the Playtest 3 hero tuning of rules §6.6: base HP 200, +1 armour, +3 damage):
 
 | Hero | Level 1 | Level 5 | Level 10 |
 |---|---|---|---|
-| Mourning Legate | 700 / 255 / 4.6 / 25–33 / 1.77 s | 950 / 360 / 6.1 / 35–43 / 1.64 s | 1300 / 495 / 8.2 / 49–57 / 1.49 s |
-| The Dowager | 475 / 330 / 2.9 / 25–31 / 1.83 s | 625 / 510 / 4.1 / 37–43 / 1.72 s | 850 / 735 / 5.6 / 52–58 / 1.60 s |
-| The Patriarch | 575 / 300 / 3.6 / 23–31 / 1.69 s | 775 / 450 / 4.8 / 33–41 / 1.59 s | 1050 / 660 / 6.6 / 47–55 / 1.46 s |
-| Gravewright | 750 / 210 / 4.3 / 27–33 / 1.89 s | 1025 / 285 / 5.5 / 38–44 / 1.77 s | 1375 / 390 / 7.0 / 52–58 / 1.64 s |
+| Mourning Legate | 800 / 255 / 5.6 / 28–36 / 1.77 s | 1050 / 360 / 7.1 / 38–46 / 1.64 s | 1400 / 495 / 9.2 / 52–60 / 1.49 s |
+| The Dowager | 575 / 330 / 3.9 / 28–34 / 1.83 s | 725 / 510 / 5.1 / 40–46 / 1.72 s | 950 / 735 / 6.6 / 55–61 / 1.60 s |
+| The Patriarch | 675 / 300 / 4.6 / 26–34 / 1.69 s | 875 / 450 / 5.8 / 36–44 / 1.59 s | 1150 / 660 / 7.6 / 50–58 / 1.46 s |
+| Gravewright | 850 / 210 / 5.3 / 30–36 / 1.89 s | 1125 / 285 / 6.5 / 41–47 / 1.77 s | 1475 / 390 / 8.0 / 55–61 / 1.64 s |
 
 | Hero | Look (one oversized prop) | Proper names (one at random, "Title: Name") |
 |---|---|---|

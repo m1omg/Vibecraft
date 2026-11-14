@@ -10,6 +10,15 @@ easy to use.
 **New since Playtest 2:** the game starts **fullscreen** (Alt + Enter or F11 switches to a window
 and back, and it remembers your choice).
 
+**Update 3b (after your Playtest 3 feedback):**
+- **Stronger heroes.** Every hero has +100 HP, +1 armour, +3 damage and faster health regeneration,
+  and four abilities hit harder: Brace the Wheel (+5 / 7 / 9 armour), Fuse Mark (95 / 165 / 235),
+  Braid Lash (55 / 95 / 135) and Sunglint (55 / 100 / 140). Does a hero now feel worth about two or
+  three soldiers early on, and more with levels? Too strong, too weak, or about right?
+- **Icons for items and buildings.** The build pages, the shop cards, the inventory, the production
+  queue, the portrait and the selection grid now show pictures instead of names. Can you tell the
+  items and buildings apart at a glance? Any that read wrong?
+
 If you have not answered the Playtest 2 questions yet, the short version is at the end.
 
 ## How to run it

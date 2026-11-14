@@ -332,9 +332,10 @@ func hero_stats(hero_id: String, level: int = 1, bonus: Dictionary = {}) -> Dict
 	var bd: Array = h.get("base_damage", [1, 1])
 	out["hp"] = float(r.get("base_hp", 100)) + float(r.get("str_hp", 25)) * s
 	out["mana"] = float(r.get("int_mana", 15)) * i
-	out["armor"] = float(h.get("base_armor", 0)) + float(r.get("agi_armor", 0.3)) * a
-	out["damage_min"] = int(bd[0]) + int(r.get("primary_damage", 1)) * p
-	out["damage_max"] = int(bd[1]) + int(r.get("primary_damage", 1)) * p
+	out["armor"] = float(h.get("base_armor", 0)) + float(r.get("armor_bonus", 0)) + float(r.get("agi_armor", 0.3)) * a
+	var flat := int(r.get("damage_bonus", 0))
+	out["damage_min"] = int(bd[0]) + flat + int(r.get("primary_damage", 1)) * p
+	out["damage_max"] = int(bd[1]) + flat + int(r.get("primary_damage", 1)) * p
 	out["cooldown"] = float(h.get("base_cooldown", 2.0)) / (1.0 + float(r.get("agi_attack_speed", 0.02)) * a)
 	out["hp_regen"] = float(r.get("base_hp_regen", 0.25)) + float(r.get("str_hp_regen", 0.05)) * s
 	out["mana_regen"] = float(r.get("base_mana_regen", 0.01)) + float(r.get("int_mana_regen", 0.05)) * i

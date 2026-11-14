@@ -141,9 +141,9 @@
     "params": {"taunt_buff": "buff_taunted", "self_buff": "buff_brace_the_wheel", "self_duration": 6.0},
     "fx": "fx_wheel_rim_ring",
     "ranks": [
-      {"area": 4.0, "duration": 2.0, "armor": 4},
-      {"area": 5.0, "duration": 3.0, "armor": 6},
-      {"area": 6.0, "duration": 4.0, "armor": 8}
+      {"area": 4.0, "duration": 2.0, "armor": 5},
+      {"area": 5.0, "duration": 3.0, "armor": 7},
+      {"area": 6.0, "duration": 4.0, "armor": 9}
     ],
     "functional_equivalent": false
   },
@@ -224,7 +224,7 @@
       "damage_type": "spell"
     },
     "fx": "fx_fuse_spark",
-    "ranks": [{"damage": 80}, {"damage": 140}, {"damage": 200}],
+    "ranks": [{"damage": 95}, {"damage": 165}, {"damage": 235}],
     "functional_equivalent": false
   },
   "kingdom_incendiary_wadding": {
@@ -301,9 +301,9 @@
     "params": {"damage_type": "spell", "pull": 3.0, "pull_hero": 1.5, "root_buff": "buff_rooted"},
     "fx": "fx_braid_snap",
     "ranks": [
-      {"cooldown": 14.0, "damage": 40, "root": 1.0, "root_hero": 0.75},
-      {"cooldown": 12.0, "damage": 75, "root": 1.25, "root_hero": 1.0},
-      {"cooldown": 10.0, "damage": 110, "root": 1.5, "root_hero": 1.25}
+      {"cooldown": 14.0, "damage": 55, "root": 1.0, "root_hero": 0.75},
+      {"cooldown": 12.0, "damage": 95, "root": 1.25, "root_hero": 1.0},
+      {"cooldown": 10.0, "damage": 135, "root": 1.5, "root_hero": 1.25}
     ],
     "functional_equivalent": false
   },
@@ -370,9 +370,9 @@
     },
     "fx": "fx_sunglint_flash",
     "ranks": [
-      {"damage": 50, "duration": 3.0, "hero_duration": 2.0},
-      {"damage": 85, "duration": 4.0, "hero_duration": 2.5},
-      {"damage": 120, "duration": 5.0, "hero_duration": 3.0}
+      {"damage": 55, "duration": 3.0, "hero_duration": 2.0},
+      {"damage": 100, "duration": 4.0, "hero_duration": 2.5},
+      {"damage": 140, "duration": 5.0, "hero_duration": 3.0}
     ],
     "functional_equivalent": false
   },

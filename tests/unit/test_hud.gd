@@ -119,7 +119,11 @@ func test_worker_card_and_build_pages() -> void:
 	assert_eq(lookout.missing, ["Timber Yard"] as Array[String], "and says so")
 	assert_eq((commands.current_card()[11] as CardModel.Entry).kind, "back", "Back in slot 11")
 	await tree.process_frame
-	assert_eq(hud.card.buttons[1].text, "Croft", "the card shows the page")
+	var croft_btn: CardButton = hud.card.buttons[1]
+	assert_true(croft_btn.entry != null and croft_btn.entry.id == "kingdom_croft", "the card shows the page")
+	assert_true(croft_btn.icon_tex != null and croft_btn.text == "", "the Croft as its icon, no label")
+	assert_true((hud.card.buttons[6] as CardButton).icon_greyed(), "the locked Lookout's icon is grey")
+	assert_false(croft_btn.icon_greyed(), "an available one is in colour")
 	_key(KEY_ESCAPE)
 	assert_eq(commands.page, CardModel.PAGE_MAIN, "Esc goes back")
 	_key(KEY_V)

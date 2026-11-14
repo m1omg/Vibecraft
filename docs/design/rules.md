@@ -425,17 +425,24 @@ Every hero has STR, AGI and INT with a base and a per-level growth (faction docs
 | Derived stat | Formula | Per point |
 |---|---|---|
 | Effective attribute | `floor(base + growth × (level − 1))` + item and buff bonuses | |
-| Max HP | `100 + 25 × STR` | STR +25 HP |
-| HP regen | `0.25 + 0.05 × STR` HP/s | STR +0.05 HP/s |
+| Max HP | `200 + 25 × STR` | STR +25 HP |
+| HP regen | `0.5 + 0.05 × STR` HP/s | STR +0.05 HP/s |
 | Max mana | `15 × INT` | INT +15 mana |
 | Mana regen | `0.01 + 0.05 × INT` mana/s | INT +0.05 mana/s |
-| Armour | `base_armor + 0.3 × AGI` (+ items, buffs). Hero base armour is usually −2 … +1 | AGI +0.3 armour |
+| Armour | `base_armor + 1 + 0.3 × AGI` (+ items, buffs). Hero base armour is usually −2 … +1 | AGI +0.3 armour |
 | Attack cooldown | `base_cooldown ÷ (1 + 0.02 × AGI + other attack-speed bonuses)`, clamped (§7.5) | AGI +2 % attack speed |
-| Damage | `base_damage [min, max]` + **1 × primary attribute** | Primary +1 damage |
+| Damage | `base_damage [min, max]` + 3 + **1 × primary attribute** | Primary +1 damage |
 | Sight | 28.1 / 12.5 m (1800 / 800 gu) | |
 | Spell resistance | Built into the Heroic armour type (id `hero`; ×0.7 vs Spell) | |
 
-Check against kingdom §6.2: Wheel Marshal at level 10 has STR floor(23 + 2.6 × 9) = 46 → 1250 HP; AGI floor(12 + 1.4 × 9) = 24 → armour 1 + 7.2 = 8.2. ✓
+Check against kingdom §6.2: Wheel Marshal at level 10 has STR floor(23 + 2.6 × 9) = 46 → 1350 HP; AGI floor(12 + 1.4 × 9) = 24 → armour 1 + 1 + 7.2 = 9.2. ✓
+
+**Playtest 3 tuning (2026-11-14).** The play-tester found the heroes "a little bit weak", so every hero gained **+100 base HP** (100 → 200),
+**+0.25 HP/s base regeneration** (0.25 → 0.5), **+1 armour** and **+3 damage** (`heroes.json` rules: `base_hp`, `base_hp_regen`,
+`armor_bonus`, `damage_bonus`). Four non-equivalent abilities hit harder: Brace the Wheel +5 / 7 / 9 armour (was 4 / 6 / 8), Fuse Mark
+95 / 165 / 235 (was 80 / 140 / 200), Braid Lash 55 / 95 / 135 (was 40 / 75 / 110), Sunglint 55 / 100 / 140 (was 50 / 85 / 120; rank 1 stays
+over 20 % from its 75 reference). Linden Balm and Naphtha Flask are functional equivalents and keep their numbers (the 20 % rule, kingdom §6.4).
+The faction tables (kingdom §6.2, clans §6.1, sylvan-and-deathless) include the tuning.
 
 ### 6.7 Revival
 
@@ -1876,6 +1883,12 @@ neutrals §9. `python3 tools/ip/check_banned_terms.py` (with its UI-string pass)
     Flour Bomb → Tattle-Burrs (neutrals §11 table; `kingdom.md` §11 was renamed here). `art-and-audio-bible.md` §9.6: give the Tattle-Burrs their own cue (a burr toss, then a
     thin bell jingle; neutrals §11) instead of `it_reveal_puff`, counted as a new P0 job. `juice/combat-and-units.md` CMB-31: add the
     60 s remains stage (§10.8). `architecture.md` §11: Classic hero-ability keys are per-def mnemonics.
+
+**Tuning flags from play-tests**
+
+34. **Hero strength (Playtest 3, 2026-11-14):** the play-tester found the heroes "a little bit weak". §6.6 records the first pass (+100 HP,
+    +0.25 HP/s, +1 armour, +3 damage on every hero; four non-equivalent abilities raised). Re-check after the next play-test; the next
+    knobs are `heroes.json` `damage_bonus` and `armor_bonus`, then the ability ranks (functional equivalents keep the 20 % rule).
 
 **Code follow-ups** are listed in §20.4. `architecture.md` §8 (trees block sight), §10 (type ids) and §11 (hotkey presets) need a line each
 when the code changes, in the same commit (architecture rule).
